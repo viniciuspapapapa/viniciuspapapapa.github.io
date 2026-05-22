@@ -4,6 +4,12 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Controle Financeiro — Vinicius</title>
+<link rel="manifest" href="/manifest.json">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Finanças">
+<meta name="theme-color" content="#7c6af7">
 <style>
   :root {
     --bg: #0f1117;
@@ -24,7 +30,6 @@
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; min-height: 100vh; }
 
-  /* NAV */
   nav { background: var(--surface); border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 100; }
   .nav-inner { max-width: 1100px; margin: 0 auto; display: flex; align-items: center; gap: 4px; padding: 0 16px; overflow-x: auto; scrollbar-width: none; }
   .nav-inner::-webkit-scrollbar { display: none; }
@@ -33,12 +38,10 @@
   .nav-btn:hover { color: var(--text); }
   .nav-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
 
-  /* LAYOUT */
   main { max-width: 1100px; margin: 0 auto; padding: 24px 16px; }
   .page { display: none; }
   .page.active { display: block; }
 
-  /* CARDS */
   .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; margin-bottom: 24px; }
   .kpi { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px 18px; }
   .kpi-label { font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin-bottom: 6px; }
@@ -48,11 +51,9 @@
   .kpi-value.purple { color: var(--purple); }
   .kpi-value.yellow { color: var(--yellow); }
 
-  /* SECTION CARD */
   .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; margin-bottom: 20px; }
   .card-title { font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin-bottom: 16px; }
 
-  /* FORM */
   .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; }
   .form-group { display: flex; flex-direction: column; gap: 5px; }
   label { font-size: 12px; color: var(--muted); font-weight: 500; }
@@ -71,7 +72,6 @@
   .btn-ghost { background: var(--surface2); color: var(--muted); }
   .btn-sm { font-size: 12px; padding: 6px 12px; }
 
-  /* TABLE */
   .table-wrap { overflow-x: auto; }
   table { width: 100%; border-collapse: collapse; font-size: 13px; }
   th { text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); padding: 8px 10px; border-bottom: 1px solid var(--border); }
@@ -85,31 +85,25 @@
   .tag-c6 { background: #3a1c1c; color: #f87171; }
   .tag-familia { background: #3a2e1c; color: #fbbf24; }
 
-  /* MONTH SELECTOR */
   .month-bar { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; flex-wrap: wrap; }
   .month-bar select { max-width: 180px; }
   .month-bar .label { font-size: 13px; color: var(--muted); }
 
-  /* BREAKDOWN TABLE */
   .breakdown { width: 100%; font-size: 13px; }
   .breakdown td { padding: 7px 0; border-bottom: 1px solid var(--border); }
   .breakdown td:last-child { text-align: right; font-weight: 600; }
   .breakdown tr:last-child td { border-bottom: none; }
   .breakdown .total td { color: var(--text); font-weight: 700; font-size: 14px; }
 
-  /* MONTHLY TABLE */
   .monthly-table { font-size: 12px; }
   .monthly-table th, .monthly-table td { padding: 7px 8px; }
 
-  /* TOGGLE */
   .section-toggle { display: flex; gap: 8px; margin-bottom: 16px; }
   .toggle-btn { background: var(--surface2); border: 1px solid var(--border); color: var(--muted); border-radius: var(--radius-sm); padding: 7px 14px; font-size: 13px; cursor: pointer; }
   .toggle-btn.on { background: var(--accent2); border-color: var(--accent); color: #fff; }
 
-  /* EMPTY STATE */
   .empty { text-align: center; color: var(--muted); padding: 40px; font-size: 14px; }
 
-  /* FIXED COSTS LIST */
   .fixo-item { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--border); }
   .fixo-item:last-child { border-bottom: none; }
   .fixo-info { flex: 1; min-width: 0; }
@@ -117,7 +111,6 @@
   .fixo-meta { font-size: 11px; color: var(--muted); margin-top: 2px; }
   .fixo-valor { font-size: 15px; font-weight: 700; white-space: nowrap; }
 
-  /* FATURA CARD */
   .fatura-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; }
   .fatura-card { background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 14px; }
   .fatura-card-title { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; margin-bottom: 10px; }
@@ -125,21 +118,17 @@
   .fatura-card-title.bb { color: var(--green); }
   .fatura-card-title.c6 { color: var(--red); }
 
-  /* PARAMS */
   .param-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; }
   .param-item { background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 14px; }
   .param-label { font-size: 12px; color: var(--muted); margin-bottom: 6px; }
 
-  /* CHART */
   canvas { max-width: 100%; }
   .chart-wrap { position: relative; height: 220px; margin-top: 8px; }
 
-  /* PROGRESS BAR */
   .progress-wrap { margin-top: 6px; }
   .progress-bar { height: 6px; border-radius: 99px; background: var(--surface2); margin-top: 6px; overflow: hidden; }
   .progress-fill { height: 100%; border-radius: 99px; transition: width .3s; }
 
-  /* RESPONSIVE */
   @media (max-width: 600px) {
     .kpi-grid { grid-template-columns: 1fr 1fr; }
     .form-grid { grid-template-columns: 1fr; }
@@ -162,14 +151,13 @@
 
 <main>
 
-<!-- DASHBOARD -->
 <div id="page-dashboard" class="page active">
   <div class="month-bar">
     <span class="label">Mês de referência:</span>
     <select id="dash-mes" onchange="renderDashboard()"></select>
   </div>
   <div class="kpi-grid" id="kpi-grid"></div>
-  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;flex-wrap:wrap;" class="two-col">
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;" class="two-col">
     <div class="card">
       <div class="card-title">Composição das Saídas</div>
       <table class="breakdown" id="breakdown-table"></table>
@@ -192,36 +180,16 @@
   </div>
 </div>
 
-<!-- GASTOS VARIÁVEIS -->
 <div id="page-variaveis" class="page">
   <div class="card">
     <div class="card-title">Lançar Gasto Variável</div>
     <div class="form-grid">
-      <div class="form-group">
-        <label>Data</label>
-        <input type="date" id="gv-data">
-      </div>
-      <div class="form-group">
-        <label>Descrição</label>
-        <input type="text" id="gv-desc" placeholder="Ex: Almoço, Uber...">
-      </div>
-      <div class="form-group">
-        <label>Categoria</label>
-        <select id="gv-cat"></select>
-      </div>
-      <div class="form-group">
-        <label>Valor (R$)</label>
-        <input type="number" id="gv-valor" min="0" step="0.01" placeholder="0,00">
-      </div>
-      <div class="form-group">
-        <label>Forma de Pagamento</label>
-        <select id="gv-forma"></select>
-      </div>
-      <div class="form-group" style="align-self:flex-end;">
-        <div class="form-actions">
-          <button class="btn btn-primary" onclick="addGastoVariavel()">Adicionar</button>
-        </div>
-      </div>
+      <div class="form-group"><label>Data</label><input type="date" id="gv-data"></div>
+      <div class="form-group"><label>Descrição</label><input type="text" id="gv-desc" placeholder="Ex: Almoço, Uber..."></div>
+      <div class="form-group"><label>Categoria</label><select id="gv-cat"></select></div>
+      <div class="form-group"><label>Valor (R$)</label><input type="number" id="gv-valor" min="0" step="0.01" placeholder="0,00"></div>
+      <div class="form-group"><label>Forma de Pagamento</label><select id="gv-forma"></select></div>
+      <div class="form-group" style="align-self:flex-end;"><div class="form-actions"><button class="btn btn-primary" onclick="addGastoVariavel()">Adicionar</button></div></div>
     </div>
   </div>
   <div class="card">
@@ -231,44 +199,23 @@
     </div>
     <div class="table-wrap">
       <table>
-        <thead><tr>
-          <th>Data</th><th>Descrição</th><th>Categoria</th><th>Valor</th><th>Forma</th><th>Mês Caixa</th><th></th>
-        </tr></thead>
+        <thead><tr><th>Data</th><th>Descrição</th><th>Categoria</th><th>Valor</th><th>Forma</th><th>Mês Caixa</th><th></th></tr></thead>
         <tbody id="gv-body"></tbody>
       </table>
     </div>
   </div>
 </div>
 
-<!-- CUSTOS FIXOS -->
 <div id="page-fixos" class="page">
   <div class="card">
     <div class="card-title">Adicionar / Editar Custo Fixo</div>
     <div class="form-grid">
-      <div class="form-group">
-        <label>Nome do Item</label>
-        <input type="text" id="cf-nome" placeholder="Ex: Academia, Netflix...">
-      </div>
-      <div class="form-group">
-        <label>Categoria</label>
-        <select id="cf-cat"></select>
-      </div>
-      <div class="form-group">
-        <label>Valor (R$)</label>
-        <input type="number" id="cf-valor" min="0" step="0.01" placeholder="0,00">
-      </div>
-      <div class="form-group">
-        <label>Forma de Pagamento</label>
-        <select id="cf-forma"></select>
-      </div>
-      <div class="form-group">
-        <label>Dia de Vencimento</label>
-        <input type="number" id="cf-dia" min="1" max="31" placeholder="Ex: 10">
-      </div>
-      <div class="form-group">
-        <label>Observação</label>
-        <input type="text" id="cf-obs" placeholder="Opcional">
-      </div>
+      <div class="form-group"><label>Nome do Item</label><input type="text" id="cf-nome" placeholder="Ex: Academia, Netflix..."></div>
+      <div class="form-group"><label>Categoria</label><select id="cf-cat"></select></div>
+      <div class="form-group"><label>Valor (R$)</label><input type="number" id="cf-valor" min="0" step="0.01" placeholder="0,00"></div>
+      <div class="form-group"><label>Forma de Pagamento</label><select id="cf-forma"></select></div>
+      <div class="form-group"><label>Dia de Vencimento</label><input type="number" id="cf-dia" min="1" max="31" placeholder="Ex: 10"></div>
+      <div class="form-group"><label>Observação</label><input type="text" id="cf-obs" placeholder="Opcional"></div>
     </div>
     <div class="form-actions" style="margin-top:14px;">
       <button class="btn btn-primary" onclick="addCustoFixo()">Salvar</button>
@@ -282,7 +229,6 @@
   </div>
 </div>
 
-<!-- CARTÃO DE CRÉDITO -->
 <div id="page-cartao" class="page">
   <div class="card">
     <div class="card-title">Lançar Faturas do Mês</div>
@@ -306,23 +252,13 @@
   </div>
 </div>
 
-<!-- CONFIGURAÇÕES -->
 <div id="page-config" class="page">
   <div class="card">
     <div class="card-title">Parâmetros Financeiros</div>
     <div class="param-grid">
-      <div class="param-item">
-        <div class="param-label">Salário mensal (R$)</div>
-        <input type="number" id="p-salario" step="100" min="0">
-      </div>
-      <div class="param-item">
-        <div class="param-label">Limite Cartão Família (R$)</div>
-        <input type="number" id="p-limite" step="100" min="0">
-      </div>
-      <div class="param-item">
-        <div class="param-label">Meta de economia mensal (R$)</div>
-        <input type="number" id="p-meta" step="100" min="0">
-      </div>
+      <div class="param-item"><div class="param-label">Salário mensal (R$)</div><input type="number" id="p-salario" step="100" min="0"></div>
+      <div class="param-item"><div class="param-label">Limite Cartão Família (R$)</div><input type="number" id="p-limite" step="100" min="0"></div>
+      <div class="param-item"><div class="param-label">Meta de economia mensal (R$)</div><input type="number" id="p-meta" step="100" min="0"></div>
     </div>
     <div class="form-actions" style="margin-top:16px;">
       <button class="btn btn-primary" onclick="salvarParams()">Salvar Configurações</button>
@@ -341,8 +277,8 @@
   </div>
   <div class="card">
     <div class="card-title" style="color:var(--red)">Zona de Perigo</div>
-    <p style="font-size:13px;color:var(--muted);margin-bottom:14px;">Apaga todos os dados salvos (gastos variáveis, faturas e custos fixos customizados). Os custos fixos padrão serão restaurados.</p>
-    <button class="btn btn-danger" onclick="resetarDados()">Resetar todos os dados</button>
+    <p style="font-size:13px;color:var(--muted);margin-bottom:14px;">Apaga os gastos variáveis e restaura faturas e custos fixos para os valores originais da planilha.</p>
+    <button class="btn btn-danger" onclick="resetarDados()">Restaurar dados originais da planilha</button>
   </div>
 </div>
 
@@ -350,64 +286,49 @@
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script>
-// ═══════════════════════════════════════════════════
-//  CONSTANTS & STATE
-// ═══════════════════════════════════════════════════
-
 const CATEGORIAS = ['Assinaturas','Combustível','Cuidados Pessoais','Eventual','iFood','Lazer','Mercado','Moradia','Outros','Pagamento de Fatura','Proteção','Saúde','Trabalho','Vestuário'];
 const FORMAS = ['Débito','BB Crédito','C6 Crédito','Nubank Crédito','Cartão Família'];
 
 const FIXOS_DEFAULT = [
-  { id:'f1', nome:'IPTU',                    cat:'Moradia',      valor:502,   forma:'Nubank Crédito', dia:21, obs:'' },
-  { id:'f2', nome:'Condomínio',              cat:'Moradia',      valor:900,   forma:'Cartão Família', dia:10, obs:'' },
-  { id:'f3', nome:'Conta de Luz',            cat:'Moradia',      valor:300.21,forma:'Cartão Família', dia:11, obs:'' },
-  { id:'f4', nome:'Conta de Água',           cat:'Moradia',      valor:100,   forma:'Nubank Crédito', dia:10, obs:'' },
-  { id:'f5', nome:'Internet',                cat:'Moradia',      valor:138,   forma:'Nubank Crédito', dia:10, obs:'' },
-  { id:'f6', nome:'Academia (SmartFit)',     cat:'Saúde',        valor:150,   forma:'Nubank Crédito', dia:10, obs:'' },
-  { id:'f7', nome:'Seguro de Vida',          cat:'Saúde',        valor:41.20, forma:'Nubank Crédito', dia:10, obs:'' },
-  { id:'f8', nome:'Estacionamento Escritório',cat:'Trabalho',    valor:250,   forma:'Nubank Crédito', dia:10, obs:'' },
-  { id:'f9', nome:'Amazon Prime',            cat:'Assinaturas',  valor:20,    forma:'Nubank Crédito', dia:12, obs:'' },
-  { id:'f10',nome:'Claude',                  cat:'Assinaturas',  valor:120,   forma:'Nubank Crédito', dia:12, obs:'' },
-  { id:'f11',nome:'Apple Cloud',             cat:'Assinaturas',  valor:19.90, forma:'Nubank Crédito', dia:8,  obs:'' },
-  { id:'f12',nome:'Spotify',                 cat:'Assinaturas',  valor:31.90, forma:'Nubank Crédito', dia:27, obs:'' },
-  { id:'f13',nome:'Microsoft 365',           cat:'Assinaturas',  valor:12,    forma:'Nubank Crédito', dia:20, obs:'' },
-  { id:'f14',nome:'PlayStation Plus',        cat:'Assinaturas',  valor:72,    forma:'Nubank Crédito', dia:10, obs:'' },
+  { id:'f1',  nome:'IPTU',                     cat:'Moradia',     valor:502,    forma:'Nubank Crédito', dia:21, obs:'' },
+  { id:'f2',  nome:'Condomínio',               cat:'Moradia',     valor:900,    forma:'Cartão Família', dia:10, obs:'' },
+  { id:'f3',  nome:'Conta de Luz',             cat:'Moradia',     valor:300.21, forma:'Cartão Família', dia:11, obs:'' },
+  { id:'f4',  nome:'Conta de Água',            cat:'Moradia',     valor:100,    forma:'Nubank Crédito', dia:10, obs:'' },
+  { id:'f5',  nome:'Internet',                 cat:'Moradia',     valor:138,    forma:'Nubank Crédito', dia:10, obs:'' },
+  { id:'f6',  nome:'Academia (SmartFit)',      cat:'Saúde',       valor:150,    forma:'Nubank Crédito', dia:10, obs:'' },
+  { id:'f7',  nome:'Seguro de Vida',           cat:'Saúde',       valor:41.20,  forma:'Nubank Crédito', dia:10, obs:'' },
+  { id:'f8',  nome:'Estacionamento Escritório',cat:'Trabalho',    valor:250,    forma:'Nubank Crédito', dia:10, obs:'' },
+  { id:'f9',  nome:'Amazon Prime',             cat:'Assinaturas', valor:20,     forma:'Nubank Crédito', dia:12, obs:'' },
+  { id:'f10', nome:'Claude',                   cat:'Assinaturas', valor:120,    forma:'Nubank Crédito', dia:12, obs:'' },
+  { id:'f11', nome:'Apple Cloud',              cat:'Assinaturas', valor:19.90,  forma:'Nubank Crédito', dia:8,  obs:'' },
+  { id:'f12', nome:'Spotify',                  cat:'Assinaturas', valor:31.90,  forma:'Nubank Crédito', dia:27, obs:'' },
+  { id:'f13', nome:'Microsoft 365',            cat:'Assinaturas', valor:12,     forma:'Nubank Crédito', dia:20, obs:'' },
+  { id:'f14', nome:'PlayStation Plus',         cat:'Assinaturas', valor:72,     forma:'Nubank Crédito', dia:10, obs:'' },
 ];
 
-const MESES_LABELS = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+const FATURAS_DEFAULT = {
+  '2026-06': { bb: 0, c6: 2938.46, nubank: 8302.23 },
+  '2026-07': { bb: 0, c6: 0,       nubank: 3991.15 },
+  '2026-08': { bb: 0, c6: 0,       nubank: 3508.23 },
+  '2026-09': { bb: 0, c6: 0,       nubank: 2708.72 },
+  '2026-10': { bb: 0, c6: 0,       nubank: 559.96  },
+};
 
-// ═══════════════════════════════════════════════════
-//  STORAGE
-// ═══════════════════════════════════════════════════
+const MESES_LABELS = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
 
 function load(key, def) {
   try { const v = localStorage.getItem(key); return v ? JSON.parse(v) : def; } catch { return def; }
 }
 function save(key, val) { localStorage.setItem(key, JSON.stringify(val)); }
 
-function getParams() {
-  return load('params', { salario: 12000, limite: 1300, meta: 3500 });
-}
-function getFixos() { return load('fixos', FIXOS_DEFAULT); }
-function getVariaveis() { return load('variaveis', []); }
-function getFaturas() { return load('faturas', {}); }
-
-// ═══════════════════════════════════════════════════
-//  DATE HELPERS
-// ═══════════════════════════════════════════════════
+function getParams()   { return load('params',   { salario: 12000, limite: 1300, meta: 3500 }); }
+function getFixos()    { return load('fixos',    FIXOS_DEFAULT); }
+function getVariaveis(){ return load('variaveis', []); }
+function getFaturas()  { return load('faturas',  FATURAS_DEFAULT); }
 
 function mesKey(year, month) { return `${year}-${String(month).padStart(2,'0')}`; }
-function parseMesKey(k) { const [y,m] = k.split('-'); return { year: +y, month: +m }; }
+function parseMesKey(k) { const [y,m] = k.split('-'); return { year:+y, month:+m }; }
 function mesLabel(k) { const {year,month} = parseMesKey(k); return `${MESES_LABELS[month-1]}/${year}`; }
-function dateToMesKey(d) { return mesKey(d.getFullYear(), d.getMonth()+1); }
-
-function calcMesCaixaFixo(dia, forma, year, month) {
-  // Custos Fixos: Débito = mesmo mês, tudo else = próximo mês
-  if (!forma || !dia) return null;
-  if (forma === 'Débito') return mesKey(year, month);
-  const next = new Date(year, month, 1); // month is 0-based if month is 1-12 → new Date(y, month, 1) = 1st of next
-  return mesKey(next.getFullYear(), next.getMonth()+1);
-}
 
 function calcMesCaixaVariavel(dateStr, forma) {
   if (!dateStr || !forma) return null;
@@ -423,52 +344,34 @@ function calcMesCaixaVariavel(dateStr, forma) {
     const nd = new Date(y, m, 1); return mesKey(nd.getFullYear(), nd.getMonth()+1);
   }
   if (forma === 'C6 Crédito') {
-    // C6 fecha no último dia útil do mês. Simplificação: fecha dia 28+
-    // Se antes do último dia útil → próximo mês, senão mês seguinte ao próximo
     const lastDay = new Date(y, m, 0).getDate();
-    let lastWorkday = lastDay;
-    while (true) {
-      const wd = new Date(y, m-1, lastWorkday).getDay();
-      if (wd !== 0 && wd !== 6) break;
-      lastWorkday--;
-    }
-    if (day <= lastWorkday) return mesKey(y, m);
+    let lw = lastDay;
+    while (true) { const wd = new Date(y, m-1, lw).getDay(); if (wd!==0 && wd!==6) break; lw--; }
+    if (day <= lw) return mesKey(y, m);
     const nd = new Date(y, m, 1); return mesKey(nd.getFullYear(), nd.getMonth()+1);
   }
   return mesKey(y, m);
 }
 
 function gerarMeses() {
-  // Gera lista de meses: 12 atrás até 12 à frente do mês atual
-  const meses = [];
-  const hoje = new Date();
+  const meses = [], hoje = new Date();
   for (let i = -12; i <= 12; i++) {
-    const d = new Date(hoje.getFullYear(), hoje.getMonth() + i, 1);
+    const d = new Date(hoje.getFullYear(), hoje.getMonth()+i, 1);
     meses.push(mesKey(d.getFullYear(), d.getMonth()+1));
   }
   return meses;
 }
 
-function mesAtual() {
-  const d = new Date();
-  return mesKey(d.getFullYear(), d.getMonth()+1);
-}
-
-// ═══════════════════════════════════════════════════
-//  CALCULATIONS
-// ═══════════════════════════════════════════════════
+function mesAtual() { const d = new Date(); return mesKey(d.getFullYear(), d.getMonth()+1); }
 
 function calcResumo(mesk) {
   const params = getParams();
   const fixos = getFixos();
   const variaveis = getVariaveis();
   const faturas = getFaturas();
-  const { year, month } = parseMesKey(mesk);
 
   let fixosDebito = 0, fixosCredito = 0, cartaoFamiliaFixos = 0;
   for (const f of fixos) {
-    const mk = calcMesCaixaFixo(f.dia, f.forma, year, month);
-    if (mk !== mesk) continue;
     if (f.forma === 'Débito') fixosDebito += f.valor;
     else if (f.forma === 'Cartão Família') cartaoFamiliaFixos += f.valor;
     else fixosCredito += f.valor;
@@ -483,155 +386,87 @@ function calcResumo(mesk) {
     else varCredito += v.valor;
   }
 
-  const fat = faturas[mesk] || { bb: 0, c6: 0, nubank: 0 };
+  const fat = faturas[mesk] || { bb:0, c6:0, nubank:0 };
   const totalFaturas = (fat.bb||0) + (fat.c6||0) + (fat.nubank||0);
-
   const totalSaidas = fixosDebito + totalFaturas + varDebito;
   const saldo = params.salario - totalSaidas;
-  const pct = params.salario > 0 ? saldo / params.salario : 0;
+  const pct = params.salario > 0 ? saldo/params.salario : 0;
   const saldoPrevisto = saldo - fixosCredito - varCredito;
   const cartaoFamilia = cartaoFamiliaFixos + cartaoFamiliaVar;
 
-  return {
-    salario: params.salario,
-    fixosDebito, fixosCredito, totalFaturas, varDebito, varCredito,
-    totalSaidas, saldo, pct, saldoPrevisto, cartaoFamilia,
-    limiteFamilia: params.limite, meta: params.meta,
-    fatBB: fat.bb||0, fatC6: fat.c6||0, fatNubank: fat.nubank||0,
-  };
+  return { salario:params.salario, fixosDebito, fixosCredito, totalFaturas, varDebito, varCredito,
+           totalSaidas, saldo, pct, saldoPrevisto, cartaoFamilia,
+           limiteFamilia:params.limite, meta:params.meta,
+           fatBB:fat.bb||0, fatC6:fat.c6||0, fatNubank:fat.nubank||0 };
 }
 
-// ═══════════════════════════════════════════════════
-//  FORMATTING
-// ═══════════════════════════════════════════════════
-
-function brl(v) {
-  return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v||0);
-}
-function pct(v) { return (v*100).toFixed(1) + '%'; }
-
+function brl(v) { return new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).format(v||0); }
+function pct(v) { return (v*100).toFixed(1)+'%'; }
 function tagForma(forma) {
-  const classes = {
-    'Débito': 'tag-debito', 'Nubank Crédito': 'tag-nubank',
-    'BB Crédito': 'tag-bb', 'C6 Crédito': 'tag-c6', 'Cartão Família': 'tag-familia'
-  };
-  return `<span class="tag ${classes[forma]||''}">${forma}</span>`;
+  const c = {'Débito':'tag-debito','Nubank Crédito':'tag-nubank','BB Crédito':'tag-bb','C6 Crédito':'tag-c6','Cartão Família':'tag-familia'};
+  return `<span class="tag ${c[forma]||''}">${forma}</span>`;
 }
-
-// ═══════════════════════════════════════════════════
-//  NAVIGATION
-// ═══════════════════════════════════════════════════
 
 function showPage(id) {
-  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-  document.getElementById('page-' + id).classList.add('active');
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
   event.currentTarget.classList.add('active');
-  if (id === 'dashboard') renderDashboard();
-  if (id === 'variaveis') renderGastosVariaveis();
-  if (id === 'fixos') renderFixos();
-  if (id === 'cartao') renderFaturas();
-  if (id === 'config') renderConfig();
+  if (id==='dashboard') renderDashboard();
+  if (id==='variaveis') renderGastosVariaveis();
+  if (id==='fixos') renderFixos();
+  if (id==='cartao') renderFaturas();
+  if (id==='config') renderConfig();
 }
-
-// ═══════════════════════════════════════════════════
-//  POPULATE SELECTS
-// ═══════════════════════════════════════════════════
 
 function populateSelects() {
-  const meses = gerarMeses();
-  const atual = mesAtual();
-
-  function fillMesSelect(id, selected) {
-    const sel = document.getElementById(id);
-    if (!sel) return;
-    sel.innerHTML = meses.map(m => `<option value="${m}" ${m===selected?'selected':''}>${mesLabel(m)}</option>`).join('');
+  const meses = gerarMeses(), atual = mesAtual();
+  function fill(id, sel) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.innerHTML = meses.map(m=>`<option value="${m}" ${m===sel?'selected':''}>${mesLabel(m)}</option>`).join('');
   }
-  fillMesSelect('dash-mes', atual);
-  fillMesSelect('gv-filtro-mes', atual);
-  fillMesSelect('fat-mes', atual);
-
-  ['gv-cat','cf-cat'].forEach(id => {
-    const sel = document.getElementById(id);
-    if (sel) sel.innerHTML = CATEGORIAS.map(c=>`<option>${c}</option>`).join('');
-  });
-  ['gv-forma','cf-forma'].forEach(id => {
-    const sel = document.getElementById(id);
-    if (sel) sel.innerHTML = FORMAS.map(f=>`<option>${f}</option>`).join('');
-  });
-
-  // Default date for variable expense = today
-  const today = new Date().toISOString().slice(0,10);
+  fill('dash-mes', atual); fill('gv-filtro-mes', atual); fill('fat-mes', atual);
+  ['gv-cat','cf-cat'].forEach(id => { const el=document.getElementById(id); if(el) el.innerHTML=CATEGORIAS.map(c=>`<option>${c}</option>`).join(''); });
+  ['gv-forma','cf-forma'].forEach(id => { const el=document.getElementById(id); if(el) el.innerHTML=FORMAS.map(f=>`<option>${f}</option>`).join(''); });
   const gvData = document.getElementById('gv-data');
-  if (gvData && !gvData.value) gvData.value = today;
+  if (gvData && !gvData.value) gvData.value = new Date().toISOString().slice(0,10);
 }
-
-// ═══════════════════════════════════════════════════
-//  DASHBOARD
-// ═══════════════════════════════════════════════════
 
 let chartInstance = null;
 
 function renderDashboard() {
   const mesk = document.getElementById('dash-mes').value;
   const r = calcResumo(mesk);
-
-  // KPIs
-  const saldoColor = r.saldo >= 0 ? 'green' : 'red';
-  const prevColor = r.saldoPrevisto >= 0 ? 'green' : 'red';
-  const famColor = r.cartaoFamilia <= r.limiteFamilia ? 'yellow' : 'red';
-  const metaOk = r.saldo >= r.meta;
+  const saldoColor = r.saldo>=0?'green':'red';
+  const prevColor = r.saldoPrevisto>=0?'green':'red';
+  const famColor = r.cartaoFamilia<=r.limiteFamilia?'yellow':'red';
+  const metaOk = r.saldo>=r.meta;
 
   document.getElementById('kpi-grid').innerHTML = `
-    <div class="kpi">
-      <div class="kpi-label">💰 Salário</div>
-      <div class="kpi-value">${brl(r.salario)}</div>
-    </div>
-    <div class="kpi">
-      <div class="kpi-label">📉 Total Saídas</div>
-      <div class="kpi-value red">${brl(r.totalSaidas)}</div>
-    </div>
-    <div class="kpi">
-      <div class="kpi-label">📈 Saldo do Mês</div>
-      <div class="kpi-value ${saldoColor}">${brl(r.saldo)}</div>
-    </div>
+    <div class="kpi"><div class="kpi-label">💰 Salário</div><div class="kpi-value">${brl(r.salario)}</div></div>
+    <div class="kpi"><div class="kpi-label">📉 Total Saídas</div><div class="kpi-value red">${brl(r.totalSaidas)}</div></div>
+    <div class="kpi"><div class="kpi-label">📈 Saldo do Mês</div><div class="kpi-value ${saldoColor}">${brl(r.saldo)}</div></div>
     <div class="kpi">
       <div class="kpi-label">💳 Cartão Família</div>
       <div class="kpi-value ${famColor}">${brl(r.cartaoFamilia)}</div>
       <div class="progress-wrap">
-        <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--muted);">
-          <span>Limite: ${brl(r.limiteFamilia)}</span>
-          <span>${r.limiteFamilia>0?pct(r.cartaoFamilia/r.limiteFamilia):'-'}</span>
-        </div>
-        <div class="progress-bar">
-          <div class="progress-fill" style="width:${Math.min(100,r.limiteFamilia>0?r.cartaoFamilia/r.limiteFamilia*100:0)}%;background:${famColor==='red'?'var(--red)':'var(--yellow)'};"></div>
-        </div>
+        <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--muted);"><span>Limite: ${brl(r.limiteFamilia)}</span><span>${r.limiteFamilia>0?pct(r.cartaoFamilia/r.limiteFamilia):'-'}</span></div>
+        <div class="progress-bar"><div class="progress-fill" style="width:${Math.min(100,r.limiteFamilia>0?r.cartaoFamilia/r.limiteFamilia*100:0)}%;background:${famColor==='red'?'var(--red)':'var(--yellow)'};"></div></div>
       </div>
     </div>
-    <div class="kpi">
-      <div class="kpi-label">🔮 Saldo Previsto</div>
-      <div class="kpi-value ${prevColor}">${brl(r.saldoPrevisto)}</div>
-    </div>
+    <div class="kpi"><div class="kpi-label">🔮 Saldo Previsto</div><div class="kpi-value ${prevColor}">${brl(r.saldoPrevisto)}</div></div>
     <div class="kpi">
       <div class="kpi-label">🎯 % Poupado</div>
       <div class="kpi-value ${metaOk?'green':'yellow'}">${pct(r.pct)}</div>
       <div class="progress-wrap">
-        <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--muted);">
-          <span>Meta: ${brl(r.meta)}</span>
-          <span>${r.salario>0?pct(r.meta/r.salario):'-'}</span>
-        </div>
-        <div class="progress-bar">
-          <div class="progress-fill" style="width:${Math.min(100,r.salario>0?r.saldo/r.meta*100:0)}%;background:${metaOk?'var(--green)':'var(--yellow)'};"></div>
-        </div>
+        <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--muted);"><span>Meta: ${brl(r.meta)}</span><span>${r.salario>0?pct(r.meta/r.salario):'-'}</span></div>
+        <div class="progress-bar"><div class="progress-fill" style="width:${Math.min(100,r.salario>0?r.saldo/r.meta*100:0)}%;background:${metaOk?'var(--green)':'var(--yellow)'};"></div></div>
       </div>
     </div>
-    <div class="kpi">
-      <div class="kpi-label">💡 Prev. Cartão Crédito</div>
-      <div class="kpi-value purple">${brl(r.fixosCredito + r.varCredito)}</div>
-    </div>
+    <div class="kpi"><div class="kpi-label">💡 Prev. Cartão Crédito</div><div class="kpi-value purple">${brl(r.fixosCredito+r.varCredito)}</div></div>
   `;
 
-  // Breakdown
   document.getElementById('breakdown-table').innerHTML = `
     <tr><td>Fixos Débito</td><td>${brl(r.fixosDebito)}</td></tr>
     <tr><td>Fixos Crédito (Prev.)</td><td style="color:var(--purple)">${brl(r.fixosCredito)}</td></tr>
@@ -642,311 +477,183 @@ function renderDashboard() {
     <tr><td style="color:var(--muted);font-size:12px;">Cartão Família (fora caixa)</td><td style="color:var(--yellow)">${brl(r.cartaoFamilia)}</td></tr>
   `;
 
-  // Histórico table
   const meses = gerarMeses();
-  const tbody = document.getElementById('historico-body');
-  tbody.innerHTML = meses.map(mk => {
+  document.getElementById('historico-body').innerHTML = meses.map(mk => {
     const rv = calcResumo(mk);
-    const isCurrent = mk === mesk;
-    const style = isCurrent ? 'background:var(--surface2);font-weight:600;' : '';
-    return `<tr style="${style}">
-      <td>${mesLabel(mk)}</td>
-      <td>${brl(rv.salario)}</td>
-      <td style="color:var(--red)">${brl(rv.totalSaidas)}</td>
-      <td style="color:${rv.saldo>=0?'var(--green)':'var(--red)'}">${brl(rv.saldo)}</td>
-      <td>${pct(rv.pct)}</td>
-      <td style="color:${rv.saldoPrevisto>=0?'var(--green)':'var(--red)'}">${brl(rv.saldoPrevisto)}</td>
-      <td style="color:var(--yellow)">${brl(rv.cartaoFamilia)}</td>
-    </tr>`;
+    const s = mk===mesk?'background:var(--surface2);font-weight:600;':'';
+    return `<tr style="${s}"><td>${mesLabel(mk)}</td><td>${brl(rv.salario)}</td><td style="color:var(--red)">${brl(rv.totalSaidas)}</td><td style="color:${rv.saldo>=0?'var(--green)':'var(--red)'}">${brl(rv.saldo)}</td><td>${pct(rv.pct)}</td><td style="color:${rv.saldoPrevisto>=0?'var(--green)':'var(--red)'}">${brl(rv.saldoPrevisto)}</td><td style="color:var(--yellow)">${brl(rv.cartaoFamilia)}</td></tr>`;
   }).join('');
 
-  // Chart
   renderChart(meses);
 }
 
 function renderChart(meses) {
   const labels = meses.map(mesLabel);
-  const saidas = meses.map(mk => calcResumo(mk).totalSaidas);
-  const saldos = meses.map(mk => calcResumo(mk).saldo);
-
-  if (chartInstance) { chartInstance.destroy(); chartInstance = null; }
+  const saidas = meses.map(mk=>calcResumo(mk).totalSaidas);
+  const saldos = meses.map(mk=>calcResumo(mk).saldo);
+  if (chartInstance) { chartInstance.destroy(); chartInstance=null; }
   const ctx = document.getElementById('chart-evolucao').getContext('2d');
   chartInstance = new Chart(ctx, {
-    type: 'bar',
-    data: {
-      labels,
-      datasets: [
-        { label: 'Saídas', data: saidas, backgroundColor: 'rgba(248,113,113,0.7)', borderRadius: 4 },
-        { label: 'Saldo', data: saldos, backgroundColor: 'rgba(52,211,153,0.7)', borderRadius: 4 },
-      ]
-    },
-    options: {
-      responsive: true, maintainAspectRatio: false,
-      plugins: { legend: { labels: { color: '#94a3b8', font: { size: 11 } } } },
-      scales: {
-        x: { ticks: { color: '#64748b', font: { size: 10 } }, grid: { color: '#1e2337' } },
-        y: { ticks: { color: '#64748b', font: { size: 10 }, callback: v => 'R$' + (v/1000).toFixed(0) + 'k' }, grid: { color: '#1e2337' } }
+    type:'bar',
+    data:{ labels, datasets:[
+      { label:'Saídas', data:saidas, backgroundColor:'rgba(248,113,113,0.7)', borderRadius:4 },
+      { label:'Saldo',  data:saldos, backgroundColor:'rgba(52,211,153,0.7)',  borderRadius:4 },
+    ]},
+    options:{ responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{ labels:{ color:'#94a3b8', font:{size:11} } } },
+      scales:{
+        x:{ ticks:{color:'#64748b',font:{size:10}}, grid:{color:'#1e2337'} },
+        y:{ ticks:{color:'#64748b',font:{size:10},callback:v=>'R$'+(v/1000).toFixed(0)+'k'}, grid:{color:'#1e2337'} }
       }
     }
   });
 }
 
-// ═══════════════════════════════════════════════════
-//  GASTOS VARIÁVEIS
-// ═══════════════════════════════════════════════════
-
 function addGastoVariavel() {
-  const data = document.getElementById('gv-data').value;
-  const desc = document.getElementById('gv-desc').value.trim();
-  const cat = document.getElementById('gv-cat').value;
-  const valor = parseFloat(document.getElementById('gv-valor').value);
-  const forma = document.getElementById('gv-forma').value;
-
-  if (!data) { alert('Informe a data.'); return; }
-  if (!desc) { alert('Informe a descrição.'); return; }
-  if (!valor || valor <= 0) { alert('Informe um valor válido.'); return; }
-
-  const variaveis = getVariaveis();
-  variaveis.push({ id: Date.now().toString(), data, desc, cat, valor, forma });
-  save('variaveis', variaveis);
-
-  document.getElementById('gv-desc').value = '';
-  document.getElementById('gv-valor').value = '';
+  const data=document.getElementById('gv-data').value;
+  const desc=document.getElementById('gv-desc').value.trim();
+  const cat=document.getElementById('gv-cat').value;
+  const valor=parseFloat(document.getElementById('gv-valor').value);
+  const forma=document.getElementById('gv-forma').value;
+  if (!data){alert('Informe a data.');return;}
+  if (!desc){alert('Informe a descrição.');return;}
+  if (!valor||valor<=0){alert('Informe um valor válido.');return;}
+  const variaveis=getVariaveis();
+  variaveis.push({id:Date.now().toString(),data,desc,cat,valor,forma});
+  save('variaveis',variaveis);
+  document.getElementById('gv-desc').value='';
+  document.getElementById('gv-valor').value='';
   renderGastosVariaveis();
   renderDashboardIfActive();
 }
 
 function deleteVariavel(id) {
   if (!confirm('Remover este lançamento?')) return;
-  save('variaveis', getVariaveis().filter(v => v.id !== id));
-  renderGastosVariaveis();
-  renderDashboardIfActive();
+  save('variaveis',getVariaveis().filter(v=>v.id!==id));
+  renderGastosVariaveis(); renderDashboardIfActive();
 }
 
 function renderGastosVariaveis() {
-  const filtro = document.getElementById('gv-filtro-mes').value;
-  const variaveis = getVariaveis().filter(v => {
-    const mk = calcMesCaixaVariavel(v.data, v.forma);
-    return mk === filtro;
-  });
-
-  const tbody = document.getElementById('gv-body');
-  if (!variaveis.length) {
-    tbody.innerHTML = `<tr><td colspan="7" class="empty">Nenhum lançamento neste mês</td></tr>`;
-    return;
-  }
-
-  // Sort by date desc
-  variaveis.sort((a,b) => b.data.localeCompare(a.data));
-
-  tbody.innerHTML = variaveis.map(v => {
-    const d = new Date(v.data + 'T12:00:00');
-    const dStr = d.toLocaleDateString('pt-BR', {day:'2-digit',month:'2-digit'});
-    const mk = calcMesCaixaVariavel(v.data, v.forma);
-    return `<tr>
-      <td>${dStr}</td>
-      <td>${v.desc}</td>
-      <td>${v.cat}</td>
-      <td style="font-weight:600">${brl(v.valor)}</td>
-      <td>${tagForma(v.forma)}</td>
-      <td style="color:var(--muted);font-size:12px">${mesLabel(mk)}</td>
-      <td><button class="btn btn-danger btn-sm" onclick="deleteVariavel('${v.id}')">✕</button></td>
-    </tr>`;
+  const filtro=document.getElementById('gv-filtro-mes').value;
+  const variaveis=getVariaveis().filter(v=>calcMesCaixaVariavel(v.data,v.forma)===filtro);
+  const tbody=document.getElementById('gv-body');
+  if (!variaveis.length){tbody.innerHTML=`<tr><td colspan="7" class="empty">Nenhum lançamento neste mês</td></tr>`;return;}
+  variaveis.sort((a,b)=>b.data.localeCompare(a.data));
+  tbody.innerHTML=variaveis.map(v=>{
+    const d=new Date(v.data+'T12:00:00');
+    const dStr=d.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'});
+    const mk=calcMesCaixaVariavel(v.data,v.forma);
+    return `<tr><td>${dStr}</td><td>${v.desc}</td><td>${v.cat}</td><td style="font-weight:600">${brl(v.valor)}</td><td>${tagForma(v.forma)}</td><td style="color:var(--muted);font-size:12px">${mesLabel(mk)}</td><td><button class="btn btn-danger btn-sm" onclick="deleteVariavel('${v.id}')">✕</button></td></tr>`;
   }).join('');
 }
 
-// ═══════════════════════════════════════════════════
-//  CUSTOS FIXOS
-// ═══════════════════════════════════════════════════
-
-let editFixoId = null;
+let editFixoId=null;
 
 function addCustoFixo() {
-  const nome = document.getElementById('cf-nome').value.trim();
-  const cat = document.getElementById('cf-cat').value;
-  const valor = parseFloat(document.getElementById('cf-valor').value);
-  const forma = document.getElementById('cf-forma').value;
-  const dia = parseInt(document.getElementById('cf-dia').value) || 1;
-  const obs = document.getElementById('cf-obs').value.trim();
-
-  if (!nome) { alert('Informe o nome.'); return; }
-  if (!valor || valor <= 0) { alert('Informe um valor válido.'); return; }
-
-  const fixos = getFixos();
-  if (editFixoId) {
-    const idx = fixos.findIndex(f => f.id === editFixoId);
-    if (idx >= 0) fixos[idx] = { ...fixos[idx], nome, cat, valor, forma, dia, obs };
-    editFixoId = null;
-  } else {
-    fixos.push({ id: 'u' + Date.now(), nome, cat, valor, forma, dia, obs });
-  }
-  save('fixos', fixos);
-  clearFixoForm();
-  renderFixos();
+  const nome=document.getElementById('cf-nome').value.trim();
+  const cat=document.getElementById('cf-cat').value;
+  const valor=parseFloat(document.getElementById('cf-valor').value);
+  const forma=document.getElementById('cf-forma').value;
+  const dia=parseInt(document.getElementById('cf-dia').value)||1;
+  const obs=document.getElementById('cf-obs').value.trim();
+  if (!nome){alert('Informe o nome.');return;}
+  if (!valor||valor<=0){alert('Informe um valor válido.');return;}
+  const fixos=getFixos();
+  if (editFixoId){const idx=fixos.findIndex(f=>f.id===editFixoId);if(idx>=0)fixos[idx]={...fixos[idx],nome,cat,valor,forma,dia,obs};editFixoId=null;}
+  else fixos.push({id:'u'+Date.now(),nome,cat,valor,forma,dia,obs});
+  save('fixos',fixos); clearFixoForm(); renderFixos();
 }
 
 function editFixo(id) {
-  const f = getFixos().find(x => x.id === id);
-  if (!f) return;
-  editFixoId = id;
-  document.getElementById('cf-nome').value = f.nome;
-  document.getElementById('cf-cat').value = f.cat;
-  document.getElementById('cf-valor').value = f.valor;
-  document.getElementById('cf-forma').value = f.forma;
-  document.getElementById('cf-dia').value = f.dia;
-  document.getElementById('cf-obs').value = f.obs || '';
+  const f=getFixos().find(x=>x.id===id); if(!f)return; editFixoId=id;
+  document.getElementById('cf-nome').value=f.nome; document.getElementById('cf-cat').value=f.cat;
+  document.getElementById('cf-valor').value=f.valor; document.getElementById('cf-forma').value=f.forma;
+  document.getElementById('cf-dia').value=f.dia; document.getElementById('cf-obs').value=f.obs||'';
   document.getElementById('cf-nome').focus();
 }
 
-function deleteFixo(id) {
-  if (!confirm('Remover este custo fixo?')) return;
-  save('fixos', getFixos().filter(f => f.id !== id));
-  renderFixos();
+function deleteFixo(id){
+  if(!confirm('Remover este custo fixo?'))return;
+  save('fixos',getFixos().filter(f=>f.id!==id)); renderFixos();
 }
 
-function cancelEditFixo() { editFixoId = null; clearFixoForm(); }
+function cancelEditFixo(){editFixoId=null;clearFixoForm();}
+function clearFixoForm(){['cf-nome','cf-valor','cf-dia','cf-obs'].forEach(id=>document.getElementById(id).value='');}
 
-function clearFixoForm() {
-  ['cf-nome','cf-valor','cf-dia','cf-obs'].forEach(id => document.getElementById(id).value = '');
-}
-
-function renderFixos() {
-  const fixos = getFixos();
-  const el = document.getElementById('fixos-list');
-  if (!fixos.length) { el.innerHTML = '<div class="empty">Nenhum custo fixo cadastrado</div>'; return; }
-
-  // Group by category
-  const groups = {};
-  fixos.forEach(f => { if (!groups[f.cat]) groups[f.cat] = []; groups[f.cat].push(f); });
-
-  el.innerHTML = Object.entries(groups).sort((a,b)=>a[0].localeCompare(b[0])).map(([cat, items]) => `
+function renderFixos(){
+  const fixos=getFixos(); const el=document.getElementById('fixos-list');
+  if(!fixos.length){el.innerHTML='<div class="empty">Nenhum custo fixo cadastrado</div>';return;}
+  const groups={};
+  fixos.forEach(f=>{if(!groups[f.cat])groups[f.cat]=[];groups[f.cat].push(f);});
+  el.innerHTML=Object.entries(groups).sort((a,b)=>a[0].localeCompare(b[0])).map(([cat,items])=>`
     <div style="margin-bottom:16px;">
       <div style="font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:8px;">${cat}</div>
-      ${items.map(f => `
+      ${items.map(f=>`
         <div class="fixo-item">
-          <div class="fixo-info">
-            <div class="fixo-name">${f.nome}</div>
-            <div class="fixo-meta">${tagForma(f.forma)} · Dia ${f.dia}${f.obs?' · '+f.obs:''}</div>
-          </div>
+          <div class="fixo-info"><div class="fixo-name">${f.nome}</div><div class="fixo-meta">${tagForma(f.forma)} · Dia ${f.dia}${f.obs?' · '+f.obs:''}</div></div>
           <div class="fixo-valor">${brl(f.valor)}</div>
           <button class="btn btn-ghost btn-sm" onclick="editFixo('${f.id}')" style="margin-left:8px">✎</button>
           <button class="btn btn-danger btn-sm" onclick="deleteFixo('${f.id}')">✕</button>
-        </div>
-      `).join('')}
-    </div>
-  `).join('');
+        </div>`).join('')}
+    </div>`).join('');
 }
 
-// ═══════════════════════════════════════════════════
-//  CARTÃO DE CRÉDITO
-// ═══════════════════════════════════════════════════
-
-function renderFaturas() {
-  const mesk = document.getElementById('fat-mes').value;
-  const faturas = getFaturas();
-  const fat = faturas[mesk] || { bb: 0, c6: 0, nubank: 0 };
-
-  document.getElementById('fatura-grid').innerHTML = `
-    <div class="fatura-card">
-      <div class="fatura-card-title green">Banco do Brasil</div>
-      <div class="form-group">
-        <label>Valor da Fatura BB (R$)</label>
-        <input type="number" id="fat-bb" value="${fat.bb||''}" min="0" step="0.01" placeholder="0,00">
-      </div>
-    </div>
-    <div class="fatura-card">
-      <div class="fatura-card-title c6">C6 Bank</div>
-      <div class="form-group">
-        <label>Valor da Fatura C6 (R$)</label>
-        <input type="number" id="fat-c6" value="${fat.c6||''}" min="0" step="0.01" placeholder="0,00">
-      </div>
-    </div>
-    <div class="fatura-card">
-      <div class="fatura-card-title nubank">Nubank</div>
-      <div class="form-group">
-        <label>Valor da Fatura Nubank (R$)</label>
-        <input type="number" id="fat-nubank" value="${fat.nubank||''}" min="0" step="0.01" placeholder="0,00">
-      </div>
-    </div>
+function renderFaturas(){
+  const mesk=document.getElementById('fat-mes').value;
+  const faturas=getFaturas(); const fat=faturas[mesk]||{bb:0,c6:0,nubank:0};
+  document.getElementById('fatura-grid').innerHTML=`
+    <div class="fatura-card"><div class="fatura-card-title green">Banco do Brasil</div><div class="form-group"><label>Fatura BB (R$)</label><input type="number" id="fat-bb" value="${fat.bb||''}" min="0" step="0.01" placeholder="0,00"></div></div>
+    <div class="fatura-card"><div class="fatura-card-title c6">C6 Bank</div><div class="form-group"><label>Fatura C6 (R$)</label><input type="number" id="fat-c6" value="${fat.c6||''}" min="0" step="0.01" placeholder="0,00"></div></div>
+    <div class="fatura-card"><div class="fatura-card-title nubank">Nubank</div><div class="form-group"><label>Fatura Nubank (R$)</label><input type="number" id="fat-nubank" value="${fat.nubank||''}" min="0" step="0.01" placeholder="0,00"></div></div>
   `;
-
-  // Historico
-  const meses = gerarMeses();
-  const params = getParams();
-  document.getElementById('fat-historico').innerHTML = meses.map(mk => {
-    const f = faturas[mk] || {};
-    const bb = f.bb||0, c6 = f.c6||0, nubank = f.nubank||0;
-    const total = bb+c6+nubank;
-    const p = params.salario > 0 ? total/params.salario : 0;
-    const isCur = mk === mesk;
-    return `<tr style="${isCur?'background:var(--surface2);font-weight:600;':''}">
-      <td>${mesLabel(mk)}</td>
-      <td>${bb?brl(bb):'-'}</td>
-      <td>${c6?brl(c6):'-'}</td>
-      <td>${nubank?brl(nubank):'-'}</td>
-      <td style="font-weight:700">${total?brl(total):'-'}</td>
-      <td>${total?pct(p):'-'}</td>
-    </tr>`;
+  const meses=gerarMeses(); const params=getParams();
+  document.getElementById('fat-historico').innerHTML=meses.map(mk=>{
+    const f=faturas[mk]||{}; const bb=f.bb||0,c6=f.c6||0,nubank=f.nubank||0,total=bb+c6+nubank;
+    const p=params.salario>0?total/params.salario:0;
+    return `<tr style="${mk===mesk?'background:var(--surface2);font-weight:600;':''}"><td>${mesLabel(mk)}</td><td>${bb?brl(bb):'-'}</td><td>${c6?brl(c6):'-'}</td><td>${nubank?brl(nubank):'-'}</td><td style="font-weight:700">${total?brl(total):'-'}</td><td>${total?pct(p):'-'}</td></tr>`;
   }).join('');
 }
 
-function salvarFaturas() {
-  const mesk = document.getElementById('fat-mes').value;
-  const bb = parseFloat(document.getElementById('fat-bb').value) || 0;
-  const c6 = parseFloat(document.getElementById('fat-c6').value) || 0;
-  const nubank = parseFloat(document.getElementById('fat-nubank').value) || 0;
-  const faturas = getFaturas();
-  faturas[mesk] = { bb, c6, nubank };
-  save('faturas', faturas);
-  renderFaturas();
-  renderDashboardIfActive();
-  alert('Faturas salvas!');
+function salvarFaturas(){
+  const mesk=document.getElementById('fat-mes').value;
+  const bb=parseFloat(document.getElementById('fat-bb').value)||0;
+  const c6=parseFloat(document.getElementById('fat-c6').value)||0;
+  const nubank=parseFloat(document.getElementById('fat-nubank').value)||0;
+  const faturas=getFaturas(); faturas[mesk]={bb,c6,nubank};
+  save('faturas',faturas); renderFaturas(); renderDashboardIfActive(); alert('Faturas salvas!');
 }
 
-// ═══════════════════════════════════════════════════
-//  CONFIG
-// ═══════════════════════════════════════════════════
-
-function renderConfig() {
-  const p = getParams();
-  document.getElementById('p-salario').value = p.salario;
-  document.getElementById('p-limite').value = p.limite;
-  document.getElementById('p-meta').value = p.meta;
+function renderConfig(){
+  const p=getParams();
+  document.getElementById('p-salario').value=p.salario;
+  document.getElementById('p-limite').value=p.limite;
+  document.getElementById('p-meta').value=p.meta;
 }
 
-function salvarParams() {
-  save('params', {
-    salario: parseFloat(document.getElementById('p-salario').value) || 0,
-    limite: parseFloat(document.getElementById('p-limite').value) || 0,
-    meta: parseFloat(document.getElementById('p-meta').value) || 0,
+function salvarParams(){
+  save('params',{
+    salario:parseFloat(document.getElementById('p-salario').value)||0,
+    limite:parseFloat(document.getElementById('p-limite').value)||0,
+    meta:parseFloat(document.getElementById('p-meta').value)||0,
   });
-  alert('Configurações salvas!');
-  renderDashboardIfActive();
+  alert('Configurações salvas!'); renderDashboardIfActive();
 }
 
-function resetarDados() {
-  if (!confirm('Tem certeza? Todos os dados serão apagados e os custos fixos padrão serão restaurados.')) return;
-  localStorage.removeItem('variaveis');
-  localStorage.removeItem('faturas');
-  localStorage.removeItem('fixos');
-  alert('Dados resetados!');
-  renderFixos();
+function resetarDados(){
+  if(!confirm('Apagar gastos variáveis e restaurar faturas e custos fixos para os valores originais da planilha?'))return;
+  localStorage.clear();
+  alert('Restaurado!');
+  populateSelects(); renderDashboard(); renderFixos();
 }
 
-// ═══════════════════════════════════════════════════
-//  HELPERS
-// ═══════════════════════════════════════════════════
-
-function renderDashboardIfActive() {
-  if (document.getElementById('page-dashboard').classList.contains('active')) renderDashboard();
+function renderDashboardIfActive(){
+  if(document.getElementById('page-dashboard').classList.contains('active'))renderDashboard();
 }
-
-// ═══════════════════════════════════════════════════
-//  INIT
-// ═══════════════════════════════════════════════════
 
 populateSelects();
 renderDashboard();
+
+if('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js');
 </script>
 </body>
 </html>
