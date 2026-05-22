@@ -469,12 +469,14 @@ function calcResumo(mesk) {
   const fixos = getFixos();
   const variaveis = getVariaveis();
   const faturas = getFaturas();
-  const { year, month } = parseMesKey(mesk);
 
+  // Custos fixos são recorrentes todo mês.
+  // Débito → caixa no mesmo mês do pagamento.
+  // Crédito/Família → caixa no mês seguinte ao pagamento.
+  // Como são mensais, sempre haverá um pagamento do mês anterior que recai neste mês.
+  // Portanto, todos os fixos aparecem em todos os meses — apenas a categoria muda.
   let fixosDebito = 0, fixosCredito = 0, cartaoFamiliaFixos = 0;
   for (const f of fixos) {
-    const mk = calcMesCaixaFixo(f.dia, f.forma, year, month);
-    if (mk !== mesk) continue;
     if (f.forma === 'Débito') fixosDebito += f.valor;
     else if (f.forma === 'Cartão Família') cartaoFamiliaFixos += f.valor;
     else fixosCredito += f.valor;
@@ -931,12 +933,12 @@ function salvarParams() {
 }
 
 function resetarDados() {
-  if (!confirm('Tem certeza? Todos os dados serão apagados e os custos fixos padrão serão restaurados.')) return;
-  localStorage.removeItem('variaveis');
-  localStorage.removeItem('faturas');
-  localStorage.removeItem('fixos');
-  alert('Dados resetados!');
+  if (!confirm('Tem certeza? Todos os gastos variáveis serão apagados e as faturas/custos fixos voltarão aos valores originais da planilha.')) return;
+  localStorage.clear();
+  initData();
+  alert('Dados restaurados para os valores originais da planilha!');
   renderFixos();
+  renderDashboardIfActive();
 }
 
 // ═══════════════════════════════════════════════════
@@ -951,6 +953,35 @@ function renderDashboardIfActive() {
 //  INIT
 // ═══════════════════════════════════════════════════
 
+// ═══════════════════════════════════════════════════
+//  INIT DATA (pré-carrega dados da planilha original)
+// ═══════════════════════════════════════════════════
+
+function initData() {
+  const DATA_VERSION = '3';
+  if (localStorage.getItem('data_version') === DATA_VERSION) return;
+
+  // Parâmetros reais da planilha
+  save('params', { salario: 12000, limite: 1300, meta: 3500 });
+
+  // Faturas reais extraídas da planilha
+  save('faturas', {
+    '2026-06': { bb: 0,    c6: 2938.46, nubank: 8302.23 },
+    '2026-07': { bb: 0,    c6: 0,       nubank: 3991.15 },
+    '2026-08': { bb: 0,    c6: 0,       nubank: 3508.23 },
+    '2026-09': { bb: 0,    c6: 0,       nubank: 2708.72 },
+    '2026-10': { bb: 0,    c6: 0,       nubank: 559.96  },
+  });
+
+  // Custos fixos padrão (já definidos em FIXOS_DEFAULT)
+  if (!localStorage.getItem('fixos')) {
+    save('fixos', FIXOS_DEFAULT);
+  }
+
+  localStorage.setItem('data_version', DATA_VERSION);
+}
+
+initData();
 populateSelects();
 renderDashboard();
 
