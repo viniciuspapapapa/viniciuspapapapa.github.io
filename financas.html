@@ -208,7 +208,7 @@
     <div class="table-wrap">
       <table class="monthly-table">
         <thead><tr>
-          <th>Mês</th><th>Salário</th><th>Total Saídas</th><th>Saldo</th><th>% Poupado</th><th>Saldo Prev.</th><th>C. Família</th><th title="Clique para editar">Lim. Sugerido ✎</th><th title="Clique para editar">Prev. Guardado ✎</th>
+          <th>Mês</th><th>Salário</th><th>Total Saídas</th><th>Saldo</th><th>% Poupado</th><th>Saldo Prev.</th><th>C. Família</th><th title="Clique para editar">Lim. Sugerido ✎</th><th title="Saldo Previsto − Limite Sugerido">Prev. Guardado</th>
         </tr></thead>
         <tbody id="historico-body"></tbody>
       </table>
@@ -569,6 +569,8 @@ function calcResumo(mesk) {
 
   const metas = getMetasMensais();
   const metaMes = metas[mesk] || {};
+  const limiteSugerido = metaMes.limiteSugerido || 0;
+  const previsaoGuardado = saldoPrevisto - limiteSugerido;
 
   return {
     salario: params.salario,
@@ -577,8 +579,7 @@ function calcResumo(mesk) {
     limiteFamilia: params.limite, meta: params.meta,
     fatBB: fat.bb||0, fatC6: fat.c6||0, fatNubank: fat.nubank||0,
     totalFixos, totalVariaveis, cartaoFamiliaFixos, cartaoFamiliaVar, debitoDireto,
-    limiteSugerido: metaMes.limiteSugerido || 0,
-    previsaoGuardado: metaMes.previsaoGuardado || 0,
+    limiteSugerido, previsaoGuardado,
   };
 }
 
@@ -777,7 +778,7 @@ function renderDashboard() {
       <td style="color:${rv.saldoPrevisto>=0?'var(--green)':'var(--red)'}">${brl(rv.saldoPrevisto)}</td>
       <td style="color:var(--yellow)">${brl(rv.cartaoFamilia)}</td>
       <td class="meta-cell-td" style="color:${lsColor}" onclick="editarMetaCell(this,'${mk}','limiteSugerido',${rv.limiteSugerido})">${rv.limiteSugerido ? brl(rv.limiteSugerido) : '—'}</td>
-      <td class="meta-cell-td" style="color:${pgColor}" onclick="editarMetaCell(this,'${mk}','previsaoGuardado',${rv.previsaoGuardado})">${rv.previsaoGuardado ? brl(rv.previsaoGuardado) : '—'}</td>
+      <td style="color:${rv.previsaoGuardado>=0?'var(--green)':'var(--red)'};font-weight:600;">${rv.limiteSugerido ? brl(rv.previsaoGuardado) : '—'}</td>
     </tr>`;
   }).join('');
 
