@@ -971,7 +971,7 @@ function renderDashboardIfActive() {
 // ═══════════════════════════════════════════════════
 
 function initData() {
-  const DATA_VERSION = '3';
+  const DATA_VERSION = '4';
   if (localStorage.getItem('data_version') === DATA_VERSION) return;
 
   // Parâmetros reais da planilha
@@ -999,7 +999,7 @@ populateSelects();
 renderDashboard();
 
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('/sw.js');
+  navigator.serviceWorker.register('/sw.js', { updateViaCache: 'none' });
 }
 </script>
 </body>
