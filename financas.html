@@ -430,12 +430,22 @@ function getVariaveis() { return load('variaveis', []); }
 function getFaturas() { return load('faturas', {}); }
 function getFixosOverrides() { return load('fixosOverrides', {}); }
 
-function getFixoValor(fixo, mesk) {
+function getFixoOverride(fixoId, mesk) {
   const overrides = getFixosOverrides();
-  if (overrides[fixo.id] && overrides[fixo.id][mesk] !== undefined) {
-    return overrides[fixo.id][mesk];
-  }
-  return fixo.valor;
+  const ov = overrides[fixoId] && overrides[fixoId][mesk];
+  if (ov === undefined || ov === null) return null;
+  if (typeof ov === 'number') return { valor: ov, forma: null }; // compat formato antigo
+  return ov;
+}
+
+function getFixoValor(fixo, mesk) {
+  const ov = getFixoOverride(fixo.id, mesk);
+  return (ov && ov.valor !== null && ov.valor !== undefined) ? ov.valor : fixo.valor;
+}
+
+function getFixoForma(fixo, mesk) {
+  const ov = getFixoOverride(fixo.id, mesk);
+  return (ov && ov.forma) ? ov.forma : fixo.forma;
 }
 
 // ═══════════════════════════════════════════════════
@@ -516,8 +526,9 @@ function calcResumo(mesk) {
     const firstCaixa = (f.forma === 'Débito') ? inicio : nextMonthKey(inicio);
     if (mesk < firstCaixa) continue;
     const fValor = getFixoValor(f, mesk);
-    if (f.forma === 'Débito') fixosDebito += fValor;
-    else if (f.forma === 'Cartão Família') cartaoFamiliaFixos += fValor;
+    const fForma = getFixoForma(f, mesk);
+    if (fForma === 'Débito') fixosDebito += fValor;
+    else if (fForma === 'Cartão Família') cartaoFamiliaFixos += fValor;
     else fixosCredito += fValor;
   }
 
@@ -902,7 +913,6 @@ function renderFixosMes() {
   if (!mesEl) return;
   const mesk = mesEl.value;
   const fixos = getFixos();
-  const overrides = getFixosOverrides();
   const el = document.getElementById('fixos-mes-list');
   const resumoEl = document.getElementById('fixos-mes-resumo');
 
@@ -915,7 +925,7 @@ function renderFixosMes() {
   let customizados = 0;
   fixos.forEach(f => {
     total += getFixoValor(f, mesk);
-    if (overrides[f.id] && overrides[f.id][mesk] !== undefined) customizados++;
+    if (getFixoOverride(f.id, mesk)) customizados++;
   });
 
   if (resumoEl) {
@@ -935,21 +945,39 @@ function renderFixosMes() {
     <div style="margin-bottom:16px;">
       <div style="font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:8px;">${cat}</div>
       ${items.map(f => {
-        const isOverridden = overrides[f.id] && overrides[f.id][mesk] !== undefined;
+        const ov = getFixoOverride(f.id, mesk);
+        const isOverridden = ov !== null;
         const valor = getFixoValor(f, mesk);
+        const forma = getFixoForma(f, mesk);
+        const valorMudou = isOverridden && ov.valor !== null && ov.valor !== f.valor;
+        const formaMudou = isOverridden && ov.forma && ov.forma !== f.forma;
+
+        const defaultInfo = (() => {
+          if (!isOverridden) return '';
+          const parts = [];
+          if (valorMudou) parts.push('Padrão: ' + brl(f.valor));
+          if (formaMudou) parts.push('Forma padrão: ' + f.forma);
+          return parts.length ? ' · ' + parts.join(' · ') : '';
+        })();
+
+        const formaOptions = FORMAS.map(fo =>
+          `<option value="${fo}"${fo === forma ? ' selected' : ''}>${fo}</option>`
+        ).join('');
+
         return `
           <div class="fixo-item">
             <div class="fixo-info">
               <div class="fixo-name">${f.nome}${isOverridden ? '<span class="fixo-badge">Personalizado</span>' : ''}</div>
-              <div class="fixo-meta">${tagForma(f.forma)} · Dia ${f.dia}${f.obs?' · '+f.obs:''}${isOverridden?' · Padrão: '+brl(f.valor):''}</div>
+              <div class="fixo-meta">${tagForma(forma)}${formaMudou ? ' <span style="font-size:10px;color:var(--yellow);">(alterado)</span>' : ''} · Dia ${f.dia}${f.obs?' · '+f.obs:''}${defaultInfo}</div>
             </div>
             <div class="fixo-mes-display" id="fixo-mes-display-${f.id}">
               <div class="fixo-valor${isOverridden?' fixo-override':''}">${brl(valor)}</div>
-              <button class="btn btn-ghost btn-sm" onclick="iniciarOverrideFixo('${f.id}')" title="Editar valor para este mês">✎</button>
-              ${isOverridden ? `<button class="btn btn-danger btn-sm" onclick="restaurarOverrideFixo('${f.id}','${mesk}')" title="Restaurar valor padrão">↺</button>` : ''}
+              <button class="btn btn-ghost btn-sm" onclick="iniciarOverrideFixo('${f.id}')" title="Editar para este mês">✎</button>
+              ${isOverridden ? `<button class="btn btn-danger btn-sm" onclick="restaurarOverrideFixo('${f.id}','${mesk}')" title="Restaurar padrão">↺</button>` : ''}
             </div>
             <div class="fixo-mes-edit" id="fixo-mes-edit-${f.id}">
-              <input type="number" id="fixo-mes-input-${f.id}" value="${valor}" min="0" step="0.01">
+              <input type="number" id="fixo-mes-input-${f.id}" value="${valor}" min="0" step="0.01" style="width:110px;">
+              <select id="fixo-mes-forma-${f.id}" style="width:150px;">${formaOptions}</select>
               <button class="btn btn-primary btn-sm" onclick="salvarOverrideFixo('${f.id}','${mesk}')">✓ Salvar</button>
               <button class="btn btn-ghost btn-sm" onclick="cancelarOverrideFixo('${f.id}')">✕</button>
             </div>
@@ -976,20 +1004,22 @@ function cancelarOverrideFixo(fixoId) {
 
 function salvarOverrideFixo(fixoId, mesk) {
   const inp = document.getElementById('fixo-mes-input-' + fixoId);
+  const formaEl = document.getElementById('fixo-mes-forma-' + fixoId);
   const valor = parseFloat(inp.value);
   if (isNaN(valor) || valor < 0) { alert('Valor inválido.'); return; }
+  const forma = formaEl.value;
 
   const fixo = getFixos().find(f => f.id === fixoId);
   const overrides = getFixosOverrides();
 
-  if (valor === fixo.valor) {
+  if (valor === fixo.valor && forma === fixo.forma) {
     if (overrides[fixoId]) {
       delete overrides[fixoId][mesk];
       if (Object.keys(overrides[fixoId]).length === 0) delete overrides[fixoId];
     }
   } else {
     if (!overrides[fixoId]) overrides[fixoId] = {};
-    overrides[fixoId][mesk] = valor;
+    overrides[fixoId][mesk] = { valor, forma };
   }
   save('fixosOverrides', overrides);
   renderFixosMes();
