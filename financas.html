@@ -559,7 +559,9 @@ function calcResumo(mesk) {
   const totalSaidas = fixosDebito + totalFaturas + varDebito;
   const saldo = params.salario - totalSaidas;
   const pct = params.salario > 0 ? saldo / params.salario : 0;
-  const saldoPrevisto = saldo - fixosCredito - varCredito;
+  // Saldo previsto: saldo atual menos gastos variáveis no crédito ainda não faturados.
+  // Fixos no crédito são recorrentes e capturados pela fatura manual do mês seguinte.
+  const saldoPrevisto = saldo - varCredito;
   const cartaoFamilia = cartaoFamiliaFixos + cartaoFamiliaVar;
   const totalFixos = fixosDebito + fixosCredito + cartaoFamiliaFixos;
   const totalVariaveis = varDebito + varCredito + cartaoFamiliaVar;
@@ -713,8 +715,9 @@ function renderDashboard() {
       </div>
     </div>
     <div class="kpi">
-      <div class="kpi-label">💡 Prev. Cartão Crédito</div>
+      <div class="kpi-label">💡 Próx. Fatura (Estimada)</div>
       <div class="kpi-value purple">${brl(r.fixosCredito + r.varCredito)}</div>
+      <div style="font-size:11px;color:var(--muted);margin-top:4px;">Fixos: ${brl(r.fixosCredito)} · Var: ${brl(r.varCredito)}</div>
     </div>
   `;
 
@@ -749,10 +752,11 @@ function renderDashboard() {
     ${r.fatBB > 0 ? `<tr><td>Fatura BB</td><td style="color:var(--green)">${brl(r.fatBB)}</td></tr>` : ''}
     <tr><td>Débito Direto</td><td>${brl(r.debitoDireto)}</td></tr>
     <tr class="total"><td>TOTAL SAÍDAS (CAIXA)</td><td>${brl(r.totalSaidas)}</td></tr>
-    <tr><td colspan="2" style="font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);padding-top:10px;padding-bottom:6px;">Crédito previsto (próx. mês)</td></tr>
-    <tr><td style="color:var(--purple)">Fixos Crédito</td><td style="color:var(--purple)">${brl(r.fixosCredito)}</td></tr>
-    <tr><td style="color:var(--purple)">Variáveis Crédito</td><td style="color:var(--purple)">${brl(r.varCredito)}</td></tr>
+    <tr><td colspan="2" style="font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);padding-top:10px;padding-bottom:6px;">Saldo previsto</td></tr>
+    <tr><td>Saldo do Mês</td><td style="color:${r.saldo>=0?'var(--green)':'var(--red)'}">${brl(r.saldo)}</td></tr>
+    <tr><td style="color:var(--purple)">Var. Crédito (não faturado)</td><td style="color:var(--purple)">- ${brl(r.varCredito)}</td></tr>
     <tr class="total"><td>Saldo Previsto</td><td style="color:${r.saldoPrevisto>=0?'var(--green)':'var(--red)'}">${brl(r.saldoPrevisto)}</td></tr>
+    ${r.fixosCredito > 0 ? `<tr><td colspan="2" style="font-size:11px;color:var(--muted);padding-top:8px;">ℹ Fixos no crédito (próx. fatura): ${brl(r.fixosCredito)}</td></tr>` : ''}
   `;
 
   // Histórico table
