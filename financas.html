@@ -585,7 +585,7 @@ function showPage(id) {
   document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
   document.getElementById('page-' + id).classList.add('active');
   event.currentTarget.classList.add('active');
-  if (id === 'dashboard') renderDashboard();
+  if (id === 'dashboard') { renderDashboard(); renderChart(gerarMeses()); }
   if (id === 'variaveis') renderGastosVariaveis();
   if (id === 'fixos') renderFixos();
   if (id === 'cartao') renderFaturas();
@@ -731,12 +731,15 @@ function renderDashboard() {
 }
 
 function renderChart(meses) {
+  const canvas = document.getElementById('chart-evolucao');
+  if (!canvas || canvas.offsetParent === null) return;
+
   const labels = meses.map(mesLabel);
   const saidas = meses.map(mk => calcResumo(mk).totalSaidas);
   const saldos = meses.map(mk => calcResumo(mk).saldo);
 
   if (chartInstance) { chartInstance.destroy(); chartInstance = null; }
-  const ctx = document.getElementById('chart-evolucao').getContext('2d');
+  const ctx = canvas.getContext('2d');
   chartInstance = new Chart(ctx, {
     type: 'bar',
     data: {
@@ -849,6 +852,7 @@ function addCustoFixo() {
   save('fixos', fixos);
   clearFixoForm();
   renderFixos();
+  renderDashboard();
 }
 
 function editFixo(id) {
@@ -868,6 +872,7 @@ function deleteFixo(id) {
   if (!confirm('Remover este custo fixo?')) return;
   save('fixos', getFixos().filter(f => f.id !== id));
   renderFixos();
+  renderDashboard();
 }
 
 function cancelEditFixo() { editFixoId = null; clearFixoForm(); }
@@ -1138,7 +1143,7 @@ function resetarDados() {
 // ═══════════════════════════════════════════════════
 
 function renderDashboardIfActive() {
-  if (document.getElementById('page-dashboard').classList.contains('active')) renderDashboard();
+  renderDashboard();
 }
 
 // ═══════════════════════════════════════════════════
