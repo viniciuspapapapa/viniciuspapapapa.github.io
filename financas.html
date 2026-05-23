@@ -210,7 +210,7 @@
     </div>
     <div class="table-wrap">
       <table>
-        <thead><tr><th>Data</th><th>Descrição</th><th>Categoria</th><th>Valor</th><th>Forma</th><th>Mês Caixa</th></tr></thead>
+        <thead><tr><th>Data</th><th>Descrição</th><th>Categoria</th><th>Valor</th><th>Forma</th></tr></thead>
         <tbody id="dash-var-body"></tbody>
       </table>
     </div>
@@ -562,32 +562,31 @@ function calcResumo(mesk) {
     }
   }
 
+  // Gastos variáveis pelo mês de CAIXA (quando efetivamente saem do bolso)
   let varDebito = 0, varCredito = 0, cartaoFamiliaVar = 0;
+  let nubankVarCaixa = 0, c6VarCaixa = 0, bbVarCaixa = 0;
+  const gastosVarMes = [];
   for (const v of variaveis) {
     const mk = calcMesCaixaVariavel(v.data, v.forma);
     if (mk !== mesk) continue;
+    gastosVarMes.push(v);
     if (v.forma === 'Débito') varDebito += v.valor;
     else if (v.forma === 'Cartão Família') cartaoFamiliaVar += v.valor;
-    else varCredito += v.valor;
-  }
-
-  // Gastos variáveis pelo mês de GASTO (data real), não mês de caixa
-  let nubankVarGasto = 0, c6VarGasto = 0, bbVarGasto = 0;
-  const gastosVarMes = [];
-  for (const v of variaveis) {
-    const d = new Date(v.data + 'T12:00:00');
-    const vMes = mesKey(d.getFullYear(), d.getMonth() + 1);
-    if (vMes !== mesk) continue;
-    gastosVarMes.push(v);
-    if (v.forma === 'Nubank Crédito') nubankVarGasto += v.valor;
-    else if (v.forma === 'C6 Crédito') c6VarGasto += v.valor;
-    else if (v.forma === 'BB Crédito') bbVarGasto += v.valor;
+    else {
+      varCredito += v.valor;
+      if (v.forma === 'Nubank Crédito') nubankVarCaixa += v.valor;
+      else if (v.forma === 'C6 Crédito') c6VarCaixa += v.valor;
+      else if (v.forma === 'BB Crédito') bbVarCaixa += v.valor;
+    }
   }
   gastosVarMes.sort((a, b) => b.data.localeCompare(a.data));
   const totalVarGastoMes = gastosVarMes.reduce((s, v) => s + v.valor, 0);
-  const nubankGasto = nubankFixos + nubankVarGasto;
-  const c6Gasto    = c6Fixos    + c6VarGasto;
-  const bbGasto    = bbFixos    + bbVarGasto;
+  const nubankVarGasto = nubankVarCaixa;
+  const c6VarGasto = c6VarCaixa;
+  const bbVarGasto = bbVarCaixa;
+  const nubankGasto = nubankFixos + nubankVarCaixa;
+  const c6Gasto    = c6Fixos    + c6VarCaixa;
+  const bbGasto    = bbFixos    + bbVarCaixa;
 
   const fat = faturas[mesk] || { bb: 0, c6: 0, nubank: 0 };
   const totalFaturas = (fat.bb||0) + (fat.c6||0) + (fat.nubank||0);
@@ -753,11 +752,6 @@ function renderDashboard() {
         </div>
       </div>
     </div>
-    <div class="kpi">
-      <div class="kpi-label">💡 Próx. Fatura (Estimada)</div>
-      <div class="kpi-value purple">${brl(r.fixosCredito + r.varCredito)}</div>
-      <div style="font-size:11px;color:var(--muted);margin-top:4px;">Fixos: ${brl(r.fixosCredito)} · Var: ${brl(r.varCredito)}</div>
-    </div>
   `;
 
   // Detalhe grid
@@ -768,16 +762,20 @@ function renderDashboard() {
       ${sub ? `<div style="font-size:11px;color:var(--muted);margin-top:4px;">${sub}</div>` : ''}
     </div>`;
   }
+  const nubVal = r.fatNubank > 0 ? r.fatNubank : r.nubankGasto;
+  const nubSub = r.fatNubank > 0 ? 'Fatura registrada' : `Estimado · Fixos: ${brl(r.nubankFixos)} · Var: ${brl(r.nubankVarGasto)}`;
+  const c6Val  = r.fatC6    > 0 ? r.fatC6    : r.c6Gasto;
+  const c6Sub  = r.fatC6    > 0 ? 'Fatura registrada' : `Estimado · Fixos: ${brl(r.c6Fixos)} · Var: ${brl(r.c6VarGasto)}`;
+  const bbVal  = r.fatBB    > 0 ? r.fatBB    : r.bbGasto;
+  const bbSub  = r.fatBB    > 0 ? 'Fatura registrada' : '';
   document.getElementById('detalhe-grid').innerHTML =
     detalheCard('Custos Fixos', r.totalFixos, 'var(--accent)',
       `Déb: ${brl(r.fixosDebito)} · Cred: ${brl(r.fixosCredito)} · Fam: ${brl(r.cartaoFamiliaFixos)}`) +
     detalheCard('Gastos Variáveis', r.totalVarGastoMes, 'var(--green)',
       `${r.gastosVarMes.length} lançamento${r.gastosVarMes.length !== 1 ? 's' : ''} no mês`) +
-    detalheCard('Nubank Crédito', r.nubankGasto, 'var(--purple)',
-      `Fixos: ${brl(r.nubankFixos)} · Var: ${brl(r.nubankVarGasto)}`) +
-    detalheCard('C6 Crédito', r.c6Gasto, 'var(--red)',
-      `Fixos: ${brl(r.c6Fixos)} · Var: ${brl(r.c6VarGasto)}`) +
-    (r.bbGasto > 0 ? detalheCard('BB Crédito', r.bbGasto, 'var(--green)', '') : '') +
+    detalheCard('Nubank Crédito', nubVal, 'var(--purple)', nubSub) +
+    detalheCard('C6 Crédito', c6Val, 'var(--red)', c6Sub) +
+    (bbVal > 0 ? detalheCard('BB Crédito', bbVal, 'var(--green)', bbSub) : '') +
     detalheCard('Cartão Família', r.cartaoFamilia, 'var(--yellow)',
       `Fixos: ${brl(r.cartaoFamiliaFixos)} · Var: ${brl(r.cartaoFamiliaVar)}`);
 
@@ -805,21 +803,20 @@ function renderDashboard() {
   const varBodyEl  = document.getElementById('dash-var-body');
   if (r.gastosVarMes.length === 0) {
     if (varTotalEl) varTotalEl.textContent = '';
-    if (varBodyEl) varBodyEl.innerHTML = `<tr><td colspan="6" class="empty">Nenhum gasto variável neste mês</td></tr>`;
+    if (varBodyEl) varBodyEl.innerHTML = `<tr><td colspan="5" class="empty">Nenhum gasto variável neste mês</td></tr>`;
   } else {
     if (varTotalEl) varTotalEl.textContent = `Total: ${brl(r.totalVarGastoMes)} · ${r.gastosVarMes.length} lançamento${r.gastosVarMes.length!==1?'s':''}`;
     if (varBodyEl) varBodyEl.innerHTML = r.gastosVarMes.map(v => {
       const d = new Date(v.data + 'T12:00:00');
       const dStr = d.toLocaleDateString('pt-BR', {day:'2-digit', month:'2-digit'});
-      const mc = calcMesCaixaVariavel(v.data, v.forma);
-      const isProx = mc !== mesk;
+      const spendMes = mesKey(d.getFullYear(), d.getMonth() + 1);
+      const fromPrev = spendMes !== mesk;
       return `<tr>
-        <td>${dStr}</td>
+        <td>${dStr}${fromPrev ? ` <span style="font-size:10px;color:var(--yellow)" title="Gasto em ${mesLabel(spendMes)}">↑</span>` : ''}</td>
         <td>${v.desc}</td>
         <td>${v.cat}</td>
         <td style="font-weight:600">${brl(v.valor)}</td>
         <td>${tagForma(v.forma)}</td>
-        <td style="font-size:12px;color:${isProx?'var(--yellow)':'var(--muted)'};" title="${isProx?'Entra no caixa em '+mesLabel(mc):'Caixa neste mês'}">${mesLabel(mc)}${isProx?' ↗':''}</td>
       </tr>`;
     }).join('');
   }
