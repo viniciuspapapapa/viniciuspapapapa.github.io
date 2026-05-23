@@ -122,6 +122,12 @@
   .fixo-name { font-size: 14px; font-weight: 500; }
   .fixo-meta { font-size: 11px; color: var(--muted); margin-top: 2px; }
   .fixo-valor { font-size: 15px; font-weight: 700; white-space: nowrap; }
+  .fixo-override { color: var(--yellow) !important; }
+  .fixo-badge { font-size: 10px; padding: 2px 7px; border-radius: 99px; background: rgba(251,191,36,.15); color: var(--yellow); margin-left: 6px; vertical-align: middle; font-weight: 600; }
+  .fixo-mes-display { display: flex; align-items: center; gap: 8px; }
+  .fixo-mes-edit { display: none; align-items: center; gap: 6px; }
+  .fixo-mes-edit input { width: 110px; padding: 6px 9px; font-size: 13px; }
+  .fixo-resumo-bar { display: flex; gap: 20px; flex-wrap: wrap; padding: 10px 14px; background: var(--surface2); border-radius: var(--radius-sm); margin-bottom: 16px; }
 
   /* FATURA CARD */
   .fatura-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; }
@@ -249,8 +255,23 @@
 
 <!-- CUSTOS FIXOS -->
 <div id="page-fixos" class="page">
+  <!-- Visão por mês -->
   <div class="card">
-    <div class="card-title">Adicionar / Editar Custo Fixo</div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:10px;">
+      <div class="card-title" style="margin:0">Custos Fixos por Mês</div>
+      <div style="display:flex;align-items:center;gap:10px;">
+        <span style="font-size:13px;color:var(--muted);">Mês:</span>
+        <select id="cf-mes-view" onchange="renderFixosMes()"></select>
+      </div>
+    </div>
+    <div id="fixos-mes-resumo"></div>
+    <div id="fixos-mes-list"></div>
+  </div>
+
+  <!-- Template base — adicionar/editar -->
+  <div class="card">
+    <div class="card-title">Gerenciar Template Base</div>
+    <p style="font-size:12px;color:var(--muted);margin-bottom:14px;">Alterações aqui afetam o valor padrão de todos os meses. Para alterar apenas um mês específico, use a visão acima e clique em ✎.</p>
     <div class="form-grid">
       <div class="form-group">
         <label>Nome do Item</label>
@@ -261,7 +282,7 @@
         <select id="cf-cat"></select>
       </div>
       <div class="form-group">
-        <label>Valor (R$)</label>
+        <label>Valor Padrão (R$)</label>
         <input type="number" id="cf-valor" min="0" step="0.01" placeholder="0,00">
       </div>
       <div class="form-group">
@@ -283,8 +304,10 @@
     </div>
     <input type="hidden" id="cf-edit-id">
   </div>
+
+  <!-- Lista do template base -->
   <div class="card">
-    <div class="card-title">Custos Fixos Cadastrados</div>
+    <div class="card-title">Template Base — Valores Padrão</div>
     <div id="fixos-list"></div>
   </div>
 </div>
@@ -348,7 +371,7 @@
   </div>
   <div class="card">
     <div class="card-title" style="color:var(--red)">Zona de Perigo</div>
-    <p style="font-size:13px;color:var(--muted);margin-bottom:14px;">Apaga todos os dados salvos (gastos variáveis, faturas e custos fixos customizados). Os custos fixos padrão serão restaurados.</p>
+    <p style="font-size:13px;color:var(--muted);margin-bottom:14px;">Apaga todos os dados salvos (gastos variáveis, faturas, personalizações mensais de custos fixos e custos fixos customizados). Os custos fixos padrão serão restaurados.</p>
     <button class="btn btn-danger" onclick="resetarDados()">Resetar todos os dados</button>
   </div>
 </div>
@@ -405,6 +428,15 @@ function getParams() {
 function getFixos() { return load('fixos', FIXOS_DEFAULT); }
 function getVariaveis() { return load('variaveis', []); }
 function getFaturas() { return load('faturas', {}); }
+function getFixosOverrides() { return load('fixosOverrides', {}); }
+
+function getFixoValor(fixo, mesk) {
+  const overrides = getFixosOverrides();
+  if (overrides[fixo.id] && overrides[fixo.id][mesk] !== undefined) {
+    return overrides[fixo.id][mesk];
+  }
+  return fixo.valor;
+}
 
 // ═══════════════════════════════════════════════════
 //  DATE HELPERS
@@ -483,9 +515,10 @@ function calcResumo(mesk) {
     const inicio = f.inicio || INICIO;
     const firstCaixa = (f.forma === 'Débito') ? inicio : nextMonthKey(inicio);
     if (mesk < firstCaixa) continue;
-    if (f.forma === 'Débito') fixosDebito += f.valor;
-    else if (f.forma === 'Cartão Família') cartaoFamiliaFixos += f.valor;
-    else fixosCredito += f.valor;
+    const fValor = getFixoValor(f, mesk);
+    if (f.forma === 'Débito') fixosDebito += fValor;
+    else if (f.forma === 'Cartão Família') cartaoFamiliaFixos += fValor;
+    else fixosCredito += fValor;
   }
 
   let varDebito = 0, varCredito = 0, cartaoFamiliaVar = 0;
@@ -564,6 +597,7 @@ function populateSelects() {
   fillMesSelect('dash-mes', atual);
   fillMesSelect('gv-filtro-mes', atual);
   fillMesSelect('fat-mes', atual);
+  fillMesSelect('cf-mes-view', atual);
 
   ['gv-cat','cf-cat'].forEach(id => {
     const sel = document.getElementById(id);
@@ -836,7 +870,6 @@ function renderFixos() {
   const el = document.getElementById('fixos-list');
   if (!fixos.length) { el.innerHTML = '<div class="empty">Nenhum custo fixo cadastrado</div>'; return; }
 
-  // Group by category
   const groups = {};
   fixos.forEach(f => { if (!groups[f.cat]) groups[f.cat] = []; groups[f.cat].push(f); });
 
@@ -856,6 +889,122 @@ function renderFixos() {
       `).join('')}
     </div>
   `).join('');
+
+  renderFixosMes();
+}
+
+// ═══════════════════════════════════════════════════
+//  CUSTOS FIXOS — VISÃO POR MÊS
+// ═══════════════════════════════════════════════════
+
+function renderFixosMes() {
+  const mesEl = document.getElementById('cf-mes-view');
+  if (!mesEl) return;
+  const mesk = mesEl.value;
+  const fixos = getFixos();
+  const overrides = getFixosOverrides();
+  const el = document.getElementById('fixos-mes-list');
+  const resumoEl = document.getElementById('fixos-mes-resumo');
+
+  if (!fixos.length) {
+    if (el) el.innerHTML = '<div class="empty">Nenhum custo fixo cadastrado</div>';
+    return;
+  }
+
+  let total = 0;
+  let customizados = 0;
+  fixos.forEach(f => {
+    total += getFixoValor(f, mesk);
+    if (overrides[f.id] && overrides[f.id][mesk] !== undefined) customizados++;
+  });
+
+  if (resumoEl) {
+    resumoEl.innerHTML = `
+      <div class="fixo-resumo-bar">
+        <div><span style="font-size:12px;color:var(--muted);">Total do mês: </span><span style="font-weight:700;font-size:15px;">${brl(total)}</span></div>
+        <div><span style="font-size:12px;color:var(--muted);">Itens: </span><span style="font-weight:600;">${fixos.length}</span></div>
+        ${customizados ? `<div><span style="font-size:12px;color:var(--yellow);">✦ Personalizados neste mês: </span><span style="font-weight:600;color:var(--yellow);">${customizados}</span></div>` : ''}
+      </div>
+    `;
+  }
+
+  const groups = {};
+  fixos.forEach(f => { if (!groups[f.cat]) groups[f.cat] = []; groups[f.cat].push(f); });
+
+  el.innerHTML = Object.entries(groups).sort((a,b)=>a[0].localeCompare(b[0])).map(([cat, items]) => `
+    <div style="margin-bottom:16px;">
+      <div style="font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:8px;">${cat}</div>
+      ${items.map(f => {
+        const isOverridden = overrides[f.id] && overrides[f.id][mesk] !== undefined;
+        const valor = getFixoValor(f, mesk);
+        return `
+          <div class="fixo-item">
+            <div class="fixo-info">
+              <div class="fixo-name">${f.nome}${isOverridden ? '<span class="fixo-badge">Personalizado</span>' : ''}</div>
+              <div class="fixo-meta">${tagForma(f.forma)} · Dia ${f.dia}${f.obs?' · '+f.obs:''}${isOverridden?' · Padrão: '+brl(f.valor):''}</div>
+            </div>
+            <div class="fixo-mes-display" id="fixo-mes-display-${f.id}">
+              <div class="fixo-valor${isOverridden?' fixo-override':''}">${brl(valor)}</div>
+              <button class="btn btn-ghost btn-sm" onclick="iniciarOverrideFixo('${f.id}')" title="Editar valor para este mês">✎</button>
+              ${isOverridden ? `<button class="btn btn-danger btn-sm" onclick="restaurarOverrideFixo('${f.id}','${mesk}')" title="Restaurar valor padrão">↺</button>` : ''}
+            </div>
+            <div class="fixo-mes-edit" id="fixo-mes-edit-${f.id}">
+              <input type="number" id="fixo-mes-input-${f.id}" value="${valor}" min="0" step="0.01">
+              <button class="btn btn-primary btn-sm" onclick="salvarOverrideFixo('${f.id}','${mesk}')">✓ Salvar</button>
+              <button class="btn btn-ghost btn-sm" onclick="cancelarOverrideFixo('${f.id}')">✕</button>
+            </div>
+          </div>
+        `;
+      }).join('')}
+    </div>
+  `).join('');
+}
+
+function iniciarOverrideFixo(fixoId) {
+  document.getElementById('fixo-mes-display-' + fixoId).style.display = 'none';
+  const editEl = document.getElementById('fixo-mes-edit-' + fixoId);
+  editEl.style.display = 'flex';
+  const inp = document.getElementById('fixo-mes-input-' + fixoId);
+  inp.focus();
+  inp.select();
+}
+
+function cancelarOverrideFixo(fixoId) {
+  document.getElementById('fixo-mes-display-' + fixoId).style.display = 'flex';
+  document.getElementById('fixo-mes-edit-' + fixoId).style.display = 'none';
+}
+
+function salvarOverrideFixo(fixoId, mesk) {
+  const inp = document.getElementById('fixo-mes-input-' + fixoId);
+  const valor = parseFloat(inp.value);
+  if (isNaN(valor) || valor < 0) { alert('Valor inválido.'); return; }
+
+  const fixo = getFixos().find(f => f.id === fixoId);
+  const overrides = getFixosOverrides();
+
+  if (valor === fixo.valor) {
+    if (overrides[fixoId]) {
+      delete overrides[fixoId][mesk];
+      if (Object.keys(overrides[fixoId]).length === 0) delete overrides[fixoId];
+    }
+  } else {
+    if (!overrides[fixoId]) overrides[fixoId] = {};
+    overrides[fixoId][mesk] = valor;
+  }
+  save('fixosOverrides', overrides);
+  renderFixosMes();
+  renderDashboardIfActive();
+}
+
+function restaurarOverrideFixo(fixoId, mesk) {
+  const overrides = getFixosOverrides();
+  if (overrides[fixoId]) {
+    delete overrides[fixoId][mesk];
+    if (Object.keys(overrides[fixoId]).length === 0) delete overrides[fixoId];
+    save('fixosOverrides', overrides);
+  }
+  renderFixosMes();
+  renderDashboardIfActive();
 }
 
 // ═══════════════════════════════════════════════════
@@ -946,10 +1095,10 @@ function salvarParams() {
 }
 
 function resetarDados() {
-  if (!confirm('Tem certeza? Todos os gastos variáveis serão apagados e as faturas/custos fixos voltarão aos valores originais da planilha.')) return;
+  if (!confirm('Tem certeza? Todos os gastos variáveis, personalizações mensais e faturas serão apagados. Os custos fixos voltarão aos valores padrão.')) return;
   localStorage.clear();
   initData();
-  alert('Dados restaurados para os valores originais da planilha!');
+  alert('Dados restaurados para os valores originais!');
   renderFixos();
   renderDashboardIfActive();
 }
