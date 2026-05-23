@@ -151,6 +151,13 @@
   .progress-bar { height: 6px; border-radius: 99px; background: var(--surface2); margin-top: 6px; overflow: hidden; }
   .progress-fill { height: 100%; border-radius: 99px; transition: width .3s; }
 
+  /* EDITABLE META CELL */
+  .meta-cell { cursor: pointer; }
+  .meta-cell:hover td { background: var(--surface2); }
+  td.meta-cell-td { cursor: pointer; }
+  td.meta-cell-td:hover { background: rgba(124,106,247,.08) !important; }
+  td.meta-cell-td:hover::after { content: ' ✎'; font-size: 10px; color: var(--accent); }
+
   /* RESPONSIVE */
   @media (max-width: 600px) {
     .kpi-grid { grid-template-columns: 1fr 1fr; }
@@ -182,6 +189,10 @@
     <span id="dash-ref-gastos" style="font-size:12px;color:var(--muted);margin-left:4px;"></span>
   </div>
   <div class="kpi-grid" id="kpi-grid"></div>
+  <div class="card" style="margin-bottom:16px;">
+    <div class="card-title">Detalhamento de Saídas</div>
+    <div id="detalhe-grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;"></div>
+  </div>
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;flex-wrap:wrap;" class="two-col">
     <div class="card">
       <div class="card-title">Composição das Saídas</div>
@@ -197,7 +208,7 @@
     <div class="table-wrap">
       <table class="monthly-table">
         <thead><tr>
-          <th>Mês</th><th>Salário</th><th>Total Saídas</th><th>Saldo</th><th>% Poupado</th><th>Saldo Prev.</th><th>C. Família</th>
+          <th>Mês</th><th>Salário</th><th>Total Saídas</th><th>Saldo</th><th>% Poupado</th><th>Saldo Prev.</th><th>C. Família</th><th title="Clique para editar">Lim. Sugerido ✎</th><th title="Clique para editar">Prev. Guardado ✎</th>
         </tr></thead>
         <tbody id="historico-body"></tbody>
       </table>
@@ -429,6 +440,7 @@ function getFixos() { return load('fixos', FIXOS_DEFAULT); }
 function getVariaveis() { return load('variaveis', []); }
 function getFaturas() { return load('faturas', {}); }
 function getFixosOverrides() { return load('fixosOverrides', {}); }
+function getMetasMensais() { return load('metasMensais', {}); }
 
 function getFixoOverride(fixoId, mesk) {
   const overrides = getFixosOverrides();
@@ -549,6 +561,12 @@ function calcResumo(mesk) {
   const pct = params.salario > 0 ? saldo / params.salario : 0;
   const saldoPrevisto = saldo - fixosCredito - varCredito;
   const cartaoFamilia = cartaoFamiliaFixos + cartaoFamiliaVar;
+  const totalFixos = fixosDebito + fixosCredito + cartaoFamiliaFixos;
+  const totalVariaveis = varDebito + varCredito + cartaoFamiliaVar;
+  const debitoDireto = fixosDebito + varDebito;
+
+  const metas = getMetasMensais();
+  const metaMes = metas[mesk] || {};
 
   return {
     salario: params.salario,
@@ -556,6 +574,9 @@ function calcResumo(mesk) {
     totalSaidas, saldo, pct, saldoPrevisto, cartaoFamilia,
     limiteFamilia: params.limite, meta: params.meta,
     fatBB: fat.bb||0, fatC6: fat.c6||0, fatNubank: fat.nubank||0,
+    totalFixos, totalVariaveis, cartaoFamiliaFixos, cartaoFamiliaVar, debitoDireto,
+    limiteSugerido: metaMes.limiteSugerido || 0,
+    previsaoGuardado: metaMes.previsaoGuardado || 0,
   };
 }
 
@@ -697,15 +718,41 @@ function renderDashboard() {
     </div>
   `;
 
+  // Detalhe grid
+  function detalheCard(label, valor, cor, sub) {
+    return `<div style="background:var(--surface2);border:1px solid var(--border);border-left:3px solid ${cor};border-radius:var(--radius-sm);padding:12px 14px;">
+      <div style="font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:5px;">${label}</div>
+      <div style="font-size:19px;font-weight:700;color:${cor};">${brl(valor)}</div>
+      ${sub ? `<div style="font-size:11px;color:var(--muted);margin-top:4px;">${sub}</div>` : ''}
+    </div>`;
+  }
+  document.getElementById('detalhe-grid').innerHTML =
+    detalheCard('Custos Fixos', r.totalFixos, 'var(--accent)',
+      `Déb: ${brl(r.fixosDebito)} · Cred: ${brl(r.fixosCredito)} · Fam: ${brl(r.cartaoFamiliaFixos)}`) +
+    detalheCard('Gastos Variáveis', r.totalVariaveis, 'var(--green)',
+      `Déb: ${brl(r.varDebito)} · Cred: ${brl(r.varCredito)}`) +
+    detalheCard('Fatura Nubank', r.fatNubank, 'var(--purple)', '') +
+    detalheCard('Fatura C6', r.fatC6, 'var(--red)', '') +
+    (r.fatBB > 0 ? detalheCard('Fatura BB', r.fatBB, 'var(--green)', '') : '') +
+    detalheCard('Cartão Família', r.cartaoFamilia, 'var(--yellow)',
+      `Fixos: ${brl(r.cartaoFamiliaFixos)} · Var: ${brl(r.cartaoFamiliaVar)}`);
+
   // Breakdown
   document.getElementById('breakdown-table').innerHTML = `
-    <tr><td>Fixos Débito</td><td>${brl(r.fixosDebito)}</td></tr>
-    <tr><td>Fixos Crédito (Prev.)</td><td style="color:var(--purple)">${brl(r.fixosCredito)}</td></tr>
-    <tr><td>Cartão Crédito (Fatura)</td><td>${brl(r.totalFaturas)}</td></tr>
-    <tr><td>Variáveis Débito</td><td>${brl(r.varDebito)}</td></tr>
-    <tr><td>Variáveis Crédito (Prev.)</td><td style="color:var(--purple)">${brl(r.varCredito)}</td></tr>
+    <tr><td colspan="2" style="font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);padding-top:4px;padding-bottom:6px;">Por tipo de gasto</td></tr>
+    <tr><td>Custos Fixos (total)</td><td>${brl(r.totalFixos)}</td></tr>
+    <tr><td>Gastos Variáveis (total)</td><td>${brl(r.totalVariaveis)}</td></tr>
+    <tr><td style="color:var(--yellow)">Cartão Família</td><td style="color:var(--yellow)">${brl(r.cartaoFamilia)}</td></tr>
+    <tr><td colspan="2" style="font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);padding-top:10px;padding-bottom:6px;">Saídas de caixa do mês</td></tr>
+    <tr><td>Fatura Nubank</td><td style="color:var(--purple)">${brl(r.fatNubank)}</td></tr>
+    <tr><td>Fatura C6</td><td style="color:var(--red)">${brl(r.fatC6)}</td></tr>
+    ${r.fatBB > 0 ? `<tr><td>Fatura BB</td><td style="color:var(--green)">${brl(r.fatBB)}</td></tr>` : ''}
+    <tr><td>Débito Direto</td><td>${brl(r.debitoDireto)}</td></tr>
     <tr class="total"><td>TOTAL SAÍDAS (CAIXA)</td><td>${brl(r.totalSaidas)}</td></tr>
-    <tr><td style="color:var(--muted);font-size:12px;">Cartão Família (fora caixa)</td><td style="color:var(--yellow)">${brl(r.cartaoFamilia)}</td></tr>
+    <tr><td colspan="2" style="font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);padding-top:10px;padding-bottom:6px;">Crédito previsto (próx. mês)</td></tr>
+    <tr><td style="color:var(--purple)">Fixos Crédito</td><td style="color:var(--purple)">${brl(r.fixosCredito)}</td></tr>
+    <tr><td style="color:var(--purple)">Variáveis Crédito</td><td style="color:var(--purple)">${brl(r.varCredito)}</td></tr>
+    <tr class="total"><td>Saldo Previsto</td><td style="color:${r.saldoPrevisto>=0?'var(--green)':'var(--red)'}">${brl(r.saldoPrevisto)}</td></tr>
   `;
 
   // Histórico table
@@ -715,6 +762,8 @@ function renderDashboard() {
     const rv = calcResumo(mk);
     const isCurrent = mk === mesk;
     const style = isCurrent ? 'background:var(--surface2);font-weight:600;' : '';
+    const lsColor = rv.limiteSugerido > 0 ? 'var(--yellow)' : 'var(--border)';
+    const pgColor = rv.previsaoGuardado > 0 ? 'var(--green)' : 'var(--border)';
     return `<tr style="${style}">
       <td>${mesLabel(mk)}</td>
       <td>${brl(rv.salario)}</td>
@@ -723,6 +772,8 @@ function renderDashboard() {
       <td>${pct(rv.pct)}</td>
       <td style="color:${rv.saldoPrevisto>=0?'var(--green)':'var(--red)'}">${brl(rv.saldoPrevisto)}</td>
       <td style="color:var(--yellow)">${brl(rv.cartaoFamilia)}</td>
+      <td class="meta-cell-td" style="color:${lsColor}" onclick="editarMetaCell(this,'${mk}','limiteSugerido',${rv.limiteSugerido})">${rv.limiteSugerido ? brl(rv.limiteSugerido) : '—'}</td>
+      <td class="meta-cell-td" style="color:${pgColor}" onclick="editarMetaCell(this,'${mk}','previsaoGuardado',${rv.previsaoGuardado})">${rv.previsaoGuardado ? brl(rv.previsaoGuardado) : '—'}</td>
     </tr>`;
   }).join('');
 
@@ -1136,6 +1187,44 @@ function resetarDados() {
   alert('Dados restaurados para os valores originais!');
   renderFixos();
   renderDashboardIfActive();
+}
+
+// ═══════════════════════════════════════════════════
+//  METAS MENSAIS — EDIÇÃO INLINE
+// ═══════════════════════════════════════════════════
+
+function editarMetaCell(cell, mesk, campo, valorAtual) {
+  if (cell.querySelector('input')) return;
+  const input = document.createElement('input');
+  input.type = 'number';
+  input.value = valorAtual || '';
+  input.min = '0';
+  input.step = '0.01';
+  input.title = campo === 'limiteSugerido' ? 'Limite Sugerido do Cartão' : 'Previsão de Valores Guardados';
+  Object.assign(input.style, {
+    width: '100px', padding: '4px 6px', fontSize: '12px',
+    background: 'var(--surface2)', border: '1px solid var(--accent)',
+    borderRadius: '4px', color: 'var(--text)'
+  });
+  cell.textContent = '';
+  cell.appendChild(input);
+  input.focus();
+  input.select();
+
+  const salvar = () => {
+    const valor = parseFloat(input.value) || 0;
+    const metas = getMetasMensais();
+    if (!metas[mesk]) metas[mesk] = {};
+    metas[mesk][campo] = valor;
+    save('metasMensais', metas);
+    renderDashboard();
+  };
+  input.addEventListener('blur', salvar);
+  input.addEventListener('keydown', e => {
+    if (e.key === 'Enter') input.blur();
+    if (e.key === 'Escape') renderDashboard();
+  });
+  input.addEventListener('click', e => e.stopPropagation());
 }
 
 // ═══════════════════════════════════════════════════
