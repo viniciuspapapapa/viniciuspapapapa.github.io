@@ -428,7 +428,10 @@ const FIXOS_DEFAULT = [
 ];
 
 const MESES_LABELS = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
-const INICIO = '2026-06';
+const INICIO = (() => {
+  const hoje = mesKey(new Date().getFullYear(), new Date().getMonth() + 1);
+  return hoje < '2026-06' ? hoje : '2026-06';
+})();
 
 function nextMonthKey(mk) {
   const {year, month} = parseMesKey(mk);
