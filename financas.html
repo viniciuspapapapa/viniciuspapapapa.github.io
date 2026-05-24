@@ -510,8 +510,13 @@ function calcMesCaixaVariavel(dateStr, forma) {
       if (wd !== 0 && wd !== 6) break;
       lastWorkday--;
     }
-    if (day <= lastWorkday) return mesKey(y, m);
-    const nd = new Date(y, m, 1); return mesKey(nd.getFullYear(), nd.getMonth()+1);
+    // C6 vence no 5º dia útil do mês seguinte ao fechamento, então:
+    // gasto até o fechamento → fatura paga no mês seguinte
+    // gasto após o fechamento → fatura paga dois meses à frente
+    if (day <= lastWorkday) {
+      const nd = new Date(y, m, 1); return mesKey(nd.getFullYear(), nd.getMonth()+1);
+    }
+    const nd = new Date(y, m+1, 1); return mesKey(nd.getFullYear(), nd.getMonth()+1);
   }
   return mesKey(y, m);
 }
