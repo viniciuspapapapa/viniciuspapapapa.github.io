@@ -562,14 +562,12 @@ function calcResumo(mesk) {
     }
   }
 
-  // Gastos variáveis pelo mês de CAIXA (quando efetivamente saem do bolso)
+  // Loop 1: por mês de CAIXA → impacto financeiro real (faturas, saldo previsto)
   let varDebito = 0, varCredito = 0, cartaoFamiliaVar = 0;
   let nubankVarCaixa = 0, c6VarCaixa = 0, bbVarCaixa = 0;
-  const gastosVarMes = [];
   for (const v of variaveis) {
     const mk = calcMesCaixaVariavel(v.data, v.forma);
     if (mk !== mesk) continue;
-    gastosVarMes.push(v);
     if (v.forma === 'Débito') varDebito += v.valor;
     else if (v.forma === 'Cartão Família') cartaoFamiliaVar += v.valor;
     else {
@@ -579,14 +577,23 @@ function calcResumo(mesk) {
       else if (v.forma === 'BB Crédito') bbVarCaixa += v.valor;
     }
   }
-  gastosVarMes.sort((a, b) => b.data.localeCompare(a.data));
-  const totalVarGastoMes = gastosVarMes.reduce((s, v) => s + v.valor, 0);
   const nubankVarGasto = nubankVarCaixa;
   const c6VarGasto = c6VarCaixa;
   const bbVarGasto = bbVarCaixa;
   const nubankGasto = nubankFixos + nubankVarCaixa;
   const c6Gasto    = c6Fixos    + c6VarCaixa;
   const bbGasto    = bbFixos    + bbVarCaixa;
+
+  // Loop 2: por data de GASTO → para exibição (lista do mês, historico)
+  const gastosVarMes = [];
+  for (const v of variaveis) {
+    const d = new Date(v.data + 'T12:00:00');
+    const vMes = mesKey(d.getFullYear(), d.getMonth() + 1);
+    if (vMes !== mesk) continue;
+    gastosVarMes.push(v);
+  }
+  gastosVarMes.sort((a, b) => b.data.localeCompare(a.data));
+  const totalVarGastoMes = gastosVarMes.reduce((s, v) => s + v.valor, 0);
 
   const fat = faturas[mesk] || { bb: 0, c6: 0, nubank: 0 };
   const totalFaturas = (fat.bb||0) + (fat.c6||0) + (fat.nubank||0);
@@ -809,14 +816,14 @@ function renderDashboard() {
     if (varBodyEl) varBodyEl.innerHTML = r.gastosVarMes.map(v => {
       const d = new Date(v.data + 'T12:00:00');
       const dStr = d.toLocaleDateString('pt-BR', {day:'2-digit', month:'2-digit'});
-      const spendMes = mesKey(d.getFullYear(), d.getMonth() + 1);
-      const fromPrev = spendMes !== mesk;
+      const mc = calcMesCaixaVariavel(v.data, v.forma);
+      const isNextMonth = mc !== mesk;
       return `<tr>
-        <td>${dStr}${fromPrev ? ` <span style="font-size:10px;color:var(--yellow)" title="Gasto em ${mesLabel(spendMes)}">↑</span>` : ''}</td>
+        <td>${dStr}</td>
         <td>${v.desc}</td>
         <td>${v.cat}</td>
         <td style="font-weight:600">${brl(v.valor)}</td>
-        <td>${tagForma(v.forma)}</td>
+        <td>${tagForma(v.forma)}${isNextMonth ? ` <span style="font-size:10px;color:var(--yellow)" title="Fatura em ${mesLabel(mc)}">↗</span>` : ''}</td>
       </tr>`;
     }).join('');
   }
@@ -912,8 +919,9 @@ function deleteVariavel(id) {
 function renderGastosVariaveis() {
   const filtro = document.getElementById('gv-filtro-mes').value;
   const variaveis = getVariaveis().filter(v => {
-    const mk = calcMesCaixaVariavel(v.data, v.forma);
-    return mk === filtro;
+    const d = new Date(v.data + 'T12:00:00');
+    const vMes = mesKey(d.getFullYear(), d.getMonth() + 1);
+    return vMes === filtro;
   });
 
   const tbody = document.getElementById('gv-body');
