@@ -519,8 +519,12 @@ function calcMesCaixaVariavel(dateStr, forma) {
 function gerarMeses() {
   const meses = [];
   const hoje = new Date();
+  const hojeKey = mesKey(hoje.getFullYear(), hoje.getMonth() + 1);
+  // Start from whichever is earlier: today's month or INICIO
+  const startKey = hojeKey < INICIO ? hojeKey : INICIO;
+  const {year: sy, month: sm} = parseMesKey(startKey);
   const endYear = Math.max(hoje.getFullYear() + 1, 2027);
-  let y = 2026, m = 6;
+  let y = sy, m = sm;
   while (y < endYear || (y === endYear && m <= 12)) {
     meses.push(mesKey(y, m));
     m++; if (m > 12) { m = 1; y++; }
@@ -530,8 +534,7 @@ function gerarMeses() {
 
 function mesAtual() {
   const d = new Date();
-  const mk = mesKey(d.getFullYear(), d.getMonth()+1);
-  return mk < INICIO ? INICIO : mk;
+  return mesKey(d.getFullYear(), d.getMonth() + 1);
 }
 
 // ═══════════════════════════════════════════════════
