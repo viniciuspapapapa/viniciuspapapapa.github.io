@@ -1163,7 +1163,9 @@ function salvarOverrideFixo(fixoId, mesk) {
   }
   save('fixosOverrides', overrides);
   renderFixosMes();
-  renderDashboardIfActive();
+  const dashMes = document.getElementById('dash-mes');
+  if (dashMes) dashMes.value = mesk;
+  renderDashboard();
 }
 
 function restaurarOverrideFixo(fixoId, mesk) {
@@ -1174,7 +1176,9 @@ function restaurarOverrideFixo(fixoId, mesk) {
     save('fixosOverrides', overrides);
   }
   renderFixosMes();
-  renderDashboardIfActive();
+  const dashMes = document.getElementById('dash-mes');
+  if (dashMes) dashMes.value = mesk;
+  renderDashboard();
 }
 
 // ═══════════════════════════════════════════════════
