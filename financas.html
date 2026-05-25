@@ -598,17 +598,33 @@ function calcResumo(mesk) {
 
   const fat = faturas[mesk] || { bb: 0, c6: 0, nubank: 0 };
 
-  // Saída por cartão:
-  // - Se fatura foi lançada: usa fatura + gastos variáveis adicionados (que ainda não estão na fatura)
-  // - Se fatura não foi lançada: usa estimativa dos fixos + var
+  // Quando há fatura, aplica o delta dos overrides de valor:
+  // se o usuário mudou o valor de um fixo Nubank de R$20→R$2000,
+  // delta = +R$1980, e nubankSaida = fatura + 1980 + var.
+  // Assim a fatura continua como base real, e a mudança no fixo
+  // afeta o saldo imediatamente.
+  let nubankDelta = 0, c6Delta = 0, bbDelta = 0;
+  for (const f of fixos) {
+    const inicio = f.inicio || INICIO;
+    if (mesk < inicio) continue;
+    const ov = getFixoOverride(f.id, mesk);
+    if (!ov) continue;
+    const fForma = getFixoForma(f, mesk);
+    if (fForma !== f.forma) continue; // forma mudou → não aplica delta simples
+    const delta = getFixoValor(f, mesk) - f.valor;
+    if (fForma === 'Nubank Crédito') nubankDelta += delta;
+    else if (fForma === 'C6 Crédito') c6Delta += delta;
+    else if (fForma === 'BB Crédito') bbDelta += delta;
+  }
+
   const nubankSaida = (fat.nubank||0) > 0
-    ? (fat.nubank||0) + nubankVarCaixa
+    ? (fat.nubank||0) + nubankDelta + nubankVarCaixa
     : nubankFixos + nubankVarCaixa;
   const c6Saida = (fat.c6||0) > 0
-    ? (fat.c6||0) + c6VarCaixa
+    ? (fat.c6||0) + c6Delta + c6VarCaixa
     : c6Fixos + c6VarCaixa;
   const bbSaida = (fat.bb||0) > 0
-    ? (fat.bb||0) + bbVarCaixa
+    ? (fat.bb||0) + bbDelta + bbVarCaixa
     : bbFixos + bbVarCaixa;
   const cartaoFamilia = cartaoFamiliaFixos + cartaoFamiliaVar;
 
@@ -616,12 +632,7 @@ function calcResumo(mesk) {
   const saldo = params.salario - totalSaidas;
   const pct = params.salario > 0 ? saldo / params.salario : 0;
   const saldoPrevisto = saldo;
-  // Exclude credit fixos superseded by a fatura — keeps totalFixos consistent with totalSaidas
-  const fixosCreditoEfetivos =
-    (fat.nubank > 0 ? 0 : nubankFixos) +
-    (fat.c6    > 0 ? 0 : c6Fixos) +
-    (fat.bb    > 0 ? 0 : bbFixos);
-  const totalFixos = fixosDebito + fixosCreditoEfetivos + cartaoFamiliaFixos;
+  const totalFixos = fixosDebito + fixosCredito + cartaoFamiliaFixos;
   const totalVariaveis = varDebito + varCredito + cartaoFamiliaVar;
   const debitoDireto = fixosDebito + varDebito;
 
@@ -632,11 +643,11 @@ function calcResumo(mesk) {
 
   return {
     salario: params.salario,
-    fixosDebito, fixosCredito, fixosCreditoEfetivos, varDebito, varCredito,
+    fixosDebito, fixosCredito, varDebito, varCredito,
     totalSaidas, saldo, pct, saldoPrevisto, cartaoFamilia,
     limiteFamilia: params.limite, meta: params.meta,
     fatBB: fat.bb||0, fatC6: fat.c6||0, fatNubank: fat.nubank||0,
-    nubankSaida, c6Saida, bbSaida,
+    nubankSaida, c6Saida, bbSaida, nubankDelta, c6Delta, bbDelta,
     totalFixos, totalVariaveis, cartaoFamiliaFixos, cartaoFamiliaVar, debitoDireto,
     limiteSugerido, previsaoGuardado,
     nubankGasto, c6Gasto, bbGasto, nubankVarGasto, c6VarGasto, bbVarGasto,
@@ -787,19 +798,19 @@ function renderDashboard() {
   }
   const nubHasFixos = r.nubankFixos + r.nubankVarGasto > 0;
   const nubSub = r.fatNubank > 0
-    ? `Fatura: ${brl(r.fatNubank)}${r.nubankVarGasto > 0 ? ` + Var: ${brl(r.nubankVarGasto)}` : ''}`
+    ? `Fatura: ${brl(r.fatNubank)}${r.nubankDelta !== 0 ? ` ${r.nubankDelta > 0 ? '+' : ''}${brl(r.nubankDelta)} (fixos)` : ''}${r.nubankVarGasto > 0 ? ` + Var: ${brl(r.nubankVarGasto)}` : ''}`
     : `Estimado · Fixos: ${brl(r.nubankFixos)} · Var: ${brl(r.nubankVarGasto)}`;
   const c6HasFixos = r.c6Fixos + r.c6VarGasto > 0;
   const c6Sub = r.fatC6 > 0
-    ? `Fatura: ${brl(r.fatC6)}${r.c6VarGasto > 0 ? ` + Var: ${brl(r.c6VarGasto)}` : ''}`
+    ? `Fatura: ${brl(r.fatC6)}${r.c6Delta !== 0 ? ` ${r.c6Delta > 0 ? '+' : ''}${brl(r.c6Delta)} (fixos)` : ''}${r.c6VarGasto > 0 ? ` + Var: ${brl(r.c6VarGasto)}` : ''}`
     : `Estimado · Fixos: ${brl(r.c6Fixos)} · Var: ${brl(r.c6VarGasto)}`;
   const bbHasFixos = r.bbGasto > 0;
   const bbSub = r.fatBB > 0
-    ? `Fatura: ${brl(r.fatBB)}${r.bbVarGasto > 0 ? ` + Var: ${brl(r.bbVarGasto)}` : ''}`
+    ? `Fatura: ${brl(r.fatBB)}${r.bbDelta !== 0 ? ` ${r.bbDelta > 0 ? '+' : ''}${brl(r.bbDelta)} (fixos)` : ''}${r.bbVarGasto > 0 ? ` + Var: ${brl(r.bbVarGasto)}` : ''}`
     : (r.bbSaida > 0 ? `Estimado · Fixos: ${brl(r.bbGasto - r.bbVarGasto)} · Var: ${brl(r.bbVarGasto)}` : '');
   document.getElementById('detalhe-grid').innerHTML =
     detalheCard('Custos Fixos', r.totalFixos, 'var(--accent)',
-      `Déb: ${brl(r.fixosDebito)} · Cred: ${brl(r.fixosCreditoEfetivos)} · Fam: ${brl(r.cartaoFamiliaFixos)}`) +
+      `Déb: ${brl(r.fixosDebito)} · Cred: ${brl(r.fixosCredito)} · Fam: ${brl(r.cartaoFamiliaFixos)}`) +
     detalheCard('Gastos Variáveis', r.totalVarGastoMes, 'var(--green)',
       `${r.gastosVarMes.length} lançamento${r.gastosVarMes.length !== 1 ? 's' : ''} no mês`) +
     detalheCard('Nubank Crédito', r.nubankSaida, 'var(--purple)', nubSub) +
