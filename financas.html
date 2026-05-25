@@ -235,7 +235,7 @@
     <div class="form-grid">
       <div class="form-group">
         <label>Data</label>
-        <input type="date" id="gv-data">
+        <input type="date" id="gv-data" onchange="atualizarPreviewMesDashboard()">
       </div>
       <div class="form-group">
         <label>Descrição</label>
@@ -251,7 +251,11 @@
       </div>
       <div class="form-group">
         <label>Forma de Pagamento</label>
-        <select id="gv-forma"></select>
+        <select id="gv-forma" onchange="atualizarPreviewMesDashboard()"></select>
+      </div>
+      <div class="form-group">
+        <label>Mês no Dashboard</label>
+        <input type="text" id="gv-preview-mes" readonly style="background:var(--surface2);color:var(--accent);font-weight:600;" placeholder="—">
       </div>
       <div class="form-group" style="align-self:flex-end;">
         <div class="form-actions">
@@ -268,7 +272,7 @@
     <div class="table-wrap">
       <table>
         <thead><tr>
-          <th>Data</th><th>Descrição</th><th>Categoria</th><th>Valor</th><th>Forma</th><th>Mês Caixa</th><th></th>
+          <th>Data</th><th>Descrição</th><th>Categoria</th><th>Valor</th><th>Forma</th><th>Mês no Dashboard</th><th></th>
         </tr></thead>
         <tbody id="gv-body"></tbody>
       </table>
@@ -594,13 +598,13 @@ function calcResumo(mesk) {
 
   const fat = faturas[mesk] || { bb: 0, c6: 0, nubank: 0 };
 
-  // Saída por cartão: usa fatura lançada se disponível, senão estimativa (fixos + var)
-  const nubankSaida = (fat.nubank||0) > 0 ? (fat.nubank||0) + nubankVarCaixa : nubankFixos + nubankVarCaixa;
-  const c6Saida     = (fat.c6||0)    > 0 ? (fat.c6||0)    + c6VarCaixa    : c6Fixos    + c6VarCaixa;
-  const bbSaida     = (fat.bb||0)    > 0 ? (fat.bb||0)    + bbVarCaixa    : bbFixos    + bbVarCaixa;
+  // Saída por cartão: usa fatura lançada (valor total real) se disponível, senão estimativa (fixos + var)
+  const nubankSaida = (fat.nubank||0) > 0 ? (fat.nubank||0) : nubankFixos + nubankVarCaixa;
+  const c6Saida     = (fat.c6||0)    > 0 ? (fat.c6||0)    : c6Fixos    + c6VarCaixa;
+  const bbSaida     = (fat.bb||0)    > 0 ? (fat.bb||0)    : bbFixos    + bbVarCaixa;
   const cartaoFamilia = cartaoFamiliaFixos + cartaoFamiliaVar;
 
-  const totalSaidas = fixosDebito + varDebito + nubankSaida + c6Saida + bbSaida + cartaoFamilia;
+  const totalSaidas = fixosDebito + varDebito + nubankSaida + c6Saida + bbSaida;
   const saldo = params.salario - totalSaidas;
   const pct = params.salario > 0 ? saldo / params.salario : 0;
   const saldoPrevisto = saldo;
@@ -691,6 +695,7 @@ function populateSelects() {
   const today = new Date().toISOString().slice(0,10);
   const gvData = document.getElementById('gv-data');
   if (gvData && !gvData.value) gvData.value = today;
+  if (typeof atualizarPreviewMesDashboard === 'function') atualizarPreviewMesDashboard();
 }
 
 // ═══════════════════════════════════════════════════
@@ -765,13 +770,13 @@ function renderDashboard() {
     </div>`;
   }
   const nubSub = r.fatNubank > 0
-    ? (r.nubankVarGasto > 0 ? `Fatura: ${brl(r.fatNubank)} · Var: ${brl(r.nubankVarGasto)}` : 'Fatura registrada')
+    ? 'Fatura lançada (valor real)'
     : `Estimado · Fixos: ${brl(r.nubankFixos)} · Var: ${brl(r.nubankVarGasto)}`;
   const c6Sub  = r.fatC6 > 0
-    ? (r.c6VarGasto > 0 ? `Fatura: ${brl(r.fatC6)} · Var: ${brl(r.c6VarGasto)}` : 'Fatura registrada')
+    ? 'Fatura lançada (valor real)'
     : `Estimado · Fixos: ${brl(r.c6Fixos)} · Var: ${brl(r.c6VarGasto)}`;
   const bbSub  = r.fatBB > 0
-    ? (r.bbVarGasto > 0 ? `Fatura: ${brl(r.fatBB)} · Var: ${brl(r.bbVarGasto)}` : 'Fatura registrada')
+    ? 'Fatura lançada (valor real)'
     : (r.bbSaida > 0 ? `Estimado · Fixos: ${brl(r.bbGasto - r.bbVarGasto)} · Var: ${brl(r.bbVarGasto)}` : '');
   document.getElementById('detalhe-grid').innerHTML =
     detalheCard('Custos Fixos', r.totalFixos, 'var(--accent)',
@@ -796,13 +801,13 @@ function renderDashboard() {
     <tr><td>${nubLabel}</td><td style="color:var(--purple)">${brl(r.nubankSaida)}</td></tr>
     <tr><td>${c6Label}</td><td style="color:var(--red)">${brl(r.c6Saida)}</td></tr>
     ${r.bbSaida > 0 ? `<tr><td>${bbLabel}</td><td style="color:var(--green)">${brl(r.bbSaida)}</td></tr>` : ''}
-    ${r.cartaoFamilia > 0 ? `<tr><td style="color:var(--yellow)">Cartão Família</td><td style="color:var(--yellow)">${brl(r.cartaoFamilia)}</td></tr>` : ''}
     <tr><td>Débito Direto</td><td>${brl(r.debitoDireto)}</td></tr>
     <tr class="total"><td>TOTAL SAÍDAS</td><td>${brl(r.totalSaidas)}</td></tr>
     <tr><td colspan="2" style="font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);padding-top:10px;padding-bottom:6px;">Saldo</td></tr>
     <tr><td>Salário</td><td>${brl(r.salario)}</td></tr>
     <tr><td>Total Saídas</td><td>- ${brl(r.totalSaidas)}</td></tr>
     <tr class="total"><td>Saldo do Mês</td><td style="color:${r.saldo>=0?'var(--green)':'var(--red)'}">${brl(r.saldo)}</td></tr>
+    ${r.cartaoFamilia > 0 ? `<tr><td colspan="2" style="font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);padding-top:10px;padding-bottom:6px;">Bônus (não entra no saldo)</td></tr><tr><td style="color:var(--yellow)">Cartão Família</td><td style="color:var(--yellow)">${brl(r.cartaoFamilia)}</td></tr>` : ''}
   `;
 
   // Gastos variáveis do mês (tabela dedicada)
@@ -888,6 +893,16 @@ function renderChart(meses) {
 //  GASTOS VARIÁVEIS
 // ═══════════════════════════════════════════════════
 
+function atualizarPreviewMesDashboard() {
+  const data = document.getElementById('gv-data').value;
+  const forma = document.getElementById('gv-forma').value;
+  const preview = document.getElementById('gv-preview-mes');
+  if (!preview) return;
+  if (!data || !forma) { preview.value = '—'; return; }
+  const mk = calcMesCaixaVariavel(data, forma);
+  preview.value = mesLabel(mk);
+}
+
 function addGastoVariavel() {
   const data = document.getElementById('gv-data').value;
   const desc = document.getElementById('gv-desc').value.trim();
@@ -903,10 +918,15 @@ function addGastoVariavel() {
   variaveis.push({ id: Date.now().toString(), data, desc, cat, valor, forma });
   save('variaveis', variaveis);
 
+  // Sincroniza dashboard com mês onde o lançamento aparecerá
+  const mkDash = calcMesCaixaVariavel(data, forma);
+  const dashMes = document.getElementById('dash-mes');
+  if (dashMes) dashMes.value = mkDash;
+
   document.getElementById('gv-desc').value = '';
   document.getElementById('gv-valor').value = '';
   renderGastosVariaveis();
-  renderDashboardIfActive();
+  renderDashboard();
 }
 
 function deleteVariavel(id) {
@@ -943,7 +963,7 @@ function renderGastosVariaveis() {
       <td>${v.cat}</td>
       <td style="font-weight:600">${brl(v.valor)}</td>
       <td>${tagForma(v.forma)}</td>
-      <td style="color:var(--muted);font-size:12px">${mesLabel(mk)}</td>
+      <td style="color:var(--accent);font-weight:600;font-size:12px">${mesLabel(mk)}</td>
       <td><button class="btn btn-danger btn-sm" onclick="deleteVariavel('${v.id}')">✕</button></td>
     </tr>`;
   }).join('');
