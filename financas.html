@@ -598,18 +598,18 @@ function calcResumo(mesk) {
 
   const fat = faturas[mesk] || { bb: 0, c6: 0, nubank: 0 };
 
-  // Saída por cartão: se há fixos individuais cadastrados, usa estimativa (fixos+var).
-  // Isso garante que qualquer alteração de custo fixo atualize imediatamente o saldo.
-  // Se não há fixos para o cartão, usa a fatura lançada como fallback.
-  const nubankSaida = (nubankFixos + nubankVarCaixa) > 0
-    ? (nubankFixos + nubankVarCaixa)
-    : (fat.nubank || 0);
-  const c6Saida = (c6Fixos + c6VarCaixa) > 0
-    ? (c6Fixos + c6VarCaixa)
-    : (fat.c6 || 0);
-  const bbSaida = (bbFixos + bbVarCaixa) > 0
-    ? (bbFixos + bbVarCaixa)
-    : (fat.bb || 0);
+  // Saída por cartão:
+  // - Se fatura foi lançada: usa fatura + gastos variáveis adicionados (que ainda não estão na fatura)
+  // - Se fatura não foi lançada: usa estimativa dos fixos + var
+  const nubankSaida = (fat.nubank||0) > 0
+    ? (fat.nubank||0) + nubankVarCaixa
+    : nubankFixos + nubankVarCaixa;
+  const c6Saida = (fat.c6||0) > 0
+    ? (fat.c6||0) + c6VarCaixa
+    : c6Fixos + c6VarCaixa;
+  const bbSaida = (fat.bb||0) > 0
+    ? (fat.bb||0) + bbVarCaixa
+    : bbFixos + bbVarCaixa;
   const cartaoFamilia = cartaoFamiliaFixos + cartaoFamiliaVar;
 
   const totalSaidas = fixosDebito + varDebito + nubankSaida + c6Saida + bbSaida;
@@ -777,20 +777,18 @@ function renderDashboard() {
       ${sub ? `<div style="font-size:11px;color:var(--muted);margin-top:4px;">${sub}</div>` : ''}
     </div>`;
   }
-  // Quando há fixos cadastrados para o cartão, estimativa controla totalSaidas
-  // A fatura lançada aparece só como referência
   const nubHasFixos = r.nubankFixos + r.nubankVarGasto > 0;
-  const nubSub = nubHasFixos
-    ? `Estimado · Fixos: ${brl(r.nubankFixos)} · Var: ${brl(r.nubankVarGasto)}${r.fatNubank > 0 ? ` · Ref. fatura: ${brl(r.fatNubank)}` : ''}`
-    : (r.fatNubank > 0 ? `Fatura lançada (sem fixos cadastrados)` : 'Sem lançamentos');
+  const nubSub = r.fatNubank > 0
+    ? `Fatura: ${brl(r.fatNubank)}${r.nubankVarGasto > 0 ? ` + Var: ${brl(r.nubankVarGasto)}` : ''}`
+    : `Estimado · Fixos: ${brl(r.nubankFixos)} · Var: ${brl(r.nubankVarGasto)}`;
   const c6HasFixos = r.c6Fixos + r.c6VarGasto > 0;
-  const c6Sub = c6HasFixos
-    ? `Estimado · Fixos: ${brl(r.c6Fixos)} · Var: ${brl(r.c6VarGasto)}${r.fatC6 > 0 ? ` · Ref. fatura: ${brl(r.fatC6)}` : ''}`
-    : (r.fatC6 > 0 ? `Fatura lançada (sem fixos cadastrados)` : 'Sem lançamentos');
+  const c6Sub = r.fatC6 > 0
+    ? `Fatura: ${brl(r.fatC6)}${r.c6VarGasto > 0 ? ` + Var: ${brl(r.c6VarGasto)}` : ''}`
+    : `Estimado · Fixos: ${brl(r.c6Fixos)} · Var: ${brl(r.c6VarGasto)}`;
   const bbHasFixos = r.bbGasto > 0;
-  const bbSub = bbHasFixos
-    ? `Estimado · Fixos: ${brl(r.bbGasto - r.bbVarGasto)} · Var: ${brl(r.bbVarGasto)}${r.fatBB > 0 ? ` · Ref. fatura: ${brl(r.fatBB)}` : ''}`
-    : (r.fatBB > 0 ? `Fatura lançada (sem fixos cadastrados)` : '');
+  const bbSub = r.fatBB > 0
+    ? `Fatura: ${brl(r.fatBB)}${r.bbVarGasto > 0 ? ` + Var: ${brl(r.bbVarGasto)}` : ''}`
+    : (r.bbSaida > 0 ? `Estimado · Fixos: ${brl(r.bbGasto - r.bbVarGasto)} · Var: ${brl(r.bbVarGasto)}` : '');
   document.getElementById('detalhe-grid').innerHTML =
     detalheCard('Custos Fixos', r.totalFixos, 'var(--accent)',
       `Déb: ${brl(r.fixosDebito)} · Cred: ${brl(r.fixosCredito)} · Fam: ${brl(r.cartaoFamiliaFixos)}`) +
@@ -803,18 +801,16 @@ function renderDashboard() {
       `Fixos: ${brl(r.cartaoFamiliaFixos)} · Var: ${brl(r.cartaoFamiliaVar)}`) : '');
 
   // Breakdown
-  const nubLabel = nubHasFixos ? `Nubank (estimado)` : (r.fatNubank > 0 ? `Nubank (fatura)` : `Nubank`);
-  const c6Label  = c6HasFixos  ? `C6 (estimado)`     : (r.fatC6    > 0 ? `C6 (fatura)`    : `C6`);
-  const bbLabel  = bbHasFixos  ? `BB (estimado)`      : (r.fatBB    > 0 ? `BB (fatura)`    : `BB`);
+  const nubLabel = r.fatNubank > 0 ? `Nubank Crédito (fatura)` : `Nubank Crédito (estimado)`;
+  const c6Label  = r.fatC6    > 0 ? `C6 Crédito (fatura)`    : `C6 Crédito (estimado)`;
+  const bbLabel  = r.fatBB    > 0 ? `BB Crédito (fatura)`    : `BB Crédito (estimado)`;
   document.getElementById('breakdown-table').innerHTML = `
     <tr><td colspan="2" style="font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);padding-top:4px;padding-bottom:6px;">Por tipo de gasto</td></tr>
-    <tr><td>Custos Fixos (total)</td><td>${brl(r.totalFixos)}</td></tr>
-    <tr><td>Gastos Variáveis (total)</td><td>${brl(r.totalVariaveis)}</td></tr>
+    <tr><td>Custos Fixos (estimado)</td><td>${brl(r.totalFixos)}</td></tr>
+    <tr><td>Gastos Variáveis</td><td>${brl(r.totalVariaveis)}</td></tr>
     <tr><td colspan="2" style="font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);padding-top:10px;padding-bottom:6px;">Detalhamento de saídas</td></tr>
     <tr><td>${nubLabel}</td><td style="color:var(--purple)">${brl(r.nubankSaida)}</td></tr>
-    ${nubHasFixos && r.fatNubank > 0 ? `<tr><td style="font-size:11px;color:var(--muted)">↳ Ref. fatura Nubank</td><td style="color:var(--muted);font-size:11px">${brl(r.fatNubank)}</td></tr>` : ''}
     <tr><td>${c6Label}</td><td style="color:var(--red)">${brl(r.c6Saida)}</td></tr>
-    ${c6HasFixos && r.fatC6 > 0 ? `<tr><td style="font-size:11px;color:var(--muted)">↳ Ref. fatura C6</td><td style="color:var(--muted);font-size:11px">${brl(r.fatC6)}</td></tr>` : ''}
     ${r.bbSaida > 0 ? `<tr><td>${bbLabel}</td><td style="color:var(--green)">${brl(r.bbSaida)}</td></tr>` : ''}
     <tr><td>Débito Direto</td><td>${brl(r.debitoDireto)}</td></tr>
     <tr class="total"><td>TOTAL SAÍDAS</td><td>${brl(r.totalSaidas)}</td></tr>
