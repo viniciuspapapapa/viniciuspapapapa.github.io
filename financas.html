@@ -616,7 +616,12 @@ function calcResumo(mesk) {
   const saldo = params.salario - totalSaidas;
   const pct = params.salario > 0 ? saldo / params.salario : 0;
   const saldoPrevisto = saldo;
-  const totalFixos = fixosDebito + fixosCredito + cartaoFamiliaFixos;
+  // Exclude credit fixos superseded by a fatura — keeps totalFixos consistent with totalSaidas
+  const fixosCreditoEfetivos =
+    (fat.nubank > 0 ? 0 : nubankFixos) +
+    (fat.c6    > 0 ? 0 : c6Fixos) +
+    (fat.bb    > 0 ? 0 : bbFixos);
+  const totalFixos = fixosDebito + fixosCreditoEfetivos + cartaoFamiliaFixos;
   const totalVariaveis = varDebito + varCredito + cartaoFamiliaVar;
   const debitoDireto = fixosDebito + varDebito;
 
@@ -627,7 +632,7 @@ function calcResumo(mesk) {
 
   return {
     salario: params.salario,
-    fixosDebito, fixosCredito, varDebito, varCredito,
+    fixosDebito, fixosCredito, fixosCreditoEfetivos, varDebito, varCredito,
     totalSaidas, saldo, pct, saldoPrevisto, cartaoFamilia,
     limiteFamilia: params.limite, meta: params.meta,
     fatBB: fat.bb||0, fatC6: fat.c6||0, fatNubank: fat.nubank||0,
@@ -794,7 +799,7 @@ function renderDashboard() {
     : (r.bbSaida > 0 ? `Estimado · Fixos: ${brl(r.bbGasto - r.bbVarGasto)} · Var: ${brl(r.bbVarGasto)}` : '');
   document.getElementById('detalhe-grid').innerHTML =
     detalheCard('Custos Fixos', r.totalFixos, 'var(--accent)',
-      `Déb: ${brl(r.fixosDebito)} · Cred: ${brl(r.fixosCredito)} · Fam: ${brl(r.cartaoFamiliaFixos)}`) +
+      `Déb: ${brl(r.fixosDebito)} · Cred: ${brl(r.fixosCreditoEfetivos)} · Fam: ${brl(r.cartaoFamiliaFixos)}`) +
     detalheCard('Gastos Variáveis', r.totalVarGastoMes, 'var(--green)',
       `${r.gastosVarMes.length} lançamento${r.gastosVarMes.length !== 1 ? 's' : ''} no mês`) +
     detalheCard('Nubank Crédito', r.nubankSaida, 'var(--purple)', nubSub) +
@@ -932,10 +937,12 @@ function addGastoVariavel() {
   variaveis.push({ id: Date.now().toString(), data, desc, cat, valor, forma });
   save('variaveis', variaveis);
 
-  // Aponta dashboard para o mês onde o lançamento aparecerá
+  // Aponta dashboard e filtro GV para o mês onde o lançamento aparecerá
   const mkDash = calcMesCaixaVariavel(data, forma);
   const dashMes = document.getElementById('dash-mes');
   if (dashMes) dashMes.value = mkDash;
+  const gvFiltro = document.getElementById('gv-filtro-mes');
+  if (gvFiltro) gvFiltro.value = mkDash;
 
   document.getElementById('gv-desc').value = '';
   document.getElementById('gv-valor').value = '';
@@ -955,9 +962,7 @@ function deleteVariavel(id) {
 function renderGastosVariaveis() {
   const filtro = document.getElementById('gv-filtro-mes').value;
   const variaveis = getVariaveis().filter(v => {
-    const d = new Date(v.data + 'T12:00:00');
-    const vMes = mesKey(d.getFullYear(), d.getMonth() + 1);
-    return vMes === filtro;
+    return calcMesCaixaVariavel(v.data, v.forma) === filtro;
   });
 
   const tbody = document.getElementById('gv-body');
