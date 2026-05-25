@@ -664,7 +664,10 @@ function showPage(id) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
   document.getElementById('page-' + id).classList.add('active');
-  event.currentTarget.classList.add('active');
+  const navBtn = (typeof event !== 'undefined' && event && event.currentTarget && event.currentTarget.classList.contains('nav-btn'))
+    ? event.currentTarget
+    : document.querySelector(`.nav-btn[onclick*="'${id}'"]`);
+  if (navBtn) navBtn.classList.add('active');
   if (id === 'dashboard') { renderDashboard(); renderChart(gerarMeses()); }
   if (id === 'variaveis') renderGastosVariaveis();
   if (id === 'fixos') renderFixos();
@@ -929,15 +932,17 @@ function addGastoVariavel() {
   variaveis.push({ id: Date.now().toString(), data, desc, cat, valor, forma });
   save('variaveis', variaveis);
 
-  // Sincroniza dashboard com mês onde o lançamento aparecerá
+  // Aponta dashboard para o mês onde o lançamento aparecerá
   const mkDash = calcMesCaixaVariavel(data, forma);
   const dashMes = document.getElementById('dash-mes');
   if (dashMes) dashMes.value = mkDash;
 
   document.getElementById('gv-desc').value = '';
   document.getElementById('gv-valor').value = '';
-  renderGastosVariaveis();
-  renderDashboard();
+  atualizarPreviewMesDashboard();
+
+  // Navega para o dashboard para mostrar o lançamento imediatamente
+  showPage('dashboard');
 }
 
 function deleteVariavel(id) {
