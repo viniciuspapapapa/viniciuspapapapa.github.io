@@ -223,10 +223,17 @@ main { max-width: 860px; margin: 0 auto; padding: 28px 20px 60px; display: flex;
         <div class="toggle"></div>
         <span class="toggle-label">Ler nomes do vídeo (tarjas de identificação)</span>
       </label>
-      <div class="diar-hint" style="margin-top:8px" id="ocrHint">
-        Analisa os frames do vídeo para capturar os nomes exibidos na tela (ex: "Dr. João Silva — Advogado"). Requer vídeo e Tesseract OCR instalado.<br>
-        <a href="https://github.com/UB-Mannheim/tesseract/wiki" target="_blank" style="color:var(--accent)">Instalar Tesseract</a> · depois: <code>pip install pytesseract opencv-python-headless</code>
+      <div class="diar-hint" style="margin-top:8px">
+        Analisa os frames do vídeo para capturar os nomes exibidos na tela (ex: "Dr. João Silva — Advogado").<br>
+        Requer <a href="https://github.com/UB-Mannheim/tesseract/wiki" target="_blank" style="color:var(--accent)">Tesseract OCR</a> instalado no computador.
       </div>
+      <div style="margin-top:10px;display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+        <span style="font-size:12px;color:var(--muted);white-space:nowrap">Caminho do tesseract.exe:</span>
+        <input id="tesseractPath" type="text" placeholder="Ex: C:\Program Files\Tesseract-OCR\tesseract.exe"
+          style="flex:1;min-width:260px;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text);font-size:12px;padding:6px 10px;">
+        <button class="btn btn-secondary btn-sm" onclick="saveTesseractPath()">Salvar</button>
+      </div>
+      <div id="tesseractStatus" style="font-size:11px;color:var(--muted);margin-top:4px"></div>
     </div>
   </div>
 
@@ -378,6 +385,38 @@ fileInput.addEventListener('change', () => { if (fileInput.files[0]) setFile(fil
 dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
 dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
 dropZone.addEventListener('drop', e => { e.preventDefault(); if(e.dataTransfer.files[0]) setFile(e.dataTransfer.files[0]); });
+
+/* ── Config (Tesseract path) ───────────────────────── */
+async function loadConfig() {
+  try {
+    const r = await fetch('/config');
+    const cfg = await r.json();
+    if (cfg.tesseract_path) {
+      document.getElementById('tesseractPath').value = cfg.tesseract_path;
+      document.getElementById('tesseractStatus').textContent = '✓ Caminho salvo';
+      document.getElementById('tesseractStatus').style.color = 'var(--green)';
+    }
+  } catch(_) {}
+}
+
+async function saveTesseractPath() {
+  const path = document.getElementById('tesseractPath').value.trim();
+  if (!path) return;
+  try {
+    await fetch('/config', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({tesseract_path: path}),
+    });
+    document.getElementById('tesseractStatus').textContent = '✓ Salvo! Será usado na próxima transcrição.';
+    document.getElementById('tesseractStatus').style.color = 'var(--green)';
+  } catch(_) {
+    document.getElementById('tesseractStatus').textContent = 'Erro ao salvar';
+    document.getElementById('tesseractStatus').style.color = 'var(--red)';
+  }
+}
+
+loadConfig();
 
 /* ── Diarization / OCR toggles ─────────────────────── */
 const diarizeToggle = document.getElementById('diarizeToggle');

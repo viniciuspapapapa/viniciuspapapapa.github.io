@@ -24,6 +24,30 @@ def find_free_port():
 
 
 base_dir = get_base_dir()
+
+# Config file lives next to the .exe (or script), not inside _MEIPASS
+CONFIG_PATH = os.path.join(
+    os.path.dirname(sys.executable if getattr(sys, 'frozen', False) else os.path.abspath(__file__)),
+    'transcricao_config.json',
+)
+
+
+def load_config():
+    try:
+        with open(CONFIG_PATH, 'r', encoding='utf-8') as f:
+            return json.load(f)
+    except Exception:
+        return {}
+
+
+def save_config(data):
+    try:
+        cfg = load_config()
+        cfg.update(data)
+        with open(CONFIG_PATH, 'w', encoding='utf-8') as f:
+            json.dump(cfg, f, ensure_ascii=False, indent=2)
+    except Exception:
+        pass
 flask_app = Flask(__name__)
 model_cache = {}
 model_lock = threading.Lock()
@@ -221,6 +245,15 @@ def extract_names_from_video_ocr(video_path):
         tess_found = True
     except Exception:
         import shutil
+        # Check user-configured path first
+        cfg_path = load_config().get('tesseract_path', '')
+        if cfg_path and os.path.isfile(cfg_path):
+            pytesseract.pytesseract.tesseract_cmd = cfg_path
+            try:
+                pytesseract.get_tesseract_version()
+                tess_found = True
+            except Exception:
+                pass
 
         # Build list of candidate paths
         home = os.path.expanduser('~')
@@ -390,6 +423,18 @@ def match_ocr_to_speakers(ocr_events, segments):
 @flask_app.route('/')
 def index():
     return send_from_directory(base_dir, 'transcricao.html')
+
+
+@flask_app.route('/config', methods=['GET'])
+def get_config():
+    return jsonify(load_config())
+
+
+@flask_app.route('/config', methods=['POST'])
+def set_config():
+    data = request.get_json(force=True)
+    save_config(data)
+    return jsonify({'ok': True})
 
 
 @flask_app.route('/transcribe', methods=['POST'])
