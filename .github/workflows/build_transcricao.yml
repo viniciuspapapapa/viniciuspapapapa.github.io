@@ -1,0 +1,43 @@
+name: Build Transcricao.exe
+
+on:
+  workflow_dispatch:   # disparo manual pelo botão no GitHub
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install pywebview flask faster-whisper pyinstaller
+
+      - name: Build executable
+        run: |
+          pyinstaller `
+            --onefile `
+            --noconsole `
+            --name "Transcricao" `
+            --add-data "transcricao.html;." `
+            --hidden-import "faster_whisper" `
+            --hidden-import "ctranslate2" `
+            --hidden-import "tokenizers" `
+            --hidden-import "huggingface_hub" `
+            --collect-all "faster_whisper" `
+            transcricao.py
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Transcricao-Windows
+          path: dist/Transcricao.exe
+          retention-days: 30
