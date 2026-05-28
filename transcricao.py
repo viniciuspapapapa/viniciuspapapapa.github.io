@@ -214,15 +214,31 @@ def extract_names_from_video_ocr(video_path):
             'https://github.com/UB-Mannheim/tesseract/wiki'
         )
 
-    # Verify tesseract binary exists
+    # Locate tesseract binary (try PATH first, then common Windows install paths)
+    tess_found = False
     try:
         pytesseract.get_tesseract_version()
+        tess_found = True
     except Exception:
+        candidates = [
+            r'C:\Program Files\Tesseract-OCR\tesseract.exe',
+            r'C:\Program Files (x86)\Tesseract-OCR\tesseract.exe',
+            os.path.join(os.environ.get('LOCALAPPDATA', ''), 'Tesseract-OCR', 'tesseract.exe'),
+            os.path.join(os.environ.get('APPDATA', ''), 'Tesseract-OCR', 'tesseract.exe'),
+        ]
+        for path in candidates:
+            if os.path.isfile(path):
+                pytesseract.pytesseract.tesseract_cmd = path
+                try:
+                    pytesseract.get_tesseract_version()
+                    tess_found = True
+                    break
+                except Exception:
+                    continue
+    if not tess_found:
         return None, (
             'Tesseract OCR não encontrado.\n'
-            'Baixe e instale em:\n'
-            'https://github.com/UB-Mannheim/tesseract/wiki\n'
-            '(Marque "Portuguese" durante a instalação)'
+            'Verifique se a instalação foi concluída e reinicie o aplicativo.'
         )
 
     try:
