@@ -199,23 +199,34 @@ main { max-width: 860px; margin: 0 auto; padding: 28px 20px 60px; display: flex;
     </div>
   </div>
 
-  <!-- Diarization -->
+  <!-- Diarization + OCR -->
   <div class="card">
     <div class="card-title">Identificação de Falantes</div>
     <div class="diar-row">
       <label class="toggle-wrap">
         <input type="checkbox" id="diarizeToggle">
         <div class="toggle"></div>
-        <span class="toggle-label">Identificar quem está falando</span>
+        <span class="toggle-label">Separar vozes por falante</span>
       </label>
       <div class="nspeakers-wrap" id="nspeakersWrap" style="display:none">
         <span>Número de falantes:</span>
         <input type="number" id="nSpeakers" value="4" min="2" max="10">
       </div>
     </div>
-    <div class="diar-hint" id="diarHint">
-      Separa automaticamente as falas por voz e tenta identificar os participantes pelo contexto da audiência.<br>
-      <strong>Requer:</strong> <code>pip install librosa scikit-learn</code>
+    <div class="diar-hint">
+      Separa as falas por características de voz e identifica nomes pelo contexto da audiência (ex: quando o juiz pede que a testemunha se identifique).
+    </div>
+
+    <div style="margin-top:14px;border-top:1px solid var(--border);padding-top:14px">
+      <label class="toggle-wrap">
+        <input type="checkbox" id="ocrToggle">
+        <div class="toggle"></div>
+        <span class="toggle-label">Ler nomes do vídeo (tarjas de identificação)</span>
+      </label>
+      <div class="diar-hint" style="margin-top:8px" id="ocrHint">
+        Analisa os frames do vídeo para capturar os nomes exibidos na tela (ex: "Dr. João Silva — Advogado"). Requer vídeo e Tesseract OCR instalado.<br>
+        <a href="https://github.com/UB-Mannheim/tesseract/wiki" target="_blank" style="color:var(--accent)">Instalar Tesseract</a> · depois: <code>pip install pytesseract opencv-python-headless</code>
+      </div>
     </div>
   </div>
 
@@ -368,11 +379,19 @@ dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classL
 dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
 dropZone.addEventListener('drop', e => { e.preventDefault(); if(e.dataTransfer.files[0]) setFile(e.dataTransfer.files[0]); });
 
-/* ── Diarization toggle ────────────────────────────── */
+/* ── Diarization / OCR toggles ─────────────────────── */
 const diarizeToggle = document.getElementById('diarizeToggle');
 const nspeakersWrap = document.getElementById('nspeakersWrap');
+const ocrToggle     = document.getElementById('ocrToggle');
 diarizeToggle.addEventListener('change', () => {
   nspeakersWrap.style.display = diarizeToggle.checked ? 'flex' : 'none';
+  if (!diarizeToggle.checked) ocrToggle.checked = false;
+});
+ocrToggle.addEventListener('change', () => {
+  if (ocrToggle.checked && !diarizeToggle.checked) {
+    diarizeToggle.checked = true;
+    nspeakersWrap.style.display = 'flex';
+  }
 });
 
 /* ── Error / processing state ──────────────────────── */
@@ -411,11 +430,14 @@ document.getElementById('btnTranscrever').addEventListener('click', async () => 
   const diarize     = diarizeToggle.checked;
   const nSpeakers   = parseInt(document.getElementById('nSpeakers').value) || 4;
 
+  const ocrVideo  = ocrToggle.checked;
+
   const formData = new FormData();
   formData.append('file', selectedFile);
   formData.append('model', modelSize);
   formData.append('diarize', diarize ? 'true' : 'false');
   formData.append('n_speakers', nSpeakers);
+  formData.append('ocr_video', ocrVideo ? 'true' : 'false');
 
   allSegments = [];
   fullText = '';
@@ -485,6 +507,24 @@ function handleEvent(data) {
   if (data.status === 'transcrevendo') {
     statusText.textContent = 'Transcrevendo…';
     statusText.style.color = 'var(--accent)';
+    return;
+  }
+  if (data.status === 'ocr_lendo') {
+    statusText.textContent = 'Lendo nomes do vídeo (OCR)…';
+    statusText.style.color = 'var(--yellow)';
+    return;
+  }
+  if (data.status === 'ocr_ok') {
+    segCount.textContent = `OCR: ${data.count} sobreposições de texto detectadas`;
+    return;
+  }
+  if (data.status === 'ocr_erro') {
+    segCount.textContent = '';
+    showError('OCR: ' + data.msg);
+    return;
+  }
+  if (data.status === 'diar_aviso') {
+    segCount.textContent = 'Aviso: ' + data.msg;
     return;
   }
   if (data.status === 'identificando_falantes') {

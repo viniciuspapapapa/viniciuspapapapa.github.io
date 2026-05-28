@@ -5,6 +5,7 @@ import tempfile
 import socket
 import threading
 import re
+import subprocess
 from collections import Counter
 
 from flask import Flask, request, jsonify, send_from_directory, Response, stream_with_context
@@ -31,20 +32,17 @@ SUPPORTED_EXTENSIONS = {
     '.mp3', '.mp4', '.wav', '.m4a', '.mkv', '.avi', '.mov',
     '.webm', '.flac', '.ogg', '.wma', '.wmv', '.mpeg', '.mpga',
 }
+VIDEO_EXTENSIONS = {'.mp4', '.mkv', '.avi', '.mov', '.webm', '.wmv', '.mpeg'}
 
-# Patterns to detect when a name is being asked (Brazilian court context)
 NAME_ASKED_PATTERNS = [
     'qual é o seu nome', 'qual seu nome', 'como se chama',
     'pode se identificar', 'qual a sua qualificação',
     'diga o seu nome', 'informe seu nome', 'declare seu nome',
-    'me diga seu nome', 'qual o nome',
 ]
-
 NAME_GIVEN_PATTERNS = [
     r'(?:meu nome é|me chamo|chamo-me|sou o|sou a)\s+([A-ZÁÉÍÓÚÀÂÊÔÃÕÜÇ][a-záéíóúàâêôãõüç]+(?:\s+[A-ZÁÉÍÓÚÀÂÊÔÃÕÜÇ][a-záéíóúàâêôãõüç]+)+)',
     r'^([A-ZÁÉÍÓÚÀÂÊÔÃÕÜÇ][a-záéíóúàâêôãõüç]+(?:\s+[A-ZÁÉÍÓÚÀÂÊÔÃÕÜÇ][a-záéíóúàâêôãõüç]+){1,4})(?:,|\.|$)',
 ]
-
 JUDGE_PATTERNS = [
     'prossiga', 'pode responder', 'defiro', 'indefiro',
     'consigne-se', 'audiência encerrada', 'próxima pergunta',
@@ -52,6 +50,8 @@ JUDGE_PATTERNS = [
     'concedo a palavra', 'sem mais perguntas', 'pode perguntar',
 ]
 
+
+# ── Model ──────────────────────────────────────────────────────────────
 
 def get_model(size):
     with model_lock:
@@ -61,103 +61,279 @@ def get_model(size):
         return model_cache[size]
 
 
+# ── Audio conversion ────────────────────────────────────────────────────
+
+def convert_to_wav(input_path):
+    """Convert any audio/video to 16 kHz mono WAV using ffmpeg."""
+    out = tempfile.mktemp(suffix='.wav')
+    result = subprocess.run(
+        ['ffmpeg', '-y', '-i', input_path,
+         '-ar', '16000', '-ac', '1', '-f', 'wav', out],
+        capture_output=True, timeout=600,
+    )
+    if result.returncode != 0:
+        raise RuntimeError('ffmpeg: ' + result.stderr.decode(errors='replace')[-300:])
+    return out
+
+
+# ── Speaker clustering (scipy + numpy only, no librosa) ─────────────────
+
+def _spectral_features(frame, sr):
+    """Compute spectral centroid, rolloff, RMS and ZCR via numpy FFT."""
+    import numpy as np
+    n_fft = min(512, len(frame))
+    if n_fft < 128:
+        return None
+    hop = n_fft // 2
+    rows = []
+    window = np.hanning(n_fft)
+    for i in range(0, len(frame) - n_fft, hop):
+        sub = frame[i:i + n_fft] * window
+        spec = np.abs(np.fft.rfft(sub))
+        freqs = np.fft.rfftfreq(n_fft, 1.0 / sr)
+        total = spec.sum()
+        if total > 1e-10:
+            centroid = (freqs * spec).sum() / total
+            cs = np.cumsum(spec)
+            ri = np.searchsorted(cs, 0.85 * cs[-1])
+            rolloff = freqs[min(ri, len(freqs) - 1)]
+        else:
+            centroid = rolloff = 0.0
+        rms = float(np.sqrt(np.mean(sub ** 2)))
+        zcr = float(np.mean(np.abs(np.diff(np.sign(frame[i:i + n_fft]))) / 2))
+        rows.append([centroid, rolloff, rms, zcr])
+    if not rows:
+        return None
+    arr = np.array(rows)
+    return np.concatenate([arr.mean(axis=0), arr.std(axis=0)])
+
+
 def cluster_speakers(audio_path, whisper_segments, n_speakers):
-    """Assign speaker labels to segments using MFCC features + agglomerative clustering."""
+    """Assign speaker labels using numpy FFT features + scikit-learn clustering."""
     try:
-        import librosa
         import numpy as np
+        from scipy.io import wavfile
         from sklearn.preprocessing import StandardScaler
         from sklearn.cluster import AgglomerativeClustering
-    except ImportError:
-        for seg in whisper_segments:
-            seg.setdefault('speaker', 'ORADOR_1')
-        return whisper_segments
+    except ImportError as e:
+        _default_labels(whisper_segments)
+        return whisper_segments, f'Dependência ausente: {e}'
 
+    wav_path = None
     try:
-        y, sr = librosa.load(audio_path, sr=16000, mono=True)
-    except Exception:
-        for seg in whisper_segments:
-            seg.setdefault('speaker', 'ORADOR_1')
-        return whisper_segments
+        wav_path = convert_to_wav(audio_path)
+        sr, audio = wavfile.read(wav_path)
+        if audio.ndim > 1:
+            audio = audio[:, 0]
+        audio = audio.astype(np.float32)
+        if audio.max() > 1.0:
+            audio /= max(np.iinfo(np.int16).max, audio.max())
+    except Exception as e:
+        _default_labels(whisper_segments)
+        return whisper_segments, f'Erro na conversão de áudio: {e}'
+    finally:
+        if wav_path and os.path.exists(wav_path):
+            try:
+                os.unlink(wav_path)
+            except OSError:
+                pass
 
-    # Extract MFCC features at fine granularity (every 0.4s)
-    hop = 0.4
-    win = 1.0
-    hop_s = int(hop * sr)
-    win_s = int(win * sr)
+    features, valid_idx = [], []
+    for i, seg in enumerate(whisper_segments):
+        s, e = int(seg['start'] * sr), int(seg['end'] * sr)
+        feat = _spectral_features(audio[s:e], sr)
+        if feat is not None:
+            features.append(feat)
+            valid_idx.append(i)
 
-    frame_times = []
-    frame_feats = []
+    if len(features) < max(2, n_speakers):
+        _default_labels(whisper_segments)
+        return whisper_segments, None
 
-    for start in range(0, len(y) - win_s, hop_s):
-        frame = y[start:start + win_s]
-        t = start / sr
-        try:
-            mfcc = librosa.feature.mfcc(y=frame, sr=sr, n_mfcc=20)
-            feat = np.concatenate([np.mean(mfcc, axis=1), np.std(mfcc, axis=1)])
-            frame_times.append(t)
-            frame_feats.append(feat)
-        except Exception:
-            pass
+    import numpy as np
+    X = StandardScaler().fit_transform(np.array(features))
+    k = min(n_speakers, len(features))
+    labels = AgglomerativeClustering(n_clusters=k, metric='euclidean', linkage='ward').fit_predict(X)
 
-    if len(frame_feats) < max(2, n_speakers):
-        for seg in whisper_segments:
-            seg.setdefault('speaker', 'ORADOR_1')
-        return whisper_segments
-
-    feats = np.array(frame_feats)
-    scaler = StandardScaler()
-    feats_scaled = scaler.fit_transform(feats)
-
-    k = min(n_speakers, len(frame_feats))
-    labels = AgglomerativeClustering(n_clusters=k, metric='euclidean', linkage='ward').fit_predict(feats_scaled)
-
-    # Assign labels to whisper segments via majority vote over overlapping frames
-    for seg in whisper_segments:
-        seg_start, seg_end = seg['start'], seg['end']
-        votes = [
-            labels[i]
-            for i, ft in enumerate(frame_times)
-            if seg_start - hop <= ft <= seg_end + hop
-        ]
-        if votes:
-            seg['speaker'] = f'ORADOR_{Counter(votes).most_common(1)[0][0] + 1}'
-        else:
-            seg['speaker'] = 'ORADOR_1'
-
-    return whisper_segments
+    for vi, si in enumerate(valid_idx):
+        whisper_segments[si]['speaker'] = f'ORADOR_{labels[vi] + 1}'
+    _default_labels(whisper_segments)
+    return whisper_segments, None
 
 
-def extract_speaker_names(segments):
-    """Infer speaker names/roles from speech patterns in Brazilian legal proceedings."""
-    speaker_names = {}
+def _default_labels(segments):
+    for s in segments:
+        s.setdefault('speaker', 'ORADOR_1')
 
+
+# ── Context-based name extraction ───────────────────────────────────────
+
+def extract_speaker_names_from_context(segments):
+    """Infer names/roles from speech patterns in Brazilian legal proceedings."""
+    names = {}
     for i, seg in enumerate(segments):
         text = seg.get('text', '')
-        text_lower = text.lower().strip()
         speaker = seg.get('speaker', '')
         if not speaker:
             continue
-
-        # If previous turn asked for a name, try to extract it from this response
         if i > 0:
-            prev_text = segments[i - 1].get('text', '').lower()
-            if any(p in prev_text for p in NAME_ASKED_PATTERNS):
-                for pattern in NAME_GIVEN_PATTERNS:
-                    m = re.search(pattern, text, re.IGNORECASE)
+            prev = segments[i - 1].get('text', '').lower()
+            if any(p in prev for p in NAME_ASKED_PATTERNS):
+                for pat in NAME_GIVEN_PATTERNS:
+                    m = re.search(pat, text, re.IGNORECASE)
                     if m:
                         name = m.group(1).strip()
-                        if len(name.split()) >= 2 and speaker not in speaker_names:
-                            speaker_names[speaker] = name
+                        if len(name.split()) >= 2 and speaker not in names:
+                            names[speaker] = name
                         break
+        if speaker not in names:
+            if any(p in text.lower() for p in JUDGE_PATTERNS):
+                names[speaker] = 'Juiz'
+    return names
 
-        # Detect judge by speech patterns
-        if speaker not in speaker_names:
-            if any(p in text_lower for p in JUDGE_PATTERNS):
-                speaker_names[speaker] = 'Juiz'
 
-    return speaker_names
+# ── Video OCR ────────────────────────────────────────────────────────────
 
+def extract_names_from_video_ocr(video_path):
+    """
+    Sample video frames and OCR the bottom region (where name plates appear).
+    Returns (list of (timestamp, text), error_message).
+    """
+    try:
+        import cv2
+    except ImportError:
+        return None, 'opencv-python não instalado.\nExecute: pip install opencv-python-headless'
+
+    try:
+        import pytesseract
+    except ImportError:
+        return None, (
+            'pytesseract não instalado.\n'
+            'Executar: pip install pytesseract\n'
+            'E instalar o Tesseract OCR em:\n'
+            'https://github.com/UB-Mannheim/tesseract/wiki'
+        )
+
+    # Verify tesseract binary exists
+    try:
+        pytesseract.get_tesseract_version()
+    except Exception:
+        return None, (
+            'Tesseract OCR não encontrado.\n'
+            'Baixe e instale em:\n'
+            'https://github.com/UB-Mannheim/tesseract/wiki\n'
+            '(Marque "Portuguese" durante a instalação)'
+        )
+
+    try:
+        import numpy as np
+        cap = cv2.VideoCapture(video_path)
+        if not cap.isOpened():
+            return None, 'Não foi possível abrir o vídeo para OCR'
+
+        fps = cap.get(cv2.CAP_PROP_FPS) or 25.0
+        total = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+        step = max(1, int(fps * 2.5))   # sample every 2.5 s
+
+        events = []
+        frame_idx = 0
+        prev_clean = None
+
+        while frame_idx < total:
+            cap.set(cv2.CAP_PROP_POS_FRAMES, frame_idx)
+            ret, frame = cap.read()
+            if not ret:
+                break
+
+            t = frame_idx / fps
+            h, w = frame.shape[:2]
+
+            # Bottom 30% — where court overlays/name plates appear
+            region = frame[int(h * 0.68):, :]
+
+            # Try both light-on-dark and dark-on-light
+            gray = cv2.cvtColor(region, cv2.COLOR_BGR2GRAY)
+            gray = cv2.convertScaleAbs(gray, alpha=1.4, beta=15)
+
+            results = []
+            for img in [gray, cv2.bitwise_not(gray)]:
+                _, bw = cv2.threshold(img, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+                cfg = '--psm 6'
+                try:
+                    lang = 'por' if 'por' in pytesseract.get_languages() else 'eng'
+                    txt = pytesseract.image_to_string(bw, config=cfg, lang=lang)
+                except Exception:
+                    txt = pytesseract.image_to_string(bw, config=cfg)
+                results.append(txt.strip())
+
+            text = max(results, key=len)
+            clean = ' '.join(text.split())
+
+            if clean and clean != prev_clean and len(clean) > 4:
+                events.append((round(t, 2), clean))
+                prev_clean = clean
+
+            frame_idx += step
+
+        cap.release()
+        return events, None
+
+    except Exception as exc:
+        return None, str(exc)
+
+
+def _parse_name_from_ocr_text(text):
+    """Extract the most likely person name or role from OCR text."""
+    # Common court overlay patterns: "Dr. João Silva — Advogado", "NOME: FULANO DE TAL"
+    patterns = [
+        r'(?:nome[:\s]+)([A-ZÁÉÍÓÚ][a-záéíóú]+(?:\s+[A-ZÁÉÍÓÚ][a-záéíóú]+)+)',
+        r'(?:Dr\.|Dra\.)\s+([A-ZÁÉÍÓÚ][a-záéíóú]+(?:\s+[A-ZÁÉÍÓÚ][a-záéíóú]+)*)',
+        r'^([A-ZÁÉÍÓÚ]{2,}(?:\s+[A-ZÁÉÍÓÚ]{2,})+)',  # ALL CAPS names
+    ]
+    for pat in patterns:
+        m = re.search(pat, text, re.IGNORECASE | re.MULTILINE)
+        if m:
+            return m.group(1).strip().title()
+
+    # Fallback: take first line with ≥2 capitalized words
+    for line in text.split('\n'):
+        words = line.strip().split()
+        cap = [w for w in words if w and w[0].isupper() and len(w) > 2 and w.isalpha()]
+        if len(cap) >= 2:
+            return ' '.join(cap[:4])
+    return None
+
+
+def match_ocr_to_speakers(ocr_events, segments):
+    """
+    For each speaker cluster, find which OCR overlay was active most often
+    during their speaking turns.
+    """
+    if not ocr_events:
+        return {}
+
+    # Build timeline: at time t the overlay 'text' was visible
+    timeline = []  # list of (start, end, name)
+    for i, (t, text) in enumerate(ocr_events):
+        name = _parse_name_from_ocr_text(text)
+        if name:
+            end = ocr_events[i + 1][0] if i + 1 < len(ocr_events) else float('inf')
+            timeline.append((t, end, name))
+
+    speaker_votes = {}   # { speaker_id: Counter({name: count}) }
+    for seg in segments:
+        sp = seg.get('speaker')
+        if not sp:
+            continue
+        mid = (seg['start'] + seg['end']) / 2
+        for start, end, name in timeline:
+            if start - 3 <= mid <= end + 3:
+                speaker_votes.setdefault(sp, Counter())[name] += 1
+
+    return {sp: cnt.most_common(1)[0][0] for sp, cnt in speaker_votes.items() if cnt}
+
+
+# ── Flask routes ─────────────────────────────────────────────────────────
 
 @flask_app.route('/')
 def index():
@@ -178,11 +354,14 @@ def transcribe():
         return jsonify({'error': f'Formato não suportado: {ext}'}), 400
 
     model_size = request.form.get('model', 'large-v3')
-    diarize = request.form.get('diarize', 'false').lower() == 'true'
+    diarize    = request.form.get('diarize', 'false').lower() == 'true'
+    ocr_video  = request.form.get('ocr_video', 'false').lower() == 'true'
     try:
         n_speakers = max(2, min(10, int(request.form.get('n_speakers', '4'))))
     except ValueError:
         n_speakers = 4
+
+    is_video = ext in VIDEO_EXTENSIONS
 
     tmp = tempfile.NamedTemporaryFile(delete=False, suffix=ext)
     file.save(tmp.name)
@@ -191,6 +370,18 @@ def transcribe():
 
     def generate():
         try:
+            # ── OCR: read names from video frames ──────────────────
+            ocr_names_by_speaker = {}
+            if ocr_video and is_video:
+                yield f'data: {json.dumps({"status": "ocr_lendo", "msg": "Lendo nomes do vídeo…"})}\n\n'
+                ocr_events, ocr_err = extract_names_from_video_ocr(temp_path)
+                if ocr_err:
+                    yield f'data: {json.dumps({"status": "ocr_erro", "msg": ocr_err})}\n\n'
+                elif ocr_events:
+                    yield f'data: {json.dumps({"status": "ocr_ok", "count": len(ocr_events)})}\n\n'
+                    # We'll correlate after diarization
+
+            # ── Transcription ──────────────────────────────────────
             yield f'data: {json.dumps({"status": "carregando_modelo", "model": model_size})}\n\n'
             model = get_model(model_size)
 
@@ -207,19 +398,31 @@ def transcribe():
             all_segments = []
             for seg in segments_gen:
                 seg_data = {
-                    'start': round(seg.start, 2),
-                    'end': round(seg.end, 2),
-                    'text': seg.text.strip(),
+                    'start':   round(seg.start, 2),
+                    'end':     round(seg.end, 2),
+                    'text':    seg.text.strip(),
                     'speaker': None,
                 }
                 all_segments.append(seg_data)
                 yield f'data: {json.dumps({"segment": seg_data})}\n\n'
 
+            # ── Speaker diarization ────────────────────────────────
             if diarize and all_segments:
                 yield f'data: {json.dumps({"status": "identificando_falantes"})}\n\n'
-                all_segments = cluster_speakers(temp_path, all_segments, n_speakers)
-                speaker_names = extract_speaker_names(all_segments)
-                yield f'data: {json.dumps({"speakers_ready": True, "segments": all_segments, "speaker_names": speaker_names})}\n\n'
+                all_segments, err = cluster_speakers(temp_path, all_segments, n_speakers)
+                if err:
+                    yield f'data: {json.dumps({"status": "diar_aviso", "msg": err})}\n\n'
+
+                # Merge name sources: context patterns + OCR
+                names = extract_speaker_names_from_context(all_segments)
+
+                if ocr_video and is_video and 'ocr_events' in dir():
+                    ocr_map = match_ocr_to_speakers(ocr_events, all_segments)
+                    # OCR names take priority (they come from the actual video)
+                    for sp, name in ocr_map.items():
+                        names[sp] = name
+
+                yield f'data: {json.dumps({"speakers_ready": True, "segments": all_segments, "speaker_names": names})}\n\n'
 
             full_text = ' '.join(s['text'] for s in all_segments)
             yield f'data: {json.dumps({"done": True, "text": full_text, "segments": all_segments, "duration": round(info.duration, 2)})}\n\n'
@@ -235,41 +438,33 @@ def transcribe():
     return Response(
         stream_with_context(generate()),
         mimetype='text/event-stream',
-        headers={
-            'X-Accel-Buffering': 'no',
-            'Cache-Control': 'no-cache',
-            'Connection': 'keep-alive',
-        },
+        headers={'X-Accel-Buffering': 'no', 'Cache-Control': 'no-cache', 'Connection': 'keep-alive'},
     )
 
 
-class TranscricaoApi:
-    """PyWebView JS API — exposes native file-save dialog to the frontend."""
+# ── PyWebView JS API ──────────────────────────────────────────────────────
 
+class TranscricaoApi:
     def save_file(self, content, filename):
         try:
             import tkinter as tk
             from tkinter import filedialog
-
             ext = os.path.splitext(filename)[1].lower()
             filetypes = {
-                '.txt': [('Arquivo de texto', '*.txt'), ('Todos os arquivos', '*.*')],
-                '.srt': [('Legenda SRT', '*.srt'), ('Todos os arquivos', '*.*')],
+                '.txt': [('Arquivo de texto', '*.txt'), ('Todos', '*.*')],
+                '.srt': [('Legenda SRT', '*.srt'), ('Todos', '*.*')],
             }
-
             root = tk.Tk()
             root.withdraw()
             root.wm_attributes('-topmost', True)
-
             path = filedialog.asksaveasfilename(
                 parent=root,
                 defaultextension=ext,
                 initialfile=filename,
-                filetypes=filetypes.get(ext, [('Todos os arquivos', '*.*')]),
+                filetypes=filetypes.get(ext, [('Todos', '*.*')]),
                 title='Salvar transcrição',
             )
             root.destroy()
-
             if path:
                 with open(path, 'w', encoding='utf-8') as f:
                     f.write(content)
@@ -279,17 +474,18 @@ class TranscricaoApi:
             return {'ok': False, 'error': str(exc)}
 
 
+# ── Entry point ───────────────────────────────────────────────────────────
+
 if __name__ == '__main__':
     import webview
 
     port = find_free_port()
-    api = TranscricaoApi()
+    api  = TranscricaoApi()
 
-    server_thread = threading.Thread(
+    threading.Thread(
         target=lambda: flask_app.run(host='127.0.0.1', port=port, threaded=True),
         daemon=True,
-    )
-    server_thread.start()
+    ).start()
 
     webview.create_window(
         'Transcrição de Áudio/Vídeo — Vinicius',

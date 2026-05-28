@@ -1,7 +1,7 @@
 name: Build Transcricao.exe
 
 on:
-  workflow_dispatch:   # disparo manual pelo botão no GitHub
+  workflow_dispatch:
   push:
     branches: [main]
     paths:
@@ -25,7 +25,7 @@ jobs:
       - name: Install dependencies
         run: |
           pip install --upgrade pip
-          pip install pywebview flask faster-whisper librosa scikit-learn pyinstaller
+          pip install pywebview flask faster-whisper scikit-learn opencv-python-headless pytesseract pyinstaller
 
       - name: Build executable
         run: |
@@ -38,7 +38,12 @@ jobs:
             --hidden-import "ctranslate2" `
             --hidden-import "tokenizers" `
             --hidden-import "huggingface_hub" `
+            --hidden-import "scipy.io.wavfile" `
+            --hidden-import "scipy.signal" `
+            --hidden-import "sklearn.cluster" `
+            --hidden-import "sklearn.preprocessing" `
             --collect-all "faster_whisper" `
+            --collect-all "sklearn" `
             transcricao.py
 
       - name: Upload artifact
