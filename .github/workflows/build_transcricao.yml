@@ -2,6 +2,12 @@ name: Build Transcricao.exe
 
 on:
   workflow_dispatch:   # disparo manual pelo botão no GitHub
+  push:
+    branches: [main]
+    paths:
+      - 'transcricao.py'
+      - 'transcricao.html'
+      - '.github/workflows/build_transcricao.yml'
 
 jobs:
   build-windows:
