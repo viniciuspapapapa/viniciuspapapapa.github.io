@@ -214,20 +214,53 @@ def extract_names_from_video_ocr(video_path):
             'https://github.com/UB-Mannheim/tesseract/wiki'
         )
 
-    # Locate tesseract binary (try PATH first, then common Windows install paths)
+    # Locate tesseract binary
     tess_found = False
     try:
         pytesseract.get_tesseract_version()
         tess_found = True
     except Exception:
+        import shutil
+
+        # Build list of candidate paths
+        home = os.path.expanduser('~')
+        local = os.environ.get('LOCALAPPDATA', '')
+        roaming = os.environ.get('APPDATA', '')
+        pf  = os.environ.get('PROGRAMFILES', r'C:\Program Files')
+        pf86 = os.environ.get('PROGRAMFILES(X86)', r'C:\Program Files (x86)')
+
         candidates = [
-            r'C:\Program Files\Tesseract-OCR\tesseract.exe',
-            r'C:\Program Files (x86)\Tesseract-OCR\tesseract.exe',
-            os.path.join(os.environ.get('LOCALAPPDATA', ''), 'Tesseract-OCR', 'tesseract.exe'),
-            os.path.join(os.environ.get('APPDATA', ''), 'Tesseract-OCR', 'tesseract.exe'),
+            shutil.which('tesseract'),
+            shutil.which('tesseract.exe'),
+            os.path.join(pf,   'Tesseract-OCR', 'tesseract.exe'),
+            os.path.join(pf86, 'Tesseract-OCR', 'tesseract.exe'),
+            os.path.join(local,  'Tesseract-OCR', 'tesseract.exe'),
+            os.path.join(local,  'Programs', 'Tesseract-OCR', 'tesseract.exe'),
+            os.path.join(roaming, 'Tesseract-OCR', 'tesseract.exe'),
+            os.path.join(home, 'AppData', 'Local', 'Tesseract-OCR', 'tesseract.exe'),
+            os.path.join(home, 'AppData', 'Local', 'Programs', 'Tesseract-OCR', 'tesseract.exe'),
+            os.path.join(home, 'AppData', 'Roaming', 'Tesseract-OCR', 'tesseract.exe'),
         ]
+
+        # Also try Windows registry
+        try:
+            import winreg
+            for root in (winreg.HKEY_LOCAL_MACHINE, winreg.HKEY_CURRENT_USER):
+                for key_path in (
+                    r'SOFTWARE\Tesseract-OCR',
+                    r'SOFTWARE\WOW6432Node\Tesseract-OCR',
+                ):
+                    try:
+                        with winreg.OpenKey(root, key_path) as k:
+                            install_dir, _ = winreg.QueryValueEx(k, 'InstallDir')
+                            candidates.append(os.path.join(install_dir, 'tesseract.exe'))
+                    except OSError:
+                        pass
+        except Exception:
+            pass
+
         for path in candidates:
-            if os.path.isfile(path):
+            if path and os.path.isfile(path):
                 pytesseract.pytesseract.tesseract_cmd = path
                 try:
                     pytesseract.get_tesseract_version()
@@ -235,10 +268,13 @@ def extract_names_from_video_ocr(video_path):
                     break
                 except Exception:
                     continue
+
     if not tess_found:
         return None, (
             'Tesseract OCR não encontrado.\n'
-            'Verifique se a instalação foi concluída e reinicie o aplicativo.'
+            'Abra o Tesseract-OCR pelo Menu Iniciar, clique com o botão\n'
+            'direito → "Abrir local do arquivo" e copie o caminho da pasta.\n'
+            'Depois reinicie o aplicativo.'
         )
 
     try:
