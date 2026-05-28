@@ -1,3 +1,6 @@
 pywebview>=4.0
 flask>=3.0
 faster-whisper>=1.0
+# Identificação de falantes (opcional mas recomendado):
+librosa>=0.10
+scikit-learn>=1.3

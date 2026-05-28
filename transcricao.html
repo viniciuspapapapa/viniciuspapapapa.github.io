@@ -24,83 +24,66 @@
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; min-height: 100vh; }
 
-/* NAV */
 nav { background: var(--surface); border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 100; }
-.nav-inner { max-width: 860px; margin: 0 auto; display: flex; align-items: center; gap: 4px; padding: 0 20px; }
-.nav-title { font-weight: 700; font-size: 15px; color: var(--accent); white-space: nowrap; padding: 15px 0; }
-.nav-sub { font-size: 12px; color: var(--muted); margin-left: 10px; }
+.nav-inner { max-width: 860px; margin: 0 auto; display: flex; align-items: center; padding: 0 20px; gap: 10px; }
+.nav-title { font-weight: 700; font-size: 15px; color: var(--accent); padding: 15px 0; }
+.nav-sub { font-size: 12px; color: var(--muted); }
 
-/* LAYOUT */
 main { max-width: 860px; margin: 0 auto; padding: 28px 20px 60px; display: flex; flex-direction: column; gap: 18px; }
 
-/* CARDS */
 .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px 22px; }
 .card-title { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .07em; color: var(--muted); margin-bottom: 14px; }
 
-/* MODEL SELECTOR */
-.model-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+/* Model selector */
+.model-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 10px; }
 .model-opt { position: relative; cursor: pointer; }
 .model-opt input { position: absolute; opacity: 0; width: 0; height: 0; }
-.model-box {
-  border: 1.5px solid var(--border);
-  border-radius: var(--radius-sm);
-  padding: 12px 14px;
-  transition: border-color .15s, background .15s;
-  cursor: pointer;
-}
-.model-opt input:checked + .model-box {
-  border-color: var(--accent);
-  background: rgba(124,106,247,.08);
-}
+.model-box { border: 1.5px solid var(--border); border-radius: var(--radius-sm); padding: 12px 14px; transition: border-color .15s, background .15s; cursor: pointer; }
+.model-opt input:checked + .model-box { border-color: var(--accent); background: rgba(124,106,247,.08); }
 .model-box:hover { border-color: var(--accent2); }
-.model-name { font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 3px; }
+.model-name { font-size: 13px; font-weight: 600; margin-bottom: 3px; }
 .model-desc { font-size: 11px; color: var(--muted); line-height: 1.4; }
-.model-badge {
-  display: inline-block;
-  font-size: 9px;
-  font-weight: 700;
-  letter-spacing: .05em;
-  text-transform: uppercase;
-  padding: 2px 6px;
-  border-radius: 4px;
-  margin-bottom: 6px;
-}
+.model-badge { display: inline-block; font-size: 9px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; padding: 2px 6px; border-radius: 4px; margin-bottom: 6px; }
 .badge-fast { background: rgba(52,211,153,.15); color: var(--green); }
 .badge-best { background: rgba(124,106,247,.2); color: var(--accent); }
-.badge-balanced { background: rgba(251,191,36,.15); color: var(--yellow); }
+.badge-bal  { background: rgba(251,191,36,.15); color: var(--yellow); }
 
-/* DROP ZONE */
-.drop-zone {
-  border: 2px dashed var(--border);
-  border-radius: var(--radius);
-  padding: 40px 24px;
-  text-align: center;
-  cursor: pointer;
-  transition: border-color .2s, background .2s;
-  position: relative;
+/* Diarization */
+.diar-row { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+.toggle-wrap { display: flex; align-items: center; gap: 8px; cursor: pointer; user-select: none; }
+.toggle-wrap input[type=checkbox] { display: none; }
+.toggle { width: 36px; height: 20px; background: var(--border); border-radius: 10px; position: relative; transition: background .2s; flex-shrink: 0; }
+.toggle::after { content: ''; position: absolute; width: 14px; height: 14px; background: #fff; border-radius: 50%; top: 3px; left: 3px; transition: left .2s; }
+.toggle-wrap input:checked + .toggle { background: var(--accent); }
+.toggle-wrap input:checked + .toggle::after { left: 19px; }
+.toggle-label { font-size: 13px; font-weight: 500; }
+.nspeakers-wrap { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--muted); }
+.nspeakers-wrap input[type=number] {
+  width: 56px; background: var(--surface2); border: 1px solid var(--border);
+  border-radius: var(--radius-sm); color: var(--text); font-size: 13px;
+  padding: 5px 8px; text-align: center;
 }
+.nspeakers-wrap input:focus { outline: none; border-color: var(--accent); }
+.diar-hint { font-size: 11px; color: var(--muted); margin-top: 8px; }
+
+/* Drop zone */
+.drop-zone { border: 2px dashed var(--border); border-radius: var(--radius); padding: 40px 24px; text-align: center; cursor: pointer; transition: border-color .2s, background .2s; }
 .drop-zone.drag-over { border-color: var(--accent); background: rgba(124,106,247,.06); }
 .drop-zone.has-file { border-color: var(--green); border-style: solid; }
-.drop-icon { font-size: 36px; margin-bottom: 10px; line-height: 1; }
+.drop-icon { font-size: 36px; margin-bottom: 10px; }
 .drop-title { font-size: 15px; font-weight: 600; margin-bottom: 6px; }
 .drop-hint { font-size: 12px; color: var(--muted); }
-.drop-formats { font-size: 11px; color: var(--border); margin-top: 10px; letter-spacing: .03em; }
+.drop-formats { font-size: 11px; color: var(--border); margin-top: 10px; }
 .file-info { display: none; align-items: center; gap: 12px; text-align: left; }
 .file-info.visible { display: flex; }
 .file-icon { font-size: 28px; flex-shrink: 0; }
-.file-name { font-size: 14px; font-weight: 600; color: var(--text); word-break: break-all; }
+.file-name { font-size: 14px; font-weight: 600; word-break: break-all; }
 .file-size { font-size: 12px; color: var(--muted); margin-top: 2px; }
 .file-change { font-size: 11px; color: var(--accent); margin-top: 4px; cursor: pointer; text-decoration: underline; }
 #fileInput { display: none; }
 
-/* ACTIONS */
-.action-bar { display: flex; gap: 10px; align-items: center; }
-.btn {
-  display: inline-flex; align-items: center; gap: 7px;
-  padding: 10px 20px; border-radius: var(--radius-sm);
-  font-size: 13px; font-weight: 600; cursor: pointer;
-  border: none; transition: opacity .15s, transform .1s;
-}
+/* Buttons */
+.btn { display: inline-flex; align-items: center; gap: 7px; padding: 10px 20px; border-radius: var(--radius-sm); font-size: 13px; font-weight: 600; cursor: pointer; border: none; transition: opacity .15s, transform .1s; }
 .btn:active { transform: scale(.97); }
 .btn:disabled { opacity: .4; cursor: not-allowed; transform: none; }
 .btn-primary { background: var(--accent); color: #fff; }
@@ -108,47 +91,43 @@ main { max-width: 860px; margin: 0 auto; padding: 28px 20px 60px; display: flex;
 .btn-secondary { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
 .btn-secondary:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
 .btn-sm { padding: 7px 14px; font-size: 12px; }
+.action-bar { display: flex; gap: 10px; align-items: center; }
 
-/* PROGRESS */
+/* Progress */
 .progress-card { display: none; }
 .progress-card.visible { display: block; }
 .status-line { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; }
-.spinner {
-  width: 18px; height: 18px; border-radius: 50%;
-  border: 2px solid var(--border);
-  border-top-color: var(--accent);
-  animation: spin .7s linear infinite;
-  flex-shrink: 0;
-}
+.spinner { width: 18px; height: 18px; border-radius: 50%; border: 2px solid var(--border); border-top-color: var(--accent); animation: spin .7s linear infinite; flex-shrink: 0; }
 @keyframes spin { to { transform: rotate(360deg); } }
 .status-text { font-size: 14px; font-weight: 500; }
 .seg-count { font-size: 12px; color: var(--muted); margin-top: 2px; }
-
-.stream-preview {
-  background: var(--bg);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  padding: 14px 16px;
-  max-height: 220px;
-  overflow-y: auto;
-  font-size: 13px;
-  line-height: 1.65;
-  color: var(--muted);
-}
+.stream-preview { background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 14px 16px; max-height: 220px; overflow-y: auto; font-size: 13px; line-height: 1.65; color: var(--muted); }
 .stream-preview p { margin: 0; padding: 2px 0; }
 .stream-preview p.last { color: var(--text); }
 
-/* RESULTS */
+/* Speaker panel */
+.speaker-panel { display: none; }
+.speaker-panel.visible { display: block; }
+.speaker-list { display: flex; flex-direction: column; gap: 8px; }
+.sp-row { display: flex; align-items: center; gap: 10px; padding: 10px 12px; background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-sm); }
+.sp-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+.sp-id { font-size: 11px; color: var(--muted); font-family: monospace; min-width: 70px; }
+.sp-name { font-size: 13px; font-weight: 600; flex: 1; }
+.sp-edit { display: flex; gap: 6px; align-items: center; }
+.sp-input { background: var(--surface2); border: 1px solid var(--border); border-radius: 6px; color: var(--text); font-size: 12px; padding: 4px 8px; width: 170px; }
+.sp-input:focus { outline: none; border-color: var(--accent); }
+.sp-presets { display: flex; gap: 4px; flex-wrap: wrap; }
+.sp-preset { font-size: 10px; padding: 2px 7px; border-radius: 4px; background: var(--surface2); border: 1px solid var(--border); color: var(--muted); cursor: pointer; transition: all .12s; }
+.sp-preset:hover { border-color: var(--accent); color: var(--accent); }
+.sp-hint { font-size: 11px; color: var(--muted); margin-top: 10px; }
+
+/* Results */
 .results-card { display: none; }
 .results-card.visible { display: block; }
 .results-header { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; flex-wrap: wrap; }
 .results-title { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .07em; color: var(--muted); flex: 1; min-width: 80px; }
 .tab-row { display: flex; gap: 4px; }
-.tab-btn {
-  padding: 5px 12px; border-radius: 6px; font-size: 12px; font-weight: 500;
-  background: none; border: 1px solid var(--border); color: var(--muted);
-  cursor: pointer; transition: all .15s;
-}
+.tab-btn { padding: 5px 12px; border-radius: 6px; font-size: 12px; font-weight: 500; background: none; border: 1px solid var(--border); color: var(--muted); cursor: pointer; transition: all .15s; }
 .tab-btn.active { background: var(--surface2); border-color: var(--accent); color: var(--accent); }
 .tab-btn:hover:not(.active) { border-color: var(--muted); color: var(--text); }
 
@@ -156,61 +135,34 @@ main { max-width: 860px; margin: 0 auto; padding: 28px 20px 60px; display: flex;
 .meta-item { font-size: 12px; color: var(--muted); }
 .meta-item strong { color: var(--text); }
 
-.text-output {
-  background: var(--bg);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  padding: 16px 18px;
-  font-size: 14px;
-  line-height: 1.75;
-  color: var(--text);
-  min-height: 120px;
-  max-height: 400px;
-  overflow-y: auto;
-  white-space: pre-wrap;
-  word-break: break-word;
-  display: none;
-}
+.text-output { background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 16px 18px; font-size: 14px; line-height: 1.75; color: var(--text); min-height: 120px; max-height: 420px; overflow-y: auto; white-space: pre-wrap; word-break: break-word; display: none; }
 .text-output.visible { display: block; }
 
-.timestamps-output { display: none; max-height: 400px; overflow-y: auto; }
+.timestamps-output { display: none; max-height: 420px; overflow-y: auto; }
 .timestamps-output.visible { display: block; }
-.ts-segment {
-  display: flex; gap: 12px; align-items: flex-start;
-  padding: 8px 0; border-bottom: 1px solid var(--border);
-}
+
+.ts-segment { display: flex; gap: 12px; align-items: flex-start; padding: 9px 0; border-bottom: 1px solid var(--border); }
 .ts-segment:last-child { border-bottom: none; }
-.ts-time {
-  font-size: 11px; color: var(--accent); font-family: monospace;
-  background: rgba(124,106,247,.1); padding: 2px 7px; border-radius: 4px;
-  white-space: nowrap; flex-shrink: 0; margin-top: 1px;
-}
-.ts-text { font-size: 13px; line-height: 1.6; color: var(--text); }
+.ts-left { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; flex-shrink: 0; width: 130px; }
+.ts-time { font-size: 11px; color: var(--muted); font-family: monospace; }
+.ts-speaker-badge { font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 4px; white-space: nowrap; max-width: 130px; overflow: hidden; text-overflow: ellipsis; }
+.ts-text { font-size: 13px; line-height: 1.65; color: var(--text); flex: 1; }
 
 .export-bar { display: flex; gap: 8px; margin-top: 14px; flex-wrap: wrap; }
 
-/* ERROR */
-.error-banner {
-  display: none;
-  background: rgba(248,113,113,.1);
-  border: 1px solid rgba(248,113,113,.3);
-  border-radius: var(--radius-sm);
-  padding: 12px 16px;
-  font-size: 13px;
-  color: var(--red);
-  gap: 8px;
-  align-items: flex-start;
-}
+/* Error */
+.error-banner { display: none; background: rgba(248,113,113,.1); border: 1px solid rgba(248,113,113,.3); border-radius: var(--radius-sm); padding: 12px 16px; font-size: 13px; color: var(--red); gap: 8px; align-items: flex-start; }
 .error-banner.visible { display: flex; }
 
-/* SCROLLBAR */
+/* Toast */
+.toast { position: fixed; bottom: 24px; right: 24px; background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 10px 16px; font-size: 13px; color: var(--text); z-index: 999; transform: translateY(60px); opacity: 0; transition: all .25s; pointer-events: none; }
+.toast.show { transform: translateY(0); opacity: 1; }
+
 ::-webkit-scrollbar { width: 5px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
 
-@media (max-width: 600px) {
-  .model-grid { grid-template-columns: repeat(2, 1fr); }
-}
+@media (max-width: 600px) { .model-grid { grid-template-columns: repeat(2,1fr); } }
 </style>
 </head>
 <body>
@@ -224,64 +176,60 @@ main { max-width: 860px; margin: 0 auto; padding: 28px 20px 60px; display: flex;
 
 <main>
 
-  <!-- Model selector -->
+  <!-- Model -->
   <div class="card">
     <div class="card-title">Modelo de Transcrição</div>
     <div class="model-grid">
-
       <label class="model-opt">
         <input type="radio" name="model" value="tiny">
-        <div class="model-box">
-          <div class="model-badge badge-fast">Rápido</div>
-          <div class="model-name">Tiny</div>
-          <div class="model-desc">Muito rápido, precisão básica. ~40 MB</div>
-        </div>
+        <div class="model-box"><div class="model-badge badge-fast">Rápido</div><div class="model-name">Tiny</div><div class="model-desc">Muito rápido, precisão básica. ~40 MB</div></div>
       </label>
-
       <label class="model-opt">
         <input type="radio" name="model" value="small">
-        <div class="model-box">
-          <div class="model-badge badge-fast">Rápido</div>
-          <div class="model-name">Small</div>
-          <div class="model-desc">Bom equilíbrio entre velocidade e precisão. ~240 MB</div>
-        </div>
+        <div class="model-box"><div class="model-badge badge-fast">Rápido</div><div class="model-name">Small</div><div class="model-desc">Bom equilíbrio de velocidade. ~240 MB</div></div>
       </label>
-
       <label class="model-opt">
         <input type="radio" name="model" value="medium">
-        <div class="model-box">
-          <div class="model-badge badge-balanced">Equilibrado</div>
-          <div class="model-name">Medium</div>
-          <div class="model-desc">Alta precisão, velocidade razoável. ~760 MB</div>
-        </div>
+        <div class="model-box"><div class="model-badge badge-bal">Equilibrado</div><div class="model-name">Medium</div><div class="model-desc">Alta precisão, velocidade razoável. ~760 MB</div></div>
       </label>
-
       <label class="model-opt">
         <input type="radio" name="model" value="large-v3" checked>
-        <div class="model-box">
-          <div class="model-badge badge-best">Melhor</div>
-          <div class="model-name">Large-v3</div>
-          <div class="model-desc">Máxima precisão para português. ~1.5 GB</div>
-        </div>
+        <div class="model-box"><div class="model-badge badge-best">Melhor</div><div class="model-name">Large-v3</div><div class="model-desc">Máxima precisão para português. ~1.5 GB</div></div>
       </label>
+    </div>
+  </div>
 
+  <!-- Diarization -->
+  <div class="card">
+    <div class="card-title">Identificação de Falantes</div>
+    <div class="diar-row">
+      <label class="toggle-wrap">
+        <input type="checkbox" id="diarizeToggle">
+        <div class="toggle"></div>
+        <span class="toggle-label">Identificar quem está falando</span>
+      </label>
+      <div class="nspeakers-wrap" id="nspeakersWrap" style="display:none">
+        <span>Número de falantes:</span>
+        <input type="number" id="nSpeakers" value="4" min="2" max="10">
+      </div>
+    </div>
+    <div class="diar-hint" id="diarHint">
+      Separa automaticamente as falas por voz e tenta identificar os participantes pelo contexto da audiência.<br>
+      <strong>Requer:</strong> <code>pip install librosa scikit-learn</code>
     </div>
   </div>
 
   <!-- Upload -->
   <div class="card">
     <div class="card-title">Arquivo de Áudio ou Vídeo</div>
-
     <div class="drop-zone" id="dropZone">
       <input type="file" id="fileInput" accept=".mp3,.mp4,.wav,.m4a,.mkv,.avi,.mov,.webm,.flac,.ogg,.wma,.wmv,.mpeg,.mpga">
-
       <div id="dropPlaceholder">
         <div class="drop-icon">🎵</div>
         <div class="drop-title">Arraste o arquivo aqui</div>
         <div class="drop-hint">ou clique para selecionar</div>
         <div class="drop-formats">MP3 · MP4 · WAV · M4A · MKV · AVI · MOV · WEBM · FLAC · OGG · WMV</div>
       </div>
-
       <div class="file-info" id="fileInfo">
         <div class="file-icon" id="fileTypeIcon">🎬</div>
         <div>
@@ -293,20 +241,11 @@ main { max-width: 860px; margin: 0 auto; padding: 28px 20px 60px; display: flex;
     </div>
   </div>
 
-  <!-- Error -->
-  <div class="error-banner" id="errorBanner">
-    <span>⚠</span>
-    <span id="errorMsg"></span>
-  </div>
+  <div class="error-banner" id="errorBanner"><span>⚠</span><span id="errorMsg"></span></div>
 
-  <!-- Action -->
   <div class="action-bar">
-    <button class="btn btn-primary" id="btnTranscrever" disabled>
-      <span>▶</span> Transcrever
-    </button>
-    <button class="btn btn-secondary" id="btnCancelar" style="display:none">
-      Cancelar
-    </button>
+    <button class="btn btn-primary" id="btnTranscrever" disabled><span>▶</span> Transcrever</button>
+    <button class="btn btn-secondary" id="btnCancelar" style="display:none">Cancelar</button>
   </div>
 
   <!-- Progress -->
@@ -321,6 +260,13 @@ main { max-width: 860px; margin: 0 auto; padding: 28px 20px 60px; display: flex;
     <div class="stream-preview" id="streamPreview"></div>
   </div>
 
+  <!-- Speaker panel -->
+  <div class="card speaker-panel" id="speakerPanel">
+    <div class="card-title">Falantes identificados — clique para renomear</div>
+    <div class="speaker-list" id="speakerList"></div>
+    <div class="sp-hint">Sugestões: Juiz · Advogado de Defesa · Advogado de Acusação · Ministério Público · Testemunha · Réu · Escrivão</div>
+  </div>
+
   <!-- Results -->
   <div class="card results-card" id="resultsCard">
     <div class="results-header">
@@ -330,12 +276,9 @@ main { max-width: 860px; margin: 0 auto; padding: 28px 20px 60px; display: flex;
         <button class="tab-btn" id="tabTimestamps" onclick="showTab('timestamps')">Com timestamps</button>
       </div>
     </div>
-
     <div class="meta-row" id="metaRow"></div>
-
     <div class="text-output visible" id="textOutput"></div>
     <div class="timestamps-output" id="timestampsOutput"></div>
-
     <div class="export-bar">
       <button class="btn btn-secondary btn-sm" onclick="copyText()">📋 Copiar texto</button>
       <button class="btn btn-secondary btn-sm" onclick="exportTxt()">⬇ Exportar TXT</button>
@@ -345,173 +288,179 @@ main { max-width: 860px; margin: 0 auto; padding: 28px 20px 60px; display: flex;
 
 </main>
 
-<script>
-const dropZone    = document.getElementById('dropZone');
-const fileInput   = document.getElementById('fileInput');
-const dropPlaceholder = document.getElementById('dropPlaceholder');
-const fileInfo    = document.getElementById('fileInfo');
-const fileName    = document.getElementById('fileName');
-const fileSize    = document.getElementById('fileSize');
-const fileTypeIcon= document.getElementById('fileTypeIcon');
-const fileChange  = document.getElementById('fileChange');
-const btnTrans    = document.getElementById('btnTranscrever');
-const btnCancel   = document.getElementById('btnCancelar');
-const progressCard= document.getElementById('progressCard');
-const statusText  = document.getElementById('statusText');
-const segCount    = document.getElementById('segCount');
-const streamPreview=document.getElementById('streamPreview');
-const resultsCard = document.getElementById('resultsCard');
-const textOutput  = document.getElementById('textOutput');
-const timestampsOutput = document.getElementById('timestampsOutput');
-const errorBanner = document.getElementById('errorBanner');
-const errorMsg    = document.getElementById('errorMsg');
-const metaRow     = document.getElementById('metaRow');
+<div class="toast" id="toast"></div>
 
+<script>
+/* ── State ─────────────────────────────────────────── */
 let selectedFile = null;
 let allSegments  = [];
 let fullText     = '';
 let abortCtrl    = null;
 let isProcessing = false;
+let speakerMap   = {};   // { 'ORADOR_1': 'Juiz', ... }
 
-const AUDIO_EXTS = new Set(['.mp3', '.wav', '.m4a', '.flac', '.ogg', '.wma', '.mpga']);
-const VIDEO_EXTS = new Set(['.mp4', '.mkv', '.avi', '.mov', '.webm', '.wmv', '.mpeg']);
+const SPEAKER_COLORS = [
+  '#7c6af7','#34d399','#fbbf24','#f87171',
+  '#60a5fa','#fb923c','#e879f9','#2dd4bf',
+];
+const AUDIO_EXTS = new Set(['.mp3','.wav','.m4a','.flac','.ogg','.wma','.mpga']);
+const VIDEO_EXTS = new Set(['.mp4','.mkv','.avi','.mov','.webm','.wmv','.mpeg']);
 
-function formatSize(bytes) {
-  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
-  return (bytes / 1024 / 1024).toFixed(1) + ' MB';
+/* ── Helpers ───────────────────────────────────────── */
+function formatSize(b) {
+  return b < 1048576 ? (b/1024).toFixed(1)+' KB' : (b/1048576).toFixed(1)+' MB';
+}
+function fmtTime(s) {
+  const h=Math.floor(s/3600), m=Math.floor((s%3600)/60), ss=Math.floor(s%60);
+  return h>0 ? `${h}:${pad(m)}:${pad(ss)}` : `${pad(m)}:${pad(ss)}`;
+}
+function srtTime(s) {
+  const h=Math.floor(s/3600), m=Math.floor((s%3600)/60), ss=Math.floor(s%60), ms=Math.round((s%1)*1000);
+  return `${pad(h)}:${pad(m)}:${pad(ss)},${pad(ms,3)}`;
+}
+function pad(n,w=2){ return String(n).padStart(w,'0'); }
+function escHtml(s){ return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+function getSpeakerColor(id) {
+  const n = parseInt((id||'').replace(/\D/g,'')) - 1;
+  return SPEAKER_COLORS[(isNaN(n)?0:n) % SPEAKER_COLORS.length];
+}
+function getSpeakerLabel(id) {
+  return speakerMap[id] || id || '';
 }
 
-function formatTime(secs) {
-  const h = Math.floor(secs / 3600);
-  const m = Math.floor((secs % 3600) / 60);
-  const s = Math.floor(secs % 60);
-  if (h > 0) return `${h}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
-  return `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+/* ── Toast ─────────────────────────────────────────── */
+function showToast(msg, duration=2500) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), duration);
 }
 
-function srtTime(secs) {
-  const h = Math.floor(secs / 3600);
-  const m = Math.floor((secs % 3600) / 60);
-  const s = Math.floor(secs % 60);
-  const ms= Math.round((secs % 1) * 1000);
-  return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')},${String(ms).padStart(3,'0')}`;
-}
+/* ── File handling ─────────────────────────────────── */
+const dropZone       = document.getElementById('dropZone');
+const fileInput      = document.getElementById('fileInput');
+const dropPlaceholder= document.getElementById('dropPlaceholder');
+const fileInfo       = document.getElementById('fileInfo');
+const fileName       = document.getElementById('fileName');
+const fileSize       = document.getElementById('fileSize');
+const fileTypeIcon   = document.getElementById('fileTypeIcon');
+const fileChange     = document.getElementById('fileChange');
 
 function setFile(file) {
   selectedFile = file;
-  const ext = '.' + file.name.split('.').pop().toLowerCase();
-  const isVideo = VIDEO_EXTS.has(ext);
-  fileTypeIcon.textContent = isVideo ? '🎬' : '🎵';
+  const ext = '.'+file.name.split('.').pop().toLowerCase();
+  fileTypeIcon.textContent = VIDEO_EXTS.has(ext) ? '🎬' : '🎵';
   fileName.textContent = file.name;
   fileSize.textContent = formatSize(file.size);
   dropPlaceholder.style.display = 'none';
   fileInfo.classList.add('visible');
   dropZone.classList.add('has-file');
   dropZone.classList.remove('drag-over');
-  btnTrans.disabled = false;
+  document.getElementById('btnTranscrever').disabled = false;
   hideError();
 }
 
 fileChange.addEventListener('click', e => { e.stopPropagation(); fileInput.click(); });
-
 dropZone.addEventListener('click', () => { if (!isProcessing) fileInput.click(); });
 fileInput.addEventListener('change', () => { if (fileInput.files[0]) setFile(fileInput.files[0]); });
-
 dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
 dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
-dropZone.addEventListener('drop', e => {
-  e.preventDefault();
-  const f = e.dataTransfer.files[0];
-  if (f) setFile(f);
+dropZone.addEventListener('drop', e => { e.preventDefault(); if(e.dataTransfer.files[0]) setFile(e.dataTransfer.files[0]); });
+
+/* ── Diarization toggle ────────────────────────────── */
+const diarizeToggle = document.getElementById('diarizeToggle');
+const nspeakersWrap = document.getElementById('nspeakersWrap');
+diarizeToggle.addEventListener('change', () => {
+  nspeakersWrap.style.display = diarizeToggle.checked ? 'flex' : 'none';
 });
 
+/* ── Error / processing state ──────────────────────── */
 function showError(msg) {
-  errorMsg.textContent = msg;
-  errorBanner.classList.add('visible');
+  document.getElementById('errorMsg').textContent = msg;
+  document.getElementById('errorBanner').classList.add('visible');
 }
 function hideError() {
-  errorBanner.classList.remove('visible');
+  document.getElementById('errorBanner').classList.remove('visible');
 }
-
 function setProcessing(val) {
   isProcessing = val;
-  btnTrans.style.display = val ? 'none' : 'inline-flex';
-  btnCancel.style.display = val ? 'inline-flex' : 'none';
+  document.getElementById('btnTranscrever').style.display = val ? 'none' : 'inline-flex';
+  document.getElementById('btnCancelar').style.display = val ? 'inline-flex' : 'none';
 }
 
+/* ── Tabs ──────────────────────────────────────────── */
 function showTab(tab) {
   const isText = tab === 'texto';
   document.getElementById('tabTexto').classList.toggle('active', isText);
   document.getElementById('tabTimestamps').classList.toggle('active', !isText);
-  textOutput.classList.toggle('visible', isText);
-  timestampsOutput.classList.toggle('visible', !isText);
+  document.getElementById('textOutput').classList.toggle('visible', isText);
+  document.getElementById('timestampsOutput').classList.toggle('visible', !isText);
 }
 
-btnCancel.addEventListener('click', () => {
+/* ── Transcription ─────────────────────────────────── */
+document.getElementById('btnCancelar').addEventListener('click', () => {
   if (abortCtrl) abortCtrl.abort();
 });
 
-btnTrans.addEventListener('click', async () => {
+document.getElementById('btnTranscrever').addEventListener('click', async () => {
   if (!selectedFile) return;
   hideError();
 
-  const modelSize = document.querySelector('input[name="model"]:checked').value;
+  const modelSize   = document.querySelector('input[name="model"]:checked').value;
+  const diarize     = diarizeToggle.checked;
+  const nSpeakers   = parseInt(document.getElementById('nSpeakers').value) || 4;
 
   const formData = new FormData();
   formData.append('file', selectedFile);
   formData.append('model', modelSize);
+  formData.append('diarize', diarize ? 'true' : 'false');
+  formData.append('n_speakers', nSpeakers);
 
   allSegments = [];
   fullText = '';
-  streamPreview.innerHTML = '';
-  segCount.textContent = '';
-  textOutput.textContent = '';
-  timestampsOutput.innerHTML = '';
-  metaRow.innerHTML = '';
+  speakerMap = {};
+  document.getElementById('streamPreview').innerHTML = '';
+  document.getElementById('segCount').textContent = '';
+  document.getElementById('textOutput').textContent = '';
+  document.getElementById('timestampsOutput').innerHTML = '';
+  document.getElementById('metaRow').innerHTML = '';
+  document.getElementById('speakerPanel').classList.remove('visible');
+  document.getElementById('speakerList').innerHTML = '';
 
-  progressCard.classList.add('visible');
-  resultsCard.classList.remove('visible');
+  document.getElementById('progressCard').classList.add('visible');
+  document.getElementById('resultsCard').classList.remove('visible');
   setProcessing(true);
 
   abortCtrl = new AbortController();
 
   try {
     const resp = await fetch('/transcribe', {
-      method: 'POST',
-      body: formData,
-      signal: abortCtrl.signal,
+      method: 'POST', body: formData, signal: abortCtrl.signal,
     });
-
     if (!resp.ok) {
-      const err = await resp.json().catch(() => ({ error: 'Erro desconhecido' }));
+      const err = await resp.json().catch(() => ({error:'Erro desconhecido'}));
       throw new Error(err.error || 'Erro no servidor');
     }
 
     const reader = resp.body.getReader();
-    const decoder = new TextDecoder();
+    const dec = new TextDecoder();
     let buf = '';
-
     while (true) {
-      const { done, value } = await reader.read();
+      const {done, value} = await reader.read();
       if (done) break;
-      buf += decoder.decode(value, { stream: true });
+      buf += dec.decode(value, {stream:true});
       const lines = buf.split('\n');
       buf = lines.pop();
       for (const line of lines) {
         if (line.startsWith('data: ')) {
-          try {
-            handleEvent(JSON.parse(line.slice(6)));
-          } catch (_) {}
+          try { handleEvent(JSON.parse(line.slice(6))); } catch(_) {}
         }
       }
     }
-  } catch (err) {
-    if (err.name === 'AbortError') {
-      progressCard.classList.remove('visible');
-    } else {
-      progressCard.classList.remove('visible');
-      showError(err.message || String(err));
-    }
+  } catch(err) {
+    document.getElementById('progressCard').classList.remove('visible');
+    if (err.name !== 'AbortError') showError(err.message || String(err));
   } finally {
     setProcessing(false);
     abortCtrl = null;
@@ -519,8 +468,12 @@ btnTrans.addEventListener('click', async () => {
 });
 
 function handleEvent(data) {
+  const statusText = document.getElementById('statusText');
+  const segCount   = document.getElementById('segCount');
+  const preview    = document.getElementById('streamPreview');
+
   if (data.error) {
-    progressCard.classList.remove('visible');
+    document.getElementById('progressCard').classList.remove('visible');
     showError(data.error);
     return;
   }
@@ -534,93 +487,228 @@ function handleEvent(data) {
     statusText.style.color = 'var(--accent)';
     return;
   }
+  if (data.status === 'identificando_falantes') {
+    statusText.textContent = 'Identificando falantes…';
+    statusText.style.color = 'var(--green)';
+    return;
+  }
   if (data.segment) {
     allSegments.push(data.segment);
-    const count = allSegments.length;
-    segCount.textContent = `${count} segmento${count > 1 ? 's' : ''} encontrado${count > 1 ? 's' : ''}`;
-
+    segCount.textContent = `${allSegments.length} segmento${allSegments.length>1?'s':''} encontrado${allSegments.length>1?'s':''}`;
+    const prev = preview.querySelector('.last');
+    if (prev) prev.classList.remove('last');
     const p = document.createElement('p');
     p.textContent = data.segment.text;
-    // dim previous last
-    const prev = streamPreview.querySelector('.last');
-    if (prev) prev.classList.remove('last');
     p.classList.add('last');
-    streamPreview.appendChild(p);
-    streamPreview.scrollTop = streamPreview.scrollHeight;
+    preview.appendChild(p);
+    preview.scrollTop = preview.scrollHeight;
+    return;
+  }
+  if (data.speakers_ready) {
+    // Update segments with speaker info and apply auto-detected names
+    allSegments = data.segments;
+    const autoNames = data.speaker_names || {};
+    for (const [sp, name] of Object.entries(autoNames)) {
+      speakerMap[sp] = name;
+    }
     return;
   }
   if (data.done) {
     fullText = data.text;
     allSegments = data.segments;
-    progressCard.classList.remove('visible');
+    document.getElementById('progressCard').classList.remove('visible');
     showResults(data);
     return;
   }
 }
 
-function showResults(data) {
-  // meta
-  const dur = data.duration;
-  metaRow.innerHTML = `
-    <span class="meta-item"><strong>${allSegments.length}</strong> segmentos</span>
-    <span class="meta-item">Duração: <strong>${formatTime(dur)}</strong></span>
-    <span class="meta-item">Palavras: <strong>${fullText.split(/\s+/).filter(Boolean).length}</strong></span>
-  `;
+/* ── Speaker panel ─────────────────────────────────── */
+const PRESETS = ['Juiz','Advogado de Defesa','Advogado de Acusação','Ministério Público','Testemunha','Réu','Escrivão'];
 
-  // plain text
-  textOutput.textContent = fullText;
+function buildSpeakerPanel() {
+  const ids = [...new Set(allSegments.map(s => s.speaker).filter(Boolean))].sort();
+  if (ids.length < 2) return;
 
-  // timestamps
-  timestampsOutput.innerHTML = '';
-  for (const seg of allSegments) {
+  const list = document.getElementById('speakerList');
+  list.innerHTML = '';
+
+  for (const id of ids) {
+    const color = getSpeakerColor(id);
     const row = document.createElement('div');
-    row.className = 'ts-segment';
+    row.className = 'sp-row';
+    row.dataset.speakerId = id;
+
     row.innerHTML = `
-      <span class="ts-time">${formatTime(seg.start)} → ${formatTime(seg.end)}</span>
-      <span class="ts-text">${escHtml(seg.text)}</span>
+      <div class="sp-dot" style="background:${color}"></div>
+      <div class="sp-id">${id}</div>
+      <div class="sp-name" data-spname="${id}">${escHtml(getSpeakerLabel(id))}</div>
+      <div class="sp-edit">
+        <input class="sp-input" type="text" placeholder="Renomear…" value="${escHtml(getSpeakerLabel(id))}" data-spinput="${id}">
+        <div class="sp-presets">
+          ${PRESETS.map(p=>`<span class="sp-preset" data-preset="${escHtml(p)}" data-spid="${id}">${escHtml(p)}</span>`).join('')}
+        </div>
+      </div>
     `;
-    timestampsOutput.appendChild(row);
+    list.appendChild(row);
+
+    // Live rename on input
+    row.querySelector(`[data-spinput="${id}"]`).addEventListener('input', e => {
+      renameSpeaker(id, e.target.value.trim() || id);
+    });
+    // Preset buttons
+    row.querySelectorAll('.sp-preset').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const name = btn.dataset.preset;
+        row.querySelector(`[data-spinput="${id}"]`).value = name;
+        renameSpeaker(id, name);
+      });
+    });
   }
 
+  document.getElementById('speakerPanel').classList.add('visible');
+}
+
+function renameSpeaker(id, newName) {
+  speakerMap[id] = newName;
+  // Update name display in speaker panel
+  document.querySelectorAll(`[data-spname="${id}"]`).forEach(el => {
+    el.textContent = newName;
+  });
+  // Rebuild timestamps view to reflect new names
+  if (document.getElementById('timestampsOutput').classList.contains('visible')) {
+    buildTimestamps();
+  }
+  // Rebuild plain text
+  buildPlainText();
+}
+
+/* ── Results ───────────────────────────────────────── */
+function showResults(data) {
+  const hasSpeakers = allSegments.some(s => s.speaker);
+
+  // Meta
+  document.getElementById('metaRow').innerHTML = `
+    <span class="meta-item"><strong>${allSegments.length}</strong> segmentos</span>
+    <span class="meta-item">Duração: <strong>${fmtTime(data.duration)}</strong></span>
+    <span class="meta-item">Palavras: <strong>${fullText.split(/\s+/).filter(Boolean).length}</strong></span>
+    ${hasSpeakers ? `<span class="meta-item">Falantes: <strong>${new Set(allSegments.map(s=>s.speaker).filter(Boolean)).size}</strong></span>` : ''}
+  `;
+
+  buildPlainText();
+  buildTimestamps();
+
+  if (hasSpeakers) buildSpeakerPanel();
+
   showTab('texto');
-  resultsCard.classList.add('visible');
-  resultsCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  document.getElementById('resultsCard').classList.add('visible');
+  document.getElementById('resultsCard').scrollIntoView({behavior:'smooth', block:'start'});
 }
 
-function escHtml(s) {
-  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+function buildPlainText() {
+  const hasSpeakers = allSegments.some(s => s.speaker);
+  if (!hasSpeakers) {
+    document.getElementById('textOutput').textContent = fullText;
+    return;
+  }
+  // Group consecutive segments by same speaker
+  const lines = [];
+  let cur = null;
+  for (const seg of allSegments) {
+    const label = getSpeakerLabel(seg.speaker) || seg.speaker || '';
+    if (label !== cur) {
+      if (cur !== null) lines.push('');
+      lines.push(label + ':');
+      cur = label;
+    }
+    lines.push(seg.text);
+  }
+  document.getElementById('textOutput').textContent = lines.join('\n');
 }
 
+function buildTimestamps() {
+  const container = document.getElementById('timestampsOutput');
+  container.innerHTML = '';
+  for (const seg of allSegments) {
+    const div = document.createElement('div');
+    div.className = 'ts-segment';
+    const speakerHtml = seg.speaker ? (() => {
+      const label = getSpeakerLabel(seg.speaker);
+      const color = getSpeakerColor(seg.speaker);
+      return `<span class="ts-speaker-badge" style="background:${color}22;color:${color};border:1px solid ${color}44">${escHtml(label)}</span>`;
+    })() : '';
+    div.innerHTML = `
+      <div class="ts-left">
+        <span class="ts-time">${fmtTime(seg.start)} → ${fmtTime(seg.end)}</span>
+        ${speakerHtml}
+      </div>
+      <span class="ts-text">${escHtml(seg.text)}</span>
+    `;
+    container.appendChild(div);
+  }
+}
+
+/* ── Export ────────────────────────────────────────── */
 function copyText() {
-  navigator.clipboard.writeText(fullText).then(() => {
-    const btn = event.target.closest('button');
-    const orig = btn.innerHTML;
-    btn.innerHTML = '✓ Copiado!';
-    setTimeout(() => { btn.innerHTML = orig; }, 1800);
-  });
+  const text = document.getElementById('textOutput').textContent;
+  navigator.clipboard.writeText(text).then(() => showToast('✓ Texto copiado!'));
 }
 
-function exportTxt() {
-  download(fullText, 'transcricao.txt', 'text/plain');
+function buildTxtContent() {
+  const hasSpeakers = allSegments.some(s => s.speaker);
+  if (!hasSpeakers) return fullText;
+  const lines = [];
+  let cur = null;
+  for (const seg of allSegments) {
+    const label = getSpeakerLabel(seg.speaker) || seg.speaker || '';
+    if (label !== cur) { if (cur !== null) lines.push(''); cur = label; }
+    lines.push(`${label}: ${seg.text}`);
+  }
+  return lines.join('\n');
 }
 
-function exportSrt() {
-  let srt = '';
-  allSegments.forEach((seg, i) => {
-    srt += `${i + 1}\n${srtTime(seg.start)} --> ${srtTime(seg.end)}\n${seg.text}\n\n`;
-  });
-  download(srt.trimEnd() + '\n', 'transcricao.srt', 'text/plain');
+function buildSrtContent() {
+  return allSegments.map((seg, i) => {
+    const label = seg.speaker ? `[${getSpeakerLabel(seg.speaker)}] ` : '';
+    return `${i+1}\n${srtTime(seg.start)} --> ${srtTime(seg.end)}\n${label}${seg.text}\n`;
+  }).join('\n');
 }
 
-function download(content, name, type) {
-  const blob = new Blob([content], { type });
-  const url  = URL.createObjectURL(blob);
-  const a    = document.createElement('a');
-  a.href = url; a.download = name;
+async function exportTxt() {
+  const content = buildTxtContent();
+  await saveFile(content, 'transcricao.txt');
+}
+
+async function exportSrt() {
+  const content = buildSrtContent();
+  await saveFile(content, 'transcricao.srt');
+}
+
+async function saveFile(content, filename) {
+  // Try PyWebView native file-save dialog first
+  if (typeof window.pywebview !== 'undefined' && window.pywebview.api) {
+    try {
+      const result = await window.pywebview.api.save_file(content, filename);
+      if (result && result.ok) {
+        showToast(`✓ Salvo: ${result.path.split(/[/\\]/).pop()}`);
+        return;
+      }
+    } catch(_) {}
+  }
+  // Browser fallback (also works if pywebview is not available)
+  browserDownload(content, filename);
+}
+
+function browserDownload(content, filename) {
+  const blob = new Blob(['﻿' + content], {type: 'text/plain;charset=utf-8'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  a.style.display = 'none';
   document.body.appendChild(a);
   a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
+  setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url); }, 1000);
+  showToast('⬇ Download iniciado');
 }
 </script>
 </body>

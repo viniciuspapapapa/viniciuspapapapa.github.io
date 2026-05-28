@@ -25,7 +25,7 @@ jobs:
       - name: Install dependencies
         run: |
           pip install --upgrade pip
-          pip install pywebview flask faster-whisper pyinstaller
+          pip install pywebview flask faster-whisper librosa scikit-learn pyinstaller
 
       - name: Build executable
         run: |

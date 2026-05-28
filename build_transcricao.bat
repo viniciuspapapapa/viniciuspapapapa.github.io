@@ -6,7 +6,7 @@ echo ================================================
 echo.
 
 echo [1/4] Instalando dependencias...
-pip install pywebview flask faster-whisper pyinstaller --quiet
+pip install pywebview flask faster-whisper librosa scikit-learn pyinstaller --quiet
 if %errorlevel% neq 0 (
     echo ERRO: Falha ao instalar dependencias.
     echo Verifique se o Python esta instalado corretamente.
