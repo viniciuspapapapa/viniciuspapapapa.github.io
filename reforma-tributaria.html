@@ -6,6 +6,9 @@
 <title>Simulador da Reforma Tributária — IBS · CBS · IS</title>
 <meta name="description" content="Simulador executivo da Reforma Tributária brasileira (EC 132/2023 e LC 214/2025): IBS, CBS, Imposto Seletivo, transição 2025–2033, créditos, split payment e custo financeiro.">
 <meta name="theme-color" content="#1d4ed8">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
 <style>
   :root{
     --bg:#f4f6fb; --surface:#ffffff; --surface2:#f8fafc;
@@ -721,8 +724,8 @@ function readState(){
 /* ============================================================
    RENDER
    ============================================================ */
-let lastNovo = null;
-function render(){
+let lastNovo = null, lastAtual = null;
+function _render(){
   const p = readState();
 
   /* labels dos controles */
@@ -773,13 +776,24 @@ function render(){
   drawInsight(r, p, diff, diffPct);
   drawRegimes(p);
 
-  /* flash KPIs on change */
-  if(lastNovo!==null && Math.abs(lastNovo-r.novo.total)>1){
+  /* flash KPIs sempre que a carga (atual OU nova) mudar */
+  const mudou = (lastNovo!==null && Math.abs(lastNovo-r.novo.total)>1) ||
+                (lastAtual!==null && Math.abs(lastAtual-r.atual.total)>1);
+  if(mudou){
     [$('kpiAtual'),$('kpiNovo'),$('kpiDiff'),$('kpiCusto')].forEach(e=>{
       e.classList.remove('flash'); void e.offsetWidth; e.classList.add('flash');
     });
   }
-  lastNovo = r.novo.total;
+  lastNovo = r.novo.total; lastAtual = r.atual.total;
+}
+
+/* Wrapper resiliente: um erro em qualquer gráfico nunca congela a atualização dos números */
+function render(){
+  try{ _render(); }
+  catch(e){
+    console.error('Erro ao atualizar o simulador:', e);
+    const k=$('kpiNovo'); if(k){ k.textContent='—'; }
+  }
 }
 
 /* ============================================================
@@ -1209,8 +1223,10 @@ $('faturamento').addEventListener('input',e=>{
   e.target.value = n? n.toLocaleString('pt-BR'):'';
   render();
 });
+// vincula 'input' e 'change' (máxima compatibilidade entre navegadores/mobile)
 ['regime','setor','ano','creditos','prazo','cdi','ibs','cbs'].forEach(id=>{
   $(id).addEventListener('input',render);
+  $(id).addEventListener('change',render);
 });
 $('resetBtn').addEventListener('click',()=>{
   $('regime').value=DEFAULTS.regime; $('setor').value=DEFAULTS.setor;
