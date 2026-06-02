@@ -436,10 +436,13 @@
           </div>
           <canvas id="cmpChart" height="260"></canvas>
           <div class="legend">
-            <span class="lg"><span class="sw" style="background:#94a3b8"></span>PIS/COFINS · ICMS · ISS</span>
+            <span class="lg"><span class="sw" style="background:#64748b"></span>PIS/COFINS</span>
+            <span class="lg"><span class="sw" style="background:#94a3b8"></span>ICMS</span>
+            <span class="lg"><span class="sw" style="background:#a78bfa"></span>ISS</span>
+            <span class="lg"><span class="sw" style="background:#cbd5e1"></span>IPI</span>
             <span class="lg"><span class="sw" style="background:var(--ibs)"></span>IBS</span>
             <span class="lg"><span class="sw" style="background:var(--cbs)"></span>CBS</span>
-            <span class="lg"><span class="sw" style="background:var(--is)"></span>Imposto Seletivo</span>
+            <span class="lg"><span class="sw" style="background:var(--is)"></span>Imp. Seletivo</span>
           </div>
         </div>
 
@@ -614,7 +617,7 @@ function calcular(p){
 
   let atual = {pisCofins:0, icms:0, iss:0, ipi:0, total:0};
   let pleno = {pisCofins:0, icms:0, iss:0, ipi:0, ibs:0, cbs:0, is:0, total:0};
-  let creditoTotal = 0, efSimples = 0;
+  let creditoTotal = 0, creditoFase = 0, efSimples = 0;
 
   /* ================= MEI ================= */
   if(p.regime==='mei'){
@@ -652,6 +655,8 @@ function calcular(p){
     } else {
       pleno.ibs = va*kIbs; pleno.cbs = va*kCbs; creditoTotal = ins*(kIbs+kCbs);
     }
+    // crédito efetivamente apropriado no ano (acompanha a fase do IBS/CBS)
+    creditoFase = (s.esp==='monofasico') ? 0 : (ins*kIbs*f.ibs + ins*kCbs*f.cbs);
     pleno.is = fat*s.is;
     pleno.total = pleno.ibs + pleno.cbs + pleno.is;
   }
@@ -682,7 +687,7 @@ function calcular(p){
   return {
     s, f, fat, insumos:ins, va, reducao:s.red, regime:p.regime, efSimples,
     aliqIbs:aIbs*(1-s.red), aliqCbs:aCbs*(1-s.red),
-    atual, novo, pleno, creditoTotal,
+    atual, novo, pleno, creditoTotal, creditoFase,
     splitMensal, floatPerdido, custoAnual, fatorPrazo
   };
 }
@@ -830,9 +835,10 @@ function drawComparativo(r){
   const simplesLike = (r.regime==='simples'||r.regime==='mei');
   const atualSegs = simplesLike
     ? [{v:r.atual.total, c:'#94a3b8'}]
-    : [{v:r.atual.pisCofins+r.atual.icms, c:'#94a3b8'},
-       {v:r.atual.iss, c:'#cbd5e1'},
-       {v:r.atual.ipi, c:'#e2e8f0'}];
+    : [{v:r.atual.pisCofins, c:'#64748b'},
+       {v:r.atual.icms, c:'#94a3b8'},
+       {v:r.atual.iss,  c:'#a78bfa'},
+       {v:r.atual.ipi,  c:'#cbd5e1'}];
   const cols=[
     {label:'Sistema atual', segs:atualSegs, total:r.atual.total},
     {label:'Novo regime', segs:[
@@ -1018,10 +1024,10 @@ function drawTabela(r){
     html+=`<tr><td>${nm}</td><td>${a>0?BRL.format(a):'<span class="mut">—</span>'}</td>
       <td>${n>0?BRL.format(n):'<span class="mut">—</span>'}</td><td>${dcell}</td></tr>`;
   });
-  // credito
-  if(r.creditoTotal>0){
-    html+=`<tr><td><span class="mut">Crédito IBS/CBS apropriado</span></td>
-      <td class="mut">—</td><td class="pos">−${BRL.format(r.creditoTotal)}</td><td class="mut">—</td></tr>`;
+  // crédito efetivamente apropriado no ano (acompanha a fase do IBS/CBS) — já embutido no IBS/CBS acima
+  if(r.creditoFase>0){
+    html+=`<tr><td><span class="mut">Crédito IBS/CBS sobre insumos <span style="font-size:10px">(já abatido)</span></span></td>
+      <td class="mut">—</td><td class="pos">−${BRL.format(r.creditoFase)}</td><td class="mut">—</td></tr>`;
   }
   const dTot=r.novo.total-r.atual.total;
   html+=`<tr class="total"><td>Total</td><td>${BRL.format(r.atual.total)}</td>
