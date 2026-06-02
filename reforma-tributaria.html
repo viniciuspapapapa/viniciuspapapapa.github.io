@@ -55,7 +55,8 @@
 
   /* LAYOUT */
   main{max-width:1200px;margin:-16px auto 60px;padding:0 22px;position:relative;z-index:2}
-  .grid{display:grid;grid-template-columns:340px 1fr;gap:22px;align-items:start}
+  .grid{display:grid;grid-template-columns:340px minmax(0,1fr);gap:26px;align-items:start}
+  .grid>*{min-width:0}
   @media(max-width:960px){.grid{grid-template-columns:1fr}}
 
   /* PANEL / CARDS */
@@ -1186,37 +1187,40 @@ function drawRegimes(p){
 }
 
 function drawRegChart(rows, bestA, bestN){
-  const cv=$('regChart'); const {ctx,w,h}=setupCanvas(cv,220);
-  const padL=46,padR=16,padT=14,padB=40;
+  const cv=$('regChart'); const {ctx,w,h}=setupCanvas(cv,236);
+  const padL=54,padR=18,padT=26,padB=46;
   const plotH=h-padT-padB, plotW=w-padL-padR;
   const vals=rows.flatMap(x=>[x.atualPct,x.novoPct]);
-  const max=Math.max(...vals,0.01)*1.18;
-  // grid
-  ctx.strokeStyle='#eef1f8';ctx.lineWidth=1;ctx.font='10.5px -apple-system,sans-serif';
-  ctx.fillStyle='#94a3b8';ctx.textAlign='right';
+  const max=Math.max(...vals,0.01)*1.20;
+  // gridlines + y labels
+  ctx.lineWidth=1;
   for(let i=0;i<=4;i++){const gy=padT+plotH-plotH*i/4;
-    ctx.beginPath();ctx.moveTo(padL,gy);ctx.lineTo(w-padR,gy);ctx.stroke();
-    ctx.fillText(fmtPctRaw(max*100*i/4,0),padL-6,gy+3);}
-  const groupW=plotW/rows.length, bw=Math.min(26,groupW*0.30);
+    ctx.strokeStyle='#eef1f8';ctx.beginPath();ctx.moveTo(padL,gy);ctx.lineTo(w-padR,gy);ctx.stroke();
+    ctx.fillStyle='#94a3b8';ctx.font='10px -apple-system,sans-serif';ctx.textAlign='right';
+    ctx.fillText(fmtPctRaw(max*100*i/4,0),padL-9,gy+3);}
+  const groupW=plotW/rows.length;
+  const bw=Math.max(11,Math.min(24,groupW*0.26));   // largura segura por barra
+  const innerGap=3;                                  // espaço entre as 2 barras do grupo
   rows.forEach((x,i)=>{
-    const gx=padL+groupW*i+groupW/2;
-    const pairs=[{v:x.atualPct,c:x.elegivel?'#94a3b8':'#e2e8f0',off:!x.elegivel},
+    const gx=padL+groupW*(i+0.5);                    // centro do grupo
+    const pairs=[{v:x.atualPct,c:x.elegivel?'#94a3b8':'#e8edf5',off:!x.elegivel},
                  {v:x.novoPct, c:x.elegivel?'#1d4ed8':'#dbe6ff',off:!x.elegivel}];
     pairs.forEach((b,j)=>{
-      const bx=gx + (j===0?-bw-2:2);
-      const bh=plotH*(b.v/max);
+      const bx=gx + (j===0 ? -bw-innerGap/2 : innerGap/2);
+      const bh=Math.max(plotH*(b.v/max),0);
       const by=padT+plotH-bh;
       ctx.fillStyle=b.c;
       roundRectTop(ctx,bx,by,bw,bh,4); ctx.fill();
       if(b.off){ ctx.strokeStyle='#cbd5e1';ctx.lineWidth=1;roundRectTop(ctx,bx,by,bw,bh,4);ctx.stroke(); }
-      ctx.fillStyle=b.off?'#94a3b8':'#475569';ctx.font='600 9.5px -apple-system,sans-serif';ctx.textAlign='center';
-      ctx.fillText(fmtPctRaw(b.v*100,0),bx+bw/2,by-3);
+      // rótulo de valor acima da barra (clarividade garantida acima do topo do plot)
+      ctx.fillStyle=b.off?'#b6c2d4':(j===0?'#64748b':'#1d4ed8');
+      ctx.font='700 9.5px -apple-system,sans-serif';ctx.textAlign='center';
+      ctx.fillText(fmtPctRaw(b.v*100,0), bx+bw/2, Math.max(by-4, padT-12));
     });
-    // crown on best current
-    ctx.textAlign='center';
-    ctx.fillStyle='#0f172a';ctx.font='600 11px -apple-system,sans-serif';
-    ctx.fillText(x.meta.nome.replace('Lucro ','').replace('Simples Nacional','Simples'),gx,h-16);
-    if(bestA && x.reg===bestA.reg){ ctx.font='12px sans-serif'; ctx.fillText('🏆',gx,h-2); }
+    // nome do regime no eixo X
+    ctx.fillStyle='#475569';ctx.font='600 11px -apple-system,sans-serif';ctx.textAlign='center';
+    ctx.fillText(x.meta.nome.replace('Lucro ','').replace('Simples Nacional','Simples'),gx,h-18);
+    if(bestA && x.reg===bestA.reg){ ctx.font='12px sans-serif'; ctx.fillText('🏆',gx,h-3); }
   });
 }
 
