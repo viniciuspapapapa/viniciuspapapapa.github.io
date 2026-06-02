@@ -572,15 +572,15 @@ function calcular(p){
   }
   /* ================= LUCRO REAL / PRESUMIDO ================= */
   else {
-    // --- PIS/COFINS ---
-    if(p.regime==='real') atual.pisCofins = va*0.0925;     // não-cumulativo (crédito sobre insumos)
-    else                  atual.pisCofins = fat*0.0365;    // presumido: cumulativo, SEM crédito
-    // --- ICMS "por dentro" (gross-up), não-cumulativo ---
+    // --- ICMS "por dentro" (gross-up), não-cumulativo — apurado 1º (entra na exclusão da base) ---
     if(s.icms>0){ const ef = s.icms/(1-s.icms); atual.icms = va*ef; }
     // --- ISS cumulativo (sem crédito) ---
     if(s.iss>0)  atual.iss = fat*s.iss;
     // --- IPI não-cumulativo ---
     if(s.ipi>0)  atual.ipi = va*s.ipi;
+    // --- PIS/COFINS — base EXCLUI o ICMS destacado (Tema 69 STF / RE 574.706) ---
+    if(p.regime==='real') atual.pisCofins = Math.max(va  - atual.icms, 0) * 0.0925; // não-cumulativo (crédito sobre insumos)
+    else                  atual.pisCofins = Math.max(fat - atual.icms, 0) * 0.0365; // presumido: cumulativo, SEM crédito
     atual.total = atual.pisCofins + atual.icms + atual.iss + atual.ipi;
 
     // --- NOVO IVA dual (IBS+CBS), não-cumulatividade plena ---
