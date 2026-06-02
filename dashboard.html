@@ -428,6 +428,39 @@ tbody td { padding: 12px 14px; vertical-align: middle; }
 }
 .kanban-deadline-date { font-size: 12px; font-weight: 600; }
 .kanban-checklist-mini { font-size: 11px; color: var(--muted); }
+
+/* KANBAN CONCLUÍDA */
+.kanban-col.done { opacity: .75; }
+.kanban-col.done .kanban-card { border-left-color: var(--green) !important; }
+.kanban-card-done-overlay { text-decoration: line-through; opacity: .7; }
+
+/* QUICK ACTION BUTTONS */
+.btn-complete {
+  margin-top: 8px; width: 100%; padding: 5px; border-radius: 6px; border: 1px solid rgba(16,185,129,.3);
+  background: rgba(16,185,129,.1); color: var(--green); font-size: 12px; font-weight: 600;
+  cursor: pointer; transition: background .15s; text-align: center;
+}
+.btn-complete:hover { background: rgba(16,185,129,.25); }
+.btn-reopen {
+  margin-top: 8px; width: 100%; padding: 5px; border-radius: 6px; border: 1px solid rgba(148,163,184,.2);
+  background: rgba(148,163,184,.08); color: var(--muted); font-size: 12px; font-weight: 600;
+  cursor: pointer; transition: background .15s; text-align: center;
+}
+.btn-reopen:hover { background: rgba(148,163,184,.18); }
+
+/* TABLE ACTION BUTTON */
+.tbl-complete-btn {
+  padding: 4px 10px; border-radius: 6px; border: 1px solid rgba(16,185,129,.3);
+  background: rgba(16,185,129,.1); color: var(--green); font-size: 11px; font-weight: 600;
+  cursor: pointer; transition: background .15s; white-space: nowrap;
+}
+.tbl-complete-btn:hover { background: rgba(16,185,129,.25); }
+.tbl-reopen-btn {
+  padding: 4px 10px; border-radius: 6px; border: 1px solid rgba(148,163,184,.2);
+  background: transparent; color: var(--muted); font-size: 11px; font-weight: 600;
+  cursor: pointer; transition: background .15s; white-space: nowrap;
+}
+.tbl-reopen-btn:hover { background: rgba(148,163,184,.1); }
 </style>
 </head>
 <body>
@@ -470,6 +503,11 @@ tbody td { padding: 12px 14px; vertical-align: middle; }
   <div class="nav-item" data-page="prospecting">
     <span class="icon">🤝</span> Prospecção
     <span class="badge gold" id="badge-prospecting">0</span>
+  </div>
+
+  <div class="nav-item" data-page="completed">
+    <span class="icon">✅</span> Concluídas
+    <span class="badge" id="badge-completed" style="background:var(--green)">0</span>
   </div>
 
   <div class="sidebar-section">Gestão</div>
@@ -636,6 +674,24 @@ tbody td { padding: 12px 14px; vertical-align: middle; }
         </div>
         <div id="prospecting-table-wrap" style="overflow-x:auto"></div>
         <div class="pagination" id="prospecting-pagination"></div>
+      </div>
+    </div>
+
+    <!-- ===== COMPLETED ===== -->
+    <div id="page-completed" class="page">
+      <div class="card">
+        <div class="task-toolbar">
+          <input class="search-input" type="text" id="completed-search" placeholder="Buscar tarefas concluídas...">
+          <select class="filter-select" id="completed-cat">
+            <option value="">Todas as categorias</option>
+            <option value="judicial">Prazos Judiciais</option>
+            <option value="internal">Prazos Internos</option>
+            <option value="admin">Administrativo</option>
+            <option value="prospecting">Prospecção</option>
+          </select>
+        </div>
+        <div id="completed-table-wrap" style="overflow-x:auto"></div>
+        <div class="pagination" id="completed-pagination"></div>
       </div>
     </div>
 
@@ -872,6 +928,8 @@ tbody td { padding: 12px 14px; vertical-align: middle; }
     </div>
     <div class="modal-footer">
       <button class="btn btn-danger btn-sm" id="btn-delete-task" style="margin-right:auto; display:none">🗑 Excluir</button>
+      <button class="btn btn-ghost btn-sm" id="btn-modal-complete" style="display:none; background:rgba(16,185,129,.12); color:var(--green); border-color:rgba(16,185,129,.3)">✅ Concluir Tarefa</button>
+      <button class="btn btn-ghost btn-sm" id="btn-modal-reopen" style="display:none">↩️ Reabrir</button>
       <button class="btn btn-ghost" id="btn-cancel-modal">Cancelar</button>
       <button class="btn btn-primary" id="btn-save-task">💾 Salvar Tarefa</button>
     </div>
@@ -1067,6 +1125,7 @@ const pages = {
   internal: '📁 Prazos Internos',
   admin: '🗃️ Administrativo',
   prospecting: '🤝 Prospecção / Vendas',
+  completed: '✅ Tarefas Concluídas',
   clients: '👥 Clientes',
   reports: '📈 Relatórios',
   settings: '⚙️ Configurações',
@@ -1102,6 +1161,7 @@ function renderPage(p) {
   else if (p === 'internal') renderTaskTable('internal', db.tasks.filter(t => t.category === 'internal'));
   else if (p === 'admin') renderTaskTable('admin', db.tasks.filter(t => t.category === 'admin'));
   else if (p === 'prospecting') renderTaskTable('prospecting', db.tasks.filter(t => t.category === 'prospecting'));
+  else if (p === 'completed') renderTaskTable('completed', db.tasks.filter(t => t.status === 'completed'));
   else if (p === 'clients') renderClients();
   else if (p === 'reports') renderReports();
   else if (p === 'settings') loadSettings();
@@ -1114,6 +1174,7 @@ function updateBadges() {
   const internal = db.tasks.filter(t => t.category === 'internal' && t.status !== 'completed');
   const admin = db.tasks.filter(t => t.category === 'admin' && t.status !== 'completed');
   const prosp = db.tasks.filter(t => t.category === 'prospecting' && t.status !== 'completed');
+  const completedCount = db.tasks.filter(t => t.status === 'completed').length;
 
   document.getElementById('badge-pending').textContent = pending.length || '0';
   document.getElementById('badge-pending').style.display = pending.length ? '' : 'none';
@@ -1125,6 +1186,8 @@ function updateBadges() {
   document.getElementById('badge-admin').style.display = admin.length ? '' : 'none';
   document.getElementById('badge-prospecting').textContent = prosp.length;
   document.getElementById('badge-prospecting').style.display = prosp.length ? '' : 'none';
+  document.getElementById('badge-completed').textContent = completedCount;
+  document.getElementById('badge-completed').style.display = completedCount ? '' : 'none';
 }
 
 // =============================================
@@ -1359,27 +1422,35 @@ function renderTaskTable(key, rawTasks) {
 
   wrap.innerHTML = `<table>
     <thead><tr>
+      <th></th>
       <th>Prioridade</th>
       <th>Título</th>
       <th>Cliente</th>
       <th>Processo</th>
-      ${key === 'tasks' ? '<th>Categoria</th>' : ''}
+      ${key === 'tasks' || key === 'completed' ? '<th>Categoria</th>' : ''}
       <th>Status</th>
+      <th>Responsável</th>
       <th>Prazo</th>
-      <th>Andamentos</th>
+      <th>And.</th>
     </tr></thead>
     <tbody>
       ${paginated.map(t => {
         const dl = daysLeft(t.dueDate);
         const dCol = daysColor(dl);
         const dlStr = dl === null ? '—' : dl < 0 ? `<span style="color:var(--red)">${fmt(t.dueDate)} <span style="font-size:10px">(${Math.abs(dl)}d atr.)</span></span>` : dl === 0 ? `<span style="color:var(--red);font-weight:700">HOJE</span>` : `<span style="color:var(--${dCol})">${fmt(t.dueDate)} <span style="font-size:10px">(${dl}d)</span></span>`;
-        return `<tr onclick="openTask('${t.id}')">
+        const isDone = t.status === 'completed';
+        const actionBtn = isDone
+          ? `<button class="tbl-reopen-btn" onclick="quickReopen('${t.id}',event)" title="Reabrir tarefa">↩️ Reabrir</button>`
+          : `<button class="tbl-complete-btn" onclick="quickComplete('${t.id}',event)" title="Marcar como concluída">✅ Concluir</button>`;
+        return `<tr onclick="openTask('${t.id}')" style="${isDone ? 'opacity:.6' : ''}">
+          <td onclick="event.stopPropagation()">${actionBtn}</td>
           <td>${dot(PRI_DOTS[t.priority]||'dot-gray')} ${badge(PRI_LABELS[t.priority]||'—', PRI_COLORS[t.priority]||'gray')}</td>
-          <td style="max-width:220px"><div style="font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(t.title)}</div>${t.tags?.length ? `<div style="margin-top:3px">${t.tags.slice(0,3).map(tg=>`<span style="font-size:10px;color:var(--muted);background:var(--surface2);padding:1px 5px;border-radius:4px;margin-right:3px">${esc(tg)}</span>`).join('')}</div>` : ''}</td>
-          <td style="max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(t.clientName||'—')}</td>
+          <td style="max-width:200px"><div style="font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap${isDone ? ';text-decoration:line-through' : ''}">${esc(t.title)}</div>${t.tags?.length ? `<div style="margin-top:3px">${t.tags.slice(0,3).map(tg=>`<span style="font-size:10px;color:var(--muted);background:var(--surface2);padding:1px 5px;border-radius:4px;margin-right:3px">${esc(tg)}</span>`).join('')}</div>` : ''}</td>
+          <td style="max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(t.clientName||'—')}</td>
           <td style="font-family:monospace;font-size:12px">${esc(t.processNumber||'—')}</td>
-          ${key === 'tasks' ? `<td>${badge(CAT_LABELS[t.category]||'—', CAT_COLORS[t.category]||'gray')}</td>` : ''}
+          ${key === 'tasks' || key === 'completed' ? `<td>${badge(CAT_LABELS[t.category]||'—', CAT_COLORS[t.category]||'gray')}</td>` : ''}
           <td>${badge(STATUS_LABELS[t.status]||'—', STATUS_COLORS[t.status]||'gray')}</td>
+          <td style="font-size:12px;color:var(--muted);max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(t.responsible||'—')}</td>
           <td style="white-space:nowrap">${dlStr}</td>
           <td style="color:var(--muted);font-size:12px">${(t.progress||[]).length}</td>
         </tr>`;
@@ -1411,27 +1482,56 @@ function renderTaskTable(key, rawTasks) {
 function setPage(key, p) { tablePagination[key] = p; renderPage(currentPage); }
 
 // =============================================
+// QUICK COMPLETE / REOPEN
+// =============================================
+function quickComplete(id, e) {
+  if (e) e.stopPropagation();
+  const t = db.tasks.find(x => x.id === id);
+  if (!t) return;
+  t.status = 'completed';
+  t.updatedAt = new Date().toISOString();
+  addActivity('complete', `Tarefa concluída: ${t.title}`);
+  saveDB();
+  updateBadges();
+  renderPage(currentPage);
+  toast('✅ Tarefa concluída!', 'success');
+}
+
+function quickReopen(id, e) {
+  if (e) e.stopPropagation();
+  const t = db.tasks.find(x => x.id === id);
+  if (!t) return;
+  t.status = 'pending';
+  t.updatedAt = new Date().toISOString();
+  addActivity('update', `Tarefa reaberta: ${t.title}`);
+  saveDB();
+  updateBadges();
+  renderPage(currentPage);
+  toast('↩️ Tarefa reaberta', 'info');
+}
+
+// =============================================
 // KANBAN
 // =============================================
 function renderKanban() {
   const catFilter = document.getElementById('kanban-cat-filter').value;
   let tasks = catFilter ? db.tasks.filter(t => t.category === catFilter) : db.tasks;
-  tasks = tasks.filter(t => t.status !== 'completed');
 
   const cols = [
-    { id: 'pending', label: '⏳ Pendente', color: 'var(--muted)' },
+    { id: 'pending',     label: '⏳ Pendente',    color: 'var(--muted)' },
     { id: 'in_progress', label: '🔄 Em Andamento', color: 'var(--accent)' },
-    { id: 'urgent', label: '🚨 Urgente', color: 'var(--red)' },
-    { id: 'overdue', label: '⚠️ Atrasada', color: 'var(--orange)' },
+    { id: 'urgent',      label: '🚨 Urgente',      color: 'var(--red)' },
+    { id: 'overdue',     label: '⚠️ Atrasada',     color: 'var(--orange)' },
+    { id: 'completed',   label: '✅ Concluída',    color: 'var(--green)', done: true },
   ];
 
   document.getElementById('kanban-board').innerHTML = cols.map(col => {
     const colTasks = tasks.filter(t => t.status === col.id).sort((a,b) => {
       if (a.dueDate && b.dueDate) return new Date(a.dueDate) - new Date(b.dueDate);
-      return 0;
+      return new Date(b.updatedAt||b.createdAt) - new Date(a.updatedAt||a.createdAt);
     });
-    return `<div class="kanban-col">
-      <div class="kanban-col-header">
+    return `<div class="kanban-col${col.done ? ' done' : ''}">
+      <div class="kanban-col-header" style="border-top: 3px solid ${col.color}">
         <span style="color:${col.color}">${col.label}</span>
         <span style="margin-left:auto; background:var(--surface2); font-size:11px; padding:2px 7px; border-radius:10px">${colTasks.length}</span>
       </div>
@@ -1443,17 +1543,23 @@ function renderKanban() {
           const chk = t.checklist || [];
           const chkDone = chk.filter(i => i.done).length;
           const chkTotal = chk.length;
-          return `<div class="kanban-card ${t.priority}" onclick="openTask('${t.id}')">
-            <div class="kanban-card-title">${esc(t.title)}</div>
+          const isDone = t.status === 'completed';
+          return `<div class="kanban-card ${isDone ? '' : t.priority}" onclick="openTask('${t.id}')">
+            <div class="kanban-card-title${isDone ? ' kanban-card-done-overlay' : ''}">${esc(t.title)}</div>
             <div class="kanban-card-client">${esc(t.clientName||'')} ${t.processNumber ? '· '+esc(t.processNumber) : ''}</div>
+            ${t.responsible ? `<div style="font-size:11px;color:var(--muted);margin-bottom:4px">👤 ${esc(t.responsible)}</div>` : ''}
             <div class="kanban-card-footer">
               ${badge(CAT_LABELS[t.category]||'', CAT_COLORS[t.category]||'gray')}
               ${chkTotal ? `<span style="font-size:11px;color:var(--muted)">☑ ${chkDone}/${chkTotal}</span>` : ''}
             </div>
-            ${t.dueDate ? `<div class="kanban-deadline">
+            ${t.dueDate && !isDone ? `<div class="kanban-deadline">
               <span class="kanban-deadline-date" style="color:var(--${dcol}); font-size:13px; font-weight:700">${fmt(t.dueDate)}</span>
               <span style="font-size:11px; color:var(--${dcol}); font-weight:600">${dlLabel}</span>
             </div>` : ''}
+            ${isDone
+              ? `<button class="btn-reopen" onclick="quickReopen('${t.id}',event)">↩️ Reabrir</button>`
+              : `<button class="btn-complete" onclick="quickComplete('${t.id}',event)">✅ Concluir</button>`
+            }
           </div>`;
         }).join('') : `<div class="empty-state" style="padding:20px"><div class="sub">Nenhuma tarefa</div></div>`}
       </div>
@@ -1476,6 +1582,9 @@ function openTask(id) {
   document.getElementById('modal-title').textContent = t ? 'Editar Tarefa' : 'Nova Tarefa';
   document.getElementById('modal-cat-icon').textContent = t ? (CAT_ICONS[t.category]||'📋') : '📋';
   document.getElementById('btn-delete-task').style.display = t ? '' : 'none';
+  const isDoneTask = t?.status === 'completed';
+  document.getElementById('btn-modal-complete').style.display = (t && !isDoneTask) ? '' : 'none';
+  document.getElementById('btn-modal-reopen').style.display = isDoneTask ? '' : 'none';
 
   // Reset tabs
   document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
@@ -1665,6 +1774,18 @@ document.getElementById('btn-new-task').onclick = () => openTask(null);
 
 document.getElementById('btn-close-modal').onclick =
 document.getElementById('btn-cancel-modal').onclick = () => {
+  document.getElementById('task-overlay').classList.remove('open');
+};
+
+document.getElementById('btn-modal-complete').onclick = () => {
+  if (!editingTaskId) return;
+  quickComplete(editingTaskId, null);
+  document.getElementById('task-overlay').classList.remove('open');
+};
+
+document.getElementById('btn-modal-reopen').onclick = () => {
+  if (!editingTaskId) return;
+  quickReopen(editingTaskId, null);
   document.getElementById('task-overlay').classList.remove('open');
 };
 
