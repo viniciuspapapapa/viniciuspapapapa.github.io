@@ -1,0 +1,983 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Simulador da Reforma Tributária — IBS · CBS · IS</title>
+<meta name="description" content="Simulador executivo da Reforma Tributária brasileira (EC 132/2023 e LC 214/2025): IBS, CBS, Imposto Seletivo, transição 2025–2033, créditos, split payment e custo financeiro.">
+<meta name="theme-color" content="#1d4ed8">
+<style>
+  :root{
+    --bg:#f4f6fb; --surface:#ffffff; --surface2:#f8fafc;
+    --border:#e6e9f2; --border2:#eef1f8;
+    --ink:#0f172a; --muted:#64748b; --faint:#94a3b8;
+    --brand:#1d4ed8; --brand2:#3b82f6; --brand-soft:#eff4ff;
+    --ibs:#2563eb; --cbs:#0ea5e9; --is:#f59e0b;
+    --green:#059669; --green-soft:#ecfdf5;
+    --red:#dc2626; --red-soft:#fef2f2;
+    --amber:#d97706; --amber-soft:#fffbeb;
+    --shadow:0 1px 2px rgba(15,23,42,.04), 0 8px 24px -12px rgba(15,23,42,.12);
+    --shadow-lg:0 12px 40px -16px rgba(29,78,216,.28);
+    --radius:16px; --radius-sm:11px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{
+    background:linear-gradient(180deg,#eef2fb 0%,#f4f6fb 240px);
+    color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
+    min-height:100vh;line-height:1.5;-webkit-font-smoothing:antialiased;
+  }
+  ::selection{background:var(--brand-soft);color:var(--brand)}
+
+  /* HEADER */
+  header{
+    background:linear-gradient(120deg,#1e3a8a 0%,#1d4ed8 55%,#2563eb 100%);
+    color:#fff;padding:26px 0 30px;position:relative;overflow:hidden;
+  }
+  header::after{content:"";position:absolute;inset:0;background:
+    radial-gradient(640px 240px at 88% -40%,rgba(255,255,255,.18),transparent 60%);}
+  .wrap{max-width:1200px;margin:0 auto;padding:0 22px;position:relative}
+  .brandrow{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+  .logo{width:46px;height:46px;border-radius:13px;background:rgba(255,255,255,.16);
+    display:grid;place-items:center;font-size:23px;backdrop-filter:blur(6px);
+    border:1px solid rgba(255,255,255,.22);flex:none}
+  h1{font-size:22px;font-weight:800;letter-spacing:-.02em;line-height:1.15}
+  .sub{font-size:13px;color:#dbeafe;margin-top:2px;font-weight:500}
+  .legal{margin-top:16px;display:flex;gap:8px;flex-wrap:wrap}
+  .pill{font-size:11.5px;font-weight:600;background:rgba(255,255,255,.13);
+    border:1px solid rgba(255,255,255,.22);color:#fff;padding:5px 11px;border-radius:999px;
+    display:inline-flex;align-items:center;gap:6px}
+  .pill b{font-weight:800}
+
+  /* LAYOUT */
+  main{max-width:1200px;margin:-16px auto 60px;padding:0 22px;position:relative;z-index:2}
+  .grid{display:grid;grid-template-columns:340px 1fr;gap:22px;align-items:start}
+  @media(max-width:960px){.grid{grid-template-columns:1fr}}
+
+  /* PANEL / CARDS */
+  .panel{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
+    box-shadow:var(--shadow)}
+  .controls{position:sticky;top:16px;padding:20px}
+  @media(max-width:960px){.controls{position:static}}
+  .panel-title{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;
+    color:var(--muted);margin-bottom:4px;display:flex;align-items:center;gap:8px}
+  .panel-title .dot{width:7px;height:7px;border-radius:50%;background:var(--brand)}
+
+  .field{margin-top:16px}
+  .field label{display:block;font-size:12.5px;font-weight:600;color:var(--ink);margin-bottom:7px}
+  .field .hint{font-weight:500;color:var(--faint);font-size:11px}
+  select,input[type=text]{
+    width:100%;padding:11px 12px;border:1px solid var(--border);border-radius:var(--radius-sm);
+    font-size:14px;color:var(--ink);background:var(--surface2);font-family:inherit;
+    transition:border-color .15s,box-shadow .15s;-webkit-appearance:none;appearance:none}
+  select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2.5'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat:no-repeat;background-position:right 12px center;padding-right:34px}
+  select:focus,input:focus{outline:none;border-color:var(--brand2);
+    box-shadow:0 0 0 3px var(--brand-soft);background:#fff}
+
+  .moneyfield{position:relative}
+  .moneyfield .prefix{position:absolute;left:12px;top:50%;transform:translateY(-50%);
+    font-size:14px;color:var(--muted);font-weight:600;pointer-events:none}
+  .moneyfield input{padding-left:40px;font-weight:600}
+
+  /* RANGE */
+  .rangewrap{display:flex;align-items:center;gap:12px}
+  input[type=range]{flex:1;-webkit-appearance:none;appearance:none;height:6px;border-radius:6px;
+    background:var(--border);outline:none}
+  input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:19px;height:19px;border-radius:50%;
+    background:#fff;border:2px solid var(--brand);box-shadow:0 1px 4px rgba(29,78,216,.4);cursor:pointer;
+    transition:transform .12s}
+  input[type=range]::-webkit-slider-thumb:active{transform:scale(1.18)}
+  input[type=range]::-moz-range-thumb{width:18px;height:18px;border-radius:50%;background:#fff;
+    border:2px solid var(--brand);cursor:pointer}
+  .rangeval{min-width:62px;text-align:right;font-weight:700;font-size:13px;color:var(--brand);
+    font-variant-numeric:tabular-nums}
+
+  .row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .toggle-note{font-size:11px;color:var(--muted);background:var(--surface2);border:1px dashed var(--border);
+    border-radius:9px;padding:9px 11px;margin-top:14px;line-height:1.45}
+
+  .btn{margin-top:18px;width:100%;padding:11px;border:none;border-radius:var(--radius-sm);
+    background:var(--surface2);color:var(--muted);font-weight:600;font-size:13px;cursor:pointer;
+    border:1px solid var(--border);transition:all .15s}
+  .btn:hover{background:#fff;color:var(--ink);border-color:var(--brand2)}
+
+  /* DASHBOARD */
+  .dash{display:flex;flex-direction:column;gap:22px}
+  .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+  @media(max-width:1080px){.kpis{grid-template-columns:repeat(2,1fr)}}
+  @media(max-width:460px){.kpis{grid-template-columns:1fr}}
+  .kpi{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
+    padding:17px 18px;box-shadow:var(--shadow);position:relative;overflow:hidden}
+  .kpi::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--brand)}
+  .kpi.k-new::before{background:var(--ibs)}
+  .kpi.k-diff::before{background:var(--green)}
+  .kpi.k-diff.neg::before{background:var(--red)}
+  .kpi.k-split::before{background:var(--is)}
+  .kpi-top{display:flex;justify-content:space-between;align-items:center}
+  .kpi-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}
+  .kpi-ic{width:30px;height:30px;border-radius:9px;display:grid;place-items:center;font-size:15px;
+    background:var(--brand-soft)}
+  .kpi.k-new .kpi-ic{background:#eff6ff}
+  .kpi.k-diff .kpi-ic{background:var(--green-soft)}
+  .kpi.k-diff.neg .kpi-ic{background:var(--red-soft)}
+  .kpi.k-split .kpi-ic{background:var(--amber-soft)}
+  .kpi-value{font-size:25px;font-weight:800;letter-spacing:-.02em;margin-top:12px;
+    font-variant-numeric:tabular-nums;transition:color .3s}
+  .kpi-value.green{color:var(--green)} .kpi-value.red{color:var(--red)}
+  .kpi-meta{font-size:12px;color:var(--muted);margin-top:3px;font-weight:500}
+  .kpi-meta b{font-weight:700;color:var(--ink)}
+
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
+    padding:20px;box-shadow:var(--shadow)}
+  .card-head{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px;gap:12px;flex-wrap:wrap}
+  .card-h{font-size:15px;font-weight:700;letter-spacing:-.01em}
+  .card-desc{font-size:12px;color:var(--muted);margin-top:2px;font-weight:500;max-width:560px}
+  .badge{font-size:11px;font-weight:700;padding:5px 10px;border-radius:999px;white-space:nowrap}
+  .badge.year{background:var(--brand-soft);color:var(--brand)}
+  .badge.green{background:var(--green-soft);color:var(--green)}
+  .badge.red{background:var(--red-soft);color:var(--red)}
+
+  .charts2{display:grid;grid-template-columns:1.4fr 1fr;gap:22px}
+  @media(max-width:880px){.charts2{grid-template-columns:1fr}}
+  .charts2b{display:grid;grid-template-columns:1fr 1fr;gap:22px}
+  @media(max-width:880px){.charts2b{grid-template-columns:1fr}}
+
+  canvas{width:100%;display:block}
+
+  /* legend */
+  .legend{display:flex;flex-wrap:wrap;gap:14px;margin-top:14px}
+  .lg{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--muted);font-weight:600}
+  .lg .sw{width:11px;height:11px;border-radius:3px;flex:none}
+
+  /* donut center + breakdown */
+  .donutwrap{display:flex;gap:18px;align-items:center;flex-wrap:wrap}
+  .donutwrap canvas{flex:none}
+  .breakdown{flex:1;min-width:160px;display:flex;flex-direction:column;gap:9px}
+  .brk{display:flex;align-items:center;gap:10px;font-size:13px}
+  .brk .sw{width:10px;height:10px;border-radius:3px;flex:none}
+  .brk .nm{font-weight:600;flex:1}
+  .brk .vl{font-weight:700;font-variant-numeric:tabular-nums}
+  .brk .pc{color:var(--muted);font-size:11.5px;min-width:46px;text-align:right}
+
+  /* TABLE */
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  thead th{text-align:right;font-size:11px;text-transform:uppercase;letter-spacing:.04em;
+    color:var(--muted);font-weight:700;padding:0 10px 10px;border-bottom:1px solid var(--border)}
+  thead th:first-child{text-align:left}
+  tbody td{padding:11px 10px;border-bottom:1px solid var(--border2);text-align:right;
+    font-variant-numeric:tabular-nums;font-weight:600}
+  tbody td:first-child{text-align:left;font-weight:600;color:var(--ink)}
+  tbody tr:last-child td{border-bottom:none}
+  tbody tr.total td{border-top:2px solid var(--border);border-bottom:none;font-weight:800;font-size:14px;
+    padding-top:13px}
+  .tag{display:inline-block;font-size:10.5px;font-weight:700;padding:2px 7px;border-radius:6px;
+    margin-left:6px;vertical-align:middle}
+  .tag.cut{background:var(--green-soft);color:var(--green)}
+  .tag.spec{background:#f1f5f9;color:#475569}
+  .pos{color:var(--green)} .negv{color:var(--red)} .mut{color:var(--muted);font-weight:500}
+
+  /* split visual */
+  .splitviz{display:flex;flex-direction:column;gap:14px}
+  .flowbar{height:42px;border-radius:11px;overflow:hidden;display:flex;border:1px solid var(--border);
+    background:var(--surface2)}
+  .flowbar .seg{display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;
+    font-size:12px;transition:flex-basis .5s cubic-bezier(.4,0,.2,1);white-space:nowrap;overflow:hidden;
+    min-width:0}
+  .flowbar .seg.net{background:linear-gradient(90deg,#1d4ed8,#3b82f6)}
+  .flowbar .seg.ibs{background:var(--ibs)} .flowbar .seg.cbs{background:var(--cbs)}
+  .splitcards{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+  @media(max-width:560px){.splitcards{grid-template-columns:1fr}}
+  .scard{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:14px}
+  .scard .l{font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);font-weight:700}
+  .scard .v{font-size:20px;font-weight:800;margin-top:6px;font-variant-numeric:tabular-nums}
+  .scard .d{font-size:11.5px;color:var(--muted);margin-top:3px}
+
+  .insight{display:flex;gap:12px;padding:14px 16px;border-radius:var(--radius-sm);
+    background:var(--brand-soft);border:1px solid #dbe6ff;margin-top:4px}
+  .insight .ic{font-size:18px;flex:none}
+  .insight p{font-size:12.5px;color:#1e3a8a;line-height:1.55}
+  .insight.warn{background:var(--amber-soft);border-color:#fde68a}
+  .insight.warn p{color:#92400e}
+
+  footer{max-width:1200px;margin:0 auto;padding:0 22px 50px;color:var(--faint);font-size:11.5px;
+    line-height:1.6}
+  footer .disc{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);
+    padding:14px 16px;box-shadow:var(--shadow)}
+  footer b{color:var(--muted)}
+
+  .anim-in{animation:fadeup .5s cubic-bezier(.2,.8,.2,1) both}
+  @keyframes fadeup{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+  .flash{animation:flash .6s ease}
+  @keyframes flash{0%{background:var(--brand-soft)}100%{background:var(--surface)}}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <div class="brandrow">
+      <div class="logo">📊</div>
+      <div>
+        <h1>Simulador da Reforma Tributária</h1>
+        <div class="sub">IBS · CBS · Imposto Seletivo — impacto financeiro da transição 2025–2033</div>
+      </div>
+    </div>
+    <div class="legal">
+      <span class="pill"><b>EC 132/2023</b></span>
+      <span class="pill"><b>LC 214/2025</b></span>
+      <span class="pill">Split Payment</span>
+      <span class="pill">100% offline · sem dependências</span>
+    </div>
+  </div>
+</header>
+
+<main>
+  <div class="grid">
+
+    <!-- ============ CONTROLES ============ -->
+    <aside class="panel controls">
+      <div class="panel-title"><span class="dot"></span> Parâmetros da simulação</div>
+
+      <div class="field">
+        <label>Regime tributário</label>
+        <select id="regime">
+          <option value="regular">Regime Regular (Lucro Real / Presumido)</option>
+          <option value="simples">Simples Nacional</option>
+          <option value="mei">MEI</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label>Setor de atividade</label>
+        <select id="setor">
+          <option value="comercio">Comércio / Varejo</option>
+          <option value="industria">Indústria</option>
+          <option value="servicos">Serviços gerais (TI, marketing…)</option>
+          <option value="profissionais">Serviços profissionais regulados</option>
+          <option value="saude">Saúde</option>
+          <option value="educacao">Educação</option>
+          <option value="agro">Agropecuária / Insumos</option>
+          <option value="alimentos">Alimentos / Cesta básica</option>
+          <option value="combustiveis">Combustíveis (monofásico)</option>
+          <option value="financeiro">Serviços financeiros</option>
+          <option value="imobiliario">Imobiliário / Construção</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label>Faturamento mensal</label>
+        <div class="moneyfield">
+          <span class="prefix">R$</span>
+          <input type="text" id="faturamento" inputmode="numeric" value="500.000">
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Ano da transição <span class="hint" id="anoFase"></span></label>
+        <div class="rangewrap">
+          <input type="range" id="ano" min="2025" max="2033" step="1" value="2029">
+          <span class="rangeval" id="anoVal">2029</span>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Créditos sobre insumos <span class="hint">(% do faturamento)</span></label>
+        <div class="rangewrap">
+          <input type="range" id="creditos" min="0" max="80" step="1" value="40">
+          <span class="rangeval" id="creditosVal">40%</span>
+        </div>
+      </div>
+
+      <div class="row2">
+        <div class="field">
+          <label>Prazo recebimento <span class="hint">(dias)</span></label>
+          <div class="rangewrap">
+            <input type="range" id="prazo" min="0" max="180" step="5" value="30">
+            <span class="rangeval" id="prazoVal">30d</span>
+          </div>
+        </div>
+        <div class="field">
+          <label>CDI <span class="hint">(% a.a.)</span></label>
+          <div class="rangewrap">
+            <input type="range" id="cdi" min="0" max="20" step="0.25" value="11">
+            <span class="rangeval" id="cdiVal">11%</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel-title" style="margin-top:22px"><span class="dot"></span> Alíquotas de referência</div>
+      <div class="row2">
+        <div class="field">
+          <label>IBS <span class="hint">(estadual/munic.)</span></label>
+          <div class="rangewrap">
+            <input type="range" id="ibs" min="10" max="22" step="0.1" value="17.7">
+            <span class="rangeval" id="ibsVal">17,7%</span>
+          </div>
+        </div>
+        <div class="field">
+          <label>CBS <span class="hint">(federal)</span></label>
+          <div class="rangewrap">
+            <input type="range" id="cbs" min="5" max="14" step="0.1" value="8.8">
+            <span class="rangeval" id="cbsVal">8,8%</span>
+          </div>
+        </div>
+      </div>
+      <div class="toggle-note" id="aliqNote">Alíquota total de referência: <b id="aliqTotal">26,5%</b> (IBS + CBS), conforme estimativa do Governo Federal/Ministério da Fazenda.</div>
+
+      <button class="btn" id="resetBtn">↺ Restaurar valores padrão</button>
+    </aside>
+
+    <!-- ============ DASHBOARD ============ -->
+    <section class="dash">
+
+      <!-- KPIs -->
+      <div class="kpis">
+        <div class="kpi anim-in">
+          <div class="kpi-top"><span class="kpi-label">Carga atual</span><span class="kpi-ic">🏛️</span></div>
+          <div class="kpi-value" id="kpiAtual">—</div>
+          <div class="kpi-meta"><b id="kpiAtualPct">—</b> do faturamento</div>
+        </div>
+        <div class="kpi k-new anim-in" style="animation-delay:.05s">
+          <div class="kpi-top"><span class="kpi-label">Novo regime <span id="kpiAnoTag" style="color:var(--brand)"></span></span><span class="kpi-ic">🔵</span></div>
+          <div class="kpi-value" id="kpiNovo">—</div>
+          <div class="kpi-meta"><b id="kpiNovoPct">—</b> do faturamento</div>
+        </div>
+        <div class="kpi k-diff anim-in" id="kpiDiffCard" style="animation-delay:.1s">
+          <div class="kpi-top"><span class="kpi-label">Variação de carga</span><span class="kpi-ic">📈</span></div>
+          <div class="kpi-value" id="kpiDiff">—</div>
+          <div class="kpi-meta" id="kpiDiffMeta">—</div>
+        </div>
+        <div class="kpi k-split anim-in" style="animation-delay:.15s">
+          <div class="kpi-top"><span class="kpi-label">Custo financeiro split</span><span class="kpi-ic">⏳</span></div>
+          <div class="kpi-value" id="kpiCusto">—</div>
+          <div class="kpi-meta">retenção: <b id="kpiSplit">—</b>/mês</div>
+        </div>
+      </div>
+
+      <!-- comparativo + evolução -->
+      <div class="charts2">
+        <div class="card">
+          <div class="card-head">
+            <div>
+              <div class="card-h">Comparativo: regime atual × novo regime</div>
+              <div class="card-desc">Tributos sobre o faturamento mensal, por componente.</div>
+            </div>
+            <span class="badge year" id="badgeAno">2029</span>
+          </div>
+          <canvas id="cmpChart" height="260"></canvas>
+          <div class="legend">
+            <span class="lg"><span class="sw" style="background:#94a3b8"></span>PIS/COFINS · ICMS · ISS</span>
+            <span class="lg"><span class="sw" style="background:var(--ibs)"></span>IBS</span>
+            <span class="lg"><span class="sw" style="background:var(--cbs)"></span>CBS</span>
+            <span class="lg"><span class="sw" style="background:var(--is)"></span>Imposto Seletivo</span>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-head">
+            <div>
+              <div class="card-h">Evolução da carga na transição</div>
+              <div class="card-desc">Carga efetiva estimada de 2025 a 2033.</div>
+            </div>
+          </div>
+          <canvas id="evoChart" height="260"></canvas>
+          <div class="legend">
+            <span class="lg"><span class="sw" style="background:#cbd5e1"></span>Sistema atual</span>
+            <span class="lg"><span class="sw" style="background:var(--brand)"></span>Carga na transição</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- distribuição + tabela -->
+      <div class="charts2b">
+        <div class="card">
+          <div class="card-head">
+            <div>
+              <div class="card-h">Distribuição IBS / CBS / IS</div>
+              <div class="card-desc">Composição do imposto devido no novo modelo.</div>
+            </div>
+          </div>
+          <div class="donutwrap">
+            <canvas id="donut" width="180" height="180" style="width:180px;height:180px"></canvas>
+            <div class="breakdown" id="breakdown"></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-head">
+            <div>
+              <div class="card-h">Memória de cálculo</div>
+              <div class="card-desc">Detalhamento por tributo (R$/mês).</div>
+            </div>
+          </div>
+          <table>
+            <thead><tr><th>Tributo</th><th>Atual</th><th>Novo</th><th>Δ</th></tr></thead>
+            <tbody id="tbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- split payment -->
+      <div class="card">
+        <div class="card-head">
+          <div>
+            <div class="card-h">Impacto do Split Payment & custo financeiro</div>
+            <div class="card-desc">Sob a LC 214/2025, o IBS e a CBS são segregados e recolhidos no momento da liquidação financeira do pagamento. O valor do tributo deixa de transitar pelo caixa da empresa.</div>
+          </div>
+        </div>
+        <div class="splitviz">
+          <div class="flowbar" id="flowbar">
+            <div class="seg net" id="segNet">Receita líquida</div>
+            <div class="seg ibs" id="segIbs">IBS</div>
+            <div class="seg cbs" id="segCbs">CBS</div>
+          </div>
+          <div class="splitcards">
+            <div class="scard">
+              <div class="l">Retido no split / mês</div>
+              <div class="v" id="sSplit">—</div>
+              <div class="d">recolhido automaticamente na liquidação</div>
+            </div>
+            <div class="scard">
+              <div class="l">Float perdido <span style="font-weight:500" id="sPrazo"></span></div>
+              <div class="v" id="sFloat">—</div>
+              <div class="d">capital de giro não financiado pelo tributo</div>
+            </div>
+            <div class="scard">
+              <div class="l">Custo financeiro / ano</div>
+              <div class="v" id="sCusto" style="color:var(--amber)">—</div>
+              <div class="d" id="sCustoD">a CDI sobre o prazo de recebimento</div>
+            </div>
+          </div>
+          <div class="insight" id="insight">
+            <div class="ic">💡</div>
+            <p id="insightTxt"></p>
+          </div>
+        </div>
+      </div>
+
+    </section>
+  </div>
+</main>
+
+<footer>
+  <div class="disc">
+    <b>Aviso:</b> ferramenta educativa de simulação. As alíquotas de referência (IBS ~17,7% e CBS ~8,8%, total ~26,5%) seguem estimativas oficiais e ainda dependem de regulamentação complementar e da fixação das alíquotas por entes federativos. Os percentuais de carga atual são médias representativas por setor. As reduções setoriais (60%, 30%, cesta básica e regimes específicos) seguem a EC 132/2023 e a LC 214/2025. O modelo de transição adota: <b>2026</b> fase-teste (CBS 0,9% / IBS 0,1% compensáveis), <b>2027</b> CBS plena + extinção de PIS/COFINS + início do Imposto Seletivo, <b>2029–2032</b> elevação gradual do IBS (10%/20%/30%/40%) com redução proporcional de ICMS/ISS, e <b>2033</b> sistema novo integral. Não substitui a análise de um contador ou tributarista. Os cálculos rodam 100% no seu navegador — nenhum dado é enviado a servidores.
+  </div>
+  <div style="margin-top:12px">Simulador da Reforma Tributária · arquivo único HTML · funciona offline e pode ser compartilhado por e-mail, WhatsApp ou hospedagem estática.</div>
+</footer>
+
+<script>
+"use strict";
+/* ============================================================
+   SIMULADOR DA REFORMA TRIBUTÁRIA — IBS / CBS / IS
+   EC 132/2023 + LC 214/2025 — cálculos 100% client-side
+   ============================================================ */
+
+/* ---------- Setores: carga atual média + regras do novo regime ---------- */
+const SETORES = {
+  comercio:     {nome:'Comércio / Varejo',        atual:{pisCofins:.0925, icms:.18,  iss:0,   ipi:0},   reducao:0,   is:0,    reg:'padrao'},
+  industria:    {nome:'Indústria',                atual:{pisCofins:.0925, icms:.18,  iss:0,   ipi:.05}, reducao:0,   is:0,    reg:'padrao'},
+  servicos:     {nome:'Serviços gerais',          atual:{pisCofins:.0925, icms:0,    iss:.05, ipi:0},   reducao:0,   is:0,    reg:'padrao'},
+  profissionais:{nome:'Serviços profissionais',   atual:{pisCofins:.0925, icms:0,    iss:.05, ipi:0},   reducao:.30, is:0,    reg:'padrao'},
+  saude:        {nome:'Saúde',                     atual:{pisCofins:.0925, icms:0,    iss:.03, ipi:0},   reducao:.60, is:0,    reg:'padrao'},
+  educacao:     {nome:'Educação',                  atual:{pisCofins:.0925, icms:0,    iss:.03, ipi:0},   reducao:.60, is:0,    reg:'padrao'},
+  agro:         {nome:'Agropecuária / Insumos',    atual:{pisCofins:.0925, icms:.07,  iss:0,   ipi:0},   reducao:.60, is:0,    reg:'padrao'},
+  alimentos:    {nome:'Alimentos / Cesta básica',  atual:{pisCofins:.0925, icms:.07,  iss:0,   ipi:0},   reducao:1.0, is:0,    reg:'cesta'},
+  combustiveis: {nome:'Combustíveis (monofásico)', atual:{pisCofins:.0925, icms:.25,  iss:0,   ipi:0},   reducao:0,   is:.10,  reg:'monofasico'},
+  financeiro:   {nome:'Serviços financeiros',      atual:{pisCofins:.0465, icms:0,    iss:.05, ipi:0},   reducao:0,   is:0,    reg:'especifico'},
+  imobiliario:  {nome:'Imobiliário / Construção',  atual:{pisCofins:.0925, icms:0,    iss:.04, ipi:0},   reducao:.50, is:0,    reg:'especifico'},
+};
+
+/* ---------- Transição: fatores de fase por ano ----------
+   ibsPhase = quanto do IBS já incide; cbsOn = CBS plena;
+   oldFactor = quanto dos tributos antigos (PIS/COFINS/ICMS/ISS) ainda incide. */
+function fase(ano){
+  switch(ano){
+    case 2025: return {ibs:0,    cbs:0,    pisCofins:1, icmsIss:1, label:'sistema atual (pré-reforma)'};
+    case 2026: return {ibs:.001, cbs:.009, pisCofins:1, icmsIss:1, label:'fase-teste (compensável)'};
+    case 2027: return {ibs:0,    cbs:1,    pisCofins:0, icmsIss:1, label:'CBS plena · fim PIS/COFINS · início IS'};
+    case 2028: return {ibs:0,    cbs:1,    pisCofins:0, icmsIss:1, label:'CBS plena · IBS em teste'};
+    case 2029: return {ibs:.10,  cbs:1,    pisCofins:0, icmsIss:.90, label:'IBS 10% · ICMS/ISS 90%'};
+    case 2030: return {ibs:.20,  cbs:1,    pisCofins:0, icmsIss:.80, label:'IBS 20% · ICMS/ISS 80%'};
+    case 2031: return {ibs:.30,  cbs:1,    pisCofins:0, icmsIss:.70, label:'IBS 30% · ICMS/ISS 70%'};
+    case 2032: return {ibs:.40,  cbs:1,    pisCofins:0, icmsIss:.60, label:'IBS 40% · ICMS/ISS 60%'};
+    case 2033: return {ibs:1,    cbs:1,    pisCofins:0, icmsIss:0, label:'novo sistema integral'};
+  }
+}
+
+/* ---------- Núcleo de cálculo ---------- */
+function calcular(p){
+  const s = SETORES[p.setor];
+  const f = fase(p.ano);
+  const fat = p.faturamento;
+  const insumos = fat * p.creditos;          // base creditável
+  const reducao = s.reducao;                 // redução setorial sobre IBS/CBS
+
+  /* ----- Sistema ATUAL (status quo, sem reforma) ----- */
+  // PIS/COFINS não-cumulativo aproveita crédito sobre insumos; ICMS idem.
+  const a = s.atual;
+  const pisCofinsAtual = Math.max(0, (fat - insumos) * a.pisCofins);
+  const icmsAtual      = Math.max(0, (fat - insumos) * a.icms);
+  const issAtual       = fat * a.iss;        // ISS é cumulativo (sem crédito)
+  const ipiAtual       = fat * a.ipi;
+  const atualTotal     = pisCofinsAtual + icmsAtual + issAtual + ipiAtual;
+
+  /* ----- NOVO regime IBS/CBS (não-cumulativo pleno) ----- */
+  const aliqIbs = p.ibs * (1 - reducao);
+  const aliqCbs = p.cbs * (1 - reducao);
+  // débito sobre faturamento menos crédito sobre insumos (IVA-dual amplo)
+  const ibsNovo = Math.max(0, (fat - insumos) * aliqIbs);
+  const cbsNovo = Math.max(0, (fat - insumos) * aliqCbs);
+  const creditoIbs = insumos * aliqIbs;
+  const creditoCbs = insumos * aliqCbs;
+  const creditoTotal = creditoIbs + creditoCbs;
+  // Imposto Seletivo: incide sobre faturamento de bens específicos (não creditável)
+  const isNovo = fat * s.is;
+
+  /* ----- Mescla da transição no ano selecionado ----- */
+  const pisCofinsTrans = pisCofinsAtual * f.pisCofins;
+  const icmsTrans      = icmsAtual      * f.icmsIss;
+  const issTrans       = issAtual       * f.icmsIss;
+  const ipiTrans       = ipiAtual       * (p.ano <= 2026 ? 1 : 0); // IPI zerado a partir de 2027 (exc. ZFM)
+  const ibsTrans       = ibsNovo * f.ibs;
+  const cbsNovoPleno   = cbsNovo;            // CBS já plena a partir de 2027
+  const cbsTrans       = cbsNovo * f.cbs;
+  const isTrans        = isNovo * (p.ano >= 2027 ? 1 : 0);
+
+  const novoTotal = pisCofinsTrans + icmsTrans + issTrans + ipiTrans + ibsTrans + cbsTrans + isTrans;
+
+  /* ----- Split payment & custo financeiro ----- */
+  // Apenas IBS+CBS vigentes no ano são recolhidos via split (líquido do crédito presumido na liquidação).
+  const splitMensal = ibsTrans + cbsTrans;
+  const diaria = Math.pow(1 + p.cdi, 1/360) - 1;   // CDI diário equivalente
+  const fatorPrazo = Math.pow(1 + diaria, p.prazo) - 1;
+  const floatPerdido = splitMensal * fatorPrazo;   // custo sobre 1 ciclo (mês)
+  const custoAnual = floatPerdido * 12;
+
+  return {
+    s, f, fat, insumos, reducao, aliqIbs, aliqCbs,
+    atual:{pisCofins:pisCofinsAtual, icms:icmsAtual, iss:issAtual, ipi:ipiAtual, total:atualTotal},
+    novo:{pisCofins:pisCofinsTrans, icms:icmsTrans, iss:issTrans, ipi:ipiTrans,
+          ibs:ibsTrans, cbs:cbsTrans, is:isTrans, total:novoTotal},
+    creditoTotal, creditoIbs, creditoCbs,
+    splitMensal, floatPerdido, custoAnual, fatorPrazo
+  };
+}
+
+/* ============================================================
+   FORMATAÇÃO
+   ============================================================ */
+const BRL = new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL',maximumFractionDigits:0});
+const BRL2 = new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL',minimumFractionDigits:2,maximumFractionDigits:2});
+const fmtPct = (x,d=1)=> (x*100).toLocaleString('pt-BR',{minimumFractionDigits:d,maximumFractionDigits:d})+'%';
+const fmtPctRaw = (x,d=1)=> x.toLocaleString('pt-BR',{minimumFractionDigits:d,maximumFractionDigits:d})+'%';
+
+function parseMoney(str){
+  const n = parseInt(String(str).replace(/\D/g,''),10);
+  return isNaN(n)?0:n;
+}
+
+/* ============================================================
+   ESTADO + ELEMENTOS
+   ============================================================ */
+const $ = id => document.getElementById(id);
+const DEFAULTS = {regime:'regular', setor:'comercio', faturamento:'500.000', ano:2029,
+                  creditos:40, prazo:30, cdi:11, ibs:17.7, cbs:8.8};
+
+function readState(){
+  return {
+    regime: $('regime').value,
+    setor: $('setor').value,
+    faturamento: parseMoney($('faturamento').value),
+    ano: +$('ano').value,
+    creditos: +$('creditos').value/100,
+    prazo: +$('prazo').value,
+    cdi: +$('cdi').value/100,
+    ibs: +$('ibs').value,
+    cbs: +$('cbs').value,
+  };
+}
+
+/* ============================================================
+   RENDER
+   ============================================================ */
+let lastNovo = null;
+function render(){
+  const p = readState();
+
+  /* labels dos controles */
+  $('anoVal').textContent = p.ano;
+  $('anoFase').textContent = '· '+fase(p.ano).label;
+  $('creditosVal').textContent = $('creditos').value+'%';
+  $('prazoVal').textContent = $('prazo').value+'d';
+  $('cdiVal').textContent = fmtPctRaw(+$('cdi').value,2).replace(',00','');
+  $('ibsVal').textContent = fmtPctRaw(p.ibs);
+  $('cbsVal').textContent = fmtPctRaw(p.cbs);
+  $('aliqTotal').textContent = fmtPctRaw(p.ibs+p.cbs);
+
+  /* regime simples/mei: ajusta a base de comparação */
+  const r = calcular(p);
+  applyRegime(p, r);
+
+  /* KPIs */
+  const cargaAtualPct = r.fat? r.atual.total/r.fat : 0;
+  const cargaNovoPct = r.fat? r.novo.total/r.fat : 0;
+  $('kpiAtual').textContent = BRL.format(r.atual.total);
+  $('kpiAtualPct').textContent = fmtPct(cargaAtualPct);
+  $('kpiNovo').textContent = BRL.format(r.novo.total);
+  $('kpiNovoPct').textContent = fmtPct(cargaNovoPct);
+  $('kpiAnoTag').textContent = '· '+p.ano;
+
+  const diff = r.novo.total - r.atual.total;
+  const diffPct = r.atual.total? diff/r.atual.total : 0;
+  const diffCard = $('kpiDiffCard');
+  const dv = $('kpiDiff');
+  dv.textContent = (diff>=0?'+':'−')+BRL.format(Math.abs(diff)).replace('R$','R$ ').trim();
+  dv.className = 'kpi-value '+(diff>0?'red':'green');
+  diffCard.classList.toggle('neg', diff>0);
+  $('kpiDiffMeta').innerHTML = (diff>0?'<b style="color:var(--red)">+':'<b style="color:var(--green)">')+
+    fmtPctRaw(Math.abs(diffPct*100))+'</b> vs. carga atual';
+
+  $('kpiCusto').textContent = BRL.format(r.custoAnual);
+  $('kpiSplit').textContent = BRL.format(r.splitMensal);
+
+  /* badge ano */
+  $('badgeAno').textContent = p.ano;
+
+  /* charts */
+  drawComparativo(r);
+  drawEvolucao(p);
+  drawDonut(r);
+  drawBreakdown(r);
+  drawTabela(r);
+  drawSplit(r, p);
+  drawInsight(r, p, diff, diffPct);
+
+  /* flash KPIs on change */
+  if(lastNovo!==null && Math.abs(lastNovo-r.novo.total)>1){
+    [$('kpiAtual'),$('kpiNovo'),$('kpiDiff'),$('kpiCusto')].forEach(e=>{
+      e.classList.remove('flash'); void e.offsetWidth; e.classList.add('flash');
+    });
+  }
+  lastNovo = r.novo.total;
+}
+
+/* Regime Simples/MEI: substitui base atual por modelo unificado */
+function applyRegime(p, r){
+  $('aliqNote').style.opacity = (p.regime==='regular')?1:.55;
+  if(p.regime==='regular') return;
+  if(p.regime==='simples'){
+    // Simples: carga unificada média ~13% (varia por anexo). Reforma mantém o regime,
+    // mas permite gerar crédito "por fora" — impacto líquido pequeno na própria empresa.
+    const aliqSimplesAtual = 0.13;
+    const aliqSimplesNovo  = 0.135; // leve ajuste pela sub-divisão IBS/CBS dentro do DAS
+    r.atual = {pisCofins:0,icms:0,iss:0,ipi:0,total:r.fat*aliqSimplesAtual};
+    const ibs = r.fat*aliqSimplesNovo*0.66, cbs=r.fat*aliqSimplesNovo*0.34;
+    r.novo = {pisCofins:0,icms:0,iss:0,ipi:0,ibs:ibs,cbs:cbs,is:0,total:r.fat*aliqSimplesNovo};
+    r.splitMensal = (ibs+cbs);
+    recompFin(r,p);
+  } else { // mei
+    const valorFixo = 75; // DAS-MEI aproximado mensal
+    r.atual = {pisCofins:0,icms:0,iss:0,ipi:0,total:valorFixo};
+    r.novo  = {pisCofins:0,icms:0,iss:0,ipi:0,ibs:valorFixo*.6,cbs:valorFixo*.4,is:0,total:valorFixo};
+    r.splitMensal = 0; r.floatPerdido=0; r.custoAnual=0;
+  }
+}
+function recompFin(r,p){
+  const diaria = Math.pow(1+p.cdi,1/360)-1;
+  const fatorPrazo = Math.pow(1+diaria,p.prazo)-1;
+  r.floatPerdido = r.splitMensal*fatorPrazo;
+  r.custoAnual = r.floatPerdido*12;
+  r.fatorPrazo = fatorPrazo;
+}
+
+/* ============================================================
+   CHARTS (canvas vanilla, retina-aware)
+   ============================================================ */
+function setupCanvas(cv, cssH){
+  const dpr = window.devicePixelRatio||1;
+  const w = cv.clientWidth || cv.parentElement.clientWidth;
+  const h = cssH;
+  cv.width = w*dpr; cv.height = h*dpr;
+  cv.style.height = h+'px';
+  const ctx = cv.getContext('2d');
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  ctx.clearRect(0,0,w,h);
+  return {ctx,w,h};
+}
+function roundRectTop(ctx,x,y,w,h,r){
+  r=Math.min(r,w/2,h);
+  ctx.beginPath();
+  ctx.moveTo(x,y+h);
+  ctx.lineTo(x,y+r);
+  ctx.arcTo(x,y,x+r,y,r);
+  ctx.lineTo(x+w-r,y);
+  ctx.arcTo(x+w,y,x+w,y+r,r);
+  ctx.lineTo(x+w,y+h);
+  ctx.closePath();
+}
+
+/* --- Comparativo: 2 colunas empilhadas --- */
+function drawComparativo(r){
+  const cv=$('cmpChart'); const {ctx,w,h}=setupCanvas(cv,260);
+  const padL=18,padR=18,padT=16,padB=42;
+  const plotH=h-padT-padB, plotW=w-padL-padR;
+  const cols=[
+    {label:'Sistema atual', segs:[
+      {v:r.atual.pisCofins+r.atual.icms, c:'#94a3b8'},
+      {v:r.atual.iss, c:'#cbd5e1'},
+      {v:r.atual.ipi, c:'#e2e8f0'},
+    ], total:r.atual.total},
+    {label:'Novo regime', segs:[
+      {v:r.novo.pisCofins+r.novo.icms+r.novo.iss+r.novo.ipi, c:'#b6c2d4'},
+      {v:r.novo.ibs, c:'#2563eb'},
+      {v:r.novo.cbs, c:'#0ea5e9'},
+      {v:r.novo.is, c:'#f59e0b'},
+    ], total:r.novo.total},
+  ];
+  const max=Math.max(cols[0].total, cols[1].total, 1)*1.18;
+  const bw=Math.min(120, plotW/2*0.5);
+  const gap=plotW/2;
+  // gridlines
+  ctx.strokeStyle='#eef1f8'; ctx.lineWidth=1; ctx.font='11px -apple-system,sans-serif';
+  ctx.fillStyle='#94a3b8'; ctx.textAlign='left';
+  for(let i=0;i<=4;i++){
+    const gy=padT+plotH-(plotH*i/4);
+    ctx.beginPath();ctx.moveTo(padL,gy);ctx.lineTo(w-padR,gy);ctx.stroke();
+    ctx.fillText(BRL.format(max*i/4).replace('R$','').trim(), padL, gy-4);
+  }
+  cols.forEach((col,ci)=>{
+    const cx=padL+gap*ci+gap/2;
+    let yTop=padT+plotH;
+    col.segs.forEach(seg=>{
+      if(seg.v<=0) return;
+      const sh=plotH*(seg.v/max);
+      yTop-=sh;
+      ctx.fillStyle=seg.c;
+      roundRectTop(ctx,cx-bw/2,yTop,bw, sh+ (yTop+sh>=padT+plotH-1?0:0.5),5);
+      ctx.fill();
+    });
+    // total label
+    const ty=padT+plotH-plotH*(col.total/max);
+    ctx.fillStyle='#0f172a';ctx.font='700 13px -apple-system,sans-serif';ctx.textAlign='center';
+    ctx.fillText(BRL.format(col.total), cx, Math.max(ty-8,padT+10));
+    // x label
+    ctx.fillStyle='#475569';ctx.font='600 12px -apple-system,sans-serif';
+    ctx.fillText(col.label, cx, h-16);
+    const pct=r.fat?col.total/r.fat:0;
+    ctx.fillStyle='#94a3b8';ctx.font='11px -apple-system,sans-serif';
+    ctx.fillText(fmtPct(pct)+' do fat.', cx, h-2);
+  });
+}
+
+/* --- Evolução 2025-2033 (linhas) --- */
+function drawEvolucao(p){
+  const cv=$('evoChart'); const {ctx,w,h}=setupCanvas(cv,260);
+  const padL=44,padR=14,padT=14,padB=34;
+  const plotH=h-padT-padB, plotW=w-padL-padR;
+  const anos=[2025,2026,2027,2028,2029,2030,2031,2032,2033];
+  const atualSerie=[], transSerie=[];
+  anos.forEach(a=>{
+    const pp={...p,ano:a};
+    const rr=calcular(pp); applyRegime(pp,rr);
+    atualSerie.push(rr.fat?rr.atual.total/rr.fat:0);
+    transSerie.push(rr.fat?rr.novo.total/rr.fat:0);
+  });
+  const max=Math.max(...atualSerie,...transSerie,0.01)*1.2;
+  const X=i=>padL+plotW*i/(anos.length-1);
+  const Y=v=>padT+plotH-plotH*(v/max);
+  // grid + y labels
+  ctx.strokeStyle='#eef1f8';ctx.lineWidth=1;ctx.font='10.5px -apple-system,sans-serif';
+  ctx.fillStyle='#94a3b8';ctx.textAlign='right';
+  for(let i=0;i<=4;i++){
+    const gy=padT+plotH-plotH*i/4;
+    ctx.beginPath();ctx.moveTo(padL,gy);ctx.lineTo(w-padR,gy);ctx.stroke();
+    ctx.fillText(fmtPctRaw(max*100*i/4,0), padL-6, gy+3);
+  }
+  // x labels
+  ctx.fillStyle='#94a3b8';ctx.font='10px -apple-system,sans-serif';ctx.textAlign='center';
+  anos.forEach((a,i)=> ctx.fillText("'"+String(a).slice(2), X(i), h-12));
+  // current line (dashed grey)
+  const line=(serie,color,fill,dash)=>{
+    ctx.save();
+    if(dash)ctx.setLineDash([5,4]);
+    ctx.strokeStyle=color;ctx.lineWidth=2.5;ctx.lineJoin='round';
+    ctx.beginPath();serie.forEach((v,i)=> i?ctx.lineTo(X(i),Y(v)):ctx.moveTo(X(i),Y(v)));ctx.stroke();
+    ctx.restore();
+    if(fill){
+      const g=ctx.createLinearGradient(0,padT,0,padT+plotH);
+      g.addColorStop(0,'rgba(29,78,216,.18)');g.addColorStop(1,'rgba(29,78,216,0)');
+      ctx.fillStyle=g;ctx.beginPath();ctx.moveTo(X(0),padT+plotH);
+      serie.forEach((v,i)=>ctx.lineTo(X(i),Y(v)));
+      ctx.lineTo(X(serie.length-1),padT+plotH);ctx.closePath();ctx.fill();
+    }
+  };
+  line(atualSerie,'#cbd5e1',false,true);
+  line(transSerie,'#1d4ed8',true,false);
+  // dots
+  transSerie.forEach((v,i)=>{
+    ctx.fillStyle= anos[i]===p.ano?'#1d4ed8':'#fff';
+    ctx.strokeStyle='#1d4ed8';ctx.lineWidth=2;
+    ctx.beginPath();ctx.arc(X(i),Y(v),anos[i]===p.ano?5:3.2,0,7);ctx.fill();ctx.stroke();
+  });
+  // marker line for selected year
+  const si=anos.indexOf(p.ano);
+  if(si>=0){
+    ctx.strokeStyle='rgba(29,78,216,.35)';ctx.setLineDash([3,3]);ctx.lineWidth=1;
+    ctx.beginPath();ctx.moveTo(X(si),padT);ctx.lineTo(X(si),padT+plotH);ctx.stroke();ctx.setLineDash([]);
+  }
+}
+
+/* --- Donut IBS/CBS/IS --- */
+function drawDonut(r){
+  const cv=$('donut'); const dpr=window.devicePixelRatio||1;
+  cv.width=180*dpr;cv.height=180*dpr;const ctx=cv.getContext('2d');ctx.setTransform(dpr,0,0,dpr,0,0);
+  ctx.clearRect(0,0,180,180);
+  const cx=90,cy=90,R=78,thick=26;
+  const parts=[
+    {v:r.novo.ibs,c:'#2563eb'},
+    {v:r.novo.cbs,c:'#0ea5e9'},
+    {v:r.novo.is, c:'#f59e0b'},
+  ];
+  const tot=parts.reduce((s,p)=>s+p.v,0)||1;
+  let ang=-Math.PI/2;
+  ctx.lineWidth=thick;ctx.lineCap='butt';
+  parts.forEach(pt=>{
+    if(pt.v<=0)return;
+    const a2=ang+(pt.v/tot)*Math.PI*2;
+    ctx.beginPath();ctx.strokeStyle=pt.c;ctx.arc(cx,cy,R-thick/2,ang+.02,a2-.02);ctx.stroke();
+    ang=a2;
+  });
+  if(tot<=1){ // empty
+    ctx.beginPath();ctx.strokeStyle='#eef1f8';ctx.arc(cx,cy,R-thick/2,0,7);ctx.stroke();
+  }
+  // center
+  ctx.fillStyle='#0f172a';ctx.textAlign='center';ctx.font='800 19px -apple-system,sans-serif';
+  ctx.fillText(BRL.format(tot>1?tot:0).replace('R$','').trim(), cx, cy+2);
+  ctx.fillStyle='#94a3b8';ctx.font='600 10px -apple-system,sans-serif';
+  ctx.fillText('IBS+CBS+IS /mês', cx, cy+18);
+}
+function drawBreakdown(r){
+  const tot=r.novo.ibs+r.novo.cbs+r.novo.is;
+  const rows=[
+    {nm:'IBS',c:'#2563eb',v:r.novo.ibs,d:'estadual + municipal'},
+    {nm:'CBS',c:'#0ea5e9',v:r.novo.cbs,d:'federal'},
+    {nm:'Imposto Seletivo',c:'#f59e0b',v:r.novo.is,d:'bens específicos'},
+  ];
+  $('breakdown').innerHTML = rows.map(x=>{
+    const pc=tot?x.v/tot:0;
+    return `<div class="brk"><span class="sw" style="background:${x.c}"></span>
+      <span class="nm">${x.nm}<br><span style="font-weight:500;color:var(--faint);font-size:11px">${x.d}</span></span>
+      <span class="vl">${BRL.format(x.v)}</span>
+      <span class="pc">${fmtPct(pc,0)}</span></div>`;
+  }).join('');
+}
+
+/* --- Tabela memória de cálculo --- */
+function drawTabela(r){
+  const red = r.reducao;
+  const cut = red>0 ? `<span class="tag cut">−${Math.round(red*100)}%</span>` : '';
+  const spec = r.s.reg==='especifico'||r.s.reg==='monofasico' ? `<span class="tag spec">específico</span>`:'';
+  const rows=[
+    ['PIS / COFINS', r.atual.pisCofins, r.novo.pisCofins, ''],
+    ['ICMS', r.atual.icms, r.novo.icms, ''],
+    ['ISS', r.atual.iss, r.novo.iss, ''],
+    ['IPI', r.atual.ipi, r.novo.ipi, ''],
+    ['IBS '+cut, 0, r.novo.ibs, ''],
+    ['CBS '+cut, 0, r.novo.cbs, ''],
+    ['Imposto Seletivo '+spec, 0, r.novo.is, ''],
+  ];
+  let html='';
+  rows.forEach(([nm,a,n])=>{
+    if(a===0 && n===0 && !/IBS|CBS|Seletivo/.test(nm)) return;
+    const d=n-a;
+    const dcell = Math.abs(d)<1 ? '<span class="mut">—</span>' :
+      `<span class="${d>0?'negv':'pos'}">${d>0?'+':'−'}${BRL.format(Math.abs(d)).replace('R$','').trim()}</span>`;
+    html+=`<tr><td>${nm}</td><td>${a>0?BRL.format(a):'<span class="mut">—</span>'}</td>
+      <td>${n>0?BRL.format(n):'<span class="mut">—</span>'}</td><td>${dcell}</td></tr>`;
+  });
+  // credito
+  if(r.creditoTotal>0){
+    html+=`<tr><td><span class="mut">Crédito IBS/CBS apropriado</span></td>
+      <td class="mut">—</td><td class="pos">−${BRL.format(r.creditoTotal)}</td><td class="mut">—</td></tr>`;
+  }
+  const dTot=r.novo.total-r.atual.total;
+  html+=`<tr class="total"><td>Total</td><td>${BRL.format(r.atual.total)}</td>
+    <td>${BRL.format(r.novo.total)}</td>
+    <td class="${dTot>0?'negv':'pos'}">${dTot>0?'+':'−'}${BRL.format(Math.abs(dTot)).replace('R$','').trim()}</td></tr>`;
+  $('tbody').innerHTML=html;
+}
+
+/* --- Split payment viz --- */
+function drawSplit(r,p){
+  const fat=r.fat||1;
+  const liquida=Math.max(fat-r.splitMensal,0);
+  const ibsP=Math.max(r.novo.ibs,0), cbsP=Math.max(r.novo.cbs,0);
+  const pct=v=>(v/fat*100);
+  $('segNet').style.flexBasis=pct(liquida)+'%';
+  $('segIbs').style.flexBasis=pct(ibsP)+'%';
+  $('segCbs').style.flexBasis=pct(cbsP)+'%';
+  $('segNet').textContent = pct(liquida)>14 ? 'Receita líquida '+fmtPctRaw(pct(liquida),0):'';
+  $('segIbs').textContent = pct(ibsP)>7 ? 'IBS':'';
+  $('segCbs').textContent = pct(cbsP)>7 ? 'CBS':'';
+  $('sSplit').textContent=BRL.format(r.splitMensal);
+  $('sFloat').textContent=BRL2.format(r.floatPerdido);
+  $('sCusto').textContent=BRL.format(r.custoAnual);
+  $('sPrazo').textContent='('+p.prazo+'d)';
+  $('sCustoD').textContent=`CDI ${fmtPctRaw(p.cdi*100,2).replace(',00','')} a.a. · prazo ${p.prazo} dias`;
+}
+
+/* --- Insight dinâmico --- */
+function drawInsight(r,p,diff,diffPct){
+  const box=$('insight'), txt=$('insightTxt');
+  let msg='', warn=false;
+  const setorNome=r.s.nome;
+  if(p.regime==='mei'){
+    msg=`Como <b>MEI</b>, você permanece em recolhimento fixo simplificado. A reforma não altera materialmente sua carga, mas seus clientes passam a poder tomar crédito sobre suas notas no novo modelo.`;
+  } else if(p.regime==='simples'){
+    msg=`No <b>Simples Nacional</b>, o regime unificado é mantido. A divisão interna entre IBS e CBS no DAS permite que clientes do regime regular apropriem créditos — o que pode tornar suas vendas mais competitivas no B2B.`;
+  } else if(r.reducao>=1){
+    msg=`O setor <b>${setorNome}</b> integra a <b>cesta básica nacional</b>, com alíquota zero de IBS/CBS. O impacto recai sobre a cadeia de fornecedores, e o ganho de não-cumulatividade tende a reduzir o preço final.`;
+  } else if(r.reducao>0){
+    msg=`O setor <b>${setorNome}</b> tem redução de <b>${Math.round(r.reducao*100)}%</b> nas alíquotas de IBS/CBS (EC 132/2023). A carga no novo regime ${diff>0?'sobe':'cai'} ${fmtPctRaw(Math.abs(diffPct*100))} frente ao sistema atual em ${p.ano}.`;
+  } else if(diff>0){
+    msg=`Em <b>${p.ano}</b>, a carga do novo modelo supera a atual em <b>${BRL.format(diff)}/mês</b> (${fmtPctRaw(diffPct*100)}). Avalie elevar o aproveitamento de créditos sobre insumos — hoje em ${ $('creditos').value }% do faturamento.`;
+    warn=true;
+  } else {
+    msg=`Em <b>${p.ano}</b>, a não-cumulatividade plena reduz a carga em <b>${BRL.format(Math.abs(diff))}/mês</b> (${fmtPctRaw(Math.abs(diffPct*100))}) frente ao sistema atual, graças ao crédito amplo de IBS/CBS sobre insumos.`;
+  }
+  if(r.custoAnual>0){
+    msg+=` O <b>split payment</b> retira ${BRL.format(r.splitMensal)}/mês do seu fluxo de caixa, gerando custo financeiro de <b>${BRL.format(r.custoAnual)}/ano</b> sobre o prazo de recebimento.`;
+  }
+  txt.innerHTML=msg;
+  box.classList.toggle('warn',warn);
+  box.querySelector('.ic').textContent= warn?'⚠️':'💡';
+}
+
+/* ============================================================
+   EVENTOS
+   ============================================================ */
+// máscara de moeda
+$('faturamento').addEventListener('input',e=>{
+  const n=parseMoney(e.target.value);
+  e.target.value = n? n.toLocaleString('pt-BR'):'';
+  render();
+});
+['regime','setor','ano','creditos','prazo','cdi','ibs','cbs'].forEach(id=>{
+  $(id).addEventListener('input',render);
+});
+$('resetBtn').addEventListener('click',()=>{
+  $('regime').value=DEFAULTS.regime; $('setor').value=DEFAULTS.setor;
+  $('faturamento').value=DEFAULTS.faturamento; $('ano').value=DEFAULTS.ano;
+  $('creditos').value=DEFAULTS.creditos; $('prazo').value=DEFAULTS.prazo;
+  $('cdi').value=DEFAULTS.cdi; $('ibs').value=DEFAULTS.ibs; $('cbs').value=DEFAULTS.cbs;
+  render();
+});
+window.addEventListener('resize',()=>{ clearTimeout(window._rz); window._rz=setTimeout(render,120); });
+
+render();
+</script>
+</body>
+</html>
