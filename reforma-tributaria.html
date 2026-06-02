@@ -243,7 +243,8 @@
       <div class="field">
         <label>Regime tributário</label>
         <select id="regime">
-          <option value="regular">Regime Regular (Lucro Real / Presumido)</option>
+          <option value="real">Lucro Real (PIS/COFINS não-cumulativo)</option>
+          <option value="presumido">Lucro Presumido (PIS/COFINS cumulativo)</option>
           <option value="simples">Simples Nacional</option>
           <option value="mei">MEI</option>
         </select>
@@ -252,17 +253,24 @@
       <div class="field">
         <label>Setor de atividade</label>
         <select id="setor">
-          <option value="comercio">Comércio / Varejo</option>
-          <option value="industria">Indústria</option>
-          <option value="servicos">Serviços gerais (TI, marketing…)</option>
-          <option value="profissionais">Serviços profissionais regulados</option>
-          <option value="saude">Saúde</option>
-          <option value="educacao">Educação</option>
-          <option value="agro">Agropecuária / Insumos</option>
-          <option value="alimentos">Alimentos / Cesta básica</option>
-          <option value="combustiveis">Combustíveis (monofásico)</option>
-          <option value="financeiro">Serviços financeiros</option>
-          <option value="imobiliario">Imobiliário / Construção</option>
+          <optgroup label="Bens">
+            <option value="comercio">Comércio / Varejo</option>
+            <option value="industria">Indústria</option>
+            <option value="agro">Agropecuária / Insumos (−60%)</option>
+            <option value="alimentos">Alimentos / Cesta básica (zero)</option>
+            <option value="combustiveis">Combustíveis (monofásico)</option>
+          </optgroup>
+          <optgroup label="Serviços">
+            <option value="servicos">Serviços gerais (TI, marketing…)</option>
+            <option value="profissionais">Profissionais regulados (−30%)</option>
+            <option value="saude">Saúde (−60%)</option>
+            <option value="educacao">Educação (−60%)</option>
+            <option value="transporte">Transporte público (zero)</option>
+            <option value="restaurantes">Bares e restaurantes (−40%)</option>
+            <option value="hotelaria">Hotelaria / Turismo (−40%)</option>
+            <option value="financeiro">Serviços financeiros (específico)</option>
+            <option value="imobiliario">Imobiliário / Locação (específico)</option>
+          </optgroup>
         </select>
       </div>
 
@@ -463,7 +471,7 @@
 
 <footer>
   <div class="disc">
-    <b>Aviso:</b> ferramenta educativa de simulação. As alíquotas de referência (IBS ~17,7% e CBS ~8,8%, total ~26,5%) seguem estimativas oficiais e ainda dependem de regulamentação complementar e da fixação das alíquotas por entes federativos. Os percentuais de carga atual são médias representativas por setor. As reduções setoriais (60%, 30%, cesta básica e regimes específicos) seguem a EC 132/2023 e a LC 214/2025. O modelo de transição adota: <b>2026</b> fase-teste (CBS 0,9% / IBS 0,1% compensáveis), <b>2027</b> CBS plena + extinção de PIS/COFINS + início do Imposto Seletivo, <b>2029–2032</b> elevação gradual do IBS (10%/20%/30%/40%) com redução proporcional de ICMS/ISS, e <b>2033</b> sistema novo integral. Não substitui a análise de um contador ou tributarista. Os cálculos rodam 100% no seu navegador — nenhum dado é enviado a servidores.
+    <b>Aviso:</b> ferramenta educativa de simulação. <b>Alíquota de referência:</b> IBS ~17,7% + CBS ~8,8% = <b>26,5%</b> (teto legal da LC 214/2025); estimativa do Ministério da Fazenda, sujeita à fixação definitiva por resolução do Senado. <b>Carga atual</b> por regime: Lucro Real (PIS/COFINS 9,25% não-cumulativo, com crédito), Lucro Presumido (PIS/COFINS 3,65% cumulativo, sem crédito), ICMS calculado "por dentro" (gross-up: 18% nominal ≈ 21,95% efetivo), ISS 2–5% cumulativo, IPI não-cumulativo, Simples Nacional pelos Anexos I–V (LC 123/2006) e DAS-MEI fixo. <b>Reduções setoriais (EC 132/2023 + LC 214/2025):</b> 60% (saúde, educação, medicamentos, insumos agropecuários, alimentos do Anexo VII), 30% (profissionais regulados), alíquota zero (cesta básica nacional, transporte público), 50%/70% (venda/locação de imóveis), 40% (bares, restaurantes, hotelaria) e regimes específicos (combustíveis monofásico, serviços financeiros). <b>Transição:</b> 2026 fase-teste (CBS 0,9% / IBS 0,1% compensáveis), 2027 CBS plena + extinção de PIS/COFINS + IPI→0 (exc. ZFM) + início do Imposto Seletivo, 2029–2032 IBS a 10/20/30/40% com ICMS/ISS reduzidos proporcionalmente, 2033 sistema integral. Os percentuais de carga atual são médias representativas — a carga real varia por estado, município, produto, NCM e perfil de créditos. Não substitui a análise de um contador ou tributarista. <b>Fontes:</b> gov.br/receitafederal, planalto.gov.br (LC 214/2025), gov.br/fazenda, LC 123/2006. Cálculos 100% no seu navegador — nenhum dado é enviado a servidores.
   </div>
   <div style="margin-top:12px">Simulador da Reforma Tributária · arquivo único HTML · funciona offline e pode ser compartilhado por e-mail, WhatsApp ou hospedagem estática.</div>
 </footer>
@@ -475,93 +483,146 @@
    EC 132/2023 + LC 214/2025 — cálculos 100% client-side
    ============================================================ */
 
-/* ---------- Setores: carga atual média + regras do novo regime ---------- */
+/* ---------- Setores: carga atual (por componente) + regras do novo regime ----------
+   tipo  : bens | servicos
+   icms  : alíquota NOMINAL de ICMS (cálculo "por dentro" aplicado no motor) — só bens
+   iss   : alíquota de ISS (cumulativo, sem crédito) — só serviços
+   ipi   : alíquota de IPI (não-cumulativo) — indústria
+   anexo : anexo do Simples Nacional aplicável
+   red   : redução da alíquota de referência IBS/CBS (EC 132/2023 + LC 214/2025)
+   is    : alíquota do Imposto Seletivo (estimada, sobre o faturamento)
+   esp   : regime específico (monofasico | financeiro | imobiliario | semcredito) */
 const SETORES = {
-  comercio:     {nome:'Comércio / Varejo',        atual:{pisCofins:.0925, icms:.18,  iss:0,   ipi:0},   reducao:0,   is:0,    reg:'padrao'},
-  industria:    {nome:'Indústria',                atual:{pisCofins:.0925, icms:.18,  iss:0,   ipi:.05}, reducao:0,   is:0,    reg:'padrao'},
-  servicos:     {nome:'Serviços gerais',          atual:{pisCofins:.0925, icms:0,    iss:.05, ipi:0},   reducao:0,   is:0,    reg:'padrao'},
-  profissionais:{nome:'Serviços profissionais',   atual:{pisCofins:.0925, icms:0,    iss:.05, ipi:0},   reducao:.30, is:0,    reg:'padrao'},
-  saude:        {nome:'Saúde',                     atual:{pisCofins:.0925, icms:0,    iss:.03, ipi:0},   reducao:.60, is:0,    reg:'padrao'},
-  educacao:     {nome:'Educação',                  atual:{pisCofins:.0925, icms:0,    iss:.03, ipi:0},   reducao:.60, is:0,    reg:'padrao'},
-  agro:         {nome:'Agropecuária / Insumos',    atual:{pisCofins:.0925, icms:.07,  iss:0,   ipi:0},   reducao:.60, is:0,    reg:'padrao'},
-  alimentos:    {nome:'Alimentos / Cesta básica',  atual:{pisCofins:.0925, icms:.07,  iss:0,   ipi:0},   reducao:1.0, is:0,    reg:'cesta'},
-  combustiveis: {nome:'Combustíveis (monofásico)', atual:{pisCofins:.0925, icms:.25,  iss:0,   ipi:0},   reducao:0,   is:.10,  reg:'monofasico'},
-  financeiro:   {nome:'Serviços financeiros',      atual:{pisCofins:.0465, icms:0,    iss:.05, ipi:0},   reducao:0,   is:0,    reg:'especifico'},
-  imobiliario:  {nome:'Imobiliário / Construção',  atual:{pisCofins:.0925, icms:0,    iss:.04, ipi:0},   reducao:.50, is:0,    reg:'especifico'},
+  comercio:     {nome:'Comércio / Varejo',         tipo:'bens',     icms:.18, iss:0,   ipi:0,   anexo:'I',   red:0,   is:0,   esp:null},
+  industria:    {nome:'Indústria',                 tipo:'bens',     icms:.18, iss:0,   ipi:.08, anexo:'II',  red:0,   is:0,   esp:null},
+  agro:         {nome:'Agropecuária / Insumos',    tipo:'bens',     icms:.07, iss:0,   ipi:0,   anexo:'II',  red:.60, is:0,   esp:null},
+  alimentos:    {nome:'Alimentos / Cesta básica',  tipo:'bens',     icms:.07, iss:0,   ipi:0,   anexo:'I',   red:1.0, is:0,   esp:null},
+  combustiveis: {nome:'Combustíveis (monofásico)', tipo:'bens',     icms:.25, iss:0,   ipi:0,   anexo:'I',   red:0,   is:.08, esp:'monofasico'},
+  servicos:     {nome:'Serviços gerais (TI etc.)', tipo:'servicos', icms:0,   iss:.05, ipi:0,   anexo:'V',   red:0,   is:0,   esp:null},
+  profissionais:{nome:'Profissionais regulados',   tipo:'servicos', icms:0,   iss:.05, ipi:0,   anexo:'V',   red:.30, is:0,   esp:null},
+  saude:        {nome:'Saúde',                      tipo:'servicos', icms:0,   iss:.03, ipi:0,   anexo:'III', red:.60, is:0,   esp:null},
+  educacao:     {nome:'Educação',                   tipo:'servicos', icms:0,   iss:.03, ipi:0,   anexo:'III', red:.60, is:0,   esp:null},
+  transporte:   {nome:'Transporte público',         tipo:'servicos', icms:0,   iss:.03, ipi:0,   anexo:'III', red:1.0, is:0,   esp:null},
+  restaurantes: {nome:'Bares e restaurantes',       tipo:'bens',     icms:.12, iss:0,   ipi:0,   anexo:'I',   red:.40, is:0,   esp:'semcredito'},
+  hotelaria:    {nome:'Hotelaria / Turismo',        tipo:'servicos', icms:0,   iss:.05, ipi:0,   anexo:'III', red:.40, is:0,   esp:null},
+  financeiro:   {nome:'Serviços financeiros',       tipo:'servicos', icms:0,   iss:.05, ipi:0,   anexo:'V',   red:0,   is:0,   esp:'financeiro'},
+  imobiliario:  {nome:'Imobiliário / Locação',      tipo:'servicos', icms:0,   iss:.04, ipi:0,   anexo:'III', red:.50, is:0,   esp:'imobiliario'},
 };
 
-/* ---------- Transição: fatores de fase por ano ----------
-   ibsPhase = quanto do IBS já incide; cbsOn = CBS plena;
-   oldFactor = quanto dos tributos antigos (PIS/COFINS/ICMS/ISS) ainda incide. */
+/* ---------- Simples Nacional: tabelas (RBT12 topo, alíquota nominal, parcela a deduzir) ----------
+   Alíquota efetiva = (RBT12 × nominal − parcela) / RBT12  (LC 123/2006) */
+const SIMPLES = {
+  I:   [[180000,.04,0],[360000,.073,5940],[720000,.095,13860],[1800000,.107,22500],[3600000,.143,87300],[4800000,.19,378000]],
+  II:  [[180000,.045,0],[360000,.078,5940],[720000,.10,13860],[1800000,.112,22500],[3600000,.147,85500],[4800000,.30,720000]],
+  III: [[180000,.06,0],[360000,.112,9360],[720000,.135,17640],[1800000,.16,35640],[3600000,.21,125640],[4800000,.33,648000]],
+  IV:  [[180000,.045,0],[360000,.09,8100],[720000,.102,12420],[1800000,.14,39780],[3600000,.22,183780],[4800000,.33,828000]],
+  V:   [[180000,.155,0],[360000,.18,4500],[720000,.195,9900],[1800000,.205,17100],[3600000,.23,62100],[4800000,.305,540000]],
+};
+function simplesAliq(anexo, rbt12){
+  const t = SIMPLES[anexo] || SIMPLES.III;
+  if(rbt12<=0) return t[0][1];
+  let row = t[t.length-1];
+  for(const r of t){ if(rbt12 <= r[0]){ row = r; break; } }
+  return Math.max((rbt12*row[1] - row[2]) / rbt12, 0);
+}
+
+/* ---------- Transição: fatores de fase por ano (EC 132/2023 art. 124–129) ----------
+   ibs/cbs = fração da alíquota de referência já vigente;
+   pisCofins/icmsIss = fração dos tributos antigos ainda incidente. */
 function fase(ano){
   switch(ano){
-    case 2025: return {ibs:0,    cbs:0,    pisCofins:1, icmsIss:1, label:'sistema atual (pré-reforma)'};
-    case 2026: return {ibs:.001, cbs:.009, pisCofins:1, icmsIss:1, label:'fase-teste (compensável)'};
-    case 2027: return {ibs:0,    cbs:1,    pisCofins:0, icmsIss:1, label:'CBS plena · fim PIS/COFINS · início IS'};
-    case 2028: return {ibs:0,    cbs:1,    pisCofins:0, icmsIss:1, label:'CBS plena · IBS em teste'};
+    case 2025: return {ibs:0,    cbs:0,    pisCofins:1, icmsIss:1,   label:'sistema atual (pré-reforma)'};
+    case 2026: return {ibs:.001, cbs:.009, pisCofins:1, icmsIss:1,   label:'fase-teste (compensável)'};
+    case 2027: return {ibs:0,    cbs:1,    pisCofins:0, icmsIss:1,   label:'CBS plena · fim PIS/COFINS · IPI→0 · início IS'};
+    case 2028: return {ibs:0,    cbs:1,    pisCofins:0, icmsIss:1,   label:'CBS plena · IBS em teste'};
     case 2029: return {ibs:.10,  cbs:1,    pisCofins:0, icmsIss:.90, label:'IBS 10% · ICMS/ISS 90%'};
     case 2030: return {ibs:.20,  cbs:1,    pisCofins:0, icmsIss:.80, label:'IBS 20% · ICMS/ISS 80%'};
     case 2031: return {ibs:.30,  cbs:1,    pisCofins:0, icmsIss:.70, label:'IBS 30% · ICMS/ISS 70%'};
     case 2032: return {ibs:.40,  cbs:1,    pisCofins:0, icmsIss:.60, label:'IBS 40% · ICMS/ISS 60%'};
-    case 2033: return {ibs:1,    cbs:1,    pisCofins:0, icmsIss:0, label:'novo sistema integral'};
+    case 2033: return {ibs:1,    cbs:1,    pisCofins:0, icmsIss:0,   label:'novo sistema integral'};
   }
 }
 
-/* ---------- Núcleo de cálculo ---------- */
+/* ---------- Núcleo de cálculo (regime-aware) ---------- */
 function calcular(p){
-  const s = SETORES[p.setor];
-  const f = fase(p.ano);
+  const s   = SETORES[p.setor];
+  const f   = fase(p.ano);
   const fat = p.faturamento;
-  const insumos = fat * p.creditos;          // base creditável
-  const reducao = s.reducao;                 // redução setorial sobre IBS/CBS
+  const ins = fat * p.creditos;             // insumos que geram crédito
+  const va  = Math.max(fat - ins, 0);       // valor agregado
+  const aIbs = p.ibs/100, aCbs = p.cbs/100; // alíquotas em fração
 
-  /* ----- Sistema ATUAL (status quo, sem reforma) ----- */
-  // PIS/COFINS não-cumulativo aproveita crédito sobre insumos; ICMS idem.
-  const a = s.atual;
-  const pisCofinsAtual = Math.max(0, (fat - insumos) * a.pisCofins);
-  const icmsAtual      = Math.max(0, (fat - insumos) * a.icms);
-  const issAtual       = fat * a.iss;        // ISS é cumulativo (sem crédito)
-  const ipiAtual       = fat * a.ipi;
-  const atualTotal     = pisCofinsAtual + icmsAtual + issAtual + ipiAtual;
+  let atual = {pisCofins:0, icms:0, iss:0, ipi:0, total:0};
+  let pleno = {pisCofins:0, icms:0, iss:0, ipi:0, ibs:0, cbs:0, is:0, total:0};
+  let creditoTotal = 0, efSimples = 0;
 
-  /* ----- NOVO regime IBS/CBS (não-cumulativo pleno) ----- */
-  const aliqIbs = p.ibs * (1 - reducao);
-  const aliqCbs = p.cbs * (1 - reducao);
-  // débito sobre faturamento menos crédito sobre insumos (IVA-dual amplo)
-  const ibsNovo = Math.max(0, (fat - insumos) * aliqIbs);
-  const cbsNovo = Math.max(0, (fat - insumos) * aliqCbs);
-  const creditoIbs = insumos * aliqIbs;
-  const creditoCbs = insumos * aliqCbs;
-  const creditoTotal = creditoIbs + creditoCbs;
-  // Imposto Seletivo: incide sobre faturamento de bens específicos (não creditável)
-  const isNovo = fat * s.is;
+  /* ================= MEI ================= */
+  if(p.regime==='mei'){
+    const das = p.ano>=2026 ? 87 : 76;      // DAS-MEI mensal aproximado
+    atual.total = das;
+    pleno.ibs = das*0.6; pleno.cbs = das*0.4; pleno.total = das;
+  }
+  /* ================= SIMPLES NACIONAL ================= */
+  else if(p.regime==='simples'){
+    efSimples = simplesAliq(s.anexo, fat*12);
+    atual.total = fat*efSimples;
+    // Reforma mantém o Simples; a parcela ICMS/ISS/PIS/COFINS do DAS é substituída
+    // por IBS/CBS proporcionalmente — carga da própria empresa praticamente preservada.
+    pleno.ibs = fat*efSimples*0.6; pleno.cbs = fat*efSimples*0.4; pleno.total = fat*efSimples;
+  }
+  /* ================= LUCRO REAL / PRESUMIDO ================= */
+  else {
+    // --- PIS/COFINS ---
+    if(p.regime==='real') atual.pisCofins = va*0.0925;     // não-cumulativo (crédito sobre insumos)
+    else                  atual.pisCofins = fat*0.0365;    // presumido: cumulativo, SEM crédito
+    // --- ICMS "por dentro" (gross-up), não-cumulativo ---
+    if(s.icms>0){ const ef = s.icms/(1-s.icms); atual.icms = va*ef; }
+    // --- ISS cumulativo (sem crédito) ---
+    if(s.iss>0)  atual.iss = fat*s.iss;
+    // --- IPI não-cumulativo ---
+    if(s.ipi>0)  atual.ipi = va*s.ipi;
+    atual.total = atual.pisCofins + atual.icms + atual.iss + atual.ipi;
 
-  /* ----- Mescla da transição no ano selecionado ----- */
-  const pisCofinsTrans = pisCofinsAtual * f.pisCofins;
-  const icmsTrans      = icmsAtual      * f.icmsIss;
-  const issTrans       = issAtual       * f.icmsIss;
-  const ipiTrans       = ipiAtual       * (p.ano <= 2026 ? 1 : 0); // IPI zerado a partir de 2027 (exc. ZFM)
-  const ibsTrans       = ibsNovo * f.ibs;
-  const cbsNovoPleno   = cbsNovo;            // CBS já plena a partir de 2027
-  const cbsTrans       = cbsNovo * f.cbs;
-  const isTrans        = isNovo * (p.ano >= 2027 ? 1 : 0);
+    // --- NOVO IVA dual (IBS+CBS), não-cumulatividade plena ---
+    let kIbs = aIbs*(1-s.red), kCbs = aCbs*(1-s.red);
+    if(s.esp==='financeiro'){ kIbs*=0.65; kCbs*=0.65; }    // regime específico (base/alíquota próprias) — aprox.
+    if(s.esp==='monofasico'){
+      // cobrança única na cadeia, sem creditamento padrão → base = faturamento
+      pleno.ibs = fat*kIbs; pleno.cbs = fat*kCbs; creditoTotal = 0;
+    } else {
+      pleno.ibs = va*kIbs; pleno.cbs = va*kCbs; creditoTotal = ins*(kIbs+kCbs);
+    }
+    pleno.is = fat*s.is;
+    pleno.total = pleno.ibs + pleno.cbs + pleno.is;
+  }
 
-  const novoTotal = pisCofinsTrans + icmsTrans + issTrans + ipiTrans + ibsTrans + cbsTrans + isTrans;
+  /* ================= Mescla da transição no ano ================= */
+  let novo;
+  if(p.regime==='real' || p.regime==='presumido'){
+    const pc  = atual.pisCofins * f.pisCofins;
+    const icm = atual.icms      * f.icmsIss;
+    const iss = atual.iss       * f.icmsIss;
+    const ipi = atual.ipi       * (p.ano<=2026 ? 1 : 0);   // IPI extinto a partir de 2027 (exc. ZFM)
+    const ibs = pleno.ibs       * f.ibs;
+    const cbs = pleno.cbs       * f.cbs;
+    const is  = pleno.is        * (p.ano>=2027 ? 1 : 0);
+    novo = {pisCofins:pc, icms:icm, iss:iss, ipi:ipi, ibs:ibs, cbs:cbs, is:is,
+            total:pc+icm+iss+ipi+ibs+cbs+is};
+  } else {
+    novo = {...pleno};   // Simples/MEI: carga estável na transição
+  }
 
-  /* ----- Split payment & custo financeiro ----- */
-  // Apenas IBS+CBS vigentes no ano são recolhidos via split (líquido do crédito presumido na liquidação).
-  const splitMensal = ibsTrans + cbsTrans;
-  const diaria = Math.pow(1 + p.cdi, 1/360) - 1;   // CDI diário equivalente
-  const fatorPrazo = Math.pow(1 + diaria, p.prazo) - 1;
-  const floatPerdido = splitMensal * fatorPrazo;   // custo sobre 1 ciclo (mês)
-  const custoAnual = floatPerdido * 12;
+  /* ================= Split payment & custo financeiro ================= */
+  const splitMensal  = (novo.ibs||0) + (novo.cbs||0);
+  const diaria       = Math.pow(1+p.cdi, 1/360) - 1;
+  const fatorPrazo   = Math.pow(1+diaria, p.prazo) - 1;
+  const floatPerdido = splitMensal * fatorPrazo;
+  const custoAnual   = floatPerdido * 12;
 
   return {
-    s, f, fat, insumos, reducao, aliqIbs, aliqCbs,
-    atual:{pisCofins:pisCofinsAtual, icms:icmsAtual, iss:issAtual, ipi:ipiAtual, total:atualTotal},
-    novo:{pisCofins:pisCofinsTrans, icms:icmsTrans, iss:issTrans, ipi:ipiTrans,
-          ibs:ibsTrans, cbs:cbsTrans, is:isTrans, total:novoTotal},
-    creditoTotal, creditoIbs, creditoCbs,
+    s, f, fat, insumos:ins, va, reducao:s.red, regime:p.regime, efSimples,
+    aliqIbs:aIbs*(1-s.red), aliqCbs:aCbs*(1-s.red),
+    atual, novo, pleno, creditoTotal,
     splitMensal, floatPerdido, custoAnual, fatorPrazo
   };
 }
@@ -583,7 +644,7 @@ function parseMoney(str){
    ESTADO + ELEMENTOS
    ============================================================ */
 const $ = id => document.getElementById(id);
-const DEFAULTS = {regime:'regular', setor:'comercio', faturamento:'500.000', ano:2029,
+const DEFAULTS = {regime:'real', setor:'comercio', faturamento:'500.000', ano:2029,
                   creditos:40, prazo:30, cdi:11, ibs:17.7, cbs:8.8};
 
 function readState(){
@@ -617,9 +678,8 @@ function render(){
   $('cbsVal').textContent = fmtPctRaw(p.cbs);
   $('aliqTotal').textContent = fmtPctRaw(p.ibs+p.cbs);
 
-  /* regime simples/mei: ajusta a base de comparação */
   const r = calcular(p);
-  applyRegime(p, r);
+  $('aliqNote').style.opacity = (p.regime==='real'||p.regime==='presumido') ? 1 : .5;
 
   /* KPIs */
   const cargaAtualPct = r.fat? r.atual.total/r.fat : 0;
@@ -664,35 +724,6 @@ function render(){
   lastNovo = r.novo.total;
 }
 
-/* Regime Simples/MEI: substitui base atual por modelo unificado */
-function applyRegime(p, r){
-  $('aliqNote').style.opacity = (p.regime==='regular')?1:.55;
-  if(p.regime==='regular') return;
-  if(p.regime==='simples'){
-    // Simples: carga unificada média ~13% (varia por anexo). Reforma mantém o regime,
-    // mas permite gerar crédito "por fora" — impacto líquido pequeno na própria empresa.
-    const aliqSimplesAtual = 0.13;
-    const aliqSimplesNovo  = 0.135; // leve ajuste pela sub-divisão IBS/CBS dentro do DAS
-    r.atual = {pisCofins:0,icms:0,iss:0,ipi:0,total:r.fat*aliqSimplesAtual};
-    const ibs = r.fat*aliqSimplesNovo*0.66, cbs=r.fat*aliqSimplesNovo*0.34;
-    r.novo = {pisCofins:0,icms:0,iss:0,ipi:0,ibs:ibs,cbs:cbs,is:0,total:r.fat*aliqSimplesNovo};
-    r.splitMensal = (ibs+cbs);
-    recompFin(r,p);
-  } else { // mei
-    const valorFixo = 75; // DAS-MEI aproximado mensal
-    r.atual = {pisCofins:0,icms:0,iss:0,ipi:0,total:valorFixo};
-    r.novo  = {pisCofins:0,icms:0,iss:0,ipi:0,ibs:valorFixo*.6,cbs:valorFixo*.4,is:0,total:valorFixo};
-    r.splitMensal = 0; r.floatPerdido=0; r.custoAnual=0;
-  }
-}
-function recompFin(r,p){
-  const diaria = Math.pow(1+p.cdi,1/360)-1;
-  const fatorPrazo = Math.pow(1+diaria,p.prazo)-1;
-  r.floatPerdido = r.splitMensal*fatorPrazo;
-  r.custoAnual = r.floatPerdido*12;
-  r.fatorPrazo = fatorPrazo;
-}
-
 /* ============================================================
    CHARTS (canvas vanilla, retina-aware)
    ============================================================ */
@@ -724,12 +755,14 @@ function drawComparativo(r){
   const cv=$('cmpChart'); const {ctx,w,h}=setupCanvas(cv,260);
   const padL=18,padR=18,padT=16,padB=42;
   const plotH=h-padT-padB, plotW=w-padL-padR;
+  const simplesLike = (r.regime==='simples'||r.regime==='mei');
+  const atualSegs = simplesLike
+    ? [{v:r.atual.total, c:'#94a3b8'}]
+    : [{v:r.atual.pisCofins+r.atual.icms, c:'#94a3b8'},
+       {v:r.atual.iss, c:'#cbd5e1'},
+       {v:r.atual.ipi, c:'#e2e8f0'}];
   const cols=[
-    {label:'Sistema atual', segs:[
-      {v:r.atual.pisCofins+r.atual.icms, c:'#94a3b8'},
-      {v:r.atual.iss, c:'#cbd5e1'},
-      {v:r.atual.ipi, c:'#e2e8f0'},
-    ], total:r.atual.total},
+    {label:'Sistema atual', segs:atualSegs, total:r.atual.total},
     {label:'Novo regime', segs:[
       {v:r.novo.pisCofins+r.novo.icms+r.novo.iss+r.novo.ipi, c:'#b6c2d4'},
       {v:r.novo.ibs, c:'#2563eb'},
@@ -781,7 +814,7 @@ function drawEvolucao(p){
   const atualSerie=[], transSerie=[];
   anos.forEach(a=>{
     const pp={...p,ano:a};
-    const rr=calcular(pp); applyRegime(pp,rr);
+    const rr=calcular(pp);
     atualSerie.push(rr.fat?rr.atual.total/rr.fat:0);
     transSerie.push(rr.fat?rr.novo.total/rr.fat:0);
   });
@@ -877,17 +910,32 @@ function drawBreakdown(r){
 
 /* --- Tabela memória de cálculo --- */
 function drawTabela(r){
+  // Simples / MEI: tabela simplificada (DAS × IBS+CBS)
+  if(r.regime==='simples' || r.regime==='mei'){
+    const nomeAtual = r.regime==='simples'
+      ? `DAS Simples${r.efSimples?` <span class="mut">(${fmtPct(r.efSimples)})</span>`:''}`
+      : 'DAS-MEI (fixo)';
+    const dTot=r.novo.total-r.atual.total;
+    $('tbody').innerHTML =
+      `<tr><td>${nomeAtual}</td><td>${BRL.format(r.atual.total)}</td><td><span class="mut">—</span></td><td><span class="mut">mantido</span></td></tr>`+
+      `<tr><td>IBS (parcela do DAS)</td><td><span class="mut">—</span></td><td>${BRL.format(r.novo.ibs)}</td><td class="mut">—</td></tr>`+
+      `<tr><td>CBS (parcela do DAS)</td><td><span class="mut">—</span></td><td>${BRL.format(r.novo.cbs)}</td><td class="mut">—</td></tr>`+
+      `<tr class="total"><td>Total</td><td>${BRL.format(r.atual.total)}</td><td>${BRL.format(r.novo.total)}</td>`+
+      `<td class="${dTot>0?'negv':'pos'}">${Math.abs(dTot)<1?'—':(dTot>0?'+':'−')+BRL.format(Math.abs(dTot)).replace('R$','').trim()}</td></tr>`;
+    return;
+  }
   const red = r.reducao;
-  const cut = red>0 ? `<span class="tag cut">−${Math.round(red*100)}%</span>` : '';
-  const spec = r.s.reg==='especifico'||r.s.reg==='monofasico' ? `<span class="tag spec">específico</span>`:'';
+  const cut = red>0 ? `<span class="tag cut">${red>=1?'isento':'−'+Math.round(red*100)+'%'}</span>` : '';
+  const spec = (r.s.esp) ? `<span class="tag spec">${r.s.esp==='monofasico'?'monofásico':(r.s.esp==='financeiro'?'específico':r.s.esp==='imobiliario'?'redutor 50%':'s/ crédito')}</span>`:'';
+  const pcLabel = r.regime==='presumido' ? 'PIS / COFINS <span class="mut">(cumul.)</span>' : 'PIS / COFINS';
   const rows=[
-    ['PIS / COFINS', r.atual.pisCofins, r.novo.pisCofins, ''],
-    ['ICMS', r.atual.icms, r.novo.icms, ''],
+    [pcLabel, r.atual.pisCofins, r.novo.pisCofins, ''],
+    ['ICMS <span class="mut">(por dentro)</span>', r.atual.icms, r.novo.icms, ''],
     ['ISS', r.atual.iss, r.novo.iss, ''],
     ['IPI', r.atual.ipi, r.novo.ipi, ''],
-    ['IBS '+cut, 0, r.novo.ibs, ''],
+    ['IBS '+cut+spec, 0, r.novo.ibs, ''],
     ['CBS '+cut, 0, r.novo.cbs, ''],
-    ['Imposto Seletivo '+spec, 0, r.novo.is, ''],
+    ['Imposto Seletivo', 0, r.novo.is, ''],
   ];
   let html='';
   rows.forEach(([nm,a,n])=>{
@@ -938,15 +986,31 @@ function drawInsight(r,p,diff,diffPct){
     msg=`Como <b>MEI</b>, você permanece em recolhimento fixo simplificado. A reforma não altera materialmente sua carga, mas seus clientes passam a poder tomar crédito sobre suas notas no novo modelo.`;
   } else if(p.regime==='simples'){
     msg=`No <b>Simples Nacional</b>, o regime unificado é mantido. A divisão interna entre IBS e CBS no DAS permite que clientes do regime regular apropriem créditos — o que pode tornar suas vendas mais competitivas no B2B.`;
-  } else if(r.reducao>=1){
-    msg=`O setor <b>${setorNome}</b> integra a <b>cesta básica nacional</b>, com alíquota zero de IBS/CBS. O impacto recai sobre a cadeia de fornecedores, e o ganho de não-cumulatividade tende a reduzir o preço final.`;
-  } else if(r.reducao>0){
-    msg=`O setor <b>${setorNome}</b> tem redução de <b>${Math.round(r.reducao*100)}%</b> nas alíquotas de IBS/CBS (EC 132/2023). A carga no novo regime ${diff>0?'sobe':'cai'} ${fmtPctRaw(Math.abs(diffPct*100))} frente ao sistema atual em ${p.ano}.`;
-  } else if(diff>0){
-    msg=`Em <b>${p.ano}</b>, a carga do novo modelo supera a atual em <b>${BRL.format(diff)}/mês</b> (${fmtPctRaw(diffPct*100)}). Avalie elevar o aproveitamento de créditos sobre insumos — hoje em ${ $('creditos').value }% do faturamento.`;
-    warn=true;
   } else {
-    msg=`Em <b>${p.ano}</b>, a não-cumulatividade plena reduz a carga em <b>${BRL.format(Math.abs(diff))}/mês</b> (${fmtPctRaw(Math.abs(diffPct*100))}) frente ao sistema atual, graças ao crédito amplo de IBS/CBS sobre insumos.`;
+    const regTxt = p.regime==='presumido'
+      ? `No <b>Lucro Presumido</b>, hoje o PIS/COFINS é cumulativo (3,65% sem crédito); `
+      : `No <b>Lucro Real</b>, o PIS/COFINS já é não-cumulativo (9,25% com crédito); `;
+    if(r.s.esp==='monofasico'){
+      msg=`<b>${setorNome}</b> segue regime <b>monofásico</b>: a tributação ocorre uma única vez na cadeia, sem creditamento padrão. `;
+    } else if(r.s.esp==='financeiro'){
+      msg=`<b>${setorNome}</b> tem <b>regime específico</b>, com base e alíquotas próprias para preservar a neutralidade do setor. `;
+    } else if(r.s.esp==='imobiliario'){
+      msg=`Operações imobiliárias têm redutores próprios na LC 214/2025 (−50% na venda, −70% na locação). `;
+    } else if(r.reducao>=1){
+      msg=`<b>${setorNome}</b> integra a <b>cesta básica nacional / alíquota zero</b> de IBS/CBS. ${regTxt}`;
+    } else if(r.reducao>0){
+      msg=`<b>${setorNome}</b> tem redução de <b>${Math.round(r.reducao*100)}%</b> na alíquota de IBS/CBS (EC 132/2023). ${regTxt}`;
+    } else {
+      msg=regTxt;
+    }
+    if(diff>0){
+      msg+=`em <b>${p.ano}</b> a carga do novo modelo <b>sobe ${BRL.format(diff)}/mês</b> (+${fmtPctRaw(diffPct*100)}). Setores de serviço com poucos insumos a creditar tendem a subir; avalie o crédito sobre insumos (hoje ${$('creditos').value}% do faturamento).`;
+      warn=true;
+    } else if(Math.abs(diff)<1){
+      msg+=`em <b>${p.ano}</b> a carga permanece praticamente neutra frente ao sistema atual.`;
+    } else {
+      msg+=`em <b>${p.ano}</b> a não-cumulatividade plena <b>reduz a carga em ${BRL.format(Math.abs(diff))}/mês</b> (−${fmtPctRaw(Math.abs(diffPct*100))}), graças ao crédito amplo de IBS/CBS sobre insumos.`;
+    }
   }
   if(r.custoAnual>0){
     msg+=` O <b>split payment</b> retira ${BRL.format(r.splitMensal)}/mês do seu fluxo de caixa, gerando custo financeiro de <b>${BRL.format(r.custoAnual)}/ano</b> sobre o prazo de recebimento.`;
