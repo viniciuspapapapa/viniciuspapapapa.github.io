@@ -401,6 +401,32 @@ tbody td { padding: 12px 14px; vertical-align: middle; }
 .stat-row:last-child { border-bottom: none; }
 .stat-row-label { font-size: 13px; display: flex; align-items: center; gap: 8px; }
 .stat-row-value { font-size: 13px; font-weight: 600; }
+
+/* CHECKLIST */
+.checklist-item {
+  display: flex; align-items: center; gap: 10px; padding: 10px 12px;
+  background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-sm);
+  margin-bottom: 8px; transition: opacity .2s;
+}
+.checklist-item.done { opacity: .55; }
+.checklist-item input[type=checkbox] {
+  width: 17px; height: 17px; accent-color: var(--green); cursor: pointer; flex-shrink: 0;
+}
+.checklist-item-text { flex: 1; font-size: 13px; cursor: pointer; }
+.checklist-item.done .checklist-item-text { text-decoration: line-through; color: var(--muted); }
+.checklist-item-del {
+  background: none; border: none; color: var(--muted2); cursor: pointer;
+  font-size: 13px; padding: 2px 5px; border-radius: 4px; transition: color .15s; flex-shrink: 0;
+}
+.checklist-item-del:hover { color: var(--red); }
+
+/* KANBAN DEADLINE PILL */
+.kanban-deadline {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--border);
+}
+.kanban-deadline-date { font-size: 12px; font-weight: 600; }
+.kanban-checklist-mini { font-size: 11px; color: var(--muted); }
 </style>
 </head>
 <body>
@@ -438,6 +464,7 @@ tbody td { padding: 12px 14px; vertical-align: middle; }
   </div>
   <div class="nav-item" data-page="admin">
     <span class="icon">🗃️</span> Administrativo
+    <span class="badge cyan" id="badge-admin">0</span>
   </div>
   <div class="nav-item" data-page="prospecting">
     <span class="icon">🤝</span> Prospecção
@@ -555,8 +582,8 @@ tbody td { padding: 12px 14px; vertical-align: middle; }
             <option value="low">Baixa</option>
           </select>
         </div>
-        <div id="task-table-wrap" style="overflow-x:auto"></div>
-        <div class="pagination" id="task-pagination"></div>
+        <div id="tasks-table-wrap" style="overflow-x:auto"></div>
+        <div class="pagination" id="tasks-pagination"></div>
       </div>
     </div>
 
@@ -709,6 +736,7 @@ tbody td { padding: 12px 14px; vertical-align: middle; }
       <div class="tabs" id="modal-tabs">
         <div class="tab active" data-tab="general">Dados Gerais</div>
         <div class="tab" data-tab="obs">Observações</div>
+        <div class="tab" data-tab="checklist">Checklist</div>
         <div class="tab" data-tab="progress">Andamentos</div>
       </div>
 
@@ -799,6 +827,22 @@ tbody td { padding: 12px 14px; vertical-align: middle; }
           <textarea class="form-textarea" id="f-strategic" style="min-height:120px"
             placeholder="Estratégia, argumentos jurídicos, teses defensivas..."></textarea>
         </div>
+      </div>
+
+      <!-- TAB: CHECKLIST -->
+      <div id="tab-checklist" style="display:none">
+        <div style="margin-bottom:14px; display:flex; align-items:center; gap:8px">
+          <input class="form-input" id="checklist-input" placeholder="Adicionar item ao checklist..." style="flex:1">
+          <button class="btn btn-primary btn-sm" id="btn-add-checklist">+ Adicionar</button>
+        </div>
+        <div id="checklist-progress-bar" style="margin-bottom:14px; display:none">
+          <div style="display:flex; justify-content:space-between; margin-bottom:5px">
+            <span style="font-size:12px; color:var(--muted)">Progresso</span>
+            <span style="font-size:12px; font-weight:600" id="checklist-pct">0%</span>
+          </div>
+          <div class="progress-bar"><div class="progress-fill" id="checklist-fill" style="width:0%; background:var(--green)"></div></div>
+        </div>
+        <div id="checklist-items"></div>
       </div>
 
       <!-- TAB: PROGRESS -->
@@ -1067,6 +1111,7 @@ function updateBadges() {
   const urgent = db.tasks.filter(t => (t.status === 'urgent' || t.status === 'overdue'));
   const judicial = db.tasks.filter(t => t.category === 'judicial' && t.status !== 'completed');
   const internal = db.tasks.filter(t => t.category === 'internal' && t.status !== 'completed');
+  const admin = db.tasks.filter(t => t.category === 'admin' && t.status !== 'completed');
   const prosp = db.tasks.filter(t => t.category === 'prospecting' && t.status !== 'completed');
 
   document.getElementById('badge-pending').textContent = pending.length || '0';
@@ -1075,6 +1120,8 @@ function updateBadges() {
   document.getElementById('badge-judicial').style.display = judicial.length ? '' : 'none';
   document.getElementById('badge-internal').textContent = internal.length;
   document.getElementById('badge-internal').style.display = internal.length ? '' : 'none';
+  document.getElementById('badge-admin').textContent = admin.length;
+  document.getElementById('badge-admin').style.display = admin.length ? '' : 'none';
   document.getElementById('badge-prospecting').textContent = prosp.length;
   document.getElementById('badge-prospecting').style.display = prosp.length ? '' : 'none';
 }
@@ -1390,13 +1437,22 @@ function renderKanban() {
       <div class="kanban-col-body">
         ${colTasks.length ? colTasks.map(t => {
           const dl = daysLeft(t.dueDate);
+          const dcol = daysColor(dl);
+          const dlLabel = dl === null ? '' : dl < 0 ? `⚠️ ${Math.abs(dl)}d atrasado` : dl === 0 ? '🔴 HOJE' : dl === 1 ? '🟠 Amanhã' : `📅 ${dl}d restantes`;
+          const chk = t.checklist || [];
+          const chkDone = chk.filter(i => i.done).length;
+          const chkTotal = chk.length;
           return `<div class="kanban-card ${t.priority}" onclick="openTask('${t.id}')">
             <div class="kanban-card-title">${esc(t.title)}</div>
             <div class="kanban-card-client">${esc(t.clientName||'')} ${t.processNumber ? '· '+esc(t.processNumber) : ''}</div>
             <div class="kanban-card-footer">
               ${badge(CAT_LABELS[t.category]||'', CAT_COLORS[t.category]||'gray')}
-              ${t.dueDate ? `<span style="font-size:11px; color:var(--${daysColor(dl)})">${dl===0?'HOJE':dl<0?`${Math.abs(dl)}d atr.`:`${dl}d`}</span>` : ''}
+              ${chkTotal ? `<span style="font-size:11px;color:var(--muted)">☑ ${chkDone}/${chkTotal}</span>` : ''}
             </div>
+            ${t.dueDate ? `<div class="kanban-deadline">
+              <span class="kanban-deadline-date" style="color:var(--${dcol})">${dlLabel}</span>
+              <span style="font-size:11px;color:var(--muted2)">${fmt(t.dueDate)}</span>
+            </div>` : ''}
           </div>`;
         }).join('') : `<div class="empty-state" style="padding:20px"><div class="sub">Nenhuma tarefa</div></div>`}
       </div>
@@ -1425,6 +1481,7 @@ function openTask(id) {
   document.querySelector('.tab[data-tab="general"]').classList.add('active');
   document.getElementById('tab-general').style.display = '';
   document.getElementById('tab-obs').style.display = 'none';
+  document.getElementById('tab-checklist').style.display = 'none';
   document.getElementById('tab-progress').style.display = 'none';
 
   // Fill form
@@ -1487,6 +1544,76 @@ function removeProgress(idx) {
   renderProgressList(t.progress);
 }
 
+// =============================================
+// CHECKLIST
+// =============================================
+function renderChecklist(items) {
+  const wrap = document.getElementById('checklist-items');
+  const bar = document.getElementById('checklist-progress-bar');
+  const fill = document.getElementById('checklist-fill');
+  const pct = document.getElementById('checklist-pct');
+
+  if (!items.length) {
+    wrap.innerHTML = `<div class="empty-state" style="padding:20px"><div class="icon">☑️</div><div class="sub">Nenhum item no checklist. Adicione itens acima.</div></div>`;
+    bar.style.display = 'none';
+    return;
+  }
+
+  const done = items.filter(i => i.done).length;
+  const total = items.length;
+  const p = Math.round(done / total * 100);
+  bar.style.display = '';
+  fill.style.width = p + '%';
+  pct.textContent = `${done}/${total} (${p}%)`;
+
+  wrap.innerHTML = items.map((item, idx) => `
+    <div class="checklist-item ${item.done ? 'done' : ''}" id="chk-item-${idx}">
+      <input type="checkbox" ${item.done ? 'checked' : ''} onchange="toggleChecklist(${idx}, this.checked)">
+      <span class="checklist-item-text" onclick="document.getElementById('chk-item-${idx}').querySelector('input').click()">${esc(item.text)}</span>
+      <button class="checklist-item-del" onclick="removeChecklist(${idx})">✕</button>
+    </div>
+  `).join('');
+}
+
+function toggleChecklist(idx, done) {
+  if (!editingTaskId) return;
+  const t = db.tasks.find(x => x.id === editingTaskId);
+  if (!t || !t.checklist) return;
+  t.checklist[idx].done = done;
+  t.updatedAt = new Date().toISOString();
+  saveDB();
+  renderChecklist(t.checklist);
+}
+
+function removeChecklist(idx) {
+  if (!editingTaskId) return;
+  const t = db.tasks.find(x => x.id === editingTaskId);
+  if (!t || !t.checklist) return;
+  t.checklist.splice(idx, 1);
+  t.updatedAt = new Date().toISOString();
+  saveDB();
+  renderChecklist(t.checklist);
+}
+
+document.getElementById('btn-add-checklist').onclick = () => {
+  const input = document.getElementById('checklist-input');
+  const text = input.value.trim();
+  if (!text) return;
+  if (!editingTaskId) { toast('Salve a tarefa primeiro para adicionar itens', 'info'); return; }
+  const t = db.tasks.find(x => x.id === editingTaskId);
+  if (!t) return;
+  if (!t.checklist) t.checklist = [];
+  t.checklist.push({ id: uid(), text, done: false, createdAt: new Date().toISOString() });
+  t.updatedAt = new Date().toISOString();
+  input.value = '';
+  saveDB();
+  renderChecklist(t.checklist);
+};
+
+document.getElementById('checklist-input').addEventListener('keydown', e => {
+  if (e.key === 'Enter') document.getElementById('btn-add-checklist').click();
+});
+
 document.getElementById('btn-add-progress').onclick = () => {
   const text = document.getElementById('progress-text').value.trim();
   if (!text) { toast('Digite o texto do andamento', 'error'); return; }
@@ -1519,11 +1646,16 @@ document.querySelectorAll('.tab').forEach(el => {
     const tab = el.dataset.tab;
     document.getElementById('tab-general').style.display = tab === 'general' ? '' : 'none';
     document.getElementById('tab-obs').style.display = tab === 'obs' ? '' : 'none';
+    document.getElementById('tab-checklist').style.display = tab === 'checklist' ? '' : 'none';
     document.getElementById('tab-progress').style.display = tab === 'progress' ? '' : 'none';
 
     if (tab === 'progress' && editingTaskId) {
       const t = db.tasks.find(x => x.id === editingTaskId);
       if (t) renderProgressList(t.progress || []);
+    }
+    if (tab === 'checklist') {
+      const t = editingTaskId ? db.tasks.find(x => x.id === editingTaskId) : null;
+      renderChecklist(t?.checklist || []);
     }
   });
 });
@@ -1568,6 +1700,7 @@ document.getElementById('btn-save-task').onclick = () => {
       data.id = editingTaskId;
       data.createdAt = db.tasks[idx].createdAt;
       data.progress = db.tasks[idx].progress || [];
+      data.checklist = db.tasks[idx].checklist || [];
       db.tasks[idx] = data;
     }
     addActivity('update', `Tarefa atualizada: ${title}`);
@@ -1576,11 +1709,20 @@ document.getElementById('btn-save-task').onclick = () => {
     data.id = uid();
     data.createdAt = new Date().toISOString();
     data.progress = [];
+    data.checklist = [];
     db.tasks.push(data);
     editingTaskId = data.id;
     document.getElementById('btn-delete-task').style.display = '';
     addActivity('create', `Nova tarefa criada: ${title}`);
     toast('Tarefa criada!', 'success');
+  }
+
+  // Auto-registrar cliente se não existir
+  if (data.clientName) {
+    const exists = db.clients.find(c => c.name.toLowerCase() === data.clientName.toLowerCase());
+    if (!exists) {
+      db.clients.push({ id: uid(), name: data.clientName, type: 'pf', createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() });
+    }
   }
 
   saveDB();
