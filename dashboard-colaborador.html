@@ -1,0 +1,2198 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lex Dashboard — Colaborador</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0d1117;
+  --surface: #161b22;
+  --surface2: #1f2937;
+  --surface3: #273344;
+  --border: #2d3748;
+  --accent: #3b82f6;
+  --accent2: #2563eb;
+  --gold: #f59e0b;
+  --gold2: #d97706;
+  --green: #10b981;
+  --red: #ef4444;
+  --orange: #f97316;
+  --purple: #8b5cf6;
+  --cyan: #06b6d4;
+  --text: #e2e8f0;
+  --muted: #94a3b8;
+  --muted2: #64748b;
+  --radius: 12px;
+  --radius-sm: 8px;
+  --sidebar-w: 260px;
+  --shadow: 0 4px 24px rgba(0,0,0,0.4);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; display: flex; overflow: hidden; }
+
+/* SCROLLBAR */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: var(--surface); }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+/* SIDEBAR */
+#sidebar {
+  width: var(--sidebar-w); min-width: var(--sidebar-w); height: 100vh; background: var(--surface);
+  border-right: 1px solid var(--border); display: flex; flex-direction: column;
+  position: fixed; left: 0; top: 0; z-index: 100; overflow-y: auto; transition: transform .3s;
+}
+.sidebar-logo {
+  padding: 24px 20px 16px; border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; gap: 12px;
+}
+.sidebar-logo .icon { font-size: 28px; }
+.sidebar-logo .brand { font-size: 18px; font-weight: 700; color: var(--text); }
+.sidebar-logo .sub { font-size: 11px; color: var(--muted); margin-top: 1px; }
+
+.sidebar-section { padding: 16px 12px 4px; font-size: 10px; font-weight: 600; color: var(--muted2); text-transform: uppercase; letter-spacing: 1px; }
+.nav-item {
+  display: flex; align-items: center; gap: 10px; padding: 10px 14px; margin: 1px 8px;
+  border-radius: var(--radius-sm); cursor: pointer; transition: all .2s; font-size: 14px; font-weight: 500; color: var(--muted);
+}
+.nav-item:hover { background: var(--surface2); color: var(--text); }
+.nav-item.active { background: rgba(59,130,246,.15); color: var(--accent); }
+.nav-item .icon { font-size: 16px; width: 20px; text-align: center; }
+.nav-item .badge {
+  margin-left: auto; background: var(--red); color: #fff; font-size: 10px;
+  font-weight: 700; padding: 1px 6px; border-radius: 10px; min-width: 18px; text-align: center;
+}
+.nav-item .badge.orange { background: var(--orange); }
+.nav-item .badge.gold { background: var(--gold); }
+.nav-item .badge.cyan { background: var(--cyan); }
+
+.sidebar-user {
+  margin-top: auto; padding: 16px 20px; border-top: 1px solid var(--border);
+  display: flex; align-items: center; gap: 10px;
+}
+.user-avatar {
+  width: 36px; height: 36px; border-radius: 50%; background: linear-gradient(135deg, var(--accent), var(--purple));
+  display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 700; flex-shrink: 0;
+}
+.user-name { font-size: 13px; font-weight: 600; }
+.user-role { font-size: 11px; color: var(--muted); }
+
+/* MAIN */
+#main {
+  margin-left: var(--sidebar-w); flex: 1; height: 100vh; overflow-y: auto; display: flex; flex-direction: column;
+}
+.topbar {
+  background: var(--surface); border-bottom: 1px solid var(--border); padding: 14px 28px;
+  display: flex; align-items: center; gap: 16px; position: sticky; top: 0; z-index: 50;
+}
+.topbar-title { font-size: 18px; font-weight: 700; flex: 1; }
+.topbar-search {
+  background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-sm);
+  padding: 8px 14px; font-size: 13px; color: var(--text); width: 260px; outline: none;
+  transition: border-color .2s;
+}
+.topbar-search:focus { border-color: var(--accent); }
+.topbar-search::placeholder { color: var(--muted2); }
+.btn {
+  padding: 8px 16px; border-radius: var(--radius-sm); border: none; cursor: pointer;
+  font-size: 13px; font-weight: 600; transition: all .2s; display: inline-flex; align-items: center; gap: 6px;
+}
+.btn-primary { background: var(--accent); color: #fff; }
+.btn-primary:hover { background: var(--accent2); }
+.btn-ghost { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
+.btn-ghost:hover { background: var(--surface3); }
+.btn-danger { background: rgba(239,68,68,.15); color: var(--red); border: 1px solid rgba(239,68,68,.3); }
+.btn-danger:hover { background: rgba(239,68,68,.25); }
+.btn-sm { padding: 5px 10px; font-size: 12px; }
+.btn-icon { padding: 7px; border-radius: var(--radius-sm); background: var(--surface2); border: 1px solid var(--border); cursor: pointer; font-size: 14px; transition: background .2s; }
+.btn-icon:hover { background: var(--surface3); }
+
+/* CONTENT */
+.content { padding: 28px; flex: 1; }
+.page { display: none; }
+.page.active { display: block; }
+
+/* CARDS */
+.kpi-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 16px; margin-bottom: 24px; }
+.kpi-card {
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 20px; position: relative; overflow: hidden;
+}
+.kpi-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; }
+.kpi-card.blue::before { background: var(--accent); }
+.kpi-card.green::before { background: var(--green); }
+.kpi-card.red::before { background: var(--red); }
+.kpi-card.orange::before { background: var(--orange); }
+.kpi-card.gold::before { background: var(--gold); }
+.kpi-card.purple::before { background: var(--purple); }
+.kpi-label { font-size: 11px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; }
+.kpi-value { font-size: 32px; font-weight: 800; margin-top: 6px; }
+.kpi-sub { font-size: 12px; color: var(--muted); margin-top: 4px; }
+
+/* GRID */
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 24px; }
+.grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; margin-bottom: 24px; }
+@media(max-width:1100px) { .grid-2, .grid-3 { grid-template-columns: 1fr; } }
+
+.card {
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px;
+}
+.card-title { font-size: 14px; font-weight: 700; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+.card-title .icon { font-size: 16px; }
+
+/* TASK TABLE */
+.task-toolbar {
+  display: flex; align-items: center; gap: 10px; margin-bottom: 16px; flex-wrap: wrap;
+}
+.filter-select {
+  background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius-sm);
+  color: var(--text); padding: 7px 12px; font-size: 13px; cursor: pointer; outline: none;
+}
+.search-input {
+  background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius-sm);
+  color: var(--text); padding: 7px 12px; font-size: 13px; outline: none; min-width: 220px; flex: 1;
+  transition: border-color .2s;
+}
+.search-input:focus { border-color: var(--accent); }
+.search-input::placeholder { color: var(--muted2); }
+
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+thead th {
+  text-align: left; padding: 10px 14px; font-size: 11px; font-weight: 600;
+  color: var(--muted); border-bottom: 1px solid var(--border); white-space: nowrap;
+  cursor: pointer; user-select: none;
+}
+thead th:hover { color: var(--text); }
+tbody tr { border-bottom: 1px solid var(--border); cursor: pointer; transition: background .15s; }
+tbody tr:hover { background: rgba(255,255,255,.03); }
+tbody tr:last-child { border-bottom: none; }
+tbody td { padding: 12px 14px; vertical-align: middle; }
+
+/* BADGES */
+.badge {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 3px 8px; border-radius: 20px; font-size: 11px; font-weight: 600; white-space: nowrap;
+}
+.badge-blue { background: rgba(59,130,246,.15); color: #60a5fa; }
+.badge-green { background: rgba(16,185,129,.15); color: #34d399; }
+.badge-red { background: rgba(239,68,68,.15); color: #f87171; }
+.badge-orange { background: rgba(249,115,22,.15); color: #fb923c; }
+.badge-gold { background: rgba(245,158,11,.15); color: #fbbf24; }
+.badge-purple { background: rgba(139,92,246,.15); color: #a78bfa; }
+.badge-cyan { background: rgba(6,182,212,.15); color: #22d3ee; }
+.badge-gray { background: rgba(148,163,184,.1); color: var(--muted); }
+
+/* PRIORITY DOT */
+.dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; display: inline-block; }
+.dot-red { background: var(--red); }
+.dot-orange { background: var(--orange); }
+.dot-green { background: var(--green); }
+.dot-gray { background: var(--muted2); }
+
+/* MODAL OVERLAY */
+.overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,.7); z-index: 200;
+  display: flex; align-items: center; justify-content: center; padding: 16px;
+  opacity: 0; pointer-events: none; transition: opacity .2s;
+}
+.overlay.open { opacity: 1; pointer-events: all; }
+
+.modal {
+  background: var(--surface); border: 1px solid var(--border); border-radius: 16px;
+  width: 100%; max-width: 800px; max-height: 90vh; overflow: hidden;
+  display: flex; flex-direction: column; transform: translateY(20px); transition: transform .2s;
+}
+.overlay.open .modal { transform: translateY(0); }
+
+.modal-header {
+  padding: 20px 24px; border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; gap: 12px;
+}
+.modal-header .title { font-size: 16px; font-weight: 700; flex: 1; }
+.modal-body { flex: 1; overflow-y: auto; padding: 24px; }
+.modal-footer {
+  padding: 16px 24px; border-top: 1px solid var(--border);
+  display: flex; gap: 10px; justify-content: flex-end;
+}
+
+/* TABS */
+.tabs { display: flex; gap: 0; border-bottom: 1px solid var(--border); margin-bottom: 20px; }
+.tab {
+  padding: 10px 18px; font-size: 13px; font-weight: 500; color: var(--muted);
+  cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; transition: all .15s;
+}
+.tab:hover { color: var(--text); }
+.tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+/* FORM */
+.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.form-full { grid-column: 1 / -1; }
+.form-group { display: flex; flex-direction: column; gap: 6px; }
+.form-label { font-size: 12px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .4px; }
+.form-input, .form-select, .form-textarea {
+  background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-sm);
+  color: var(--text); padding: 10px 12px; font-size: 13px; outline: none;
+  transition: border-color .2s; font-family: inherit;
+}
+.form-input:focus, .form-select:focus, .form-textarea:focus { border-color: var(--accent); }
+.form-textarea { resize: vertical; min-height: 100px; }
+.form-select option { background: var(--surface2); }
+
+/* PROGRESS ENTRIES */
+.progress-list { display: flex; flex-direction: column; gap: 12px; margin-bottom: 16px; }
+.progress-item {
+  background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-sm);
+  padding: 14px; position: relative;
+}
+.progress-item-header { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+.progress-item-date { font-size: 11px; color: var(--muted); }
+.progress-item-type { }
+.progress-item-text { font-size: 13px; line-height: 1.6; color: var(--text); white-space: pre-wrap; }
+.progress-item-del {
+  position: absolute; top: 10px; right: 10px; background: none; border: none;
+  color: var(--muted2); cursor: pointer; font-size: 13px; padding: 2px 5px;
+  border-radius: 4px; transition: color .15s;
+}
+.progress-item-del:hover { color: var(--red); }
+
+.add-progress {
+  background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 14px;
+}
+.add-progress-header { display: flex; gap: 10px; margin-bottom: 10px; align-items: center; }
+
+/* DEADLINE ITEMS */
+.deadline-item {
+  display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--border);
+}
+.deadline-item:last-child { border-bottom: none; }
+.deadline-date-box {
+  min-width: 50px; text-align: center; background: var(--surface2); border-radius: 8px;
+  padding: 6px 8px; flex-shrink: 0;
+}
+.deadline-date-day { font-size: 20px; font-weight: 800; line-height: 1; }
+.deadline-date-mon { font-size: 10px; color: var(--muted); text-transform: uppercase; }
+.deadline-info { flex: 1; min-width: 0; }
+.deadline-title { font-size: 13px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.deadline-client { font-size: 11px; color: var(--muted); margin-top: 2px; }
+.deadline-days { font-size: 12px; font-weight: 600; flex-shrink: 0; }
+
+/* CHART WRAPPER */
+.chart-wrap { position: relative; height: 200px; }
+.chart-wrap-lg { position: relative; height: 260px; }
+
+/* EMPTY STATE */
+.empty-state {
+  text-align: center; padding: 48px 20px; color: var(--muted);
+}
+.empty-state .icon { font-size: 48px; margin-bottom: 12px; }
+.empty-state .title { font-size: 16px; font-weight: 600; color: var(--text); margin-bottom: 6px; }
+.empty-state .sub { font-size: 13px; }
+
+/* PAGINATION */
+.pagination { display: flex; align-items: center; gap: 6px; margin-top: 16px; justify-content: flex-end; }
+.page-btn {
+  padding: 6px 10px; background: var(--surface2); border: 1px solid var(--border);
+  border-radius: 6px; cursor: pointer; font-size: 12px; color: var(--text); transition: all .15s;
+}
+.page-btn:hover, .page-btn.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+.page-info { font-size: 12px; color: var(--muted); margin: 0 8px; }
+
+/* TOAST */
+.toast-container { position: fixed; bottom: 24px; right: 24px; z-index: 999; display: flex; flex-direction: column; gap: 8px; }
+.toast {
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm);
+  padding: 12px 18px; font-size: 13px; font-weight: 500; display: flex; align-items: center; gap: 8px;
+  box-shadow: var(--shadow); animation: slideIn .3s ease; max-width: 320px;
+}
+.toast.success { border-left: 3px solid var(--green); }
+.toast.error { border-left: 3px solid var(--red); }
+.toast.info { border-left: 3px solid var(--accent); }
+@keyframes slideIn { from { transform: translateX(100px); opacity: 0; } to { transform: none; opacity: 1; } }
+@keyframes slideOut { to { transform: translateX(120px); opacity: 0; } }
+
+/* SETTINGS */
+.settings-section { margin-bottom: 28px; }
+.settings-title { font-size: 14px; font-weight: 700; margin-bottom: 16px; padding-bottom: 10px; border-bottom: 1px solid var(--border); }
+
+/* CLIENT CARDS */
+.client-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 16px; }
+.client-card {
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 18px; cursor: pointer; transition: border-color .2s;
+}
+.client-card:hover { border-color: var(--accent); }
+.client-card-name { font-size: 15px; font-weight: 600; margin-bottom: 4px; }
+.client-card-sub { font-size: 12px; color: var(--muted); }
+.client-card-stats { display: flex; gap: 12px; margin-top: 14px; }
+.client-stat { flex: 1; text-align: center; background: var(--bg); border-radius: 8px; padding: 8px; }
+.client-stat-num { font-size: 18px; font-weight: 700; }
+.client-stat-lbl { font-size: 10px; color: var(--muted); text-transform: uppercase; }
+
+/* TIMELINE / ACTIVITY */
+.activity-item { display: flex; gap: 12px; padding: 10px 0; border-bottom: 1px solid rgba(45,55,72,.5); }
+.activity-item:last-child { border-bottom: none; }
+.activity-dot-wrap { display: flex; flex-direction: column; align-items: center; }
+.activity-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; margin-top: 3px; }
+.activity-line { width: 1px; background: var(--border); flex: 1; margin-top: 4px; }
+.activity-body { flex: 1; padding-bottom: 6px; }
+.activity-title { font-size: 13px; font-weight: 500; }
+.activity-sub { font-size: 11px; color: var(--muted); margin-top: 3px; }
+
+/* KANBAN */
+.kanban-board { display: flex; gap: 16px; overflow-x: auto; padding-bottom: 12px; min-height: 500px; }
+.kanban-col {
+  min-width: 260px; background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); display: flex; flex-direction: column; max-height: calc(100vh - 200px);
+}
+.kanban-col-header {
+  padding: 14px 16px; border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; gap: 8px; font-weight: 600; font-size: 13px;
+}
+.kanban-col-body { flex: 1; overflow-y: auto; padding: 10px; display: flex; flex-direction: column; gap: 8px; }
+.kanban-card {
+  background: var(--bg); border: 1px solid var(--border); border-radius: 8px;
+  padding: 12px; cursor: pointer; transition: border-color .2s; border-left: 3px solid transparent;
+}
+.kanban-card:hover { border-color: var(--border); background: var(--surface2); }
+.kanban-card.urgent { border-left-color: var(--red); }
+.kanban-card.high { border-left-color: var(--orange); }
+.kanban-card.medium { border-left-color: var(--gold); }
+.kanban-card.low { border-left-color: var(--green); }
+.kanban-card-title { font-size: 13px; font-weight: 500; margin-bottom: 6px; }
+.kanban-card-client { font-size: 11px; color: var(--muted); margin-bottom: 8px; }
+.kanban-card-footer { display: flex; align-items: center; justify-content: space-between; }
+
+/* CONFIRM MODAL */
+.confirm-modal {
+  background: var(--surface); border: 1px solid var(--border); border-radius: 14px;
+  padding: 28px; max-width: 380px; width: 100%; text-align: center;
+}
+.confirm-modal .icon { font-size: 40px; margin-bottom: 14px; }
+.confirm-modal h3 { font-size: 16px; font-weight: 700; margin-bottom: 8px; }
+.confirm-modal p { font-size: 13px; color: var(--muted); margin-bottom: 20px; }
+.confirm-modal .actions { display: flex; gap: 10px; justify-content: center; }
+
+/* RESPONSIVE */
+@media(max-width: 768px) {
+  #sidebar { transform: translateX(-100%); }
+  #sidebar.open { transform: none; }
+  #main { margin-left: 0; }
+  .form-grid { grid-template-columns: 1fr; }
+  .kpi-grid { grid-template-columns: 1fr 1fr; }
+  .topbar-search { width: 160px; }
+}
+
+/* PROGRESS BAR */
+.progress-bar { background: var(--surface2); border-radius: 99px; height: 6px; overflow: hidden; }
+.progress-fill { height: 100%; border-radius: 99px; transition: width .3s; }
+
+/* TOOLTIP */
+[data-tip] { position: relative; }
+[data-tip]:hover::after {
+  content: attr(data-tip); position: absolute; bottom: calc(100% + 6px); left: 50%;
+  transform: translateX(-50%); background: var(--surface3); color: var(--text);
+  font-size: 11px; padding: 4px 8px; border-radius: 6px; white-space: nowrap;
+  border: 1px solid var(--border); pointer-events: none; z-index: 999;
+}
+
+/* STAT ROW */
+.stat-row { display: flex; align-items: center; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid rgba(45,55,72,.4); }
+.stat-row:last-child { border-bottom: none; }
+.stat-row-label { font-size: 13px; display: flex; align-items: center; gap: 8px; }
+.stat-row-value { font-size: 13px; font-weight: 600; }
+
+/* CHECKLIST */
+.checklist-item {
+  display: flex; align-items: center; gap: 10px; padding: 10px 12px;
+  background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-sm);
+  margin-bottom: 8px; transition: opacity .2s;
+}
+.checklist-item.done { opacity: .55; }
+.checklist-item input[type=checkbox] {
+  width: 17px; height: 17px; accent-color: var(--green); cursor: pointer; flex-shrink: 0;
+}
+.checklist-item-text { flex: 1; font-size: 13px; cursor: pointer; }
+.checklist-item.done .checklist-item-text { text-decoration: line-through; color: var(--muted); }
+.checklist-item-del {
+  background: none; border: none; color: var(--muted2); cursor: pointer;
+  font-size: 13px; padding: 2px 5px; border-radius: 4px; transition: color .15s; flex-shrink: 0;
+}
+.checklist-item-del:hover { color: var(--red); }
+
+/* KANBAN DEADLINE PILL */
+.kanban-deadline {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--border);
+}
+.kanban-deadline-date { font-size: 12px; font-weight: 600; }
+.kanban-checklist-mini { font-size: 11px; color: var(--muted); }
+
+/* KANBAN CONCLUÍDA */
+.kanban-col.done { opacity: .75; }
+.kanban-col.done .kanban-card { border-left-color: var(--green) !important; }
+.kanban-card-done-overlay { text-decoration: line-through; opacity: .7; }
+
+/* QUICK ACTION BUTTONS */
+.btn-complete {
+  margin-top: 8px; width: 100%; padding: 5px; border-radius: 6px; border: 1px solid rgba(16,185,129,.3);
+  background: rgba(16,185,129,.1); color: var(--green); font-size: 12px; font-weight: 600;
+  cursor: pointer; transition: background .15s; text-align: center;
+}
+.btn-complete:hover { background: rgba(16,185,129,.25); }
+.btn-reopen {
+  margin-top: 8px; width: 100%; padding: 5px; border-radius: 6px; border: 1px solid rgba(148,163,184,.2);
+  background: rgba(148,163,184,.08); color: var(--muted); font-size: 12px; font-weight: 600;
+  cursor: pointer; transition: background .15s; text-align: center;
+}
+.btn-reopen:hover { background: rgba(148,163,184,.18); }
+
+/* TABLE ACTION BUTTON */
+.tbl-complete-btn {
+  padding: 4px 10px; border-radius: 6px; border: 1px solid rgba(16,185,129,.3);
+  background: rgba(16,185,129,.1); color: var(--green); font-size: 11px; font-weight: 600;
+  cursor: pointer; transition: background .15s; white-space: nowrap;
+}
+.tbl-complete-btn:hover { background: rgba(16,185,129,.25); }
+.tbl-reopen-btn {
+  padding: 4px 10px; border-radius: 6px; border: 1px solid rgba(148,163,184,.2);
+  background: transparent; color: var(--muted); font-size: 11px; font-weight: 600;
+  cursor: pointer; transition: background .15s; white-space: nowrap;
+}
+.tbl-reopen-btn:hover { background: rgba(148,163,184,.1); }
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<nav id="sidebar">
+  <div class="sidebar-logo">
+    <span class="icon">⚖️</span>
+    <div>
+      <div class="brand">Lex Dashboard</div>
+      <div class="sub">Gestão Jurídica</div>
+    </div>
+  </div>
+
+  <div class="sidebar-section">Principal</div>
+  <div class="nav-item active" data-page="dashboard">
+    <span class="icon">📊</span> Dashboard
+  </div>
+  <div class="nav-item" data-page="kanban">
+    <span class="icon">🗂️</span> Kanban
+  </div>
+  <div class="nav-item" data-page="tasks">
+    <span class="icon">📋</span> Todas as Tarefas
+    <span class="badge" id="badge-pending">0</span>
+  </div>
+
+  <div class="sidebar-section">Categorias</div>
+  <div class="nav-item" data-page="judicial">
+    <span class="icon">🏛️</span> Prazos Judiciais
+    <span class="badge" id="badge-judicial">0</span>
+  </div>
+  <div class="nav-item" data-page="internal">
+    <span class="icon">📁</span> Prazos Internos
+    <span class="badge orange" id="badge-internal">0</span>
+  </div>
+  <div class="nav-item" data-page="admin">
+    <span class="icon">🗃️</span> Administrativo
+    <span class="badge cyan" id="badge-admin">0</span>
+  </div>
+  <div class="nav-item" data-page="prospecting">
+    <span class="icon">🤝</span> Prospecção
+    <span class="badge gold" id="badge-prospecting">0</span>
+  </div>
+
+  <div class="nav-item" data-page="completed">
+    <span class="icon">✅</span> Concluídas
+    <span class="badge" id="badge-completed" style="background:var(--green)">0</span>
+  </div>
+
+  <div class="sidebar-section">Gestão</div>
+  <div class="nav-item" data-page="clients">
+    <span class="icon">👥</span> Clientes
+  </div>
+  <div class="nav-item" data-page="reports">
+    <span class="icon">📈</span> Relatórios
+  </div>
+
+  <div class="sidebar-section">Sistema</div>
+  <div class="nav-item" data-page="settings">
+    <span class="icon">⚙️</span> Configurações
+  </div>
+
+  <div class="sidebar-user">
+    <div class="user-avatar" id="user-avatar-initials">VP</div>
+    <div>
+      <div class="user-name" id="sidebar-user-name">Vinicius</div>
+      <div class="user-role" id="sidebar-user-role">Advogado</div>
+    </div>
+  </div>
+</nav>
+
+<!-- MAIN -->
+<div id="main">
+  <div class="topbar">
+    <button class="btn-icon" id="menu-toggle" style="display:none">☰</button>
+    <div class="topbar-title" id="topbar-title">Dashboard</div>
+    <input class="topbar-search" type="text" id="global-search" placeholder="🔍 Buscar tarefas, clientes, processos...">
+    <button class="btn btn-primary" id="btn-new-task">+ Nova Tarefa</button>
+  </div>
+
+  <div class="content">
+
+    <!-- ===== DASHBOARD ===== -->
+    <div id="page-dashboard" class="page active">
+      <div class="kpi-grid" id="kpi-grid"></div>
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-title"><span class="icon">📅</span> Próximos Prazos</div>
+          <div id="deadline-list"></div>
+        </div>
+        <div class="card">
+          <div class="card-title"><span class="icon">🔔</span> Atividade Recente</div>
+          <div id="activity-list"></div>
+        </div>
+      </div>
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-title"><span class="icon">📊</span> Tarefas por Categoria</div>
+          <div class="chart-wrap"><canvas id="chart-category"></canvas></div>
+        </div>
+        <div class="card">
+          <div class="card-title"><span class="icon">📉</span> Tarefas por Status</div>
+          <div class="chart-wrap"><canvas id="chart-status"></canvas></div>
+        </div>
+      </div>
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-title"><span class="icon">📆</span> Evolução Mensal</div>
+          <div class="chart-wrap-lg"><canvas id="chart-monthly"></canvas></div>
+        </div>
+        <div class="card">
+          <div class="card-title"><span class="icon">⚡</span> Por Prioridade</div>
+          <div id="priority-breakdown"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== KANBAN ===== -->
+    <div id="page-kanban" class="page">
+      <div class="task-toolbar">
+        <select class="filter-select" id="kanban-cat-filter">
+          <option value="">Todas as categorias</option>
+          <option value="judicial">Prazos Judiciais</option>
+          <option value="internal">Prazos Internos</option>
+          <option value="admin">Administrativo</option>
+          <option value="prospecting">Prospecção</option>
+        </select>
+        <button class="btn btn-ghost btn-sm" id="btn-kanban-refresh">↺ Atualizar</button>
+      </div>
+      <div class="kanban-board" id="kanban-board"></div>
+    </div>
+
+    <!-- ===== ALL TASKS ===== -->
+    <div id="page-tasks" class="page">
+      <div class="card">
+        <div class="task-toolbar">
+          <input class="search-input" type="text" id="task-search" placeholder="Buscar tarefa, cliente, processo...">
+          <select class="filter-select" id="filter-cat">
+            <option value="">Todas as categorias</option>
+            <option value="judicial">Prazos Judiciais</option>
+            <option value="internal">Prazos Internos</option>
+            <option value="admin">Administrativo</option>
+            <option value="prospecting">Prospecção</option>
+          </select>
+          <select class="filter-select" id="filter-status">
+            <option value="">Todos os status</option>
+            <option value="pending">Pendente</option>
+            <option value="in_progress">Em Andamento</option>
+            <option value="urgent">Urgente</option>
+            <option value="completed">Concluída</option>
+            <option value="overdue">Atrasada</option>
+          </select>
+          <select class="filter-select" id="filter-priority">
+            <option value="">Todas as prioridades</option>
+            <option value="urgent">Urgente</option>
+            <option value="high">Alta</option>
+            <option value="medium">Média</option>
+            <option value="low">Baixa</option>
+          </select>
+        </div>
+        <div id="tasks-table-wrap" style="overflow-x:auto"></div>
+        <div class="pagination" id="tasks-pagination"></div>
+      </div>
+    </div>
+
+    <!-- ===== JUDICIAL ===== -->
+    <div id="page-judicial" class="page">
+      <div class="card">
+        <div class="task-toolbar">
+          <input class="search-input" type="text" id="judicial-search" placeholder="Buscar...">
+          <select class="filter-select" id="judicial-status">
+            <option value="">Todos os status</option>
+            <option value="pending">Pendente</option>
+            <option value="in_progress">Em Andamento</option>
+            <option value="urgent">Urgente</option>
+            <option value="completed">Concluída</option>
+          </select>
+        </div>
+        <div id="judicial-table-wrap" style="overflow-x:auto"></div>
+        <div class="pagination" id="judicial-pagination"></div>
+      </div>
+    </div>
+
+    <!-- ===== INTERNAL ===== -->
+    <div id="page-internal" class="page">
+      <div class="card">
+        <div class="task-toolbar">
+          <input class="search-input" type="text" id="internal-search" placeholder="Buscar...">
+        </div>
+        <div id="internal-table-wrap" style="overflow-x:auto"></div>
+        <div class="pagination" id="internal-pagination"></div>
+      </div>
+    </div>
+
+    <!-- ===== ADMIN ===== -->
+    <div id="page-admin" class="page">
+      <div class="card">
+        <div class="task-toolbar">
+          <input class="search-input" type="text" id="admin-search" placeholder="Buscar...">
+        </div>
+        <div id="admin-table-wrap" style="overflow-x:auto"></div>
+        <div class="pagination" id="admin-pagination"></div>
+      </div>
+    </div>
+
+    <!-- ===== PROSPECTING ===== -->
+    <div id="page-prospecting" class="page">
+      <div class="card">
+        <div class="task-toolbar">
+          <input class="search-input" type="text" id="prospecting-search" placeholder="Buscar...">
+        </div>
+        <div id="prospecting-table-wrap" style="overflow-x:auto"></div>
+        <div class="pagination" id="prospecting-pagination"></div>
+      </div>
+    </div>
+
+    <!-- ===== COMPLETED ===== -->
+    <div id="page-completed" class="page">
+      <div class="card">
+        <div class="task-toolbar">
+          <input class="search-input" type="text" id="completed-search" placeholder="Buscar tarefas concluídas...">
+          <select class="filter-select" id="completed-cat">
+            <option value="">Todas as categorias</option>
+            <option value="judicial">Prazos Judiciais</option>
+            <option value="internal">Prazos Internos</option>
+            <option value="admin">Administrativo</option>
+            <option value="prospecting">Prospecção</option>
+          </select>
+        </div>
+        <div id="completed-table-wrap" style="overflow-x:auto"></div>
+        <div class="pagination" id="completed-pagination"></div>
+      </div>
+    </div>
+
+    <!-- ===== CLIENTS ===== -->
+    <div id="page-clients" class="page">
+      <div class="task-toolbar" style="margin-bottom:20px">
+        <input class="search-input" type="text" id="client-search" placeholder="Buscar cliente...">
+        <button class="btn btn-primary btn-sm" id="btn-new-client">+ Novo Cliente</button>
+      </div>
+      <div class="client-grid" id="client-grid"></div>
+    </div>
+
+    <!-- ===== REPORTS ===== -->
+    <div id="page-reports" class="page">
+      <div class="kpi-grid" id="report-kpis"></div>
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-title"><span class="icon">📊</span> Distribuição por Categoria</div>
+          <div class="chart-wrap-lg"><canvas id="chart-report-cat"></canvas></div>
+        </div>
+        <div class="card">
+          <div class="card-title"><span class="icon">✅</span> Taxa de Conclusão</div>
+          <div id="report-completion"></div>
+        </div>
+      </div>
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-title"><span class="icon">👥</span> Top Clientes (por tarefas)</div>
+          <div id="report-top-clients"></div>
+        </div>
+        <div class="card">
+          <div class="card-title"><span class="icon">📆</span> Histórico de Conclusões</div>
+          <div class="chart-wrap-lg"><canvas id="chart-report-history"></canvas></div>
+        </div>
+      </div>
+      <div style="text-align:right; margin-top:12px; display:flex; gap:10px; justify-content:flex-end;">
+        <button class="btn btn-ghost" id="btn-export-json">⬇ Exportar JSON</button>
+        <button class="btn btn-ghost" id="btn-import-json">⬆ Importar JSON</button>
+        <input type="file" id="import-file" accept=".json" style="display:none">
+      </div>
+    </div>
+
+    <!-- ===== SETTINGS ===== -->
+    <div id="page-settings" class="page">
+      <div class="card" style="max-width:600px">
+        <div class="settings-title">Perfil do Usuário</div>
+        <div class="form-grid" style="margin-bottom:20px">
+          <div class="form-group">
+            <label class="form-label">Seu Nome</label>
+            <input class="form-input" id="settings-name" placeholder="Ex: Dr. Vinicius">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Nome do Escritório</label>
+            <input class="form-input" id="settings-office" placeholder="Ex: Papapapa Advocacia">
+          </div>
+          <div class="form-group">
+            <label class="form-label">OAB</label>
+            <input class="form-input" id="settings-oab" placeholder="Ex: OAB/SP 123.456">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Área de Atuação</label>
+            <input class="form-input" id="settings-area" placeholder="Ex: Direito Civil e Empresarial">
+          </div>
+        </div>
+        <div class="settings-title">Alertas e Prazos</div>
+        <div class="form-grid" style="margin-bottom:20px">
+          <div class="form-group">
+            <label class="form-label">Alerta com antecedência (dias)</label>
+            <input class="form-input" id="settings-alert-days" type="number" value="3" min="1" max="30">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Urgente com antecedência (dias)</label>
+            <input class="form-input" id="settings-urgent-days" type="number" value="1" min="1" max="10">
+          </div>
+        </div>
+        <div class="settings-title">Dados</div>
+        <div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:20px">
+          <button class="btn btn-ghost" id="btn-export-settings">⬇ Exportar Backup</button>
+          <button class="btn btn-ghost" id="btn-import-settings">⬆ Restaurar Backup</button>
+          <input type="file" id="import-settings-file" accept=".json" style="display:none">
+          <button class="btn btn-danger" id="btn-clear-data">🗑 Limpar Todos os Dados</button>
+        </div>
+        <button class="btn btn-primary" id="btn-save-settings">💾 Salvar Configurações</button>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+</div><!-- /main -->
+
+<!-- ===== TASK MODAL ===== -->
+<div class="overlay" id="task-overlay">
+  <div class="modal" id="task-modal">
+    <div class="modal-header">
+      <span class="icon" id="modal-cat-icon">📋</span>
+      <div class="title" id="modal-title">Nova Tarefa</div>
+      <button class="btn btn-ghost btn-sm" id="btn-close-modal">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="tabs" id="modal-tabs">
+        <div class="tab active" data-tab="general">Dados Gerais</div>
+        <div class="tab" data-tab="obs">Observações</div>
+        <div class="tab" data-tab="checklist">Checklist</div>
+        <div class="tab" data-tab="progress">Andamentos</div>
+      </div>
+
+      <!-- TAB: GENERAL -->
+      <div id="tab-general">
+        <div class="form-grid">
+          <div class="form-group form-full">
+            <label class="form-label">Título / Tarefa *</label>
+            <input class="form-input" id="f-title" placeholder="Descreva a tarefa...">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Cliente *</label>
+            <input class="form-input" id="f-client" placeholder="Nome do cliente" list="client-datalist">
+            <datalist id="client-datalist"></datalist>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Nº do Processo</label>
+            <input class="form-input" id="f-process" placeholder="0000000-00.0000.0.00.0000">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Categoria *</label>
+            <select class="form-select" id="f-category">
+              <option value="judicial">🏛️ Prazo Judicial</option>
+              <option value="internal">📁 Prazo Interno</option>
+              <option value="admin">🗃️ Administrativo</option>
+              <option value="prospecting">🤝 Prospecção / Venda</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Status</label>
+            <select class="form-select" id="f-status">
+              <option value="pending">⏳ Pendente</option>
+              <option value="in_progress">🔄 Em Andamento</option>
+              <option value="urgent">🚨 Urgente</option>
+              <option value="completed">✅ Concluída</option>
+              <option value="overdue">⚠️ Atrasada</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Prioridade</label>
+            <select class="form-select" id="f-priority">
+              <option value="urgent">🔴 Urgente</option>
+              <option value="high">🟠 Alta</option>
+              <option value="medium" selected>🟡 Média</option>
+              <option value="low">🟢 Baixa</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Data de Prazo / Vencimento</label>
+            <input class="form-input" id="f-due" type="date">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Data de Início</label>
+            <input class="form-input" id="f-start" type="date">
+          </div>
+          <div class="form-group form-full">
+            <label class="form-label">Descrição / Tarefa a realizar</label>
+            <textarea class="form-textarea" id="f-desc" placeholder="Descreva detalhadamente o que deve ser feito..."></textarea>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Vara / Tribunal / Instância</label>
+            <input class="form-input" id="f-court" placeholder="Ex: 2ª Vara Cível de SP">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Contraparte / Adversário</label>
+            <input class="form-input" id="f-counterpart" placeholder="Nome da contraparte">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Responsável</label>
+            <input class="form-input" id="f-responsible" placeholder="Quem vai executar?">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Tags (separadas por vírgula)</label>
+            <input class="form-input" id="f-tags" placeholder="Ex: trabalhista, liminar, urgente">
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB: OBSERVATIONS -->
+      <div id="tab-obs" style="display:none">
+        <div class="form-group">
+          <label class="form-label">Observações Gerais</label>
+          <textarea class="form-textarea" id="f-obs" style="min-height:200px"
+            placeholder="Anotações, observações, informações relevantes sobre o caso ou tarefa..."></textarea>
+        </div>
+        <div class="form-group" style="margin-top:16px">
+          <label class="form-label">Notas Estratégicas</label>
+          <textarea class="form-textarea" id="f-strategic" style="min-height:120px"
+            placeholder="Estratégia, argumentos jurídicos, teses defensivas..."></textarea>
+        </div>
+      </div>
+
+      <!-- TAB: CHECKLIST -->
+      <div id="tab-checklist" style="display:none">
+        <div style="margin-bottom:14px; display:flex; align-items:center; gap:8px">
+          <input class="form-input" id="checklist-input" placeholder="Adicionar item ao checklist..." style="flex:1">
+          <button class="btn btn-primary btn-sm" id="btn-add-checklist">+ Adicionar</button>
+        </div>
+        <div id="checklist-progress-bar" style="margin-bottom:14px; display:none">
+          <div style="display:flex; justify-content:space-between; margin-bottom:5px">
+            <span style="font-size:12px; color:var(--muted)">Progresso</span>
+            <span style="font-size:12px; font-weight:600" id="checklist-pct">0%</span>
+          </div>
+          <div class="progress-bar"><div class="progress-fill" id="checklist-fill" style="width:0%; background:var(--green)"></div></div>
+        </div>
+        <div id="checklist-items"></div>
+      </div>
+
+      <!-- TAB: PROGRESS -->
+      <div id="tab-progress" style="display:none">
+        <div class="progress-list" id="progress-list"></div>
+        <div class="add-progress">
+          <div class="add-progress-header">
+            <select class="form-select" id="progress-type" style="flex:0 0 auto; width:180px">
+              <option value="andamento">📝 Andamento</option>
+              <option value="decisao">⚖️ Decisão Judicial</option>
+              <option value="protocolo">📬 Protocolo</option>
+              <option value="audiencia">🎤 Audiência</option>
+              <option value="reuniao">🤝 Reunião</option>
+              <option value="email">📧 E-mail</option>
+              <option value="ligacao">📞 Ligação</option>
+              <option value="peticao">📄 Petição</option>
+              <option value="nota">💡 Nota Interna</option>
+            </select>
+            <input class="form-input" id="progress-date" type="datetime-local" style="flex:0 0 auto; width:195px">
+            <span style="font-size:11px; color:var(--muted); flex-shrink:0">Data do registro</span>
+          </div>
+          <textarea class="form-textarea" id="progress-text" placeholder="Descreva o andamento, decisão, protocolo ou evento..." style="min-height:80px; margin-bottom:10px"></textarea>
+          <button class="btn btn-primary btn-sm" id="btn-add-progress">+ Adicionar Andamento</button>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-danger btn-sm" id="btn-delete-task" style="margin-right:auto; display:none">🗑 Excluir</button>
+      <button class="btn btn-ghost btn-sm" id="btn-modal-complete" style="display:none; background:rgba(16,185,129,.12); color:var(--green); border-color:rgba(16,185,129,.3)">✅ Concluir Tarefa</button>
+      <button class="btn btn-ghost btn-sm" id="btn-modal-reopen" style="display:none">↩️ Reabrir</button>
+      <button class="btn btn-ghost" id="btn-cancel-modal">Cancelar</button>
+      <button class="btn btn-primary" id="btn-save-task">💾 Salvar Tarefa</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== CLIENT MODAL ===== -->
+<div class="overlay" id="client-overlay">
+  <div class="modal" style="max-width:520px">
+    <div class="modal-header">
+      <span class="icon">👤</span>
+      <div class="title" id="client-modal-title">Novo Cliente</div>
+      <button class="btn btn-ghost btn-sm" id="btn-close-client-modal">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="form-group form-full">
+          <label class="form-label">Nome Completo / Razão Social *</label>
+          <input class="form-input" id="c-name" placeholder="Nome do cliente">
+        </div>
+        <div class="form-group">
+          <label class="form-label">CPF / CNPJ</label>
+          <input class="form-input" id="c-doc" placeholder="000.000.000-00">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Tipo</label>
+          <select class="form-select" id="c-type">
+            <option value="pf">Pessoa Física</option>
+            <option value="pj">Pessoa Jurídica</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">E-mail</label>
+          <input class="form-input" id="c-email" type="email" placeholder="email@exemplo.com">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Telefone / WhatsApp</label>
+          <input class="form-input" id="c-phone" placeholder="(11) 99999-9999">
+        </div>
+        <div class="form-group form-full">
+          <label class="form-label">Endereço</label>
+          <input class="form-input" id="c-addr" placeholder="Rua, número, cidade - UF">
+        </div>
+        <div class="form-group form-full">
+          <label class="form-label">Observações</label>
+          <textarea class="form-textarea" id="c-obs" placeholder="Notas sobre o cliente..." style="min-height:80px"></textarea>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-danger btn-sm" id="btn-delete-client" style="margin-right:auto; display:none">🗑 Excluir</button>
+      <button class="btn btn-ghost" id="btn-cancel-client">Cancelar</button>
+      <button class="btn btn-primary" id="btn-save-client">💾 Salvar Cliente</button>
+    </div>
+  </div>
+</div>
+
+<!-- CONFIRM OVERLAY -->
+<div class="overlay" id="confirm-overlay">
+  <div class="confirm-modal">
+    <div class="icon" id="confirm-icon">⚠️</div>
+    <h3 id="confirm-title">Confirmar</h3>
+    <p id="confirm-msg">Tem certeza?</p>
+    <div class="actions">
+      <button class="btn btn-ghost" id="confirm-cancel">Cancelar</button>
+      <button class="btn btn-danger" id="confirm-ok">Confirmar</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST CONTAINER -->
+<div class="toast-container" id="toast-container"></div>
+
+<script>
+// =============================================
+// DATA LAYER — localStorage persistence
+// =============================================
+const DB_KEY = 'lex_dashboard_colaborador_v1';
+
+function loadDB() {
+  try {
+    const raw = localStorage.getItem(DB_KEY);
+    if (raw) return JSON.parse(raw);
+  } catch(e) {}
+  return { tasks: [], clients: [], settings: { name: 'Dr. Vinicius', office: 'Escritório de Advocacia', oab: '', area: '', alertDays: 3, urgentDays: 1 }, activity: [] };
+}
+
+function saveDB() {
+  try { localStorage.setItem(DB_KEY, JSON.stringify(db)); } catch(e) { toast('Erro ao salvar dados', 'error'); }
+}
+
+let db = loadDB();
+
+// Migrate / ensure structure
+if (!db.settings) db.settings = { name: 'Dr. Vinicius', office: 'Escritório de Advocacia', oab: '', area: '', alertDays: 3, urgentDays: 1 };
+if (!db.activity) db.activity = [];
+if (!db.clients) db.clients = [];
+
+// =============================================
+// UTILS
+// =============================================
+function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
+
+function fmt(iso) {
+  if (!iso) return '—';
+  const d = new Date(iso + (iso.length === 10 ? 'T00:00:00' : ''));
+  return d.toLocaleDateString('pt-BR');
+}
+
+function fmtDT(iso) {
+  if (!iso) return '';
+  const d = new Date(iso);
+  return d.toLocaleDateString('pt-BR') + ' ' + d.toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'});
+}
+
+function daysLeft(iso) {
+  if (!iso) return null;
+  const now = new Date(); now.setHours(0,0,0,0);
+  const d = new Date(iso + 'T00:00:00');
+  return Math.round((d - now) / 86400000);
+}
+
+function daysColor(n) {
+  if (n === null) return 'gray';
+  if (n < 0) return 'red';
+  if (n === 0) return 'red';
+  if (n <= (db.settings.urgentDays || 1)) return 'red';
+  if (n <= (db.settings.alertDays || 3)) return 'orange';
+  return 'green';
+}
+
+const CAT_LABELS = { judicial: 'Prazo Judicial', internal: 'Prazo Interno', admin: 'Administrativo', prospecting: 'Prospecção' };
+const CAT_ICONS = { judicial: '🏛️', internal: '📁', admin: '🗃️', prospecting: '🤝' };
+const CAT_COLORS = { judicial: 'blue', internal: 'purple', admin: 'cyan', prospecting: 'gold' };
+
+const STATUS_LABELS = { pending: 'Pendente', in_progress: 'Em Andamento', urgent: 'Urgente', completed: 'Concluída', overdue: 'Atrasada' };
+const STATUS_COLORS = { pending: 'gray', in_progress: 'blue', urgent: 'red', completed: 'green', overdue: 'orange' };
+
+const PRI_LABELS = { urgent: 'Urgente', high: 'Alta', medium: 'Média', low: 'Baixa' };
+const PRI_COLORS = { urgent: 'red', high: 'orange', medium: 'gold', low: 'green' };
+const PRI_DOTS = { urgent: 'dot-red', high: 'dot-orange', medium: 'dot-orange', low: 'dot-green' };
+
+const PROG_ICONS = { andamento:'📝', decisao:'⚖️', protocolo:'📬', audiencia:'🎤', reuniao:'🤝', email:'📧', ligacao:'📞', peticao:'📄', nota:'💡' };
+
+function badge(text, color) { return `<span class="badge badge-${color}">${text}</span>`; }
+function dot(cls) { return `<span class="dot ${cls}" style="display:inline-block; margin-right:4px"></span>`; }
+
+function autoUpdateStatus(tasks) {
+  const today = new Date(); today.setHours(0,0,0,0);
+  tasks.forEach(t => {
+    if (t.status === 'completed') return;
+    if (!t.dueDate) return;
+    const d = new Date(t.dueDate + 'T00:00:00');
+    const diff = Math.round((d - today) / 86400000);
+    if (diff < 0 && t.status !== 'overdue') { t.status = 'overdue'; t.updatedAt = new Date().toISOString(); }
+    else if (diff <= (db.settings.urgentDays || 1) && diff >= 0 && t.status === 'pending') { t.status = 'urgent'; t.updatedAt = new Date().toISOString(); }
+  });
+}
+
+// =============================================
+// TOAST
+// =============================================
+function toast(msg, type = 'info') {
+  const el = document.createElement('div');
+  el.className = `toast ${type}`;
+  el.textContent = msg;
+  document.getElementById('toast-container').appendChild(el);
+  setTimeout(() => { el.style.animation = 'slideOut .3s ease forwards'; setTimeout(() => el.remove(), 300); }, 3000);
+}
+
+// =============================================
+// CONFIRM DIALOG
+// =============================================
+let confirmCallback = null;
+function confirm(title, msg, cb, icon = '⚠️') {
+  document.getElementById('confirm-title').textContent = title;
+  document.getElementById('confirm-msg').textContent = msg;
+  document.getElementById('confirm-icon').textContent = icon;
+  confirmCallback = cb;
+  document.getElementById('confirm-overlay').classList.add('open');
+}
+document.getElementById('confirm-cancel').onclick = () => { document.getElementById('confirm-overlay').classList.remove('open'); confirmCallback = null; };
+document.getElementById('confirm-ok').onclick = () => { document.getElementById('confirm-overlay').classList.remove('open'); if (confirmCallback) confirmCallback(); confirmCallback = null; };
+
+// =============================================
+// NAVIGATION
+// =============================================
+const pages = {
+  dashboard: 'Dashboard',
+  kanban: 'Kanban — Visão em Quadros',
+  tasks: 'Todas as Tarefas',
+  judicial: '🏛️ Prazos Judiciais',
+  internal: '📁 Prazos Internos',
+  admin: '🗃️ Administrativo',
+  prospecting: '🤝 Prospecção / Vendas',
+  completed: '✅ Tarefas Concluídas',
+  clients: '👥 Clientes',
+  reports: '📈 Relatórios',
+  settings: '⚙️ Configurações',
+};
+
+let currentPage = 'dashboard';
+
+document.querySelectorAll('.nav-item[data-page]').forEach(el => {
+  el.addEventListener('click', () => {
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    el.classList.add('active');
+    const p = el.dataset.page;
+    navigateTo(p);
+  });
+});
+
+function navigateTo(p) {
+  currentPage = p;
+  document.querySelectorAll('.page').forEach(el => el.classList.remove('active'));
+  const pageEl = document.getElementById('page-' + p);
+  if (pageEl) pageEl.classList.add('active');
+  document.getElementById('topbar-title').textContent = pages[p] || p;
+  renderPage(p);
+}
+
+function renderPage(p) {
+  autoUpdateStatus(db.tasks);
+  updateBadges();
+  if (p === 'dashboard') renderDashboard();
+  else if (p === 'kanban') renderKanban();
+  else if (p === 'tasks') renderTaskTable('tasks', db.tasks);
+  else if (p === 'judicial') renderTaskTable('judicial', db.tasks.filter(t => t.category === 'judicial'));
+  else if (p === 'internal') renderTaskTable('internal', db.tasks.filter(t => t.category === 'internal'));
+  else if (p === 'admin') renderTaskTable('admin', db.tasks.filter(t => t.category === 'admin'));
+  else if (p === 'prospecting') renderTaskTable('prospecting', db.tasks.filter(t => t.category === 'prospecting'));
+  else if (p === 'completed') renderTaskTable('completed', db.tasks.filter(t => t.status === 'completed'));
+  else if (p === 'clients') renderClients();
+  else if (p === 'reports') renderReports();
+  else if (p === 'settings') loadSettings();
+}
+
+function updateBadges() {
+  const pending = db.tasks.filter(t => t.status !== 'completed');
+  const urgent = db.tasks.filter(t => (t.status === 'urgent' || t.status === 'overdue'));
+  const judicial = db.tasks.filter(t => t.category === 'judicial' && t.status !== 'completed');
+  const internal = db.tasks.filter(t => t.category === 'internal' && t.status !== 'completed');
+  const admin = db.tasks.filter(t => t.category === 'admin' && t.status !== 'completed');
+  const prosp = db.tasks.filter(t => t.category === 'prospecting' && t.status !== 'completed');
+  const completedCount = db.tasks.filter(t => t.status === 'completed').length;
+
+  document.getElementById('badge-pending').textContent = pending.length || '0';
+  document.getElementById('badge-pending').style.display = pending.length ? '' : 'none';
+  document.getElementById('badge-judicial').textContent = urgent.filter(t => t.category === 'judicial').length || judicial.length;
+  document.getElementById('badge-judicial').style.display = judicial.length ? '' : 'none';
+  document.getElementById('badge-internal').textContent = internal.length;
+  document.getElementById('badge-internal').style.display = internal.length ? '' : 'none';
+  document.getElementById('badge-admin').textContent = admin.length;
+  document.getElementById('badge-admin').style.display = admin.length ? '' : 'none';
+  document.getElementById('badge-prospecting').textContent = prosp.length;
+  document.getElementById('badge-prospecting').style.display = prosp.length ? '' : 'none';
+  document.getElementById('badge-completed').textContent = completedCount;
+  document.getElementById('badge-completed').style.display = completedCount ? '' : 'none';
+}
+
+// =============================================
+// DASHBOARD
+// =============================================
+let chartCat, chartStatus, chartMonthly, chartRepCat, chartRepHistory;
+
+function renderDashboard() {
+  const tasks = db.tasks;
+  const total = tasks.length;
+  const completed = tasks.filter(t => t.status === 'completed').length;
+  const pending = tasks.filter(t => t.status === 'pending').length;
+  const urgent = tasks.filter(t => t.status === 'urgent' || t.status === 'overdue').length;
+  const today = new Date(); today.setHours(0,0,0,0);
+  const dueToday = tasks.filter(t => t.dueDate && new Date(t.dueDate + 'T00:00:00').getTime() === today.getTime()).length;
+  const dueWeek = tasks.filter(t => { const d = daysLeft(t.dueDate); return d !== null && d >= 0 && d <= 7 && t.status !== 'completed'; }).length;
+  const clients = new Set(tasks.map(t => t.clientName).filter(Boolean)).size;
+
+  document.getElementById('kpi-grid').innerHTML = `
+    <div class="kpi-card blue">
+      <div class="kpi-label">Total de Tarefas</div>
+      <div class="kpi-value">${total}</div>
+      <div class="kpi-sub">${completed} concluídas</div>
+    </div>
+    <div class="kpi-card red">
+      <div class="kpi-label">Urgente / Atrasado</div>
+      <div class="kpi-value">${urgent}</div>
+      <div class="kpi-sub">Atenção imediata</div>
+    </div>
+    <div class="kpi-card orange">
+      <div class="kpi-label">Vencem esta Semana</div>
+      <div class="kpi-value">${dueWeek}</div>
+      <div class="kpi-sub">${dueToday} vencem hoje</div>
+    </div>
+    <div class="kpi-card green">
+      <div class="kpi-label">Concluídas</div>
+      <div class="kpi-value">${completed}</div>
+      <div class="kpi-sub">${total ? Math.round(completed/total*100) : 0}% de conclusão</div>
+    </div>
+    <div class="kpi-card gold">
+      <div class="kpi-label">Em Andamento</div>
+      <div class="kpi-value">${tasks.filter(t => t.status === 'in_progress').length}</div>
+      <div class="kpi-sub">${pending} pendentes</div>
+    </div>
+    <div class="kpi-card purple">
+      <div class="kpi-label">Clientes Ativos</div>
+      <div class="kpi-value">${clients}</div>
+      <div class="kpi-sub">${db.clients.length} cadastrados</div>
+    </div>
+  `;
+
+  // Deadlines
+  const upcoming = tasks
+    .filter(t => t.dueDate && t.status !== 'completed' && daysLeft(t.dueDate) !== null && daysLeft(t.dueDate) >= -3)
+    .sort((a,b) => new Date(a.dueDate) - new Date(b.dueDate))
+    .slice(0, 8);
+
+  const dlWrap = document.getElementById('deadline-list');
+  if (!upcoming.length) {
+    dlWrap.innerHTML = '<div class="empty-state" style="padding:24px"><div class="icon">📅</div><div class="sub">Nenhum prazo próximo</div></div>';
+  } else {
+    dlWrap.innerHTML = upcoming.map(t => {
+      const d = new Date(t.dueDate + 'T00:00:00');
+      const days = daysLeft(t.dueDate);
+      const col = daysColor(days);
+      const dayStr = days < 0 ? `${Math.abs(days)}d atrasado` : days === 0 ? 'HOJE' : `${days}d`;
+      const months = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+      return `<div class="deadline-item" onclick="openTask('${t.id}')">
+        <div class="deadline-date-box">
+          <div class="deadline-date-day">${d.getDate()}</div>
+          <div class="deadline-date-mon">${months[d.getMonth()]}</div>
+        </div>
+        <div class="deadline-info">
+          <div class="deadline-title">${esc(t.title)}</div>
+          <div class="deadline-client">${esc(t.clientName || '')} ${t.processNumber ? '· '+esc(t.processNumber) : ''}</div>
+        </div>
+        <div class="deadline-days" style="color:var(--${col})">${dayStr}</div>
+      </div>`;
+    }).join('');
+  }
+
+  // Activity
+  const actWrap = document.getElementById('activity-list');
+  const acts = [...db.activity].reverse().slice(0, 10);
+  if (!acts.length) {
+    actWrap.innerHTML = '<div class="empty-state" style="padding:24px"><div class="icon">🔔</div><div class="sub">Nenhuma atividade ainda</div></div>';
+  } else {
+    actWrap.innerHTML = '<div class="progress-list">' + acts.map(a => {
+      const colors = { create:'var(--green)', update:'var(--accent)', delete:'var(--red)', complete:'var(--gold)', progress:'var(--purple)' };
+      return `<div class="activity-item">
+        <div class="activity-dot-wrap">
+          <div class="activity-dot" style="background:${colors[a.type]||'var(--muted)'}"></div>
+        </div>
+        <div class="activity-body">
+          <div class="activity-title">${esc(a.title)}</div>
+          <div class="activity-sub">${fmtDT(a.date)}</div>
+        </div>
+      </div>`;
+    }).join('') + '</div>';
+  }
+
+  // Charts
+  renderDashboardCharts();
+
+  // Priority breakdown
+  const cats = ['judicial','internal','admin','prospecting'];
+  document.getElementById('priority-breakdown').innerHTML = `
+    <div style="margin-bottom:16px">${cats.map(c => {
+      const n = tasks.filter(t => t.category === c && t.status !== 'completed').length;
+      const total2 = tasks.filter(t => t.category === c).length;
+      const pct = total2 ? Math.round(n/total2*100) : 0;
+      return `<div class="stat-row">
+        <div class="stat-row-label">${CAT_ICONS[c]} ${CAT_LABELS[c]}</div>
+        <div style="display:flex;align-items:center;gap:10px;flex:1;justify-content:flex-end">
+          <div class="progress-bar" style="width:80px"><div class="progress-fill" style="width:${100-pct}%; background:var(--${CAT_COLORS[c]})"></div></div>
+          <div class="stat-row-value" style="min-width:28px;text-align:right">${n}</div>
+        </div>
+      </div>`;
+    }).join('')}</div>
+    <div>${['urgent','high','medium','low'].map(p => {
+      const n = tasks.filter(t => t.priority === p && t.status !== 'completed').length;
+      return `<div class="stat-row">
+        <div class="stat-row-label">${dot(PRI_DOTS[p])} ${PRI_LABELS[p]}</div>
+        <div class="stat-row-value">${n}</div>
+      </div>`;
+    }).join('')}</div>
+  `;
+}
+
+function renderDashboardCharts() {
+  const tasks = db.tasks;
+  const chartDefaults = { color: '#94a3b8', font: { family: 'Inter', size: 12 } };
+  Chart.defaults.color = chartDefaults.color;
+  Chart.defaults.font = chartDefaults.font;
+
+  // Category
+  const catData = ['judicial','internal','admin','prospecting'].map(c => tasks.filter(t => t.category === c).length);
+  if (chartCat) chartCat.destroy();
+  chartCat = new Chart(document.getElementById('chart-category'), {
+    type: 'doughnut',
+    data: {
+      labels: ['Judicial','Interno','Administrativo','Prospecção'],
+      datasets: [{ data: catData, backgroundColor: ['#3b82f6','#8b5cf6','#06b6d4','#f59e0b'], borderWidth: 0 }]
+    },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { padding: 16 } } }, cutout: '65%' }
+  });
+
+  // Status
+  const statusData = ['pending','in_progress','urgent','completed','overdue'].map(s => tasks.filter(t => t.status === s).length);
+  if (chartStatus) chartStatus.destroy();
+  chartStatus = new Chart(document.getElementById('chart-status'), {
+    type: 'bar',
+    data: {
+      labels: ['Pendente','Em And.','Urgente','Concluída','Atrasada'],
+      datasets: [{ data: statusData, backgroundColor: ['#94a3b8','#3b82f6','#ef4444','#10b981','#f97316'], borderRadius: 6, borderWidth: 0 }]
+    },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { grid: { display: false } }, y: { grid: { color: '#2d3748' }, ticks: { stepSize: 1 } } } }
+  });
+
+  // Monthly
+  const months = []; const monthLabels = [];
+  const now = new Date();
+  const ML = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+  for (let i = 5; i >= 0; i--) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    months.push({ y: d.getFullYear(), m: d.getMonth() });
+    monthLabels.push(ML[d.getMonth()] + '/' + String(d.getFullYear()).slice(2));
+  }
+  const created = months.map(({y,m}) => tasks.filter(t => { const d = new Date(t.createdAt); return d.getFullYear()===y && d.getMonth()===m; }).length);
+  const completed2 = months.map(({y,m}) => tasks.filter(t => { if (t.status !== 'completed') return false; const d = new Date(t.updatedAt||t.createdAt); return d.getFullYear()===y && d.getMonth()===m; }).length);
+  if (chartMonthly) chartMonthly.destroy();
+  chartMonthly = new Chart(document.getElementById('chart-monthly'), {
+    type: 'line',
+    data: {
+      labels: monthLabels,
+      datasets: [
+        { label: 'Criadas', data: created, borderColor: '#3b82f6', backgroundColor: 'rgba(59,130,246,.1)', tension: .4, fill: true, pointBackgroundColor: '#3b82f6' },
+        { label: 'Concluídas', data: completed2, borderColor: '#10b981', backgroundColor: 'rgba(16,185,129,.1)', tension: .4, fill: true, pointBackgroundColor: '#10b981' }
+      ]
+    },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } }, scales: { x: { grid: { display: false } }, y: { grid: { color: '#2d3748' }, ticks: { stepSize: 1 } } } }
+  });
+}
+
+// =============================================
+// TASK TABLE
+// =============================================
+const tablePagination = {};
+
+function renderTaskTable(key, rawTasks) {
+  const searchEl = document.getElementById(key + '-search') || document.getElementById('task-search');
+  const catEl = document.getElementById('filter-cat');
+  const statusEl = document.getElementById('filter-status');
+  const priEl = document.getElementById('filter-priority');
+
+  let tasks = [...rawTasks];
+
+  if (searchEl && searchEl.value) {
+    const q = searchEl.value.toLowerCase();
+    tasks = tasks.filter(t =>
+      (t.title||'').toLowerCase().includes(q) ||
+      (t.clientName||'').toLowerCase().includes(q) ||
+      (t.processNumber||'').toLowerCase().includes(q) ||
+      (t.description||'').toLowerCase().includes(q)
+    );
+  }
+  if (catEl && catEl.value) tasks = tasks.filter(t => t.category === catEl.value);
+  if (statusEl && statusEl.value) tasks = tasks.filter(t => t.status === statusEl.value);
+  if (priEl && priEl.value) tasks = tasks.filter(t => t.priority === priEl.value);
+
+  tasks.sort((a,b) => {
+    const order = { urgent:0, overdue:1, in_progress:2, pending:3, completed:4 };
+    if ((order[a.status]||5) !== (order[b.status]||5)) return (order[a.status]||5) - (order[b.status]||5);
+    if (a.dueDate && b.dueDate) return new Date(a.dueDate) - new Date(b.dueDate);
+    return new Date(b.createdAt) - new Date(a.createdAt);
+  });
+
+  const pageSize = 15;
+  if (!tablePagination[key]) tablePagination[key] = 1;
+  const total = tasks.length;
+  const totalPages = Math.ceil(total / pageSize) || 1;
+  if (tablePagination[key] > totalPages) tablePagination[key] = 1;
+  const page = tablePagination[key];
+  const paginated = tasks.slice((page-1)*pageSize, page*pageSize);
+
+  const wrap = document.getElementById(key + '-table-wrap');
+  if (!total) {
+    wrap.innerHTML = `<div class="empty-state"><div class="icon">📋</div><div class="title">Nenhuma tarefa encontrada</div><div class="sub">Clique em "+ Nova Tarefa" para começar</div></div>`;
+    document.getElementById(key + '-pagination').innerHTML = '';
+    return;
+  }
+
+  wrap.innerHTML = `<table>
+    <thead><tr>
+      <th></th>
+      <th>Prioridade</th>
+      <th>Título</th>
+      <th>Cliente</th>
+      <th>Processo</th>
+      ${key === 'tasks' || key === 'completed' ? '<th>Categoria</th>' : ''}
+      <th>Status</th>
+      <th>Responsável</th>
+      <th>Prazo</th>
+      <th>And.</th>
+    </tr></thead>
+    <tbody>
+      ${paginated.map(t => {
+        const dl = daysLeft(t.dueDate);
+        const dCol = daysColor(dl);
+        const dlStr = dl === null ? '—' : dl < 0 ? `<span style="color:var(--red)">${fmt(t.dueDate)} <span style="font-size:10px">(${Math.abs(dl)}d atr.)</span></span>` : dl === 0 ? `<span style="color:var(--red);font-weight:700">HOJE</span>` : `<span style="color:var(--${dCol})">${fmt(t.dueDate)} <span style="font-size:10px">(${dl}d)</span></span>`;
+        const isDone = t.status === 'completed';
+        const actionBtn = isDone
+          ? `<button class="tbl-reopen-btn" onclick="quickReopen('${t.id}',event)" title="Reabrir tarefa">↩️ Reabrir</button>`
+          : `<button class="tbl-complete-btn" onclick="quickComplete('${t.id}',event)" title="Marcar como concluída">✅ Concluir</button>`;
+        return `<tr onclick="openTask('${t.id}')" style="${isDone ? 'opacity:.6' : ''}">
+          <td onclick="event.stopPropagation()">${actionBtn}</td>
+          <td>${dot(PRI_DOTS[t.priority]||'dot-gray')} ${badge(PRI_LABELS[t.priority]||'—', PRI_COLORS[t.priority]||'gray')}</td>
+          <td style="max-width:200px"><div style="font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap${isDone ? ';text-decoration:line-through' : ''}">${esc(t.title)}</div>${t.tags?.length ? `<div style="margin-top:3px">${t.tags.slice(0,3).map(tg=>`<span style="font-size:10px;color:var(--muted);background:var(--surface2);padding:1px 5px;border-radius:4px;margin-right:3px">${esc(tg)}</span>`).join('')}</div>` : ''}</td>
+          <td style="max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(t.clientName||'—')}</td>
+          <td style="font-family:monospace;font-size:12px">${esc(t.processNumber||'—')}</td>
+          ${key === 'tasks' || key === 'completed' ? `<td>${badge(CAT_LABELS[t.category]||'—', CAT_COLORS[t.category]||'gray')}</td>` : ''}
+          <td>${badge(STATUS_LABELS[t.status]||'—', STATUS_COLORS[t.status]||'gray')}</td>
+          <td style="font-size:12px;color:var(--muted);max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(t.responsible||'—')}</td>
+          <td style="white-space:nowrap">${dlStr}</td>
+          <td style="color:var(--muted);font-size:12px">${(t.progress||[]).length}</td>
+        </tr>`;
+      }).join('')}
+    </tbody>
+  </table>`;
+
+  // Pagination
+  const pEl = document.getElementById(key + '-pagination');
+  let pgHtml = `<span class="page-info">Página ${page} de ${totalPages} (${total} tarefas)</span>`;
+  if (totalPages > 1) {
+    if (page > 1) pgHtml += `<button class="page-btn" onclick="setPage('${key}',${page-1})">‹</button>`;
+    for (let i = Math.max(1,page-2); i <= Math.min(totalPages,page+2); i++) {
+      pgHtml += `<button class="page-btn ${i===page?'active':''}" onclick="setPage('${key}',${i})">${i}</button>`;
+    }
+    if (page < totalPages) pgHtml += `<button class="page-btn" onclick="setPage('${key}',${page+1})">›</button>`;
+  }
+  pEl.innerHTML = pgHtml;
+
+  // Wire search
+  if (searchEl) {
+    searchEl.oninput = () => { tablePagination[key] = 1; renderPage(currentPage); };
+  }
+  if (catEl) catEl.onchange = () => { tablePagination[key] = 1; renderPage(currentPage); };
+  if (statusEl) statusEl.onchange = () => { tablePagination[key] = 1; renderPage(currentPage); };
+  if (priEl) priEl.onchange = () => { tablePagination[key] = 1; renderPage(currentPage); };
+}
+
+function setPage(key, p) { tablePagination[key] = p; renderPage(currentPage); }
+
+// =============================================
+// QUICK COMPLETE / REOPEN
+// =============================================
+function quickComplete(id, e) {
+  if (e) e.stopPropagation();
+  const t = db.tasks.find(x => x.id === id);
+  if (!t) return;
+  t.status = 'completed';
+  t.updatedAt = new Date().toISOString();
+  addActivity('complete', `Tarefa concluída: ${t.title}`);
+  saveDB();
+  updateBadges();
+  renderPage(currentPage);
+  toast('✅ Tarefa concluída!', 'success');
+}
+
+function quickReopen(id, e) {
+  if (e) e.stopPropagation();
+  const t = db.tasks.find(x => x.id === id);
+  if (!t) return;
+  t.status = 'pending';
+  t.updatedAt = new Date().toISOString();
+  addActivity('update', `Tarefa reaberta: ${t.title}`);
+  saveDB();
+  updateBadges();
+  renderPage(currentPage);
+  toast('↩️ Tarefa reaberta', 'info');
+}
+
+// =============================================
+// KANBAN
+// =============================================
+function renderKanban() {
+  const catFilter = document.getElementById('kanban-cat-filter').value;
+  let tasks = catFilter ? db.tasks.filter(t => t.category === catFilter) : db.tasks;
+
+  const cols = [
+    { id: 'pending',     label: '⏳ Pendente',    color: 'var(--muted)' },
+    { id: 'in_progress', label: '🔄 Em Andamento', color: 'var(--accent)' },
+    { id: 'urgent',      label: '🚨 Urgente',      color: 'var(--red)' },
+    { id: 'overdue',     label: '⚠️ Atrasada',     color: 'var(--orange)' },
+    { id: 'completed',   label: '✅ Concluída',    color: 'var(--green)', done: true },
+  ];
+
+  document.getElementById('kanban-board').innerHTML = cols.map(col => {
+    const colTasks = tasks.filter(t => t.status === col.id).sort((a,b) => {
+      if (a.dueDate && b.dueDate) return new Date(a.dueDate) - new Date(b.dueDate);
+      return new Date(b.updatedAt||b.createdAt) - new Date(a.updatedAt||a.createdAt);
+    });
+    return `<div class="kanban-col${col.done ? ' done' : ''}">
+      <div class="kanban-col-header" style="border-top: 3px solid ${col.color}">
+        <span style="color:${col.color}">${col.label}</span>
+        <span style="margin-left:auto; background:var(--surface2); font-size:11px; padding:2px 7px; border-radius:10px">${colTasks.length}</span>
+      </div>
+      <div class="kanban-col-body">
+        ${colTasks.length ? colTasks.map(t => {
+          const dl = daysLeft(t.dueDate);
+          const dcol = daysColor(dl);
+          const dlLabel = dl === null ? '' : dl < 0 ? `⚠️ ${Math.abs(dl)}d atrasado` : dl === 0 ? '🔴 HOJE' : dl === 1 ? '🟠 Amanhã' : `📅 ${dl}d`;
+          const chk = t.checklist || [];
+          const chkDone = chk.filter(i => i.done).length;
+          const chkTotal = chk.length;
+          const isDone = t.status === 'completed';
+          return `<div class="kanban-card ${isDone ? '' : t.priority}" onclick="openTask('${t.id}')">
+            <div class="kanban-card-title${isDone ? ' kanban-card-done-overlay' : ''}">${esc(t.title)}</div>
+            <div class="kanban-card-client">${esc(t.clientName||'')} ${t.processNumber ? '· '+esc(t.processNumber) : ''}</div>
+            ${t.responsible ? `<div style="font-size:11px;color:var(--muted);margin-bottom:4px">👤 ${esc(t.responsible)}</div>` : ''}
+            <div class="kanban-card-footer">
+              ${badge(CAT_LABELS[t.category]||'', CAT_COLORS[t.category]||'gray')}
+              ${chkTotal ? `<span style="font-size:11px;color:var(--muted)">☑ ${chkDone}/${chkTotal}</span>` : ''}
+            </div>
+            ${t.dueDate && !isDone ? `<div class="kanban-deadline">
+              <span class="kanban-deadline-date" style="color:var(--${dcol}); font-size:13px; font-weight:700">${fmt(t.dueDate)}</span>
+              <span style="font-size:11px; color:var(--${dcol}); font-weight:600">${dlLabel}</span>
+            </div>` : ''}
+            ${isDone
+              ? `<button class="btn-reopen" onclick="quickReopen('${t.id}',event)">↩️ Reabrir</button>`
+              : `<button class="btn-complete" onclick="quickComplete('${t.id}',event)">✅ Concluir</button>`
+            }
+          </div>`;
+        }).join('') : `<div class="empty-state" style="padding:20px"><div class="sub">Nenhuma tarefa</div></div>`}
+      </div>
+    </div>`;
+  }).join('');
+
+  document.getElementById('kanban-cat-filter').onchange = () => renderKanban();
+  document.getElementById('btn-kanban-refresh').onclick = () => renderKanban();
+}
+
+// =============================================
+// TASK MODAL
+// =============================================
+let editingTaskId = null;
+
+function openTask(id) {
+  const t = id ? db.tasks.find(x => x.id === id) : null;
+  editingTaskId = id || null;
+
+  document.getElementById('modal-title').textContent = t ? 'Editar Tarefa' : 'Nova Tarefa';
+  document.getElementById('modal-cat-icon').textContent = t ? (CAT_ICONS[t.category]||'📋') : '📋';
+  document.getElementById('btn-delete-task').style.display = t ? '' : 'none';
+  const isDoneTask = t?.status === 'completed';
+  document.getElementById('btn-modal-complete').style.display = (t && !isDoneTask) ? '' : 'none';
+  document.getElementById('btn-modal-reopen').style.display = isDoneTask ? '' : 'none';
+
+  // Reset tabs
+  document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
+  document.querySelector('.tab[data-tab="general"]').classList.add('active');
+  document.getElementById('tab-general').style.display = '';
+  document.getElementById('tab-obs').style.display = 'none';
+  document.getElementById('tab-checklist').style.display = 'none';
+  document.getElementById('tab-progress').style.display = 'none';
+
+  // Fill form
+  document.getElementById('f-title').value = t?.title || '';
+  document.getElementById('f-client').value = t?.clientName || '';
+  document.getElementById('f-process').value = t?.processNumber || '';
+  document.getElementById('f-category').value = t?.category || 'judicial';
+  document.getElementById('f-status').value = t?.status || 'pending';
+  document.getElementById('f-priority').value = t?.priority || 'medium';
+  document.getElementById('f-due').value = t?.dueDate || '';
+  document.getElementById('f-start').value = t?.startDate || '';
+  document.getElementById('f-desc').value = t?.description || '';
+  document.getElementById('f-court').value = t?.court || '';
+  document.getElementById('f-counterpart').value = t?.counterpart || '';
+  document.getElementById('f-responsible').value = t?.responsible || '';
+  document.getElementById('f-tags').value = (t?.tags||[]).join(', ');
+  document.getElementById('f-obs').value = t?.observations || '';
+  document.getElementById('f-strategic').value = t?.strategic || '';
+
+  // Progress default date = now
+  const now = new Date();
+  const local = new Date(now.getTime() - now.getTimezoneOffset()*60000).toISOString().slice(0,16);
+  document.getElementById('progress-date').value = local;
+  document.getElementById('progress-text').value = '';
+
+  // Client datalist
+  const dl = document.getElementById('client-datalist');
+  dl.innerHTML = db.clients.map(c => `<option value="${esc(c.name)}">`).join('') +
+    [...new Set(db.tasks.map(x => x.clientName).filter(Boolean))].map(n => `<option value="${esc(n)}">`).join('');
+
+  renderProgressList(t?.progress || []);
+
+  document.getElementById('task-overlay').classList.add('open');
+}
+
+function renderProgressList(entries) {
+  const wrap = document.getElementById('progress-list');
+  if (!entries.length) {
+    wrap.innerHTML = `<div class="empty-state" style="padding:16px"><div class="icon">📝</div><div class="sub">Nenhum andamento registrado</div></div>`;
+    return;
+  }
+  wrap.innerHTML = entries.slice().reverse().map((e,ri) => {
+    const realIdx = entries.length - 1 - ri;
+    return `<div class="progress-item">
+      <div class="progress-item-header">
+        <span class="progress-item-type">${PROG_ICONS[e.type]||'📝'} <strong>${e.type ? e.type.charAt(0).toUpperCase()+e.type.slice(1) : 'Andamento'}</strong></span>
+        <span class="progress-item-date">${fmtDT(e.date)}</span>
+      </div>
+      <div class="progress-item-text">${esc(e.text)}</div>
+      <button class="progress-item-del" onclick="removeProgress(${realIdx})">✕</button>
+    </div>`;
+  }).join('');
+}
+
+function removeProgress(idx) {
+  if (!editingTaskId) return;
+  const t = db.tasks.find(x => x.id === editingTaskId);
+  if (!t) return;
+  t.progress.splice(idx, 1);
+  renderProgressList(t.progress);
+}
+
+// =============================================
+// CHECKLIST
+// =============================================
+function renderChecklist(items) {
+  const wrap = document.getElementById('checklist-items');
+  const bar = document.getElementById('checklist-progress-bar');
+  const fill = document.getElementById('checklist-fill');
+  const pct = document.getElementById('checklist-pct');
+
+  if (!items.length) {
+    wrap.innerHTML = `<div class="empty-state" style="padding:20px"><div class="icon">☑️</div><div class="sub">Nenhum item no checklist. Adicione itens acima.</div></div>`;
+    bar.style.display = 'none';
+    return;
+  }
+
+  const done = items.filter(i => i.done).length;
+  const total = items.length;
+  const p = Math.round(done / total * 100);
+  bar.style.display = '';
+  fill.style.width = p + '%';
+  pct.textContent = `${done}/${total} (${p}%)`;
+
+  wrap.innerHTML = items.map((item, idx) => `
+    <div class="checklist-item ${item.done ? 'done' : ''}" id="chk-item-${idx}">
+      <input type="checkbox" ${item.done ? 'checked' : ''} onchange="toggleChecklist(${idx}, this.checked)">
+      <span class="checklist-item-text" onclick="document.getElementById('chk-item-${idx}').querySelector('input').click()">${esc(item.text)}</span>
+      <button class="checklist-item-del" onclick="removeChecklist(${idx})">✕</button>
+    </div>
+  `).join('');
+}
+
+function toggleChecklist(idx, done) {
+  if (!editingTaskId) return;
+  const t = db.tasks.find(x => x.id === editingTaskId);
+  if (!t || !t.checklist) return;
+  t.checklist[idx].done = done;
+  t.updatedAt = new Date().toISOString();
+  saveDB();
+  renderChecklist(t.checklist);
+}
+
+function removeChecklist(idx) {
+  if (!editingTaskId) return;
+  const t = db.tasks.find(x => x.id === editingTaskId);
+  if (!t || !t.checklist) return;
+  t.checklist.splice(idx, 1);
+  t.updatedAt = new Date().toISOString();
+  saveDB();
+  renderChecklist(t.checklist);
+}
+
+document.getElementById('btn-add-checklist').onclick = () => {
+  const input = document.getElementById('checklist-input');
+  const text = input.value.trim();
+  if (!text) return;
+  if (!editingTaskId) { toast('Salve a tarefa primeiro para adicionar itens', 'info'); return; }
+  const t = db.tasks.find(x => x.id === editingTaskId);
+  if (!t) return;
+  if (!t.checklist) t.checklist = [];
+  t.checklist.push({ id: uid(), text, done: false, createdAt: new Date().toISOString() });
+  t.updatedAt = new Date().toISOString();
+  input.value = '';
+  saveDB();
+  renderChecklist(t.checklist);
+};
+
+document.getElementById('checklist-input').addEventListener('keydown', e => {
+  if (e.key === 'Enter') document.getElementById('btn-add-checklist').click();
+});
+
+document.getElementById('btn-add-progress').onclick = () => {
+  const text = document.getElementById('progress-text').value.trim();
+  if (!text) { toast('Digite o texto do andamento', 'error'); return; }
+  if (!editingTaskId) { toast('Salve a tarefa primeiro para adicionar andamentos', 'info'); return; }
+  const t = db.tasks.find(x => x.id === editingTaskId);
+  if (!t) return;
+  if (!t.progress) t.progress = [];
+  t.progress.push({
+    id: uid(),
+    type: document.getElementById('progress-type').value,
+    date: new Date(document.getElementById('progress-date').value || Date.now()).toISOString(),
+    text
+  });
+  t.updatedAt = new Date().toISOString();
+  document.getElementById('progress-text').value = '';
+  const now = new Date();
+  const local = new Date(now.getTime() - now.getTimezoneOffset()*60000).toISOString().slice(0,16);
+  document.getElementById('progress-date').value = local;
+  saveDB();
+  addActivity('progress', `Andamento adicionado: ${t.title}`);
+  renderProgressList(t.progress);
+  toast('Andamento registrado!', 'success');
+};
+
+// Tabs
+document.querySelectorAll('.tab').forEach(el => {
+  el.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    el.classList.add('active');
+    const tab = el.dataset.tab;
+    document.getElementById('tab-general').style.display = tab === 'general' ? '' : 'none';
+    document.getElementById('tab-obs').style.display = tab === 'obs' ? '' : 'none';
+    document.getElementById('tab-checklist').style.display = tab === 'checklist' ? '' : 'none';
+    document.getElementById('tab-progress').style.display = tab === 'progress' ? '' : 'none';
+
+    if (tab === 'progress' && editingTaskId) {
+      const t = db.tasks.find(x => x.id === editingTaskId);
+      if (t) renderProgressList(t.progress || []);
+    }
+    if (tab === 'checklist') {
+      const t = editingTaskId ? db.tasks.find(x => x.id === editingTaskId) : null;
+      renderChecklist(t?.checklist || []);
+    }
+  });
+});
+
+document.getElementById('btn-new-task').onclick = () => openTask(null);
+
+document.getElementById('btn-close-modal').onclick =
+document.getElementById('btn-cancel-modal').onclick = () => {
+  document.getElementById('task-overlay').classList.remove('open');
+};
+
+document.getElementById('btn-modal-complete').onclick = () => {
+  if (!editingTaskId) return;
+  quickComplete(editingTaskId, null);
+  document.getElementById('task-overlay').classList.remove('open');
+};
+
+document.getElementById('btn-modal-reopen').onclick = () => {
+  if (!editingTaskId) return;
+  quickReopen(editingTaskId, null);
+  document.getElementById('task-overlay').classList.remove('open');
+};
+
+document.getElementById('task-overlay').addEventListener('click', e => {
+  if (e.target === document.getElementById('task-overlay')) document.getElementById('task-overlay').classList.remove('open');
+});
+
+document.getElementById('btn-save-task').onclick = () => {
+  const title = document.getElementById('f-title').value.trim();
+  if (!title) { toast('Informe o título da tarefa', 'error'); return; }
+
+  const data = {
+    title,
+    clientName: document.getElementById('f-client').value.trim(),
+    processNumber: document.getElementById('f-process').value.trim(),
+    category: document.getElementById('f-category').value,
+    status: document.getElementById('f-status').value,
+    priority: document.getElementById('f-priority').value,
+    dueDate: document.getElementById('f-due').value || null,
+    startDate: document.getElementById('f-start').value || null,
+    description: document.getElementById('f-desc').value.trim(),
+    court: document.getElementById('f-court').value.trim(),
+    counterpart: document.getElementById('f-counterpart').value.trim(),
+    responsible: document.getElementById('f-responsible').value.trim(),
+    tags: document.getElementById('f-tags').value.split(',').map(s=>s.trim()).filter(Boolean),
+    observations: document.getElementById('f-obs').value.trim(),
+    strategic: document.getElementById('f-strategic').value.trim(),
+    updatedAt: new Date().toISOString(),
+  };
+
+  if (editingTaskId) {
+    const idx = db.tasks.findIndex(x => x.id === editingTaskId);
+    if (idx !== -1) {
+      data.id = editingTaskId;
+      data.createdAt = db.tasks[idx].createdAt;
+      data.progress = db.tasks[idx].progress || [];
+      data.checklist = db.tasks[idx].checklist || [];
+      db.tasks[idx] = data;
+    }
+    addActivity('update', `Tarefa atualizada: ${title}`);
+    toast('Tarefa atualizada!', 'success');
+  } else {
+    data.id = uid();
+    data.createdAt = new Date().toISOString();
+    data.progress = [];
+    data.checklist = [];
+    db.tasks.push(data);
+    editingTaskId = data.id;
+    document.getElementById('btn-delete-task').style.display = '';
+    addActivity('create', `Nova tarefa criada: ${title}`);
+    toast('Tarefa criada!', 'success');
+  }
+
+  // Auto-registrar cliente se não existir
+  if (data.clientName) {
+    const exists = db.clients.find(c => c.name.toLowerCase() === data.clientName.toLowerCase());
+    if (!exists) {
+      db.clients.push({ id: uid(), name: data.clientName, type: 'pf', createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() });
+    }
+  }
+
+  saveDB();
+  updateBadges();
+  renderPage(currentPage);
+  document.getElementById('task-overlay').classList.remove('open');
+};
+
+document.getElementById('btn-delete-task').onclick = () => {
+  confirm('Excluir Tarefa', 'Esta ação não pode ser desfeita. Deseja excluir esta tarefa?', () => {
+    db.tasks = db.tasks.filter(x => x.id !== editingTaskId);
+    addActivity('delete', `Tarefa excluída`);
+    saveDB();
+    updateBadges();
+    renderPage(currentPage);
+    document.getElementById('task-overlay').classList.remove('open');
+    toast('Tarefa excluída', 'info');
+  }, '🗑️');
+};
+
+// =============================================
+// CLIENTS
+// =============================================
+let editingClientId = null;
+
+function renderClients() {
+  const q = (document.getElementById('client-search')?.value || '').toLowerCase();
+  let clients = db.clients;
+  if (q) clients = clients.filter(c => (c.name||'').toLowerCase().includes(q) || (c.email||'').toLowerCase().includes(q));
+
+  const grid = document.getElementById('client-grid');
+  if (!clients.length) {
+    grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1"><div class="icon">👥</div><div class="title">Nenhum cliente cadastrado</div><div class="sub">Adicione clientes para vincular às suas tarefas</div></div>`;
+    return;
+  }
+  grid.innerHTML = clients.map(c => {
+    const tasks = db.tasks.filter(t => t.clientName === c.name);
+    const pending = tasks.filter(t => t.status !== 'completed').length;
+    return `<div class="client-card" onclick="openClient('${c.id}')">
+      <div class="client-card-name">${esc(c.name)}</div>
+      <div class="client-card-sub">${c.type==='pj'?'Pessoa Jurídica':'Pessoa Física'} ${c.doc?'· '+esc(c.doc):''}</div>
+      ${c.phone ? `<div class="client-card-sub" style="margin-top:4px">📞 ${esc(c.phone)}</div>` : ''}
+      ${c.email ? `<div class="client-card-sub">✉️ ${esc(c.email)}</div>` : ''}
+      <div class="client-card-stats">
+        <div class="client-stat"><div class="client-stat-num">${tasks.length}</div><div class="client-stat-lbl">Tarefas</div></div>
+        <div class="client-stat"><div class="client-stat-num" style="color:var(--orange)">${pending}</div><div class="client-stat-lbl">Pendentes</div></div>
+        <div class="client-stat"><div class="client-stat-num" style="color:var(--green)">${tasks.length-pending}</div><div class="client-stat-lbl">Concluídas</div></div>
+      </div>
+    </div>`;
+  }).join('');
+
+  document.getElementById('client-search').oninput = () => renderClients();
+}
+
+function openClient(id) {
+  const c = id ? db.clients.find(x => x.id === id) : null;
+  editingClientId = id || null;
+  document.getElementById('client-modal-title').textContent = c ? 'Editar Cliente' : 'Novo Cliente';
+  document.getElementById('btn-delete-client').style.display = c ? '' : 'none';
+  document.getElementById('c-name').value = c?.name || '';
+  document.getElementById('c-doc').value = c?.doc || '';
+  document.getElementById('c-type').value = c?.type || 'pf';
+  document.getElementById('c-email').value = c?.email || '';
+  document.getElementById('c-phone').value = c?.phone || '';
+  document.getElementById('c-addr').value = c?.address || '';
+  document.getElementById('c-obs').value = c?.observations || '';
+  document.getElementById('client-overlay').classList.add('open');
+}
+
+document.getElementById('btn-new-client').onclick = () => openClient(null);
+document.getElementById('btn-close-client-modal').onclick =
+document.getElementById('btn-cancel-client').onclick = () => { document.getElementById('client-overlay').classList.remove('open'); };
+
+document.getElementById('btn-save-client').onclick = () => {
+  const name = document.getElementById('c-name').value.trim();
+  if (!name) { toast('Informe o nome do cliente', 'error'); return; }
+  const data = {
+    name,
+    doc: document.getElementById('c-doc').value.trim(),
+    type: document.getElementById('c-type').value,
+    email: document.getElementById('c-email').value.trim(),
+    phone: document.getElementById('c-phone').value.trim(),
+    address: document.getElementById('c-addr').value.trim(),
+    observations: document.getElementById('c-obs').value.trim(),
+    updatedAt: new Date().toISOString(),
+  };
+  if (editingClientId) {
+    const idx = db.clients.findIndex(x => x.id === editingClientId);
+    if (idx !== -1) { data.id = editingClientId; data.createdAt = db.clients[idx].createdAt; db.clients[idx] = data; }
+    toast('Cliente atualizado!', 'success');
+  } else {
+    data.id = uid(); data.createdAt = new Date().toISOString();
+    db.clients.push(data);
+    toast('Cliente cadastrado!', 'success');
+  }
+  saveDB();
+  renderClients();
+  document.getElementById('client-overlay').classList.remove('open');
+};
+
+document.getElementById('btn-delete-client').onclick = () => {
+  confirm('Excluir Cliente', 'Deseja excluir este cliente? As tarefas vinculadas não serão excluídas.', () => {
+    db.clients = db.clients.filter(x => x.id !== editingClientId);
+    saveDB(); renderClients();
+    document.getElementById('client-overlay').classList.remove('open');
+    toast('Cliente excluído', 'info');
+  }, '🗑️');
+};
+
+// =============================================
+// REPORTS
+// =============================================
+function renderReports() {
+  const tasks = db.tasks;
+  const total = tasks.length;
+  const completed = tasks.filter(t => t.status === 'completed').length;
+  const overdue = tasks.filter(t => t.status === 'overdue').length;
+  const completion = total ? Math.round(completed/total*100) : 0;
+
+  document.getElementById('report-kpis').innerHTML = `
+    <div class="kpi-card blue"><div class="kpi-label">Total de Tarefas</div><div class="kpi-value">${total}</div></div>
+    <div class="kpi-card green"><div class="kpi-label">Concluídas</div><div class="kpi-value">${completed}</div><div class="kpi-sub">${completion}% de conclusão</div></div>
+    <div class="kpi-card orange"><div class="kpi-label">Atrasadas</div><div class="kpi-value">${overdue}</div></div>
+    <div class="kpi-card purple"><div class="kpi-label">Clientes</div><div class="kpi-value">${db.clients.length}</div></div>
+  `;
+
+  // Category chart
+  const catData = ['judicial','internal','admin','prospecting'].map(c => tasks.filter(t => t.category === c).length);
+  if (chartRepCat) chartRepCat.destroy();
+  chartRepCat = new Chart(document.getElementById('chart-report-cat'), {
+    type: 'bar',
+    data: {
+      labels: ['Judicial','Interno','Administrativo','Prospecção'],
+      datasets: [
+        { label: 'Total', data: catData, backgroundColor: ['#3b82f6','#8b5cf6','#06b6d4','#f59e0b'], borderRadius: 6, borderWidth: 0 },
+        { label: 'Concluídas', data: ['judicial','internal','admin','prospecting'].map(c => tasks.filter(t => t.category===c && t.status==='completed').length), backgroundColor: 'rgba(16,185,129,.3)', borderRadius: 6, borderWidth: 0 }
+      ]
+    },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } }, scales: { x: { grid: { display: false } }, y: { grid: { color: '#2d3748' } } } }
+  });
+
+  // Completion by category
+  document.getElementById('report-completion').innerHTML = ['judicial','internal','admin','prospecting'].map(c => {
+    const tot = tasks.filter(t => t.category === c).length;
+    const comp = tasks.filter(t => t.category === c && t.status === 'completed').length;
+    const pct = tot ? Math.round(comp/tot*100) : 0;
+    return `<div class="stat-row">
+      <div class="stat-row-label">${CAT_ICONS[c]} ${CAT_LABELS[c]}</div>
+      <div style="display:flex;align-items:center;gap:10px">
+        <div class="progress-bar" style="width:100px"><div class="progress-fill" style="width:${pct}%;background:var(--${CAT_COLORS[c]})"></div></div>
+        <div class="stat-row-value">${pct}%</div>
+      </div>
+    </div>`;
+  }).join('');
+
+  // Top clients
+  const clientCounts = {};
+  tasks.forEach(t => { if (t.clientName) { clientCounts[t.clientName] = (clientCounts[t.clientName]||0)+1; } });
+  const topClients = Object.entries(clientCounts).sort((a,b)=>b[1]-a[1]).slice(0,8);
+  document.getElementById('report-top-clients').innerHTML = topClients.length ?
+    topClients.map(([name,n]) => `<div class="stat-row"><div class="stat-row-label">👤 ${esc(name)}</div><div class="stat-row-value">${n} tarefa${n>1?'s':''}</div></div>`).join('') :
+    '<div class="empty-state" style="padding:20px"><div class="sub">Sem dados</div></div>';
+
+  // History chart
+  const ML = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+  const now = new Date();
+  const months = []; const monthLabels = [];
+  for (let i = 11; i >= 0; i--) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    months.push({ y: d.getFullYear(), m: d.getMonth() });
+    monthLabels.push(ML[d.getMonth()]);
+  }
+  const histData = months.map(({y,m}) => tasks.filter(t => t.status==='completed' && (() => { const d=new Date(t.updatedAt||t.createdAt); return d.getFullYear()===y && d.getMonth()===m; })()).length);
+  if (chartRepHistory) chartRepHistory.destroy();
+  chartRepHistory = new Chart(document.getElementById('chart-report-history'), {
+    type: 'bar',
+    data: {
+      labels: monthLabels,
+      datasets: [{ label: 'Concluídas', data: histData, backgroundColor: 'rgba(16,185,129,.7)', borderRadius: 6, borderWidth: 0 }]
+    },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { grid: { display: false } }, y: { grid: { color: '#2d3748' }, ticks: { stepSize: 1 } } } }
+  });
+}
+
+// =============================================
+// SETTINGS
+// =============================================
+function loadSettings() {
+  document.getElementById('settings-name').value = db.settings.name || '';
+  document.getElementById('settings-office').value = db.settings.office || '';
+  document.getElementById('settings-oab').value = db.settings.oab || '';
+  document.getElementById('settings-area').value = db.settings.area || '';
+  document.getElementById('settings-alert-days').value = db.settings.alertDays || 3;
+  document.getElementById('settings-urgent-days').value = db.settings.urgentDays || 1;
+}
+
+document.getElementById('btn-save-settings').onclick = () => {
+  db.settings.name = document.getElementById('settings-name').value.trim() || 'Dr. Vinicius';
+  db.settings.office = document.getElementById('settings-office').value.trim();
+  db.settings.oab = document.getElementById('settings-oab').value.trim();
+  db.settings.area = document.getElementById('settings-area').value.trim();
+  db.settings.alertDays = parseInt(document.getElementById('settings-alert-days').value) || 3;
+  db.settings.urgentDays = parseInt(document.getElementById('settings-urgent-days').value) || 1;
+  saveDB();
+  document.getElementById('sidebar-user-name').textContent = db.settings.name;
+  document.getElementById('sidebar-user-role').textContent = db.settings.area || 'Advogado';
+  document.getElementById('user-avatar-initials').textContent = db.settings.name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+  toast('Configurações salvas!', 'success');
+};
+
+document.getElementById('btn-clear-data').onclick = () => {
+  confirm('Limpar Todos os Dados', 'ATENÇÃO: Isso apagará TODAS as tarefas, clientes e configurações. Esta ação é irreversível!', () => {
+    localStorage.removeItem(DB_KEY);
+    db = { tasks: [], clients: [], settings: { name: 'Dr. Vinicius', office: '', oab: '', area: '', alertDays: 3, urgentDays: 1 }, activity: [] };
+    saveDB();
+    renderPage(currentPage);
+    toast('Dados limpos', 'info');
+  }, '⚠️');
+};
+
+// =============================================
+// EXPORT / IMPORT
+// =============================================
+function exportData() {
+  const json = JSON.stringify(db, null, 2);
+  const blob = new Blob([json], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `lex_backup_${new Date().toISOString().slice(0,10)}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+  toast('Backup exportado!', 'success');
+}
+
+function importData(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const data = JSON.parse(e.target.result);
+      if (!data.tasks || !Array.isArray(data.tasks)) throw new Error('Formato inválido');
+      confirm('Importar Dados', `Serão importadas ${data.tasks.length} tarefas e ${(data.clients||[]).length} clientes. Os dados atuais serão substituídos.`, () => {
+        db = data;
+        if (!db.activity) db.activity = [];
+        if (!db.clients) db.clients = [];
+        if (!db.settings) db.settings = { name: 'Dr. Vinicius', office: '', oab: '', area: '', alertDays: 3, urgentDays: 1 };
+        saveDB();
+        renderPage(currentPage);
+        updateBadges();
+        toast(`Importação concluída: ${data.tasks.length} tarefas`, 'success');
+      });
+    } catch(err) { toast('Arquivo inválido ou corrompido', 'error'); }
+    input.value = '';
+  };
+  reader.readAsText(file);
+}
+
+document.getElementById('btn-export-json').onclick = exportData;
+document.getElementById('btn-import-json').onclick = () => document.getElementById('import-file').click();
+document.getElementById('import-file').onchange = function() { importData(this); };
+document.getElementById('btn-export-settings').onclick = exportData;
+document.getElementById('btn-import-settings').onclick = () => document.getElementById('import-settings-file').click();
+document.getElementById('import-settings-file').onchange = function() { importData(this); };
+
+// =============================================
+// ACTIVITY LOG
+// =============================================
+function addActivity(type, title) {
+  db.activity.push({ id: uid(), type, title, date: new Date().toISOString() });
+  if (db.activity.length > 100) db.activity = db.activity.slice(-100);
+  saveDB();
+}
+
+// =============================================
+// GLOBAL SEARCH
+// =============================================
+document.getElementById('global-search').addEventListener('input', function() {
+  const q = this.value.trim();
+  if (!q) return;
+  navigateTo('tasks');
+  document.getElementById('task-search').value = q;
+  renderTaskTable('tasks', db.tasks);
+});
+
+// =============================================
+// ESCAPE UTIL
+// =============================================
+function esc(str) {
+  if (!str) return '';
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// =============================================
+// RESPONSIVE MENU
+// =============================================
+document.getElementById('menu-toggle').onclick = () => {
+  document.getElementById('sidebar').classList.toggle('open');
+};
+
+function checkResponsive() {
+  const isMob = window.innerWidth < 768;
+  document.getElementById('menu-toggle').style.display = isMob ? '' : 'none';
+}
+window.addEventListener('resize', checkResponsive);
+checkResponsive();
+
+// =============================================
+// SIDEBAR: SETTINGS USER INIT
+// =============================================
+function initSidebarUser() {
+  const n = db.settings.name || 'Dr. Vinicius';
+  document.getElementById('sidebar-user-name').textContent = n;
+  document.getElementById('sidebar-user-role').textContent = db.settings.area || 'Advogado';
+  document.getElementById('user-avatar-initials').textContent = n.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+}
+
+// =============================================
+// MIGRATE: registra clientes de tarefas existentes
+// =============================================
+function migrateClientsFromTasks() {
+  let added = 0;
+  db.tasks.forEach(t => {
+    if (!t.clientName) return;
+    const exists = db.clients.find(c => c.name.toLowerCase() === t.clientName.toLowerCase());
+    if (!exists) {
+      db.clients.push({
+        id: uid(),
+        name: t.clientName,
+        type: 'pf',
+        createdAt: t.createdAt || new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      });
+      added++;
+    }
+  });
+  if (added > 0) { saveDB(); }
+}
+
+// =============================================
+// INIT
+// =============================================
+migrateClientsFromTasks();
+autoUpdateStatus(db.tasks);
+updateBadges();
+initSidebarUser();
+renderDashboard();
+</script>
+</body>
+</html>
