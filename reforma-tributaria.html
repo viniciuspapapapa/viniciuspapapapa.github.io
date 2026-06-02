@@ -201,6 +201,24 @@
   .insight.warn{background:var(--amber-soft);border-color:#fde68a}
   .insight.warn p{color:#92400e}
 
+  /* regime recommendation */
+  .reco{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:18px}
+  @media(max-width:560px){.reco{grid-template-columns:1fr}}
+  .reco-card{border-radius:var(--radius-sm);padding:15px 17px;border:1px solid}
+  .reco-card.best{background:var(--green-soft);border-color:#a7f3d0}
+  .reco-card.new{background:var(--brand-soft);border-color:#dbe6ff}
+  .reco-l{font-size:11.5px;font-weight:700;text-transform:uppercase;letter-spacing:.04em}
+  .reco-card.best .reco-l{color:var(--green)} .reco-card.new .reco-l{color:var(--brand)}
+  .reco-v{font-size:21px;font-weight:800;margin-top:6px;letter-spacing:-.01em;color:var(--ink)}
+  .reco-d{font-size:12px;color:var(--muted);margin-top:3px;font-weight:500}
+  tbody tr.sel td{background:var(--brand-soft)}
+  tbody tr.win td:first-child::after{content:"★";color:var(--green);margin-left:6px;font-size:12px}
+  tbody tr.off td{opacity:.45}
+  .sit{display:inline-block;font-size:10.5px;font-weight:700;padding:2px 8px;border-radius:6px}
+  .sit.ok{background:var(--green-soft);color:var(--green)}
+  .sit.no{background:#f1f5f9;color:#64748b}
+  .sit.cur{background:var(--brand-soft);color:var(--brand)}
+
   footer{max-width:1200px;margin:0 auto;padding:0 22px 50px;color:var(--faint);font-size:11.5px;
     line-height:1.6}
   footer .disc{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);
@@ -361,6 +379,45 @@
           <div class="kpi-top"><span class="kpi-label">Custo financeiro split</span><span class="kpi-ic">⏳</span></div>
           <div class="kpi-value" id="kpiCusto">—</div>
           <div class="kpi-meta">retenção: <b id="kpiSplit">—</b>/mês</div>
+        </div>
+      </div>
+
+      <!-- comparador de regimes -->
+      <div class="card">
+        <div class="card-head">
+          <div>
+            <div class="card-h">Qual regime tributário escolher?</div>
+            <div class="card-desc">Carga estimada para <b id="regSetor">—</b> em cada regime, hoje e no novo sistema (<span id="regAno">—</span>). A elegibilidade considera os limites de faturamento.</div>
+          </div>
+          <span class="badge year" id="regBadge">—</span>
+        </div>
+
+        <div class="reco" id="reco">
+          <div class="reco-card best">
+            <div class="reco-l">🏆 Melhor regime hoje</div>
+            <div class="reco-v" id="recoAtual">—</div>
+            <div class="reco-d" id="recoAtualD">—</div>
+          </div>
+          <div class="reco-card new">
+            <div class="reco-l">🔵 Melhor no novo sistema (<span id="recoAnoTag">—</span>)</div>
+            <div class="reco-v" id="recoNovo">—</div>
+            <div class="reco-d" id="recoNovoD">—</div>
+          </div>
+        </div>
+
+        <canvas id="regChart" height="220"></canvas>
+        <div class="legend" style="margin-bottom:6px">
+          <span class="lg"><span class="sw" style="background:#94a3b8"></span>Sistema atual</span>
+          <span class="lg"><span class="sw" style="background:var(--brand)"></span>Novo sistema (<span id="regAno2">—</span>)</span>
+          <span class="lg"><span class="sw" style="background:#e2e8f0;border:1px solid #cbd5e1"></span>Não elegível</span>
+        </div>
+
+        <table style="margin-top:10px">
+          <thead><tr><th>Regime</th><th>Hoje</th><th>%</th><th>Novo (<span id="regAnoT">—</span>)</th><th>%</th><th>Situação</th></tr></thead>
+          <tbody id="regBody"></tbody>
+        </table>
+        <div class="insight" id="regInsight" style="margin-top:14px">
+          <div class="ic">🧭</div><p id="regInsightTxt"></p>
         </div>
       </div>
 
@@ -714,6 +771,7 @@ function render(){
   drawTabela(r);
   drawSplit(r, p);
   drawInsight(r, p, diff, diffPct);
+  drawRegimes(p);
 
   /* flash KPIs on change */
   if(lastNovo!==null && Math.abs(lastNovo-r.novo.total)>1){
@@ -1018,6 +1076,128 @@ function drawInsight(r,p,diff,diffPct){
   txt.innerHTML=msg;
   box.classList.toggle('warn',warn);
   box.querySelector('.ic').textContent= warn?'⚠️':'💡';
+}
+
+/* --- Comparador de regimes tributários --- */
+const REGIMES_META = {
+  real:      {nome:'Lucro Real',      limite:Infinity, nota:'sem limite'},
+  presumido: {nome:'Lucro Presumido', limite:78000000, nota:'até R$ 78 mi/ano'},
+  simples:   {nome:'Simples Nacional', limite:4800000, nota:'até R$ 4,8 mi/ano'},
+  mei:       {nome:'MEI',             limite:81000,    nota:'até R$ 81 mil/ano'},
+};
+const REGIME_ORDER = ['real','presumido','simples','mei'];
+
+function drawRegimes(p){
+  const fatAnual = p.faturamento*12;
+  $('regSetor').textContent = SETORES[p.setor].nome;
+  $('regAno').textContent = p.ano; $('regAno2').textContent = p.ano;
+  $('regAnoT').textContent = p.ano; $('regBadge').textContent = p.ano;
+  $('recoAnoTag').textContent = p.ano;
+
+  // calcula cada regime
+  const rows = REGIME_ORDER.map(reg=>{
+    const r = calcular({...p, regime:reg});
+    const elegivel = fatAnual <= REGIMES_META[reg].limite;
+    return {reg, meta:REGIMES_META[reg], elegivel,
+            atual:r.atual.total, novo:r.novo.total,
+            atualPct:p.faturamento?r.atual.total/p.faturamento:0,
+            novoPct:p.faturamento?r.novo.total/p.faturamento:0};
+  });
+
+  // melhores elegíveis
+  const eleg = rows.filter(x=>x.elegivel);
+  const bestA = eleg.slice().sort((a,b)=>a.atual-b.atual)[0];
+  const bestN = eleg.slice().sort((a,b)=>a.novo-b.novo)[0];
+
+  if(bestA){
+    $('recoAtual').textContent = bestA.meta.nome;
+    $('recoAtualD').innerHTML = `${BRL.format(bestA.atual)}/mês · <b>${fmtPct(bestA.atualPct)}</b> do faturamento`;
+  }
+  // Real e Presumido têm IBS/CBS idênticos no novo sistema → agrupar quando empatam
+  const regularEmpate = (()=>{
+    const re=rows.find(x=>x.reg==='real'), pr=rows.find(x=>x.reg==='presumido');
+    return re&&pr&&re.elegivel&&pr.elegivel&&Math.abs(re.novo-pr.novo)<1;
+  })();
+  const labelNovo = (bestN && (bestN.reg==='real'||bestN.reg==='presumido') && regularEmpate)
+    ? 'Regime Regular (Real/Presumido)' : (bestN?bestN.meta.nome:'—');
+  if(bestN){
+    $('recoNovo').textContent = labelNovo;
+    $('recoNovoD').innerHTML = `${BRL.format(bestN.novo)}/mês · <b>${fmtPct(bestN.novoPct)}</b> do faturamento`;
+  }
+
+  // gráfico de barras agrupadas
+  drawRegChart(rows, bestA, bestN);
+
+  // tabela
+  $('regBody').innerHTML = rows.map(x=>{
+    const cls = (x.reg===p.regime?'sel ':'') + (x.elegivel?'':'off ') + ((bestA&&x.reg===bestA.reg)?'win':'');
+    let sit = x.reg===p.regime ? '<span class="sit cur">atual</span>'
+            : x.elegivel ? '<span class="sit ok">elegível</span>'
+            : `<span class="sit no">${x.meta.nota}</span>`;
+    return `<tr class="${cls.trim()}"><td>${x.meta.nome}</td>`+
+      `<td>${BRL.format(x.atual)}</td><td class="mut">${fmtPct(x.atualPct)}</td>`+
+      `<td>${BRL.format(x.novo)}</td><td class="mut">${fmtPct(x.novoPct)}</td>`+
+      `<td>${sit}</td></tr>`;
+  }).join('');
+
+  // insight
+  const cur = rows.find(x=>x.reg===p.regime);
+  let txt = '';
+  if(cur && !cur.elegivel){
+    txt = `O regime selecionado (<b>${cur.meta.nome}</b>) exige faturamento ${cur.meta.nota} — seu porte (${BRL.format(fatAnual)}/ano) está acima do limite. `;
+  }
+  if(bestA && cur){
+    const econ = cur.atual - bestA.atual;
+    if(bestA.reg===p.regime){
+      txt += `Hoje, <b>${cur.meta.nome}</b> já é o regime mais econômico para este perfil.`;
+    } else if(econ>1){
+      txt += `Hoje, migrar de <b>${cur.meta.nome}</b> para <b>${bestA.meta.nome}</b> economizaria <b>${BRL.format(econ)}/mês</b> (${BRL.format(econ*12)}/ano).`;
+    } else {
+      txt += `Hoje, <b>${bestA.meta.nome}</b> é o mais econômico, mas a diferença para o seu regime atual é pequena.`;
+    }
+  }
+  if(bestN && bestA && bestN.reg!==bestA.reg){
+    txt += ` No novo sistema (${p.ano}), o regime mais vantajoso passa a ser <b>${labelNovo}</b> — vale reavaliar a escolha durante a transição.`;
+  } else if(bestN){
+    txt += ` Essa escolha tende a se manter no novo sistema em ${p.ano}.`;
+  }
+  txt += ` <span style="color:var(--faint)">Obs.: o comparativo mede a carga sobre o consumo; IBS/CBS independem de Real ou Presumido — a diferença entre eles está no IRPJ/CSLL, fora deste escopo.</span>`;
+  $('regInsightTxt').innerHTML = txt;
+}
+
+function drawRegChart(rows, bestA, bestN){
+  const cv=$('regChart'); const {ctx,w,h}=setupCanvas(cv,220);
+  const padL=46,padR=16,padT=14,padB=40;
+  const plotH=h-padT-padB, plotW=w-padL-padR;
+  const vals=rows.flatMap(x=>[x.atualPct,x.novoPct]);
+  const max=Math.max(...vals,0.01)*1.18;
+  // grid
+  ctx.strokeStyle='#eef1f8';ctx.lineWidth=1;ctx.font='10.5px -apple-system,sans-serif';
+  ctx.fillStyle='#94a3b8';ctx.textAlign='right';
+  for(let i=0;i<=4;i++){const gy=padT+plotH-plotH*i/4;
+    ctx.beginPath();ctx.moveTo(padL,gy);ctx.lineTo(w-padR,gy);ctx.stroke();
+    ctx.fillText(fmtPctRaw(max*100*i/4,0),padL-6,gy+3);}
+  const groupW=plotW/rows.length, bw=Math.min(26,groupW*0.30);
+  rows.forEach((x,i)=>{
+    const gx=padL+groupW*i+groupW/2;
+    const pairs=[{v:x.atualPct,c:x.elegivel?'#94a3b8':'#e2e8f0',off:!x.elegivel},
+                 {v:x.novoPct, c:x.elegivel?'#1d4ed8':'#dbe6ff',off:!x.elegivel}];
+    pairs.forEach((b,j)=>{
+      const bx=gx + (j===0?-bw-2:2);
+      const bh=plotH*(b.v/max);
+      const by=padT+plotH-bh;
+      ctx.fillStyle=b.c;
+      roundRectTop(ctx,bx,by,bw,bh,4); ctx.fill();
+      if(b.off){ ctx.strokeStyle='#cbd5e1';ctx.lineWidth=1;roundRectTop(ctx,bx,by,bw,bh,4);ctx.stroke(); }
+      ctx.fillStyle=b.off?'#94a3b8':'#475569';ctx.font='600 9.5px -apple-system,sans-serif';ctx.textAlign='center';
+      ctx.fillText(fmtPctRaw(b.v*100,0),bx+bw/2,by-3);
+    });
+    // crown on best current
+    ctx.textAlign='center';
+    ctx.fillStyle='#0f172a';ctx.font='600 11px -apple-system,sans-serif';
+    ctx.fillText(x.meta.nome.replace('Lucro ','').replace('Simples Nacional','Simples'),gx,h-16);
+    if(bestA && x.reg===bestA.reg){ ctx.font='12px sans-serif'; ctx.fillText('🏆',gx,h-2); }
+  });
 }
 
 /* ============================================================
