@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vaga CRC – Clara Odontologia</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Jost:wght@300;400;500;600&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --cream:   #F7F3EE;
+    --sand:    #E8DDD2;
+    --terra:   #C4A882;
+    --mocha:   #7D6147;
+    --ink:     #2C1F14;
+    --white:   #FEFCFA;
+  }
+
+  body {
+    background: var(--cream);
+    font-family: 'Jost', sans-serif;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 32px 16px;
+  }
+
+  /* ─── CARD ─────────────────────────────────── */
+  .card {
+    background: var(--white);
+    width: 520px;
+    border-radius: 4px;
+    overflow: hidden;
+    box-shadow: 0 12px 48px rgba(44,31,20,.12);
+    position: relative;
+  }
+
+  /* ─── HEADER ────────────────────────────────── */
+  .header {
+    background: var(--ink);
+    padding: 40px 40px 32px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .header::before {
+    content: '';
+    position: absolute;
+    top: -60px; right: -60px;
+    width: 240px; height: 240px;
+    border-radius: 50%;
+    background: rgba(196,168,130,.12);
+  }
+
+  .header::after {
+    content: '';
+    position: absolute;
+    bottom: -30px; left: 30px;
+    width: 120px; height: 120px;
+    border-radius: 50%;
+    background: rgba(196,168,130,.07);
+  }
+
+  .clinic-label {
+    font-family: 'Jost', sans-serif;
+    font-weight: 300;
+    font-size: 10px;
+    letter-spacing: 3.5px;
+    text-transform: uppercase;
+    color: var(--terra);
+    margin-bottom: 14px;
+  }
+
+  .header-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-weight: 300;
+    font-size: 42px;
+    line-height: 1.05;
+    color: var(--white);
+    letter-spacing: -.5px;
+  }
+
+  .header-title em {
+    font-style: italic;
+    color: var(--terra);
+  }
+
+  .header-sub {
+    font-family: 'Jost', sans-serif;
+    font-weight: 400;
+    font-size: 12px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--sand);
+    margin-top: 18px;
+    opacity: .7;
+  }
+
+  /* ─── DIVIDER ───────────────────────────────── */
+  .divider {
+    height: 3px;
+    background: linear-gradient(90deg, var(--terra) 0%, var(--mocha) 60%, transparent 100%);
+  }
+
+  /* ─── BODY ──────────────────────────────────── */
+  .body {
+    padding: 36px 40px 32px;
+  }
+
+  /* intro line */
+  .intro {
+    font-size: 13.5px;
+    font-weight: 400;
+    color: var(--mocha);
+    line-height: 1.65;
+    margin-bottom: 28px;
+  }
+
+  /* section label */
+  .section-label {
+    font-size: 9px;
+    font-weight: 600;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--terra);
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .section-label::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--sand);
+  }
+
+  /* responsibilities grid */
+  .resp-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 28px;
+  }
+
+  .resp-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 12px 14px;
+    background: var(--cream);
+    border-radius: 3px;
+    border-left: 2px solid var(--terra);
+  }
+
+  .resp-item .icon {
+    font-size: 15px;
+    line-height: 1;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+
+  .resp-item span {
+    font-size: 12px;
+    font-weight: 400;
+    color: var(--ink);
+    line-height: 1.45;
+  }
+
+  /* highlight band – captação */
+  .highlight {
+    background: var(--ink);
+    border-radius: 3px;
+    padding: 16px 18px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 28px;
+  }
+
+  .highlight .hl-icon {
+    font-size: 24px;
+    flex-shrink: 0;
+  }
+
+  .highlight-text {
+    color: var(--white);
+  }
+
+  .highlight-text strong {
+    font-family: 'Cormorant Garamond', serif;
+    font-weight: 400;
+    font-size: 17px;
+    letter-spacing: .3px;
+    display: block;
+    margin-bottom: 2px;
+  }
+
+  .highlight-text small {
+    font-size: 11px;
+    font-weight: 300;
+    color: var(--sand);
+    opacity: .8;
+    line-height: 1.5;
+  }
+
+  /* benefits row */
+  .benefits {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 28px;
+    flex-wrap: wrap;
+  }
+
+  .badge {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    padding: 9px 14px;
+    border-radius: 2px;
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: .4px;
+  }
+
+  .badge.salary   { background: var(--mocha); color: var(--white); }
+  .badge.vr       { background: var(--sand);  color: var(--ink);   }
+  .badge.vt       { background: var(--sand);  color: var(--ink);   }
+  .badge.schedule { background: var(--cream); color: var(--ink); border: 1px solid var(--sand); }
+
+  /* ─── FOOTER / CTA ──────────────────────────── */
+  .footer {
+    background: var(--terra);
+    padding: 22px 40px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+  }
+
+  .cta-text {
+    color: var(--white);
+  }
+
+  .cta-text p {
+    font-size: 11px;
+    font-weight: 300;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    opacity: .85;
+    margin-bottom: 3px;
+  }
+
+  .cta-text strong {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 20px;
+    font-weight: 300;
+    letter-spacing: .5px;
+  }
+
+  .cta-btn {
+    background: var(--ink);
+    color: var(--white);
+    font-family: 'Jost', sans-serif;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    padding: 12px 22px;
+    border-radius: 2px;
+    cursor: pointer;
+    border: none;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  @media (max-width: 540px) {
+    .card { width: 100%; }
+    .header { padding: 32px 28px 24px; }
+    .body { padding: 28px 28px 24px; }
+    .footer { padding: 20px 28px; flex-direction: column; align-items: flex-start; }
+    .resp-grid { grid-template-columns: 1fr; }
+    .header-title { font-size: 34px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="card">
+
+  <!-- HEADER -->
+  <div class="header">
+    <div class="clinic-label">Clara Odontologia · Belo Horizonte</div>
+    <h1 class="header-title">
+      Vaga aberta:<br>
+      <em>CRC de Lead</em>
+    </h1>
+    <p class="header-sub">Coordenadora de Relacionamento Comercial</p>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- BODY -->
+  <div class="body">
+
+    <p class="intro">
+      Buscamos uma profissional com perfil comercial, comunicativa e organizada,
+      para atuar no relacionamento com leads e apoiar as ações de marketing da clínica.
+    </p>
+
+    <!-- RESPONSABILIDADES -->
+    <div class="section-label">Responsabilidades</div>
+    <div class="resp-grid">
+      <div class="resp-item">
+        <span class="icon">💬</span>
+        <span>Atendimento e qualificação de leads via WhatsApp e telefone</span>
+      </div>
+      <div class="resp-item">
+        <span class="icon">📋</span>
+        <span>Gestão de pipeline de leads no CRM (Kommo)</span>
+      </div>
+      <div class="resp-item">
+        <span class="icon">🔁</span>
+        <span>Agendamento, confirmação e controle de retornos</span>
+      </div>
+      <div class="resp-item">
+        <span class="icon">📊</span>
+        <span>Acompanhamento de metas e indicadores comerciais</span>
+      </div>
+    </div>
+
+    <!-- DESTAQUE: CAPTAÇÃO -->
+    <div class="highlight">
+      <div class="hl-icon">📸</div>
+      <div class="highlight-text">
+        <strong>Captação de conteúdo para Stories e Campanhas</strong>
+        <small>Apoio na produção de conteúdo para Instagram da clínica —<br>registros, bastidores e ações de divulgação.</small>
+      </div>
+    </div>
+
+    <!-- BENEFÍCIOS -->
+    <div class="section-label">O que oferecemos</div>
+    <div class="benefits">
+      <div class="badge salary">💰 Salário a combinar</div>
+      <div class="badge vr">🍽️ Vale Refeição</div>
+      <div class="badge vt">🚌 Vale Transporte</div>
+      <div class="badge schedule">🕗 Seg – Sex &nbsp;|&nbsp; 08h às 18h</div>
+    </div>
+
+  </div>
+
+  <!-- FOOTER CTA -->
+  <div class="footer">
+    <div class="cta-text">
+      <p>Interessada? Envie seu currículo pelo</p>
+      <a href="https://wa.me/5531996860598?text=Ol%C3%A1!%20Tenho%20interesse%20na%20vaga%20de%20CRC%20de%20Lead%20da%20Clara%20Odontologia." target="_blank" style="text-decoration:none;color:inherit;">
+        <strong>WhatsApp (31) 99686-0598</strong>
+      </a>
+    </div>
+    <a href="https://wa.me/5531996860598?text=Ol%C3%A1!%20Tenho%20interesse%20na%20vaga%20de%20CRC%20de%20Lead%20da%20Clara%20Odontologia." target="_blank" style="text-decoration:none;">
+      <button class="cta-btn">Quero me candidatar</button>
+    </a>
+  </div>
+
+</div>
+
+</body>
+</html>
