@@ -1,0 +1,11 @@
+{
+  "name": "Controle Financeiro — Gustavo Vieira",
+  "short_name": "Finanças Gustavo",
+  "description": "Controle financeiro pessoal do Gustavo Vieira",
+  "start_url": "/financeiro-gustavo.html",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#0f1117",
+  "theme_color": "#7c6af7",
+  "orientation": "any"
+}
