@@ -1,0 +1,15 @@
+{
+  "name": "IRONFIT — Treinos de Academia",
+  "short_name": "IRONFIT",
+  "description": "Monte fichas A/B/C/D, gere treinos automáticos por objetivo e acompanhe seu progresso na academia.",
+  "start_url": "/academia.html",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#0a0b10",
+  "theme_color": "#0a0b10",
+  "orientation": "portrait",
+  "icons": [
+    { "src": "/icon-academia-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "/icon-academia-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}
