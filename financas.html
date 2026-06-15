@@ -128,6 +128,11 @@
   .fixo-mes-edit { display: none; align-items: center; gap: 6px; }
   .fixo-mes-edit input { width: 110px; padding: 6px 9px; font-size: 13px; }
   .fixo-resumo-bar { display: flex; gap: 20px; flex-wrap: wrap; padding: 10px 14px; background: var(--surface2); border-radius: var(--radius-sm); margin-bottom: 16px; }
+  .fixo-pago-badge { display: inline-flex; align-items: center; gap: 5px; background: rgba(52,211,153,.15); color: var(--green); border-radius: 99px; padding: 2px 9px; font-size: 12px; font-weight: 600; white-space: nowrap; }
+  .btn-pago { background: rgba(52,211,153,.12); color: var(--green); border: 1px solid rgba(52,211,153,.25); }
+  .btn-pago:hover { background: rgba(52,211,153,.22); opacity: 1; }
+  .fixo-pago-form { display: none; align-items: center; gap: 6px; flex-wrap: wrap; margin-top: 4px; }
+  .fixo-pago-form input { width: 110px; padding: 6px 9px; font-size: 13px; }
 
   /* FATURA CARD */
   .fatura-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; }
@@ -175,6 +180,7 @@
     <button class="nav-btn" onclick="showPage('variaveis')">Gastos Variáveis</button>
     <button class="nav-btn" onclick="showPage('fixos')">Custos Fixos</button>
     <button class="nav-btn" onclick="showPage('cartao')">Cartão de Crédito</button>
+    <button class="nav-btn" onclick="showPage('economias')">Economias</button>
     <button class="nav-btn" onclick="showPage('config')">Configurações</button>
   </div>
 </nav>
@@ -220,7 +226,7 @@
     <div class="table-wrap">
       <table class="monthly-table">
         <thead><tr>
-          <th>Mês</th><th>Salário</th><th>Total Saídas</th><th>Gasto Var.</th><th>Saldo</th><th>% Poupado</th><th>Saldo Prev.</th><th>C. Família</th><th title="Clique para editar">Lim. Sugerido ✎</th><th title="Saldo Previsto − Limite Sugerido">Prev. Guardado</th>
+          <th>Mês</th><th>Salário</th><th>Total Saídas</th><th>Gasto Var.</th><th>Saldo</th><th>% Poupado</th><th>Saldo Prev.</th><th>C. Família</th><th title="Clique para editar">Lim. Sugerido ✎</th><th title="Saldo Previsto − Limite Sugerido">Prev. Guardado</th><th></th>
         </tr></thead>
         <tbody id="historico-body"></tbody>
       </table>
@@ -363,6 +369,23 @@
   </div>
 </div>
 
+<!-- ECONOMIAS -->
+<div id="page-economias" class="page">
+  <div class="card">
+    <div class="card-title">Economias Arquivadas</div>
+    <p style="font-size:13px;color:var(--muted);margin-bottom:16px;">Resumo dos meses encerrados. Os lançamentos detalhados foram removidos e apenas o resumo financeiro é mantido aqui.</p>
+    <div id="economias-empty" class="empty" style="display:none;">Nenhum mês arquivado ainda. Na tabela de Histórico do Dashboard, clique em "Arquivar" em meses já encerrados.</div>
+    <div class="table-wrap">
+      <table class="monthly-table">
+        <thead><tr>
+          <th>Mês</th><th>Salário</th><th>Total Saídas</th><th>Gasto Var.</th><th>Economizado</th><th>% Poupado</th><th>C. Família</th>
+        </tr></thead>
+        <tbody id="economias-body"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
 <!-- CONFIGURAÇÕES -->
 <div id="page-config" class="page">
   <div class="card">
@@ -457,6 +480,16 @@ function getVariaveis() { return load('variaveis', []); }
 function getFaturas() { return load('faturas', {}); }
 function getFixosOverrides() { return load('fixosOverrides', {}); }
 function getMetasMensais() { return load('metasMensais', {}); }
+function getFixosPagos() { return load('fixosPagos', {}); }
+function getMesesArquivados() { return load('mesesArquivados', []); }
+function getEconomias() { return load('economias', {}); }
+
+function getFixoPagoValor(fixoId, mesk) {
+  const pagos = getFixosPagos();
+  const fixoPagos = pagos[fixoId];
+  if (!fixoPagos) return null;
+  return fixoPagos[mesk] !== undefined ? fixoPagos[mesk] : null;
+}
 
 function getFixoOverride(fixoId, mesk) {
   const overrides = getFixosOverrides();
@@ -531,8 +564,10 @@ function gerarMeses() {
   const {year: sy, month: sm} = parseMesKey(INICIO);
   const endYear = Math.max(hoje.getFullYear() + 1, 2027);
   let y = sy, m = sm;
+  const arquivados = getMesesArquivados();
   while (y < endYear || (y === endYear && m <= 12)) {
-    meses.push(mesKey(y, m));
+    const mk = mesKey(y, m);
+    if (!arquivados.includes(mk)) meses.push(mk);
     m++; if (m > 12) { m = 1; y++; }
   }
   return meses;
@@ -626,7 +661,8 @@ function calcResumo(mesk) {
   const bbSaida = (fat.bb||0) > 0
     ? (fat.bb||0) + bbDelta + bbVarCaixa
     : bbFixos + bbVarCaixa;
-  const cartaoFamilia = cartaoFamiliaFixos + cartaoFamiliaVar;
+  const familiaFatura = fat.familia || 0;
+  const cartaoFamilia = familiaFatura > 0 ? familiaFatura + cartaoFamiliaVar : cartaoFamiliaFixos + cartaoFamiliaVar;
 
   const totalSaidas = fixosDebito + varDebito + nubankSaida + c6Saida + bbSaida;
   const saldo = params.salario - totalSaidas;
@@ -689,6 +725,7 @@ function showPage(id) {
   if (id === 'fixos') renderFixos();
   if (id === 'cartao') renderFaturas();
   if (id === 'config') renderConfig();
+  if (id === 'economias') renderEconomias();
 }
 
 // ═══════════════════════════════════════════════════
@@ -865,12 +902,14 @@ function renderDashboard() {
 
   // Histórico table
   const meses = gerarMeses();
+  const hoje = mesAtual();
   const tbody = document.getElementById('historico-body');
   tbody.innerHTML = meses.map(mk => {
     const rv = calcResumo(mk);
     const isCurrent = mk === mesk;
     const style = isCurrent ? 'background:var(--surface2);font-weight:600;' : '';
     const lsColor = rv.limiteSugerido > 0 ? 'var(--yellow)' : 'var(--border)';
+    const canArchive = mk < hoje;
     return `<tr style="${style}">
       <td>${mesLabel(mk)}</td>
       <td>${brl(rv.salario)}</td>
@@ -882,6 +921,7 @@ function renderDashboard() {
       <td style="color:var(--yellow)">${brl(rv.cartaoFamilia)}</td>
       <td class="meta-cell-td" style="color:${lsColor}" onclick="editarMetaCell(this,'${mk}','limiteSugerido',${rv.limiteSugerido})">${rv.limiteSugerido ? brl(rv.limiteSugerido) : '—'}</td>
       <td style="color:${rv.previsaoGuardado>=0?'var(--green)':'var(--red)'};font-weight:600;">${rv.limiteSugerido ? brl(rv.previsaoGuardado) : '—'}</td>
+      <td>${canArchive ? `<button class="btn btn-danger btn-sm" onclick="arquivarMes('${mk}')" title="Arquivar mês e remover lançamentos">🗃 Arquivar</button>` : ''}</td>
     </tr>`;
   }).join('');
 
@@ -1150,16 +1190,29 @@ function renderFixosMes() {
           `<option value="${fo}"${fo === forma ? ' selected' : ''}>${fo}</option>`
         ).join('');
 
+        // Pago status
+        const pagoValor = getFixoPagoValor(f.id, mesk);
+        const isPaid = pagoValor !== null;
+        const isCredit = forma !== 'Débito';
+
+        const pagoSection = isCredit ? (
+          isPaid
+            ? `<span class="fixo-pago-badge">✓ Pago ${brl(pagoValor)}</span>
+               <button class="btn btn-danger btn-sm" onclick="desfazerPagoFixo('${f.id}','${mesk}')" title="Desfazer pagamento">↩</button>`
+            : `<button class="btn btn-pago btn-sm" onclick="iniciarPagoFixo('${f.id}')">💳 Pagar</button>`
+        ) : '';
+
         return `
-          <div class="fixo-item">
+          <div class="fixo-item" style="flex-wrap:wrap;gap:8px;">
             <div class="fixo-info">
-              <div class="fixo-name">${f.nome}${isOverridden ? '<span class="fixo-badge">Personalizado</span>' : ''}</div>
+              <div class="fixo-name">${f.nome}${isOverridden ? '<span class="fixo-badge">Personalizado</span>' : ''}${isPaid ? '<span class="fixo-badge" style="background:rgba(52,211,153,.15);color:var(--green);">Pago</span>' : ''}</div>
               <div class="fixo-meta">${tagForma(forma)}${formaMudou ? ' <span style="font-size:10px;color:var(--yellow);">(alterado)</span>' : ''} · Dia ${f.dia}${f.obs?' · '+f.obs:''}${defaultInfo}</div>
             </div>
             <div class="fixo-mes-display" id="fixo-mes-display-${f.id}">
               <div class="fixo-valor${isOverridden?' fixo-override':''}">${brl(valor)}</div>
               <button class="btn btn-ghost btn-sm" onclick="iniciarOverrideFixo('${f.id}')" title="Editar para este mês">✎</button>
               ${isOverridden ? `<button class="btn btn-danger btn-sm" onclick="restaurarOverrideFixo('${f.id}','${mesk}')" title="Restaurar padrão">↺</button>` : ''}
+              ${pagoSection}
             </div>
             <div class="fixo-mes-edit" id="fixo-mes-edit-${f.id}">
               <input type="number" id="fixo-mes-input-${f.id}" value="${valor}" min="0" step="0.01" style="width:110px;">
@@ -1167,6 +1220,13 @@ function renderFixosMes() {
               <button class="btn btn-primary btn-sm" onclick="salvarOverrideFixo('${f.id}','${mesk}')">✓ Salvar</button>
               <button class="btn btn-ghost btn-sm" onclick="cancelarOverrideFixo('${f.id}')">✕</button>
             </div>
+            ${isCredit && !isPaid ? `
+            <div class="fixo-pago-form" id="fixo-pago-form-${f.id}">
+              <input type="number" id="fixo-pago-input-${f.id}" value="${valor}" min="0" step="0.01" placeholder="Valor real pago">
+              <button class="btn btn-primary btn-sm" onclick="confirmarPagoFixo('${f.id}','${mesk}')">✓ Confirmar</button>
+              <button class="btn btn-ghost btn-sm" onclick="cancelarPagoFixo('${f.id}')">✕</button>
+            </div>
+            ` : ''}
           </div>
         `;
       }).join('')}
@@ -1225,6 +1285,181 @@ function restaurarOverrideFixo(fixoId, mesk) {
   const dashMes = document.getElementById('dash-mes');
   if (dashMes) dashMes.value = mesk;
   renderDashboard();
+}
+
+// ═══════════════════════════════════════════════════
+//  CUSTOS FIXOS — BOTÃO PAGO
+// ═══════════════════════════════════════════════════
+
+function iniciarPagoFixo(fixoId) {
+  document.getElementById('fixo-mes-display-' + fixoId).style.display = 'none';
+  const form = document.getElementById('fixo-pago-form-' + fixoId);
+  if (form) {
+    form.style.display = 'flex';
+    const inp = document.getElementById('fixo-pago-input-' + fixoId);
+    if (inp) { inp.focus(); inp.select(); }
+  }
+}
+
+function cancelarPagoFixo(fixoId) {
+  document.getElementById('fixo-mes-display-' + fixoId).style.display = 'flex';
+  const form = document.getElementById('fixo-pago-form-' + fixoId);
+  if (form) form.style.display = 'none';
+}
+
+function confirmarPagoFixo(fixoId, mesk) {
+  const inp = document.getElementById('fixo-pago-input-' + fixoId);
+  const valor = parseFloat(inp.value);
+  if (isNaN(valor) || valor <= 0) { alert('Informe um valor válido.'); return; }
+
+  const fixo = getFixos().find(f => f.id === fixoId);
+  if (!fixo) return;
+  const forma = getFixoForma(fixo, mesk);
+
+  // Save to fixosPagos
+  const pagos = getFixosPagos();
+  if (!pagos[fixoId]) pagos[fixoId] = {};
+  pagos[fixoId][mesk] = valor;
+  save('fixosPagos', pagos);
+
+  // Add to the respective card's fatura
+  const faturas = getFaturas();
+  if (!faturas[mesk]) faturas[mesk] = { bb: 0, c6: 0, nubank: 0 };
+  if (forma === 'Nubank Crédito') faturas[mesk].nubank = (faturas[mesk].nubank || 0) + valor;
+  else if (forma === 'C6 Crédito') faturas[mesk].c6 = (faturas[mesk].c6 || 0) + valor;
+  else if (forma === 'BB Crédito') faturas[mesk].bb = (faturas[mesk].bb || 0) + valor;
+  else if (forma === 'Cartão Família') faturas[mesk].familia = (faturas[mesk].familia || 0) + valor;
+  save('faturas', faturas);
+
+  renderFixosMes();
+  const dashMes = document.getElementById('dash-mes');
+  if (dashMes) dashMes.value = mesk;
+  renderDashboard();
+}
+
+function desfazerPagoFixo(fixoId, mesk) {
+  const pagos = getFixosPagos();
+  const paidVal = pagos[fixoId] && pagos[fixoId][mesk];
+  if (!paidVal && paidVal !== 0) return;
+
+  const fixo = getFixos().find(f => f.id === fixoId);
+  if (!fixo) return;
+  const forma = getFixoForma(fixo, mesk);
+
+  // Remove from fatura
+  const faturas = getFaturas();
+  if (faturas[mesk]) {
+    if (forma === 'Nubank Crédito') faturas[mesk].nubank = Math.max(0, (faturas[mesk].nubank || 0) - paidVal);
+    else if (forma === 'C6 Crédito') faturas[mesk].c6 = Math.max(0, (faturas[mesk].c6 || 0) - paidVal);
+    else if (forma === 'BB Crédito') faturas[mesk].bb = Math.max(0, (faturas[mesk].bb || 0) - paidVal);
+    else if (forma === 'Cartão Família') faturas[mesk].familia = Math.max(0, (faturas[mesk].familia || 0) - paidVal);
+    save('faturas', faturas);
+  }
+
+  // Remove from fixosPagos
+  delete pagos[fixoId][mesk];
+  if (Object.keys(pagos[fixoId]).length === 0) delete pagos[fixoId];
+  save('fixosPagos', pagos);
+
+  renderFixosMes();
+  const dashMes = document.getElementById('dash-mes');
+  if (dashMes) dashMes.value = mesk;
+  renderDashboard();
+}
+
+// ═══════════════════════════════════════════════════
+//  ECONOMIAS — ARQUIVAR MÊS
+// ═══════════════════════════════════════════════════
+
+function arquivarMes(mesk) {
+  if (!confirm(`Arquivar ${mesLabel(mesk)}?\n\nOs lançamentos detalhados serão removidos e o resumo financeiro ficará salvo na aba "Economias". Esta ação não pode ser desfeita.`)) return;
+
+  // Save summary before deleting data
+  const rv = calcResumo(mesk);
+  const economias = getEconomias();
+  economias[mesk] = {
+    salario: rv.salario,
+    totalSaidas: rv.totalSaidas,
+    saldo: rv.saldo,
+    totalVariaveis: rv.totalVariaveis,
+    cartaoFamilia: rv.cartaoFamilia,
+  };
+  save('economias', economias);
+
+  // Remove variaveis for this month (by mesCaixa)
+  const variaveis = getVariaveis().filter(v => calcMesCaixaVariavel(v.data, v.forma) !== mesk);
+  save('variaveis', variaveis);
+
+  // Remove fatura for this month
+  const faturas = getFaturas();
+  delete faturas[mesk];
+  save('faturas', faturas);
+
+  // Remove fixo overrides for this month
+  const overrides = getFixosOverrides();
+  for (const fixoId of Object.keys(overrides)) {
+    if (overrides[fixoId] && overrides[fixoId][mesk] !== undefined) {
+      delete overrides[fixoId][mesk];
+      if (Object.keys(overrides[fixoId]).length === 0) delete overrides[fixoId];
+    }
+  }
+  save('fixosOverrides', overrides);
+
+  // Remove fixosPagos for this month
+  const pagos = getFixosPagos();
+  for (const fixoId of Object.keys(pagos)) {
+    if (pagos[fixoId] && pagos[fixoId][mesk] !== undefined) {
+      delete pagos[fixoId][mesk];
+      if (Object.keys(pagos[fixoId]).length === 0) delete pagos[fixoId];
+    }
+  }
+  save('fixosPagos', pagos);
+
+  // Add to archived list
+  const arquivados = getMesesArquivados();
+  if (!arquivados.includes(mesk)) arquivados.push(mesk);
+  save('mesesArquivados', arquivados);
+
+  // Re-populate selects (removes archived month from all dropdowns) and re-render
+  populateSelects();
+  renderDashboard();
+  renderChart(gerarMeses());
+}
+
+function renderEconomias() {
+  const economias = getEconomias();
+  const tbody = document.getElementById('economias-body');
+  const emptyEl = document.getElementById('economias-empty');
+  const meses = Object.keys(economias).sort();
+
+  if (!meses.length) {
+    if (emptyEl) emptyEl.style.display = 'block';
+    tbody.innerHTML = '';
+    return;
+  }
+  if (emptyEl) emptyEl.style.display = 'none';
+
+  let totalEconomizado = 0;
+  tbody.innerHTML = meses.map(mk => {
+    const e = economias[mk];
+    const s = e.saldo || 0;
+    totalEconomizado += s;
+    const pctVal = (e.salario || 0) > 0 ? s / e.salario : 0;
+    return `<tr>
+      <td>${mesLabel(mk)}</td>
+      <td>${brl(e.salario)}</td>
+      <td style="color:var(--red)">${brl(e.totalSaidas)}</td>
+      <td style="color:var(--green)">${(e.totalVariaveis||0) > 0 ? brl(e.totalVariaveis) : '—'}</td>
+      <td style="color:${s>=0?'var(--green)':'var(--red)'};font-weight:700">${brl(s)}</td>
+      <td>${pct(pctVal)}</td>
+      <td style="color:var(--yellow)">${(e.cartaoFamilia||0) > 0 ? brl(e.cartaoFamilia) : '—'}</td>
+    </tr>`;
+  }).join('') + `
+    <tr style="border-top:2px solid var(--border);font-weight:700;font-size:13px;background:var(--surface2);">
+      <td>TOTAL ECONOMIZADO</td><td>—</td><td>—</td><td>—</td>
+      <td style="color:${totalEconomizado>=0?'var(--green)':'var(--red)'}">${brl(totalEconomizado)}</td>
+      <td>—</td><td>—</td>
+    </tr>`;
 }
 
 // ═══════════════════════════════════════════════════
