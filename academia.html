@@ -520,33 +520,64 @@ const SPLITS={
      ["Legs B (Glúteo/Posterior)",["Glúteos","Posterior","Pernas","Abdômen"]]],
 };
 const LETTERS=["A","B","C","D","E","F"];
-function generatePlan({goal,days,level}){
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+
+/* monta um item de exercício a partir do esquema do objetivo */
+function mkSet(e,sc){
+  return {exId:e.id,
+    sets:e.g==="Cardio"?1:sc.sets,
+    rmin:e.g==="Cardio"?e.def[1]:sc.rmin,
+    rmax:e.g==="Cardio"?e.def[2]:sc.rmax,
+    rest:e.g==="Cardio"?0:sc.rest,
+    weight:""};
+}
+/* minutos estimados por exercício de força, segundo o esquema */
+function perExMin(sc){return (sc.sets*(35+sc.rest)+40)/60;}
+/* estima a duração total de uma ficha em minutos */
+function estimateMinutes(f){
+  let sec=0;
+  f.exs.forEach(x=>{
+    const e=EXS.find(z=>z.id===x.exId);if(!e)return;
+    if(e.g==="Cardio") sec += ((x.rmin+x.rmax)/2)*60;
+    else sec += x.sets*(35+(x.rest||0))+40;
+  });
+  return Math.round(sec/60)+8; // +aquecimento
+}
+/* distribui N exercícios entre os grupos do dia, dando peso extra ao foco */
+function distribute(groups,total,focus){
+  const w=groups.map(g=>g===focus?2.2:1);
+  const sum=w.reduce((a,b)=>a+b,0);
+  return w.map(x=>Math.max(1,Math.round(total*x/sum)));
+}
+/* opts: {goal, days, level, exPerDay?, duration?, focus?, cardio?, abs?} */
+function generatePlan(opts){
+  const {goal,days,level}=opts;
   const sc=schemeFor(goal);
   const split=SPLITS[days]||SPLITS[3];
-  const addCardio = (goal==="emagrecimento"||goal==="definicao");
+  const focus=opts.focus||"";
+  const cardio=opts.cardio ?? (goal==="emagrecimento"||goal==="definicao");
+  const absEvery=opts.abs ?? false;
+  let exPerDay=opts.exPerDay;
+  if(!exPerDay){
+    if(opts.duration) exPerDay=clamp(Math.round((opts.duration-10)/perExMin(sc)),3,12);
+    else exPerDay=goal==="emagrecimento"?6:7;
+  }
   return split.map((day,i)=>{
     const [title,groups]=day;
     let exs=[];
-    // distribui ~ 6-8 exercícios pelo(s) grupo(s)
-    const perGroup=Math.max(1,Math.round((goal==="emagrecimento"?6:7)/groups.length));
-    groups.forEach(g=>{
-      pickExs(g,perGroup,level).forEach(e=>{
-        const reps = e.g==="Cardio" ? e.def : null;
-        exs.push({
-          exId:e.id,
-          sets: e.g==="Cardio"?1:sc.sets,
-          rmin: e.g==="Cardio"?e.def[1]:sc.rmin,
-          rmax: e.g==="Cardio"?e.def[2]:sc.rmax,
-          rest: e.g==="Cardio"?0:sc.rest,
-          weight:""
-        });
-      });
-    });
-    if(addCardio && i===split.length-1){
-      const c=EXS.find(e=>e.g==="Cardio");
-      exs.push({exId:c.id,sets:1,rmin:20,rmax:30,rest:0,weight:""});
+    const counts=distribute(groups,exPerDay,focus);
+    groups.forEach((g,gi)=>{ pickExs(g,counts[gi],level).forEach(e=>exs.push(mkSet(e,sc))); });
+    if(absEvery && !groups.includes("Abdômen"))
+      pickExs("Abdômen",1,level).forEach(e=>exs.push(mkSet(e,sc)));
+    if(cardio){
+      const pool=EXS.filter(e=>e.g==="Cardio");
+      const c=pool[Math.floor(Math.random()*pool.length)];
+      const mins=goal==="emagrecimento"?25:15;
+      exs.push({exId:c.id,sets:1,rmin:mins,rmax:mins+10,rest:0,weight:""});
     }
-    return {id:"f"+Date.now()+i, letter:LETTERS[i], title, goal, level, exs};
+    const f={id:"f"+Date.now()+i, letter:LETTERS[i], title, goal, level, exs};
+    f.estMin=estimateMinutes(f);
+    return f;
   });
 }
 const GOAL_LABEL={hipertrofia:"Hipertrofia",emagrecimento:"Emagrecimento",definicao:"Definição",forca:"Força",resistencia:"Resistência"};
@@ -621,7 +652,7 @@ function fichaCardHTML(f){
     <div class="ficha-badge fb-${f.letter}">${f.letter}</div>
     <div class="info">
       <h3>Treino ${f.letter} · ${f.title}</h3>
-      <p>${f.exs.length} exercícios${f.goal?` · ${GOAL_LABEL[f.goal]||""}`:""}</p>
+      <p>${f.exs.length} exercícios · ~${estimateMinutes(f)}min${f.goal?` · ${GOAL_LABEL[f.goal]||""}`:""}</p>
     </div>
     <div class="go">›</div>
   </div>`;
@@ -736,7 +767,7 @@ function openFicha(id){
   openSheet(`
     <div style="display:flex;align-items:center;gap:12px;margin-bottom:6px">
       <div class="ficha-badge fb-${f.letter}">${f.letter}</div>
-      <div style="flex:1"><h3 style="margin:0">Treino ${f.letter}</h3><p class="note">${f.title}</p></div>
+      <div style="flex:1"><h3 style="margin:0">Treino ${f.letter}</h3><p class="note">${f.title} · ${f.exs.length} ex · ~${estimateMinutes(f)}min</p></div>
     </div>
     <button class="btn green block" onclick="startWorkout('${f.id}')" style="margin:10px 0 16px">▶ Iniciar este treino</button>
     <div class="list-head" style="margin-top:0;display:flex;justify-content:space-between;align-items:center">Exercícios <button class="swap-x" onclick="editFicha('${f.id}')">✎ Editar</button></div>
@@ -869,20 +900,75 @@ function openGenerator(){
       <option value="Inter" selected>Intermediário</option>
       <option value="Avanc">Avançado</option>
     </select>
+
+    <label class="fl">Volume de exercícios</label>
+    <select class="field" id="gen_volume" onchange="genVolChange()">
+      <option value="leve">Leve · 4 exercícios por treino</option>
+      <option value="moderado" selected>Moderado · 6 exercícios</option>
+      <option value="intenso">Intenso · 8 exercícios</option>
+      <option value="maximo">Máximo · 10 exercícios</option>
+      <option value="tempo">Por tempo de treino ⏱️</option>
+      <option value="custom">Personalizado…</option>
+    </select>
+
+    <div id="gen_durWrap" style="display:none">
+      <label class="fl">Duração-alvo do treino</label>
+      <select class="field" id="gen_dur">
+        <option value="30">30 min · rápido</option>
+        <option value="45">45 min</option>
+        <option value="60" selected>60 min</option>
+        <option value="75">75 min</option>
+        <option value="90">90 min · longo</option>
+      </select>
+    </div>
+
+    <div id="gen_customWrap" style="display:none">
+      <label class="fl">Exercícios por treino</label>
+      <input class="field" id="gen_custom" type="number" inputmode="numeric" min="3" max="12" value="7">
+    </div>
+
+    <label class="fl">Foco extra (priorizar grupo)</label>
+    <select class="field" id="gen_focus">
+      <option value="">Equilibrado (sem prioridade)</option>
+      ${GROUPS.filter(g=>g!=="Cardio").map(g=>`<option value="${g}">${g}</option>`).join("")}
+    </select>
+
+    <label class="fl">Extras</label>
+    <div class="muscle-pick" id="gen_extras" style="margin-bottom:6px">
+      <button type="button" class="mp" id="gen_cardio" onclick="this.classList.toggle('on')"><span style="font-size:20px">🏃</span> Cardio no fim</button>
+      <button type="button" class="mp" id="gen_abs" onclick="this.classList.toggle('on')"><span style="font-size:20px">🔥</span> Abdômen todo dia</button>
+    </div>
+
     <div class="card" style="background:rgba(124,77,255,.08);border-color:#3a2f5e;margin:6px 0 16px">
       <p class="note" style="color:#c5b8ff">⚠️ Substituirá suas fichas atuais. Você pode editar tudo depois.</p>
     </div>
     <button class="btn block" onclick="runGenerator()">⚡ Gerar meu plano</button>
   `);
+  // pré-marca cardio para objetivos de gasto calórico
+  genVolChange();
+}
+function genVolChange(){
+  const v=document.getElementById("gen_volume").value;
+  document.getElementById("gen_durWrap").style.display = v==="tempo"?"block":"none";
+  document.getElementById("gen_customWrap").style.display = v==="custom"?"block":"none";
 }
 function pickOne(btn,sel){document.querySelectorAll(sel+" .mp").forEach(b=>b.classList.remove("on"));btn.classList.add("on");}
 function runGenerator(){
   const goal=document.querySelector("#gen_goal .mp.on").dataset.v;
   const days=+document.getElementById("gen_days").value;
   const level=document.getElementById("gen_level").value;
-  state.fichas=generatePlan({goal,days,level});
+  const vol=document.getElementById("gen_volume").value;
+  const volMap={leve:4,moderado:6,intenso:8,maximo:10};
+  let exPerDay=volMap[vol], duration=null;
+  if(vol==="tempo"){exPerDay=null;duration=+document.getElementById("gen_dur").value;}
+  else if(vol==="custom"){exPerDay=clamp(+document.getElementById("gen_custom").value||7,3,12);}
+  const focus=document.getElementById("gen_focus").value;
+  const cardio=document.getElementById("gen_cardio").classList.contains("on");
+  const abs=document.getElementById("gen_abs").classList.contains("on");
+  state.fichas=generatePlan({goal,days,level,exPerDay,duration,focus,cardio,abs});
   persist();closeSheet();go("fichas");
-  toast(`Plano de ${GOAL_LABEL[goal]} gerado! 🎉`);
+  const total=state.fichas.reduce((s,f)=>s+f.exs.length,0);
+  toast(`Plano de ${GOAL_LABEL[goal]} · ${total} exercícios gerado! 🎉`);
 }
 
 /* =========================================================================
