@@ -909,7 +909,7 @@ function renderDashboard() {
     const isCurrent = mk === mesk;
     const style = isCurrent ? 'background:var(--surface2);font-weight:600;' : '';
     const lsColor = rv.limiteSugerido > 0 ? 'var(--yellow)' : 'var(--border)';
-    const canArchive = mk < hoje;
+    const canArchive = mk <= hoje;
     return `<tr style="${style}">
       <td>${mesLabel(mk)}</td>
       <td>${brl(rv.salario)}</td>
