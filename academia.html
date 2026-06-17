@@ -456,10 +456,69 @@ const EXS = [
  ["Remo ergométrico","Cardio","cardio","Inter",[1,15,30],"Puxada de remo, trabalha corpo todo (minutos)."],
  ["HIIT (tiros)","Cardio","cardio","Avanc",[1,12,20],"Intervalos de alta intensidade alternados com descanso (minutos)."],
  ["Burpee","Cardio","peso","Avanc",[4,10,15],"Agache, prancha, flexão, salto. Corpo inteiro."],
+ /* ===== PESO DO CORPO (sem equipamentos) — corpo todo ===== */
+ ["Flexão inclinada (pés elevados)","Peito","peso","Inter",[3,8,15],"Pés sobre banco/cama. Foco no peito superior. Empurre o corpo para cima."],
+ ["Flexão diamante","Peito","peso","Inter",[3,8,12],"Mãos juntas formando um losango. Trabalha peito e tríceps."],
+ ["Flexão archer","Peito","peso","Avanc",[3,6,10],"Desça para um lado de cada vez, estendendo o braço oposto. Avançado."],
+ ["Remada invertida (australiana)","Costas","peso","Inic",[3,8,15],"Barra baixa ou mesa firme, corpo reto, puxe o peito até a barra."],
+ ["Superman","Costas","peso","Inic",[3,12,20],"Deitado de bruços, eleve braços e pernas contraindo a lombar."],
+ ["Barra fixa supinada (chin-up)","Costas","peso","Avanc",[3,5,10],"Pegada supinada, puxe o corpo. Costas e bíceps."],
+ ["Flexão pike","Ombros","peso","Inter",[3,8,12],"Quadril bem elevado, empurre a cabeça em direção ao chão. Ombros."],
+ ["Parada de mãos na parede","Ombros","peso","Avanc",[3,5,10],"De cabeça para baixo apoiado na parede. Ombros e estabilidade."],
+ ["Encolhimento na barra (pendura)","Trapézio","peso","Inter",[3,10,15],"Pendurado na barra, eleve o corpo só encolhendo os ombros."],
+ ["Rosca isométrica com toalha","Bíceps","peso","Inic",[3,20,30],"Puxe uma toalha contra a própria força (ou elástico) fazendo rosca (segundos)."],
+ ["Flexão fechada (tríceps)","Tríceps","peso","Inic",[3,8,15],"Mãos próximas, cotovelos rentes ao corpo. Foco no tríceps."],
+ ["Agachamento livre (peso corporal)","Pernas","peso","Inic",[4,15,25],"Agache até as coxas paralelas mantendo o tronco ereto."],
+ ["Afundo (peso corporal)","Pernas","peso","Inic",[3,12,20],"Passada à frente descendo o joelho de trás em direção ao chão."],
+ ["Agachamento búlgaro (peso corporal)","Pernas","peso","Inter",[3,10,15],"Pé de trás elevado, agache na perna da frente."],
+ ["Agachamento pistol","Pernas","peso","Avanc",[3,5,10],"Agachamento numa perna só. Exige muita força e equilíbrio."],
+ ["Wall sit (cadeira na parede)","Pernas","peso","Inic",[3,30,60],"Costas na parede, joelhos a 90°. Sustente a posição (segundos)."],
+ ["Stiff unilateral (peso corporal)","Posterior","peso","Inter",[3,10,15],"Equilíbrio numa perna, incline o tronco alongando o posterior."],
+ ["Flexão nórdica (nordic curl)","Posterior","peso","Avanc",[3,5,8],"Joelhos fixos, desça o tronco controlando com o posterior."],
+ ["Ponte de glúteo","Glúteos","peso","Inic",[3,15,25],"Costas no chão, eleve o quadril contraindo o glúteo no topo."],
+ ["Coice de glúteo (4 apoios)","Glúteos","peso","Inic",[3,15,20],"Eleve a perna para trás contraindo o glúteo."],
+ ["Abdução deitada de lado","Glúteos","peso","Inic",[3,15,20],"Deitado de lado, eleve a perna de cima. Glúteo médio."],
+ ["Panturrilha em pé (peso corporal)","Panturrilha","peso","Inic",[4,15,25],"Eleve os calcanhares ao máximo. Use um degrau para mais amplitude."],
+ ["Panturrilha unilateral (peso corporal)","Panturrilha","peso","Inter",[3,12,20],"Numa perna só para aumentar a intensidade."],
+ ["Bicicleta no ar","Abdômen","peso","Inic",[3,15,25],"Pedale no ar levando o cotovelo ao joelho oposto."],
+ ["Pendura na barra (pegada)","Antebraço","peso","Inic",[3,20,40],"Pendure-se na barra para fortalecer a pegada e o antebraço (segundos)."],
+ ["Polichinelo (jumping jacks)","Cardio","peso","Inic",[1,15,25],"Abra e feche braços e pernas com saltos (minutos)."],
+ ["Mountain climber","Cardio","peso","Inter",[1,10,20],"Em prancha, traga os joelhos ao peito alternando rápido (minutos)."],
+ ["Corrida estacionária","Cardio","peso","Inic",[1,15,30],"Corra no lugar elevando bem os joelhos (minutos)."],
+ ["Agachamento com salto","Cardio","peso","Inter",[3,12,20],"Agache e salte explodindo para cima. Cardio e pernas."],
+ /* ===== POLIA / FUNCIONAL (poucos aparelhos, crossover com ganchos) — corpo todo ===== */
+ ["Crossover baixo (polia)","Peito","cabo","Inter",[3,12,15],"Polias baixas, una as mãos à frente e acima. Peito superior."],
+ ["Supino na polia em pé","Peito","cabo","Inter",[3,12,15],"Empurre as alças à frente na altura do peito."],
+ ["Pullover na polia","Costas","cabo","Inter",[3,12,15],"Polia alta, traga a barra/corda até as coxas com os braços estendidos. Dorsal."],
+ ["Face pull","Costas","cabo","Inic",[3,12,15],"Corda na altura do rosto, puxe abrindo os cotovelos. Costas alta e ombro posterior."],
+ ["Desenvolvimento na polia","Ombros","cabo","Inter",[3,10,12],"Empurre as alças acima da cabeça."],
+ ["Elevação frontal na polia","Ombros","cabo","Inic",[3,12,15],"Polia baixa, eleve à frente até a altura dos olhos."],
+ ["Crucifixo invertido na polia","Ombros","cabo","Inter",[3,12,15],"Polias cruzadas na altura dos ombros, abra para trás. Deltoide posterior."],
+ ["Encolhimento na polia","Trapézio","cabo","Inic",[4,12,20],"Polia baixa, encolha os ombros em direção às orelhas."],
+ ["Remada alta na polia","Trapézio","cabo","Inter",[3,12,15],"Puxe a barra ao queixo com os cotovelos altos. Trapézio e ombro."],
+ ["Rosca martelo na corda (polia)","Bíceps","cabo","Inic",[3,12,15],"Corda na polia baixa, pegada neutra. Bíceps e braquial."],
+ ["Rosca unilateral na polia","Bíceps","cabo","Inic",[3,12,15],"Uma alça por vez, tensão constante no bíceps."],
+ ["Tríceps na polia (barra)","Tríceps","cabo","Inic",[4,10,15],"Barra reta, estenda os cotovelos empurrando para baixo."],
+ ["Tríceps testa na polia","Tríceps","cabo","Inter",[3,10,15],"De costas para a polia, estenda os braços acima da cabeça."],
+ ["Agachamento na polia","Pernas","cabo","Inic",[3,12,20],"Segure a alça baixa e agache usando o cabo como apoio/contrapeso."],
+ ["Afundo na polia","Pernas","cabo","Inter",[3,10,15],"Passada à frente segurando a alça da polia."],
+ ["Extensora na polia (caneleira)","Pernas","cabo","Inic",[3,12,15],"Tornozeleira na polia baixa, estenda o joelho. Quadríceps."],
+ ["Stiff na polia","Posterior","cabo","Inter",[3,10,15],"Polia baixa, leve o quadril para trás alongando o posterior."],
+ ["Flexora na polia (caneleira)","Posterior","cabo","Inic",[3,12,15],"Tornozeleira na polia, flexione o joelho trazendo o calcanhar ao glúteo."],
+ ["Abdução na polia","Glúteos","cabo","Inic",[3,15,20],"Tornozeleira na polia, afaste a perna para o lado. Glúteo médio."],
+ ["Elevação pélvica na polia","Glúteos","cabo","Inter",[3,12,15],"Cabo sobre o quadril, eleve a pelve contraindo o glúteo."],
+ ["Panturrilha na polia","Panturrilha","cabo","Inic",[4,15,20],"Segure a alça e eleve os calcanhares. Use um degrau se possível."],
+ ["Rosca de punho na polia","Antebraço","cabo","Inic",[3,15,20],"Flexione os punhos contra a polia baixa. Antebraço."],
 ].map((x,i)=>({id:"ex"+i,name:x[0],g:x[1],e:x[2],lvl:x[3],def:x[4],instr:x[5]}));
 
 const GROUPS = ["Peito","Costas","Ombros","Trapézio","Bíceps","Tríceps","Pernas","Posterior","Glúteos","Panturrilha","Abdômen","Antebraço","Cardio"];
 const LVL={Inic:"Iniciante",Inter:"Intermediário",Avanc:"Avançado"};
+/* ambientes / equipamentos disponíveis (allow=null significa tudo) */
+const ENVS={
+  completa:{label:"Academia completa",allow:null},
+  funcional:{label:"Polia / funcional",allow:["cabo","peso"]},
+  casa:{label:"Só peso do corpo",allow:["peso"]},
+};
 
 /* ---------- estado / storage ---------- */
 const DB={
@@ -476,8 +535,8 @@ function persist(){DB.save("fichas",state.fichas);DB.save("history",state.histor
 /* =========================================================================
    GERADOR DE FICHAS AUTOMÁTICAS por objetivo
    ========================================================================= */
-function pickExs(group,n,level){
-  let pool=EXS.filter(e=>e.g===group);
+function pickExs(group,n,level,allow){
+  let pool=EXS.filter(e=>e.g===group && (!allow||allow.includes(e.e)));
   // prioriza nível adequado mas não exclui
   const order={Inic:1,Inter:2,Avanc:3};
   const lv=order[level]||2;
@@ -557,23 +616,29 @@ function generatePlan(opts){
   const focus=opts.focus||"";
   const cardio=opts.cardio ?? (goal==="emagrecimento"||goal==="definicao");
   const absEvery=opts.abs ?? false;
+  const allow=(ENVS[opts.env]||ENVS.completa).allow;
+  const hasEx=g=>EXS.some(e=>e.g===g && (!allow||allow.includes(e.e)));
   let exPerDay=opts.exPerDay;
   if(!exPerDay){
     if(opts.duration) exPerDay=clamp(Math.round((opts.duration-10)/perExMin(sc)),3,12);
     else exPerDay=goal==="emagrecimento"?6:7;
   }
   return split.map((day,i)=>{
-    const [title,groups]=day;
+    const [title,allGroups]=day;
+    // mantém só grupos com exercícios disponíveis no ambiente escolhido
+    let groups=allGroups.filter(hasEx); if(!groups.length)groups=allGroups;
     let exs=[];
     const counts=distribute(groups,exPerDay,focus);
-    groups.forEach((g,gi)=>{ pickExs(g,counts[gi],level).forEach(e=>exs.push(mkSet(e,sc))); });
-    if(absEvery && !groups.includes("Abdômen"))
-      pickExs("Abdômen",1,level).forEach(e=>exs.push(mkSet(e,sc)));
+    groups.forEach((g,gi)=>{ pickExs(g,counts[gi],level,allow).forEach(e=>exs.push(mkSet(e,sc))); });
+    if(absEvery && !groups.includes("Abdômen") && hasEx("Abdômen"))
+      pickExs("Abdômen",1,level,allow).forEach(e=>exs.push(mkSet(e,sc)));
     if(cardio){
-      const pool=EXS.filter(e=>e.g==="Cardio");
-      const c=pool[Math.floor(Math.random()*pool.length)];
-      const mins=goal==="emagrecimento"?25:15;
-      exs.push({exId:c.id,sets:1,rmin:mins,rmax:mins+10,rest:0,weight:""});
+      const pool=EXS.filter(e=>e.g==="Cardio" && (!allow||allow.includes(e.e)));
+      if(pool.length){
+        const c=pool[Math.floor(Math.random()*pool.length)];
+        const mins=goal==="emagrecimento"?25:15;
+        exs.push({exId:c.id,sets:1,rmin:mins,rmax:mins+10,rest:0,weight:""});
+      }
     }
     const f={id:"f"+Date.now()+i, letter:LETTERS[i], title, goal, level, exs};
     f.estMin=estimateMinutes(f);
@@ -901,6 +966,13 @@ function openGenerator(){
       <option value="Avanc">Avançado</option>
     </select>
 
+    <label class="fl">Equipamentos disponíveis</label>
+    <select class="field" id="gen_env">
+      <option value="completa" selected>🏋️ Academia completa (todos os aparelhos)</option>
+      <option value="funcional">🔗 Poucos aparelhos · polia / funcional</option>
+      <option value="casa">🏠 Só peso do corpo (sem equipamentos)</option>
+    </select>
+
     <label class="fl">Volume de exercícios</label>
     <select class="field" id="gen_volume" onchange="genVolChange()">
       <option value="leve">Leve · 4 exercícios por treino</option>
@@ -963,9 +1035,10 @@ function runGenerator(){
   if(vol==="tempo"){exPerDay=null;duration=+document.getElementById("gen_dur").value;}
   else if(vol==="custom"){exPerDay=clamp(+document.getElementById("gen_custom").value||7,3,12);}
   const focus=document.getElementById("gen_focus").value;
+  const env=document.getElementById("gen_env").value;
   const cardio=document.getElementById("gen_cardio").classList.contains("on");
   const abs=document.getElementById("gen_abs").classList.contains("on");
-  state.fichas=generatePlan({goal,days,level,exPerDay,duration,focus,cardio,abs});
+  state.fichas=generatePlan({goal,days,level,exPerDay,duration,focus,cardio,abs,env});
   persist();closeSheet();go("fichas");
   const total=state.fichas.reduce((s,f)=>s+f.exs.length,0);
   toast(`Plano de ${GOAL_LABEL[goal]} · ${total} exercícios gerado! 🎉`);
