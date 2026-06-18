@@ -590,6 +590,15 @@ body{
       <label>Cor do cartão</label>
       <div class="swatches" id="cartao-cores"></div>
     </div>
+    <div class="fg">
+      <div style="display:flex;align-items:center;justify-content:space-between;background:var(--bg3);border-radius:var(--r-sm);padding:14px 16px">
+        <div>
+          <div style="font-size:15px;font-weight:500">Cartão Família</div>
+          <div style="font-size:12px;color:var(--text2);margin-top:2px">Gastos neste cartão não deduzem do seu saldo pessoal</div>
+        </div>
+        <label class="toggle"><input type="checkbox" id="cartao-familia"><span class="toggle-sl"></span></label>
+      </div>
+    </div>
     <input type="hidden" id="cartao-edit-id">
   </div>
 </div>
@@ -678,6 +687,8 @@ const saveMesesArq  = (v) => save('fp_arq',v);
 const saveEconomias = (v) => save('fp_economias',v);
 const saveCats      = (v) => save('fp_cats',v);
 const saveTheme     = (v) => save('fp_theme',v);
+const getFixosPagos  = () => load('fp_fixos_pagos',{});
+const saveFixosPagos = (v) => save('fp_fixos_pagos',v);
 
 // ═══════════════════════════════════════════════════
 //  DATE HELPERS
@@ -733,8 +744,10 @@ function calcResumo(mesk){
   const cartoesSaida={};
   for(const c of cartoes) cartoesSaida[c.id]=0;
 
-  // Fixos
+  // Fixos — só computa quando marcado "pago" no mês
+  const fixosPagos=getFixosPagos();
   for(const f of fixos){
+    if(!fixosPagos[f.id]?.[mesk]) continue; // não pago ainda
     const ov=getOverrides()[f.id]?.[mesk];
     const valor=ov?.valor??f.valor;
     const forma=ov?.forma??f.forma;
@@ -742,7 +755,9 @@ function calcResumo(mesk){
       totalDebito+=valor;
     } else if(forma.startsWith('cartao:')){
       const id=forma.slice(7);
-      if(cartoesSaida[id]!==undefined) cartoesSaida[id]+=valor;
+      const card=cartoes.find(c=>c.id===id);
+      // cartão família não deduz do saldo pessoal
+      if(!card?.familia && cartoesSaida[id]!==undefined) cartoesSaida[id]+=valor;
     }
   }
 
@@ -795,7 +810,8 @@ function formaLabel(forma){
   if(forma.startsWith('cartao:')){
     const id=forma.slice(7);
     const c=getCartoes().find(c=>c.id===id);
-    return c?c.nome:'Cartão';
+    if(!c) return 'Cartão';
+    return c.familia?`${c.nome} (Família)`:c.nome;
   }
   return forma;
 }
@@ -935,7 +951,7 @@ function populateFormaSelects(ids=[]){
   const cartoes=getCartoes();
   const opts=[
     `<option value="debito">Débito / Conta</option>`,
-    ...cartoes.map(c=>`<option value="cartao:${c.id}">${c.nome}</option>`)
+    ...cartoes.map(c=>`<option value="cartao:${c.id}">${c.nome}${c.familia?' (Família)':''}</option>`)
   ].join('');
   for(const id of ids){
     const el=document.getElementById(id);
@@ -1270,31 +1286,80 @@ function renderFixosMes(){
   renderPills('pills-fixos','fixos',`setMes.bind(null,'fixos')`);
   const fixos=getFixos();
   const el=document.getElementById('fixos-mes-list');
-  if(fixos.length===0){
-    el.innerHTML='';return;
-  }
-  const total=fixos.reduce((s,f)=>s+f.valor,0);
-  el.innerHTML=`
-    <div style="background:var(--bg2);border-radius:var(--r);padding:14px 16px;margin-bottom:14px;border:1px solid var(--glass-b);display:flex;justify-content:space-between;align-items:center">
-      <span style="font-size:14px;color:var(--text2)">${fixos.length} custos fixos</span>
-      <span style="font-size:18px;font-weight:900">${brl(total)}/mês</span>
-    </div>
-    <div class="gc" style="margin-bottom:14px">
-      ${fixos.map(f=>`
-        <div class="fi-item">
-          <div class="li-ico" style="background:var(--bg3)">${catIcon(f.cat)}</div>
-          <div class="fi-info">
-            <div class="fi-name">${f.nome}</div>
-            <div class="fi-meta">${formaLabel(f.forma)} · dia ${f.dia||'—'}</div>
-          </div>
-          <div class="fi-val neg">${brl(f.valor)}</div>
-          <button onclick="editFixo('${f.id}')" style="background:none;border:none;color:var(--accent);font-size:13px;cursor:pointer;padding:4px 8px;font-weight:700">✎</button>
-          <button onclick="delFixo('${f.id}')" style="background:none;border:none;color:var(--text3);font-size:16px;cursor:pointer;padding:4px">🗑</button>
-        </div>`).join('')}
+  if(fixos.length===0){el.innerHTML='';return;}
+
+  const pagos=getFixosPagos();
+  const cartoes=getCartoes();
+
+  const isPago=f=>!!(pagos[f.id]?.[mk]);
+  const isFamilia=f=>{
+    if(!f.forma.startsWith('cartao:')) return false;
+    return !!(cartoes.find(c=>c.id===f.forma.slice(7))?.familia);
+  };
+
+  const listaPagos=fixos.filter(isPago);
+  const listaAPagar=fixos.filter(f=>!isPago(f));
+  const totalPago=listaPagos.reduce((s,f)=>s+f.valor,0);
+  const totalAPagar=listaAPagar.reduce((s,f)=>s+f.valor,0);
+  const totalGeral=fixos.reduce((s,f)=>s+f.valor,0);
+
+  const renderItem=(f,pago)=>{
+    const familia=isFamilia(f);
+    const valColor=familia?'color:var(--yellow)':'color:var(--red)';
+    const valPrefix=familia?'👨‍👩‍👧 ':'−';
+    return `<div class="fi-item">
+      <div class="li-ico" style="background:var(--bg3)">${catIcon(f.cat)}</div>
+      <div class="fi-info">
+        <div class="fi-name">${f.nome}</div>
+        <div class="fi-meta">${formaLabel(f.forma)}${familia?' <span style="color:var(--yellow);font-weight:700">· Família</span>':''} · dia ${f.dia||'—'}</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:6px;flex-shrink:0">
+        <div class="fi-val" style="${valColor}">${valPrefix}${brl(f.valor)}</div>
+        ${pago
+          ?`<button onclick="marcarFixoPago('${f.id}','${mk}',false)"
+              style="background:rgba(34,211,122,.12);border:1px solid rgba(34,211,122,.2);border-radius:8px;color:var(--green);font-size:11px;font-weight:700;padding:5px 10px;cursor:pointer;white-space:nowrap;flex-shrink:0">✓ Pago</button>`
+          :`<button onclick="marcarFixoPago('${f.id}','${mk}',true)"
+              style="background:rgba(124,111,255,.12);border:1px solid rgba(124,111,255,.2);border-radius:8px;color:var(--accent);font-size:11px;font-weight:700;padding:5px 10px;cursor:pointer;white-space:nowrap;flex-shrink:0">Pagar</button>`}
+        <button onclick="editFixo('${f.id}')" style="background:none;border:none;color:var(--text3);font-size:14px;cursor:pointer;padding:4px">✎</button>
+        <button onclick="delFixo('${f.id}')" style="background:none;border:none;color:var(--text3);font-size:16px;cursor:pointer;padding:4px">🗑</button>
+      </div>
     </div>`;
+  };
+
+  el.innerHTML=`
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:0;background:var(--bg2);border-radius:var(--r);overflow:hidden;margin-bottom:14px;border:1px solid var(--glass-b)">
+      <div style="padding:14px 16px;border-right:1px solid var(--sep)">
+        <div style="font-size:17px;font-weight:900;color:var(--green)">${brl(totalPago)}</div>
+        <div style="font-size:10px;color:var(--green);text-transform:uppercase;letter-spacing:.06em;margin-top:3px;font-weight:700">✓ Pagos</div>
+      </div>
+      <div style="padding:14px 16px;border-right:1px solid var(--sep)">
+        <div style="font-size:17px;font-weight:900;color:var(--orange)">${brl(totalAPagar)}</div>
+        <div style="font-size:10px;color:var(--orange);text-transform:uppercase;letter-spacing:.06em;margin-top:3px;font-weight:700">A pagar</div>
+      </div>
+      <div style="padding:14px 16px">
+        <div style="font-size:17px;font-weight:900">${brl(totalGeral)}</div>
+        <div style="font-size:10px;color:var(--text2);text-transform:uppercase;letter-spacing:.06em;margin-top:3px;font-weight:700">Total mês</div>
+      </div>
+    </div>
+    ${listaAPagar.length>0?`
+      <div class="sec-hd" style="padding-left:4px;color:var(--orange)">A Pagar — ${listaAPagar.length}</div>
+      <div class="gc" style="margin-bottom:14px">${listaAPagar.map(f=>renderItem(f,false)).join('')}</div>`:''}
+    ${listaPagos.length>0?`
+      <div class="sec-hd" style="padding-left:4px;color:var(--green)">Pagos — ${listaPagos.length}</div>
+      <div class="gc" style="margin-bottom:14px">${listaPagos.map(f=>renderItem(f,true)).join('')}</div>`:''}`;
 }
 
 function renderFixosList(){ renderFixosMes(); }
+
+function marcarFixoPago(fixoId,mesk,pagar){
+  const pagos=getFixosPagos();
+  if(!pagos[fixoId]) pagos[fixoId]={};
+  pagos[fixoId][mesk]=pagar;
+  saveFixosPagos(pagos);
+  renderFixosMes();
+  if(_activePage==='dashboard') renderDashboard();
+  showToast(pagar?'✓ Marcado como pago':'Pagamento desfeito');
+}
 
 function addCustoFixo(){
   const nome=document.getElementById('cf-nome').value.trim();
@@ -1478,6 +1543,7 @@ function openNovoCartao(){
   document.getElementById('cartao-fechamento').value='';
   document.getElementById('cartao-vencimento').value='';
   document.getElementById('cartao-limite').value='';
+  document.getElementById('cartao-familia').checked=false;
   renderColorSwatches(CARD_COLORS[0].id);
   selectSwatch(CARD_COLORS[0].id);
   openSheet('sheet-cartao');
@@ -1492,6 +1558,7 @@ function editCartao(id){
   document.getElementById('cartao-fechamento').value=c.fechamento||'';
   document.getElementById('cartao-vencimento').value=c.vencimento||'';
   document.getElementById('cartao-limite').value=c.limite||'';
+  document.getElementById('cartao-familia').checked=!!(c.familia);
   renderColorSwatches(c.colorId||CARD_COLORS[0].id);
   selectSwatch(c.colorId||CARD_COLORS[0].id);
   openSheet('sheet-cartao');
@@ -1503,19 +1570,19 @@ function saveCartao(){
   const vencimento=parseInt(document.getElementById('cartao-vencimento').value)||null;
   const limite=parseFloat(document.getElementById('cartao-limite').value)||0;
   const colorId=getSelectedSwatch();
+  const familia=document.getElementById('cartao-familia').checked;
   if(!nome) return showToast('Informe o nome do cartão');
   const editId=document.getElementById('cartao-edit-id').value;
   let cartoes=getCartoes();
   if(editId){
-    cartoes=cartoes.map(c=>c.id===editId?{...c,nome,fechamento,vencimento,limite,colorId}:c);
+    cartoes=cartoes.map(c=>c.id===editId?{...c,nome,fechamento,vencimento,limite,colorId,familia}:c);
     showToast('Cartão atualizado');
   } else {
-    cartoes.push({id:uid(),nome,fechamento,vencimento,limite,colorId});
+    cartoes.push({id:uid(),nome,fechamento,vencimento,limite,colorId,familia});
     showToast('Cartão adicionado');
   }
   saveCartoes(cartoes);
   closeSheet('sheet-cartao');
-  // Repopulate form selects
   populateFormaSelects(['gv-forma','cf-forma']);
   renderCartoes();
   if(_activePage==='dashboard') renderDashboard();
