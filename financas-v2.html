@@ -691,7 +691,7 @@ const uid     = () => Math.random().toString(36).slice(2,10);
 function gerarMeses(){
   const arq=getMesesArq();
   const hoje=new Date();
-  const endY=Math.max(hoje.getFullYear()+1,2028);
+  const endY=hoje.getFullYear()+1;
   const meses=[];
   let y=hoje.getFullYear()-2,m=1;
   while(y<endY||(y===endY&&m<=12)){
@@ -1069,13 +1069,14 @@ function renderDashboard(){
       </div>`).join('');
   }
 
-  // Histórico
+  // Histórico — apenas meses até o atual
   const histEl=document.getElementById('dash-historico');
-  const meses=gerarMeses();
-  const recent12=meses.slice(Math.max(0,meses.length-12));
+  const hoje=mesAtual();
+  const mesesAteHoje=gerarMeses().filter(m=>m<=hoje);
+  const recent12=mesesAteHoje.slice(-12);
   histEl.innerHTML=recent12.map(m=>{
     const r2=calcResumo(m);
-    const isCur=m===mesAtual();
+    const isCur=m===hoje;
     const varTotal=r2.varMes.reduce((s,v)=>s+v.valor,0);
     return `<tr${isCur?' class="cur"':''}>
       <td>${mesLbl(m)}</td>
@@ -1087,7 +1088,7 @@ function renderDashboard(){
     </tr>`;
   }).join('');
 
-  renderChart(meses.slice(-12));
+  renderChart(mesesAteHoje.slice(-12));
 }
 
 // ═══════════════════════════════════════════════════
