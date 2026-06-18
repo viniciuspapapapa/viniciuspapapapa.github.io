@@ -702,9 +702,10 @@ const uid     = () => Math.random().toString(36).slice(2,10);
 function gerarMeses(){
   const arq=getMesesArq();
   const hoje=new Date();
-  const endY=hoje.getFullYear()+1;
+  const nd=new Date(hoje.getFullYear(),hoje.getMonth()+1,1);
+  const endY=nd.getFullYear()+1;
   const meses=[];
-  let y=hoje.getFullYear()-2,m=1;
+  let y=nd.getFullYear(),m=nd.getMonth()+1;
   while(y<endY||(y===endY&&m<=12)){
     const k=mesKey(y,m);
     if(!arq.includes(k)) meses.push(k);
@@ -777,7 +778,7 @@ function calcResumo(mesk){
   // Apply invoices
   const fat=faturas[mesk]||{};
   for(const c of cartoes){
-    if(fat[c.id]>0) cartoesSaida[c.id]=fat[c.id];
+    if((fat[c.id]||0)>cartoesSaida[c.id]) cartoesSaida[c.id]=fat[c.id];
   }
 
   const totalCartoes=Object.values(cartoesSaida).reduce((s,v)=>s+v,0);
@@ -1085,14 +1086,13 @@ function renderDashboard(){
       </div>`).join('');
   }
 
-  // Histórico — apenas meses até o atual
+  // Histórico — meses disponíveis (a partir do próximo mês)
   const histEl=document.getElementById('dash-historico');
-  const hoje=mesAtual();
-  const mesesAteHoje=gerarMeses().filter(m=>m<=hoje);
-  const recent12=mesesAteHoje.slice(-12);
+  const mesesDisp=gerarMeses();
+  const recent12=mesesDisp.slice(0,12);
   histEl.innerHTML=recent12.map(m=>{
     const r2=calcResumo(m);
-    const isCur=m===hoje;
+    const isCur=m===mesesDisp[0];
     const varTotal=r2.varMes.reduce((s,v)=>s+v.valor,0);
     return `<tr${isCur?' class="cur"':''}>
       <td>${mesLbl(m)}</td>
@@ -1104,7 +1104,7 @@ function renderDashboard(){
     </tr>`;
   }).join('');
 
-  renderChart(mesesAteHoje.slice(-12));
+  renderChart(recent12);
 }
 
 // ═══════════════════════════════════════════════════
@@ -1358,6 +1358,7 @@ function marcarFixoPago(fixoId,mesk,pagar){
   saveFixosPagos(pagos);
   renderFixosMes();
   if(_activePage==='dashboard') renderDashboard();
+  else if(_activePage==='cartao') renderCartoes();
   showToast(pagar?'✓ Marcado como pago':'Pagamento desfeito');
 }
 
@@ -1758,10 +1759,11 @@ function init(){
   renderPills('pills-fixos','fixos',`setMes.bind(null,'fixos')`);
   renderPills('pills-cartao','cartao',`setMes.bind(null,'cartao')`);
   // Scroll pills to current month
-  _currentMeses.dashboard=mesAtual();
-  _currentMeses.variaveis=mesAtual();
-  _currentMeses.fixos=mesAtual();
-  _currentMeses.cartao=mesAtual();
+  const primeiro=gerarMeses()[0]||mesAtual();
+  _currentMeses.dashboard=primeiro;
+  _currentMeses.variaveis=primeiro;
+  _currentMeses.fixos=primeiro;
+  _currentMeses.cartao=primeiro;
   renderDashboard();
   // Check if first time
   const params=getParams();
