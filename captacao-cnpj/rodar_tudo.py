@@ -38,6 +38,11 @@ HEADERS = {"User-Agent": "Mozilla/5.0 (captacao-cnpj)"}
 # WebDAV do share público da RFB usa Basic auth: usuário = token, senha vazia.
 AUTH = (SHARE_TOKEN, "")
 
+# Alguns CSVs da Receita (visto em Estabelecimentos) trazem bytes de controle C1
+# soltos (0x80–0x9F) em campos de contato. O leitor latin-1 do DuckDB rejeita
+# esses bytes ("File is not latin-1 encoded"). Trocamos por espaço na extração.
+_LIMPA_C1 = bytes(0x20 if 0x80 <= i <= 0x9f else i for i in range(256))
+
 
 def struct(colunas):
     return "{" + ", ".join(f"'{c}': 'VARCHAR'" for c in colunas) + "}"
@@ -79,10 +84,17 @@ def baixa_e_extrai(base, nome):
     print(f" {zip_path.stat().st_size/1e6:.0f} MB; extraindo...", end="", flush=True)
     with zipfile.ZipFile(zip_path) as z:
         membro = z.namelist()[0]
-        z.extract(membro, TMP)
+        destino = TMP / membro
+        # extrai já limpando bytes de controle C1 (num único passe de escrita)
+        with z.open(membro) as src, open(destino, "wb") as out:
+            while True:
+                pedaco = src.read(1 << 22)
+                if not pedaco:
+                    break
+                out.write(pedaco.translate(_LIMPA_C1))
     zip_path.unlink()
     print(" ok")
-    return TMP / membro
+    return destino
 
 
 def main():
