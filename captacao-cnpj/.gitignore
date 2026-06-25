@@ -1,0 +1,6 @@
+# Dados brutos da Receita (pesados) e artefatos gerados — não versionar
+dados/
+saida/
+*.duckdb
+__pycache__/
+*.pyc
