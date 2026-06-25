@@ -71,7 +71,33 @@ A base completa é grande. **Não rode em servidor pequeno/sandbox.**
 
 ---
 
-## Passo a passo
+## Atalho: tudo em um comando (recomendado)
+
+Se você só quer a planilha preenchida, use o `rodar_tudo.py`. Ele baixa cada
+arquivo, **filtra apenas os clientes da sua planilha** e apaga o arquivo em
+seguida — usa poucos GB de disco por vez (não precisa dos ~40 GB do fluxo
+completo) e roda em um notebook comum:
+
+```bash
+cd captacao-cnpj
+pip install -r requirements.txt
+python rodar_tudo.py "Clientes_PF_TPC_CPF.xlsx" --aba ADVWin
+```
+
+Saída em `saida/..._PREENCHIDA.xlsx` (mesmas abas do fluxo abaixo). Se a planilha
+tiver a coluna `CPF` preenchida, ele confirma os matches automaticamente; se não
+tiver, preenche assim mesmo e sinaliza homônimos na coluna **Confiança**.
+
+> Funciona em qualquer máquina com internet liberada para
+> `arquivos.receitafederal.gov.br`. (No ambiente Claude Code web a rede de saída
+> é restrita ao GitHub, então rode localmente ou em uma sessão com rede aberta.)
+
+---
+
+## Passo a passo detalhado (3 etapas)
+
+Útil se você quer manter a base `cnpj.duckdb` para reaproveitar em outras
+carteiras/análises.
 
 ```bash
 cd captacao-cnpj
