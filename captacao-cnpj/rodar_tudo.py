@@ -50,9 +50,12 @@ def struct(colunas):
 
 
 def read_csv(glob, colunas):
+    # parallel=false: alguns CSVs da Receita (Estabelecimentos) têm quebra de
+    # linha DENTRO de campo entre aspas; o leitor paralelo do DuckDB não suporta
+    # isso junto com null_padding. Single-thread é mais lento, mas lê corretamente.
     return (f"read_csv('{glob}', delim=';', header=false, quote='\"', "
             f"encoding='latin-1', columns={struct(colunas)}, "
-            f"ignore_errors=true, null_padding=true)")
+            f"ignore_errors=true, null_padding=true, parallel=false)")
 
 
 def competencia_recente():
