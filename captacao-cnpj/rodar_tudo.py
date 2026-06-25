@@ -26,7 +26,7 @@ import pandas as pd
 import openpyxl
 
 from comum import (
-    URL_BASE, GRUPOS_ARQUIVOS,
+    URL_BASE, SHARE_TOKEN, GRUPOS_ARQUIVOS,
     COLUNAS_SOCIOS, COLUNAS_EMPRESAS, COLUNAS_ESTABELECIMENTOS, COLUNAS_DOMINIO,
     sql_normaliza, cpf_mascarado, PORTE, SITUACAO_CADASTRAL,
 )
@@ -35,6 +35,8 @@ PASTA = Path(__file__).parent
 TMP = PASTA / "dados" / "_tmp"
 SAIDA = PASTA / "saida"
 HEADERS = {"User-Agent": "Mozilla/5.0 (captacao-cnpj)"}
+# WebDAV do share público da RFB usa Basic auth: usuário = token, senha vazia.
+AUTH = (SHARE_TOKEN, "")
 
 
 def struct(colunas):
@@ -51,8 +53,10 @@ def competencia_recente():
     import re
     from datetime import date
     try:
-        r = requests.get(URL_BASE + "/", headers=HEADERS, timeout=60)
-        meses = sorted(set(re.findall(r"(\d{4}-\d{2})/", r.text)))
+        # WebDAV: PROPFIND com Depth 1 lista as subpastas AAAA-MM da pasta CNPJ.
+        r = requests.request("PROPFIND", URL_BASE + "/", auth=AUTH,
+                             headers={**HEADERS, "Depth": "1"}, timeout=120)
+        meses = sorted(set(re.findall(r"/(\d{4}-\d{2})/", r.text)))
         if meses:
             return meses[-1]
     except Exception:
@@ -66,7 +70,8 @@ def baixa_e_extrai(base, nome):
     TMP.mkdir(parents=True, exist_ok=True)
     zip_path = TMP / nome
     print(f"   baixando {nome} ...", end="", flush=True)
-    with requests.get(f"{base}/{nome}", headers=HEADERS, stream=True, timeout=900) as r:
+    with requests.get(f"{base}/{nome}", headers=HEADERS, auth=AUTH,
+                      stream=True, timeout=900) as r:
         r.raise_for_status()
         with open(zip_path, "wb") as f:
             for chunk in r.iter_content(1 << 20):

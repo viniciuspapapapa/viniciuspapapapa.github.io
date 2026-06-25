@@ -11,8 +11,19 @@ e a expressão de normalização de nomes para que o "construir_base" e o
 # ---------------------------------------------------------------------------
 # Download
 # ---------------------------------------------------------------------------
-# Base oficial dos dados abertos. Cada competência é uma pasta AAAA-MM.
-URL_BASE = "https://arquivos.receitafederal.gov.br/dados/cnpj/dados_abertos_cnpj"
+# ATENÇÃO: em janeiro/2026 a Receita Federal migrou os Dados Abertos para um
+# compartilhamento público Nextcloud (WebDAV). O caminho antigo
+#   https://arquivos.receitafederal.gov.br/dados/cnpj/dados_abertos_cnpj/AAAA-MM/
+# passou a responder 404. Agora os arquivos ficam sob o WebDAV do share público:
+#   https://arquivos.receitafederal.gov.br/public.php/webdav/Dados/Cadastros/CNPJ/AAAA-MM/
+# O acesso é por HTTP Basic, usando o TOKEN do share como usuário e senha vazia.
+#
+# O token abaixo é o do share público oficial ("Dados" da RFB). Se a Receita
+# rotacionar o token, o helper resolve_share_token() (em rodar_tudo.py) tenta
+# descobrir o novo seguindo o redirecionamento da raiz do servidor.
+SHARE_TOKEN = "gn672Ad4CF8N6TK"
+URL_BASE = ("https://arquivos.receitafederal.gov.br/public.php/webdav"
+            "/Dados/Cadastros/CNPJ")
 
 # Arquivos que realmente precisamos para o cruzamento sócio -> empresa.
 # (Estabelecimentos é grande, mas traz CNAE, e-mail, telefone e UF — ouro para

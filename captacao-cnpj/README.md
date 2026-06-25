@@ -92,6 +92,13 @@ tiver, preenche assim mesmo e sinaliza homônimos na coluna **Confiança**.
 > `arquivos.receitafederal.gov.br`. (No ambiente Claude Code web a rede de saída
 > é restrita ao GitHub, então rode localmente ou em uma sessão com rede aberta.)
 
+> **Atualização (jan/2026):** a Receita migrou os Dados Abertos para um
+> compartilhamento público **Nextcloud (WebDAV)**. O caminho antigo
+> `.../dados/cnpj/dados_abertos_cnpj/AAAA-MM/` passou a responder **404**; agora os
+> arquivos ficam em
+> `.../public.php/webdav/Dados/Cadastros/CNPJ/AAAA-MM/` (acesso por HTTP Basic com
+> o token do share). Os scripts já foram atualizados para o novo endereço.
+
 ---
 
 ## Passo a passo detalhado (3 etapas)
