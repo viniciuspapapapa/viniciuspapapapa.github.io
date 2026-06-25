@@ -71,21 +71,23 @@ def competencia_recente():
     return f"{h.year:04d}-{h.month:02d}"
 
 
-def baixa_e_extrai(base, nome, tentativas=6):
+def baixa_e_extrai(base, nome, falhas_seguidas_max=8):
     """Baixa um zip e extrai o CSV (limpando bytes de controle C1); apaga o zip.
 
-    Robusto para downloads longos: retoma de onde parou via HTTP Range quando a
-    conexão cai e tenta novamente com espera crescente. Um zip parcial deixado
-    por uma execução anterior é reaproveitado (continua o download), não baixado
-    de novo do zero.
+    Robusto para downloads longos numa rede instável: retoma de onde parou via
+    HTTP Range sempre que a conexão cai. O limite é de FALHAS SEGUIDAS sem
+    progresso — enquanto o download avança (mais bytes no disco), o contador
+    zera. Assim aguenta muitas quedas curtas, desde que esteja progredindo. Um
+    zip parcial de uma execução anterior é reaproveitado, não rebaixado do zero.
     """
     TMP.mkdir(parents=True, exist_ok=True)
     zip_path = TMP / nome
     url = f"{base}/{nome}"
     print(f"   baixando {nome} ...", end="", flush=True)
-    for tent in range(1, tentativas + 1):
+    falhas = 0
+    while True:
+        ja = zip_path.stat().st_size if zip_path.exists() else 0
         try:
-            ja = zip_path.stat().st_size if zip_path.exists() else 0
             headers = dict(HEADERS)
             modo = "wb"
             if ja:
@@ -107,14 +109,18 @@ def baixa_e_extrai(base, nome, tentativas=6):
                 z.namelist()
             break
         except Exception as e:
-            espera = min(30, 2 ** tent)
-            print(f" [falha {tent}/{tentativas}: {type(e).__name__}; "
+            agora = zip_path.stat().st_size if zip_path.exists() else 0
+            falhas = 0 if agora > ja else falhas + 1   # progrediu? zera contador
+            if falhas >= falhas_seguidas_max:
+                raise RuntimeError(
+                    f"download falhou após {falhas} tentativas seguidas sem "
+                    f"progresso: {nome}") from e
+            espera = min(30, 2 ** falhas)
+            print(f" [queda ({type(e).__name__}) em {agora/1e6:.0f} MB; "
                   f"retomando em {espera}s]", end="", flush=True)
             if isinstance(e, zipfile.BadZipFile) and zip_path.exists():
                 zip_path.unlink()               # corrompido: recomeça limpo
             time.sleep(espera)
-    else:
-        raise RuntimeError(f"download falhou após {tentativas} tentativas: {nome}")
     print(f" {zip_path.stat().st_size/1e6:.0f} MB; extraindo...", end="", flush=True)
     with zipfile.ZipFile(zip_path) as z:
         membro = z.namelist()[0]
