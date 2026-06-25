@@ -16,6 +16,7 @@ para arquivos.receitafederal.gov.br e ~10 GB livres de pico de disco.
 Saída: captacao-cnpj/saida/<nome>_PREENCHIDA.xlsx
 """
 import sys
+import time
 import argparse
 import zipfile
 from pathlib import Path
@@ -70,17 +71,50 @@ def competencia_recente():
     return f"{h.year:04d}-{h.month:02d}"
 
 
-def baixa_e_extrai(base, nome):
-    """Baixa um zip, extrai, retorna o caminho do CSV. Apaga o zip."""
+def baixa_e_extrai(base, nome, tentativas=6):
+    """Baixa um zip e extrai o CSV (limpando bytes de controle C1); apaga o zip.
+
+    Robusto para downloads longos: retoma de onde parou via HTTP Range quando a
+    conexão cai e tenta novamente com espera crescente. Um zip parcial deixado
+    por uma execução anterior é reaproveitado (continua o download), não baixado
+    de novo do zero.
+    """
     TMP.mkdir(parents=True, exist_ok=True)
     zip_path = TMP / nome
+    url = f"{base}/{nome}"
     print(f"   baixando {nome} ...", end="", flush=True)
-    with requests.get(f"{base}/{nome}", headers=HEADERS, auth=AUTH,
-                      stream=True, timeout=900) as r:
-        r.raise_for_status()
-        with open(zip_path, "wb") as f:
-            for chunk in r.iter_content(1 << 20):
-                f.write(chunk)
+    for tent in range(1, tentativas + 1):
+        try:
+            ja = zip_path.stat().st_size if zip_path.exists() else 0
+            headers = dict(HEADERS)
+            modo = "wb"
+            if ja:
+                headers["Range"] = f"bytes={ja}-"
+            with requests.get(url, headers=headers, auth=AUTH,
+                              stream=True, timeout=900) as r:
+                if ja and r.status_code == 206:
+                    modo = "ab"                 # servidor aceitou retomar
+                elif r.status_code == 416:
+                    pass                         # já temos o arquivo inteiro
+                else:
+                    modo, ja = "wb", 0          # recomeça do zero
+                    r.raise_for_status()
+                if r.status_code != 416:
+                    with open(zip_path, modo) as f:
+                        for chunk in r.iter_content(1 << 20):
+                            f.write(chunk)
+            with zipfile.ZipFile(zip_path) as z:    # valida o ZIP baixado
+                z.namelist()
+            break
+        except Exception as e:
+            espera = min(30, 2 ** tent)
+            print(f" [falha {tent}/{tentativas}: {type(e).__name__}; "
+                  f"retomando em {espera}s]", end="", flush=True)
+            if isinstance(e, zipfile.BadZipFile) and zip_path.exists():
+                zip_path.unlink()               # corrompido: recomeça limpo
+            time.sleep(espera)
+    else:
+        raise RuntimeError(f"download falhou após {tentativas} tentativas: {nome}")
     print(f" {zip_path.stat().st_size/1e6:.0f} MB; extraindo...", end="", flush=True)
     with zipfile.ZipFile(zip_path) as z:
         membro = z.namelist()[0]
@@ -128,33 +162,59 @@ def main():
                             if col_cpf else None)
     print(f"Aba '{aba}': {len(clientes)} clientes ({'com' if col_cpf else 'sem'} CPF).\n")
 
-    con = duckdb.connect()  # em memória
+    # Banco de trabalho EM ARQUIVO: permite retomar de onde parou se a sessão
+    # cair no meio (queda de rede, container reiniciado). Cada zip processado é
+    # registrado em "_feitos"; numa nova execução os já feitos são pulados.
+    DB = PASTA / "dados" / "trabalho.duckdb"
+    DB.parent.mkdir(parents=True, exist_ok=True)
+    con = duckdb.connect(str(DB))
+    con.execute("CREATE TABLE IF NOT EXISTS _feitos (nome VARCHAR PRIMARY KEY);")
+
+    def ja_feito(n):
+        return con.execute("SELECT 1 FROM _feitos WHERE nome = ?", [n]).fetchone() is not None
+
+    # "alvo" é recriado a cada execução (barato e determinístico).
     con.register("clientes_in", clientes)
-    con.execute(f"CREATE TABLE alvo AS SELECT cliente, cpf_mask, "
+    con.execute(f"CREATE OR REPLACE TABLE alvo AS SELECT cliente, cpf_mask, "
                 f"{sql_normaliza('cliente')} AS nome_norm FROM clientes_in;")
+
+    def processa(grupo, ddl, insert_sql, colunas):
+        """Baixa cada zip do grupo e roda o INSERT, pulando os já feitos.
+        O INSERT e a marca em _feitos vão na mesma transação (atômico)."""
+        con.execute(ddl)
+        for nome in GRUPOS_ARQUIVOS[grupo]:
+            if ja_feito(nome):
+                print(f"   {nome}: já processado (pulando)")
+                continue
+            csv = baixa_e_extrai(base, nome)
+            glob = str(csv).replace(chr(92), "/")
+            con.execute("BEGIN;")
+            con.execute(insert_sql.format(src=read_csv(glob, colunas)))
+            con.execute("INSERT INTO _feitos VALUES (?)", [nome])
+            con.execute("COMMIT;")
+            csv.unlink()
 
     # ---- 1) varre SÓCIOS filtrando só os nossos clientes ----
     print("== Sócios (filtrando seus clientes) ==")
-    con.execute("CREATE TABLE socios_match (cnpj_basico VARCHAR, nome_socio VARCHAR, "
-                "cpf_cnpj_socio VARCHAR, qualificacao_socio VARCHAR, data_entrada VARCHAR, "
-                "cliente VARCHAR, cpf_mask VARCHAR);")
-    for nome in GRUPOS_ARQUIVOS["Socios"]:
-        csv = baixa_e_extrai(base, nome)
-        con.execute(f"""
-            INSERT INTO socios_match
-            SELECT s.cnpj_basico, s.nome_socio, s.cpf_cnpj_socio, s.qualificacao_socio,
-                   s.data_entrada_sociedade, a.cliente, a.cpf_mask
-            FROM {read_csv(str(csv).replace(chr(92), '/'), COLUNAS_SOCIOS)} s
-            JOIN alvo a ON a.nome_norm = {sql_normaliza('s.nome_socio')}
-            WHERE s.identificador_socio = '2';
-        """)
-        csv.unlink()
-        n = con.execute("SELECT count(*) FROM socios_match").fetchone()[0]
-        print(f"   acumulado: {n} vínculos")
+    processa(
+        "Socios",
+        "CREATE TABLE IF NOT EXISTS socios_match (cnpj_basico VARCHAR, nome_socio VARCHAR, "
+        "cpf_cnpj_socio VARCHAR, qualificacao_socio VARCHAR, data_entrada VARCHAR, "
+        "cliente VARCHAR, cpf_mask VARCHAR);",
+        "INSERT INTO socios_match "
+        "SELECT s.cnpj_basico, s.nome_socio, s.cpf_cnpj_socio, s.qualificacao_socio, "
+        "       s.data_entrada_sociedade, a.cliente, a.cpf_mask "
+        "FROM {src} s "
+        f"JOIN alvo a ON a.nome_norm = {sql_normaliza('s.nome_socio')} "
+        "WHERE s.identificador_socio = '2';",
+        COLUNAS_SOCIOS,
+    )
+    n = con.execute("SELECT count(*) FROM socios_match").fetchone()[0]
+    print(f"   vínculos de sócios: {n}")
 
     # marca homônimos (mesmo nome, vários CPFs) e descarta CPF que não confere
     con.execute("""
-        CREATE TABLE socios_f AS
+        CREATE OR REPLACE TABLE socios_f AS
         SELECT *, count(DISTINCT cpf_cnpj_socio) OVER (PARTITION BY cliente) AS qtd_cpfs
         FROM socios_match
         WHERE cpf_mask IS NULL OR cpf_cnpj_socio = cpf_mask;
@@ -163,46 +223,44 @@ def main():
     print(f"\nEmpresas distintas a detalhar: {len(cnpjs)}")
     if not cnpjs:
         print("Nenhum vínculo societário encontrado para esta lista.")
-    con.execute("CREATE TABLE alvo_cnpj AS SELECT DISTINCT cnpj_basico FROM socios_f;")
+    con.execute("CREATE OR REPLACE TABLE alvo_cnpj AS SELECT DISTINCT cnpj_basico FROM socios_f;")
 
     # ---- 2) EMPRESAS (capital social, razão, natureza, porte) ----
     print("\n== Empresas (capital social) ==")
-    con.execute("CREATE TABLE emp (cnpj_basico VARCHAR, razao_social VARCHAR, "
-                "natureza_juridica VARCHAR, capital_social DOUBLE, porte_empresa VARCHAR);")
-    for nome in GRUPOS_ARQUIVOS["Empresas"]:
-        csv = baixa_e_extrai(base, nome)
-        con.execute(f"""
-            INSERT INTO emp
-            SELECT e.cnpj_basico, e.razao_social, e.natureza_juridica,
-                   TRY_CAST(replace(e.capital_social, ',', '.') AS DOUBLE), e.porte_empresa
-            FROM {read_csv(str(csv).replace(chr(92), '/'), COLUNAS_EMPRESAS)} e
-            JOIN alvo_cnpj a ON a.cnpj_basico = e.cnpj_basico;
-        """)
-        csv.unlink()
+    processa(
+        "Empresas",
+        "CREATE TABLE IF NOT EXISTS emp (cnpj_basico VARCHAR, razao_social VARCHAR, "
+        "natureza_juridica VARCHAR, capital_social DOUBLE, porte_empresa VARCHAR);",
+        "INSERT INTO emp "
+        "SELECT e.cnpj_basico, e.razao_social, e.natureza_juridica, "
+        "       TRY_CAST(replace(e.capital_social, ',', '.') AS DOUBLE), e.porte_empresa "
+        "FROM {src} e "
+        "JOIN alvo_cnpj a ON a.cnpj_basico = e.cnpj_basico;",
+        COLUNAS_EMPRESAS,
+    )
 
     # ---- 3) ESTABELECIMENTOS (CNAE/atividade, UF, contato) ----
     print("\n== Estabelecimentos (atividade/contato) ==")
-    con.execute("CREATE TABLE est (cnpj_basico VARCHAR, cnpj_ordem VARCHAR, cnpj_dv VARCHAR, "
-                "situacao_cadastral VARCHAR, cnae_principal VARCHAR, uf VARCHAR, "
-                "municipio VARCHAR, ddd_1 VARCHAR, telefone_1 VARCHAR, email VARCHAR);")
-    for nome in GRUPOS_ARQUIVOS["Estabelecimentos"]:
-        csv = baixa_e_extrai(base, nome)
-        con.execute(f"""
-            INSERT INTO est
-            SELECT t.cnpj_basico, t.cnpj_ordem, t.cnpj_dv, t.situacao_cadastral,
-                   t.cnae_principal, t.uf, t.municipio, t.ddd_1, t.telefone_1, t.email
-            FROM {read_csv(str(csv).replace(chr(92), '/'), COLUNAS_ESTABELECIMENTOS)} t
-            JOIN alvo_cnpj a ON a.cnpj_basico = t.cnpj_basico
-            WHERE t.matriz_filial = '1';
-        """)
-        csv.unlink()
+    processa(
+        "Estabelecimentos",
+        "CREATE TABLE IF NOT EXISTS est (cnpj_basico VARCHAR, cnpj_ordem VARCHAR, cnpj_dv VARCHAR, "
+        "situacao_cadastral VARCHAR, cnae_principal VARCHAR, uf VARCHAR, "
+        "municipio VARCHAR, ddd_1 VARCHAR, telefone_1 VARCHAR, email VARCHAR);",
+        "INSERT INTO est "
+        "SELECT t.cnpj_basico, t.cnpj_ordem, t.cnpj_dv, t.situacao_cadastral, "
+        "       t.cnae_principal, t.uf, t.municipio, t.ddd_1, t.telefone_1, t.email "
+        "FROM {src} t "
+        "JOIN alvo_cnpj a ON a.cnpj_basico = t.cnpj_basico "
+        "WHERE t.matriz_filial = '1';",
+        COLUNAS_ESTABELECIMENTOS,
+    )
 
     # ---- 4) tabelas de domínio (pequenas) ----
     print("\n== Tabelas de referência ==")
     for tabela, grupo, in [("cnaes", "Cnaes"), ("naturezas", "Naturezas"),
                            ("qualificacoes", "Qualificacoes"), ("municipios", "Municipios")]:
         csv = baixa_e_extrai(base, GRUPOS_ARQUIVOS[grupo][0])
-        con.execute(f"CREATE TABLE {tabela} AS SELECT codigo, descricao FROM "
+        con.execute(f"CREATE OR REPLACE TABLE {tabela} AS SELECT codigo, descricao FROM "
                     f"{read_csv(str(csv).replace(chr(92), '/'), COLUNAS_DOMINIO)};")
         csv.unlink()
 
@@ -229,11 +287,16 @@ def main():
     # ---- 6) formata e escreve (mesma lógica do cruzar_clientes) ----
     escreve_saida(caminho, aba, col_cliente, clientes, res)
 
-    # limpeza
+    # limpeza (só após sucesso): apaga CSVs temporários e o banco de trabalho
     try:
         for f in TMP.glob("*"):
             f.unlink()
         TMP.rmdir()
+    except Exception:
+        pass
+    try:
+        DB.unlink()
+        (DB.parent / (DB.name + ".wal")).unlink(missing_ok=True)
     except Exception:
         pass
 
