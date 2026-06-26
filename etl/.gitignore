@@ -1,0 +1,7 @@
+# dados brutos da PGFN e saídas geradas localmente
+pgfn_csv/
+saida/
+*.zip
+*.xlsx
+empresas_divida_ativa.csv
+__pycache__/

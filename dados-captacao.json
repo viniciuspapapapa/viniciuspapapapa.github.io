@@ -1,0 +1,4022 @@
+{
+ "meta": {
+  "gerado_em": "2026-06-26T10:16:10",
+  "origem": "DEMO (dados sintéticos)",
+  "fonte": "PGFN — Dados Abertos da Dívida Ativa da União (https://dadosabertos.pgfn.gov.br/)",
+  "total_empresas": 140,
+  "valor_relevante_min": 100000.0,
+  "foco": "Minas Gerais — Belo Horizonte/RMBH e Zona da Mata",
+  "demo": true,
+  "aviso": "Dados públicos. Foco em pessoas jurídicas (CNPJ) para prospecção B2B. Confira sempre a situação atual da inscrição no e-CAC/Regularize antes de qualquer abordagem."
+ },
+ "empresas": [
+  {
+   "cnpj": "84608106200342",
+   "razao_social": "CERÂMICA MINAS VISTA EIRELI",
+   "nome_fantasia": "Cerâmica Minas Vista Eireli",
+   "uf": "MG",
+   "unidade_responsavel": "DRF BELO HORIZONTE",
+   "regiao": "Belo Horizonte / RMBH",
+   "municipio": "Santa Luzia",
+   "divida_total": 14254757.46,
+   "qtd_inscricoes": 14,
+   "qtd_ajuizadas": 0,
+   "ajuizado": false,
+   "situacoes": [
+    "Em cobrança"
+   ],
+   "receitas": [
+    "Contribuição Previdenciária",
+    "IPI",
+    "PIS/PASEP"
+   ],
+   "cnae_principal": "Fabricação de produtos de metal",
+   "situacao_cadastral": "ATIVA",
+   "porte": "DEMAIS",
+   "telefone": "(31) 15432-4675",
+   "email": "contato@cermicaminas.com.br",
+   "data_inscricao_mais_antiga": "2013-11-09",
+   "score": 80
+  },
+  {
+   "cnpj": "14141397552314",
+   "razao_social": "INDÚSTRIA QUÍMICA SÃO ESPERANÇA COMÉRCIO E INDÚSTRIA LTDA",
+   "nome_fantasia": "Indústria Química São Esperanç",
+   "uf": "MG",
+   "unidade_responsavel": "DRF JUIZ DE FORA",
+   "regiao": "Zona da Mata",
+   "municipio": "Ubá",
+   "divida_total": 14120808.25,
+   "qtd_inscricoes": 15,
+   "qtd_ajuizadas": 0,
+   "ajuizado": false,
+   "situacoes": [
+    "Parcelada",
+    "Suspensa por decisão judicial"
+   ],
+   "receitas": [
+    "IPI",
+    "IRRF",
+    "Multas Diversas"
+   ],
+   "cnae_principal": "Transporte rodoviário de carga",
+   "situacao_cadastral": "ATIVA",
+   "porte": "DEMAIS",
+   "telefone": "(31) 58139-3762",
+   "email": "contato@indstriaqumi.com.br",
+   "data_inscricao_mais_antiga": "2018-02-07",
+   "score": 80
+  },
+  {
+   "cnpj": "16995866934654",
+   "razao_social": "LOGÍSTICA NOVA DO VALE ME",
+   "nome_fantasia": "Logística Nova do Vale ME",
+   "uf": "MG",
+   "unidade_responsavel": "DRF BELO HORIZONTE",
+   "regiao": "Belo Horizonte / RMBH",
+   "municipio": "Belo Horizonte",
+   "divida_total": 13832359.32,
+   "qtd_inscricoes": 19,
+   "qtd_ajuizadas": 4,
+   "ajuizado": true,
+   "situacoes": [
+    "Ajuizada",
+    "Suspensa por decisão judicial"
+   ],
+   "receitas": [
+    "CSLL",
+    "Contribuição Previdenciária",
+    "PIS/PASEP"
+   ],
+   "cnae_principal": "Construção de edifícios",
+   "situacao_cadastral": "ATIVA",
+   "porte": "EPP",
+   "telefone": "(31) 95113-3913",
+   "email": "contato@logsticanova.com.br",
+   "data_inscricao_mais_antiga": "2016-03-05",
+   "score": 100
+  },
+  {
+   "cnpj": "35889163756289",
+   "razao_social": "CONFECÇÕES SÃO VISTA EIRELI",
+   "nome_fantasia": "Confecções São Vista Eireli",
+   "uf": "MG",
+   "unidade_responsavel": "DRF BELO HORIZONTE",
+   "regiao": "Belo Horizonte / RMBH",
+   "municipio": "Nova Lima",
+   "divida_total": 13288319.53,
+   "qtd_inscricoes": 19,
+   "qtd_ajuizadas": 0,
+   "ajuizado": false,
+   "situacoes": [
+    "Suspensa por decisão judicial"
+   ],
+   "receitas": [
+    "CSLL",
+    "Contribuição Previdenciária",
+    "IRPJ",
+    "IRRF"
+   ],
+   "cnae_principal": "Atividades de atenção hospitalar",
+   "situacao_cadastral": "ATIVA",
+   "porte": "EPP",
+   "telefone": "(31) 45371-5557",
+   "email": "contato@confecessovi.com.br",
+   "data_inscricao_mais_antiga": "2009-01-21",
+   "score": 80
+  },
+  {
+   "cnpj": "04223253672946",
+   "razao_social": "LOGÍSTICA SANTA GERAL EIRELI",
+   "nome_fantasia": "Logística Santa Geral Eireli",
+   "uf": "MG",
+   "unidade_responsavel": "DRF BELO HORIZONTE",
+   "regiao": "Belo Horizonte / RMBH",
+   "municipio": "Sabará",
+   "divida_total": 13154218.98,
+   "qtd_inscricoes": 4,
+   "qtd_ajuizadas": 3,
+   "ajuizado": true,
+   "situacoes": [
+    "Ajuizada",
+    "Em cobrança",
+    "Parcelada"
+   ],
+   "receitas": [
+    "Contribuição Previdenciária",
+    "Multas Diversas",
+    "PIS/PASEP"
+   ],
+   "cnae_principal": "Fabricação de produtos têxteis",
+   "situacao_cadastral": "ATIVA",
+   "porte": "ME",
+   "telefone": "(31) 97804-8511",
+   "email": "contato@logsticasant.com.br",
+   "data_inscricao_mais_antiga": "2015-08-03",
+   "score": 94
+  },
+  {
+   "cnpj": "80339740148902",
+   "razao_social": "CALÇADOS SÃO CENTER LTDA",
+   "nome_fantasia": "Calçados São Center",
+   "uf": "MG",
+   "unidade_responsavel": "DRF BELO HORIZONTE",
+   "regiao": "Belo Horizonte / RMBH",
+   "municipio": "Sabará",
+   "divida_total": 12989287.33,
+   "qtd_inscricoes": 11,
+   "qtd_ajuizadas": 1,
+   "ajuizado": true,
+   "situacoes": [
+    "Suspensa por decisão judicial"
+   ],
+   "receitas": [
+    "Contribuição Previdenciária",
+    "IRPJ"
+   ],
+   "cnae_principal": "Construção de edifícios",
+   "situacao_cadastral": "ATIVA",
+   "porte": "EPP",
+   "telefone": "(31) 76277-7375",
+   "email": "contato@caladossocen.com.br",
+   "data_inscricao_mais_antiga": "2023-06-01",
+   "score": 96
+  },
+  {
+   "cnpj": "39652239559059",
+   "razao_social": "AGROPECUÁRIA SANTA VISTA S.A.",
+   "nome_fantasia": "Agropecuária Santa Vista",
+   "uf": "MG",
+   "unidade_responsavel": "DRF BELO HORIZONTE",
+   "regiao": "Belo Horizonte / RMBH",
+   "municipio": "Sabará",
+   "divida_total": 12611707.1,
+   "qtd_inscricoes": 2,
+   "qtd_ajuizadas": 0,
+   "ajuizado": false,
+   "situacoes": [
+    "Parcelada"
+   ],
+   "receitas": [
+    "COFINS",
+    "IRPJ",
+    "PIS/PASEP"
+   ],
+   "cnae_principal": "Comércio varejista de mercadorias",
+   "situacao_cadastral": "ATIVA",
+   "porte": "EPP",
+   "telefone": "(31) 80861-4584",
+   "email": "contato@agropecurias.com.br",
+   "data_inscricao_mais_antiga": "2018-03-19",
+   "score": 72
+  },
+  {
+   "cnpj": "51613696816453",
+   "razao_social": "DISTRIBUIDORA DE BEBIDAS BOA VISTA ME",
+   "nome_fantasia": "Distribuidora de Bebidas Boa V",
+   "uf": "MG",
+   "unidade_responsavel": "DRF BELO HORIZONTE",
+   "regiao": "Belo Horizonte / RMBH",
+   "municipio": "Santa Luzia",
+   "divida_total": 12417188.01,
+   "qtd_inscricoes": 15,
+   "qtd_ajuizadas": 0,
+   "ajuizado": false,
+   "situacoes": [
+    "Ativa em cobrança",
+    "Em cobrança",
+    "Parcelada"
+   ],
+   "receitas": [
+    "COFINS",
+    "CSLL",
+    "IRPJ"
+   ],
+   "cnae_principal": "Transporte rodoviário de carga",
+   "situacao_cadastral": "ATIVA",
+   "porte": "EPP",
+   "telefone": "(31) 24740-3504",
+   "email": "contato@distribuidor.com.br",
+   "data_inscricao_mais_antiga": "2014-03-03",
+   "score": 80
+  },
+  {
+   "cnpj": "32710405411526",
+   "razao_social": "CALÇADOS NOVA GERAL COMÉRCIO E INDÚSTRIA LTDA",
+   "nome_fantasia": "Calçados Nova Geral Comércio e",
+   "uf": "MG",
+   "unidade_responsavel": "DRF JUIZ DE FORA",
+   "regiao": "Zona da Mata",
+   "municipio": "Cataguases",
+   "divida_total": 12253489.93,
+   "qtd_inscricoes": 21,
+   "qtd_ajuizadas": 0,
+   "ajuizado": false,
+   "situacoes": [
+    "Ajuizada",
+    "Em cobrança",
+    "Parcelada"
+   ],
+   "receitas": [
+    "CSLL",
+    "IRPJ",
+    "Multas Diversas",
+    "PIS/PASEP"
+   ],
+   "cnae_principal": "Restaurantes e similares",
+   "situacao_cadastral": "ATIVA",
+   "porte": "ME",
+   "telefone": "(31) 15272-6424",
+   "email": "contato@caladosnovag.com.br",
+   "data_inscricao_mais_antiga": "2011-12-03",
+   "score": 80
+  },
+  {
+   "cnpj": "97289623091307",
+   "razao_social": "METALÚRGICA REAL FORTE EIRELI",
+   "nome_fantasia": "Metalúrgica Real Forte Eireli",
+   "uf": "MG",
+   "unidade_responsavel": "DRF JUIZ DE FORA",
+   "regiao": "Zona da Mata",
+   "municipio": "Viçosa",
+   "divida_total": 12090106.33,
+   "qtd_inscricoes": 8,
+   "qtd_ajuizadas": 0,
+   "ajuizado": false,
+   "situacoes": [
+    "Ativa em cobrança",
+    "Parcelada"
+   ],
+   "receitas": [
+    "CSLL",
+    "IPI",
+    "IRPJ",
+    "Multas Diversas"
+   ],
+   "cnae_principal": "Fabricação de laticínios",
+   "situacao_cadastral": "ATIVA",
+   "porte": "DEMAIS",
+   "telefone": "(31) 70875-7173",
+   "email": "contato@metalrgicare.com.br",
+   "data_inscricao_mais_antiga": "2014-07-05",
+   "score": 78
+  },
+  {
+   "cnpj": "96705466889373",
+   "razao_social": "CONFECÇÕES NOVA VISTA S.A.",
+   "nome_fantasia": "Confecções Nova Vista",
+   "uf": "MG",
+   "unidade_responsavel": "DRF BELO HORIZONTE",
+   "regiao": "Belo Horizonte / RMBH",
+   "municipio": "Sabará",
+   "divida_total": 12007345.04,
+   "qtd_inscricoes": 1,
+   "qtd_ajuizadas": 0,
+   "ajuizado": false,
+   "situacoes": [
+    "Parcelada"
+   ],
+   "receitas": [
+    "CSLL",
+    "Contribuição Previdenciária",
+    "Multas Diversas"
+   ],
+   "cnae_principal": "Atividades de atenção hospitalar",
+   "situacao_cadastral": "ATIVA",
+   "porte": "ME",
+   "telefone": "(31) 53645-1444",
+   "email": "contato@confecesnova.com.br",
+   "data_inscricao_mais_antiga": "2013-07-16",
+   "score": 71
+  },
+  {
+   "cnpj": "61228685289755",
+   "razao_social": "AGROPECUÁRIA REAL CENTER S.A.",
+   "nome_fantasia": "Agropecuária Real Center",
+   "uf": "MG",
+   "unidade_responsavel": "DRF BELO HORIZONTE",
+   "regiao": "Belo Horizonte / RMBH",
+   "municipio": "Sabará",
+   "divida_total": 11699408.89,
+   "qtd_inscricoes": 19,
+   "qtd_ajuizadas": 14,
+   "ajuizado": true,
+   "situacoes": [
+    "Parcelada",
+    "Suspensa por decisão judicial"
+   ],
+   "receitas": [
+    "Contribuição Previdenciária",
+    "IPI",
+    "PIS/PASEP"
+   ],
+   "cnae_principal": "Fabricação de laticínios",
+   "situacao_cadastral": "SUSPENSA",
+   "porte": "DEMAIS",
+   "telefone": "(31) 49187-8412",
+   "email": "contato@agropecuriar.com.br",
+   "data_inscricao_mais_antiga": "2017-06-28",
+   "score": 100
+  },
+  {
+   "cnpj": "65918463865577",
+   "razao_social": "CERÂMICA SÃO CENTER COMÉRCIO E INDÚSTRIA LTDA",
+   "nome_fantasia": "Cerâmica São Center Comércio e",
+   "uf": "MG",
+   "unidade_responsavel": "DRF JUIZ DE FORA",
+   "regiao": "Zona da Mata",
+   "municipio": "Juiz de Fora",
+   "divida_total": 11644826.19,
+   "qtd_inscricoes": 18,
+   "qtd_ajuizadas": 12,
+   "ajuizado": true,
+   "situacoes": [
+    "Ativa em cobrança",
+    "Em cobrança",
+    "Parcelada"
+   ],
+   "receitas": [
+    "CSLL",
+    "IPI"
+   ],
+   "cnae_principal": "Construção de edifícios",
+   "situacao_cadastral": "ATIVA",
+   "porte": "EPP",
+   "telefone": "(31) 26498-3578",
+   "email": "contato@cermicasocen.com.br",
+   "data_inscricao_mais_antiga": "2023-10-01",
+   "score": 95
+  },
+  {
+   "cnpj": "33484344375758",
+   "razao_social": "CONFECÇÕES REAL GERAL COMÉRCIO E INDÚSTRIA LTDA",
+   "nome_fantasia": "Confecções Real Geral Comércio",
+   "uf": "MG",
+   "unidade_responsavel": "DRF BELO HORIZONTE",
+   "regiao": "Belo Horizonte / RMBH",
+   "municipio": "Contagem",
+   "divida_total": 11372019.3,
+   "qtd_inscricoes": 9,
+   "qtd_ajuizadas": 0,
+   "ajuizado": false,
+   "situacoes": [
+    "Em cobrança",
+    "Parcelada"
+   ],
+   "receitas": [
+    "COFINS",
+    "CSLL",
+    "Contribuição Previdenciária",
+    "Multas Diversas"
+   ],
+   "cnae_principal": "Fabricação de produtos de metal",
+   "situacao_cadastral": "ATIVA",
+   "porte": "ME",
+   "telefone": "(31) 47398-8247",
+   "email": "contato@confecesreal.com.br",
+   "data_inscricao_mais_antiga": "2023-12-09",
+   "score": 74
+  },
+  {
+   "cnpj": "25881537147321",
+   "razao_social": "CALÇADOS NOVA ESPERANÇA EIRELI",
+   "nome_fantasia": "Calçados Nova Esperança Eireli",
+   "uf": "MG",
+   "unidade_responsavel": "DRF BELO HORIZONTE",
+   "regiao": "Belo Horizonte / RMBH",
+   "municipio": "Nova Lima",
+   "divida_total": 11338717.51,
+   "qtd_inscricoes": 12,
+   "qtd_ajuizadas": 0,
+   "ajuizado": false,
+   "situacoes": [
+    "Ativa em cobrança",
+    "Em cobrança",
+    "Parcelada"
+   ],
+   "receitas": [
+    "CSLL",
+    "Contribuição Previdenciária",
+    "Multas Diversas"
+   ],
+   "cnae_principal": "Atividades de atenção hospitalar",
+   "situacao_cadastral": "SUSPENSA",
+   "porte": "DEMAIS",
+   "telefone": "(31) 42441-9148",
+   "email": "contato@caladosnovae.com.br",
+   "data_inscricao_mais_antiga": "2009-05-13",
+   "score": 80
+  },
+  {
+   "cnpj": "30316179904210",
+   "razao_social": "TRANSPORTES REAL GERAL ME",
+   "nome_fantasia": "Transportes Real Geral ME",
+   "uf": "MG",
+   "unidade_responsavel": "DRF BELO HORIZONTE",
+   "regiao": "Belo Horizonte / RMBH",
+   "municipio": "Contagem",
+   "divida_total": 10447913.93,
+   "qtd_inscricoes": 3,
+   "qtd_ajuizadas": 3,
+   "ajuizado": true,
+   "situacoes": [
+    "Ativa em cobrança"
+   ],
+   "receitas": [
+    "COFINS",
+    "Contribuição Previdenciária",
+    "IPI",
+    "Multas Diversas"
+   ],
+   "cnae_principal": "Transporte rodoviário de carga",
+   "situacao_cadastral": "ATIVA",
+   "porte": "EPP",
+   "telefone": "(31) 37227-2934",
+   "email": "contato@transportesr.com.br",
+   "data_inscricao_mais_antiga": "2020-03-23",
+   "score": 93
+  },
+  {
+   "cnpj": "72774348734714",
+   "razao_social": "MINERAÇÃO REAL DO VALE EIRELI",
+   "nome_fantasia": "Mineração Real do Vale Eireli",
+   "uf": "MG",
+   "unidade_responsavel": "DRF BELO HORIZONTE",
+   "regiao": "Belo Horizonte / RMBH",
+   "municipio": "Nova Lima",
+   "divida_total": 9964480.2,
+   "qtd_inscricoes": 17,
+   "qtd_ajuizadas": 17,
+   "ajuizado": true,
+   "situacoes": [
+    "Em cobrança",
+    "Suspensa por decisão judicial"
+   ],
+   "receitas": [
+    "COFINS",
+    "CSLL"
+   ],
+   "cnae_principal": "Restaurantes e similares",
+   "situacao_cadastral": "ATIVA",
+   "porte": "EPP",
+   "telefone": "(31) 10418-7797",
+   "email": "contato@mineraoreald.com.br",
+   "data_inscricao_mais_antiga": "2012-05-11",
+   "score": 92
+  },
+  {
+   "cnpj": "99091699854353",
+   "razao_social": "MINERAÇÃO SANTA VISTA COMÉRCIO E INDÚSTRIA LTDA",
+   "nome_fantasia": "Mineração Santa Vista Comércio",
+   "uf": "MG",
+   "unidade_responsavel": "DRF BELO HORIZONTE",
+   "regiao": "Belo Horizonte / RMBH",
+   "municipio": "Sabará",
+   "divida_total": 9735456.38,
+   "qtd_inscricoes": 8,
+   "qtd_ajuizadas": 3,
+   "ajuizado": true,
+   "situacoes": [
+    "Ajuizada",
+    "Ativa em cobrança",
+    "Parcelada"
+   ],
+   "receitas": [
+    "IRPJ"
+   ],
+   "cnae_principal": "Atividades de atenção hospitalar",
+   "situacao_cadastral": "ATIVA",
+   "porte": "ME",
+   "telefone": "(31) 72468-4492",
+   "email": "contato@mineraosanta.com.br",
+   "data_inscricao_mais_antiga": "2013-07-05",
+   "score": 90
+  },
+  {
+   "cnpj": "75655125674680",
+   "razao_social": "CALÇADOS REAL CENTER ME",
+   "nome_fantasia": "Calçados Real Center ME",
+   "uf": "MG",
+   "unidade_responsavel": "DRF JUIZ DE FORA",
+   "regiao": "Zona da Mata",
+   "municipio": "Muriaé",
+   "divida_total": 9609285.13,
+   "qtd_inscricoes": 16,
+   "qtd_ajuizadas": 0,
+   "ajuizado": false,
+   "situacoes": [
+    "Ajuizada",
+    "Em cobrança"
+   ],
+   "receitas": [
+    "IPI",
+    "IRPJ",
+    "Multas Diversas",
+    "PIS/PASEP"
+   ],
+   "cnae_principal": "Restaurantes e similares",
+   "situacao_cadastral": "ATIVA",
+   "porte": "EPP",
+   "telefone": "(31) 69952-6927",
+   "email": "contato@caladosrealc.com.br",
+   "data_inscricao_mais_antiga": "2016-02-11",
+   "score": 72
+  },
+  {
+   "cnpj": "95527177449058",
+   "razao_social": "CONSTRUTORA SANTA CENTER ME",
+   "nome_fantasia": "Construtora Santa Center ME",
+   "uf": "MG",
+   "unidade_responsavel": "DRF JUIZ DE FORA",
+   "regiao": "Zona da Mata",
+   "municipio": "Viçosa",
+   "divida_total": 9533085.17,
+   "qtd_inscricoes": 19,
+   "qtd_ajuizadas": 0,
+   "ajuizado": false,
+   "situacoes": [
+    "Em cobrança",
+    "Suspensa por decisão judicial"
+   ],
+   "receitas": [
+    "IPI",
+    "IRPJ",
+    "Multas Diversas"
+   ],
+   "cnae_principal": "Comércio varejista de mercadorias",
+   "situacao_cadastral": "SUSPENSA",
+   "porte": "DEMAIS",
+   "telefone": "(31) 78064-1672",
+   "email": "contato@construtoras.com.br",
+   "data_inscricao_mais_antiga": "2010-05-15",
+   "score": 72
+  },
+  {
+   "cnpj": "64090974395339",
+   "razao_social": "INDÚSTRIA QUÍMICA NOVA FORTE LTDA",
+   "nome_fantasia": "Indústria Química Nova Forte",
+   "uf": "MG",
+   "unidade_responsavel": "DRF BELO HORIZONTE",
+   "regiao": "Belo Horizonte / RMBH",
+   "municipio": "Betim",
+   "divida_total": 9472555.09,
+   "qtd_inscricoes": 10,
+   "qtd_ajuizadas": 10,
+   "ajuizado": true,
+   "situacoes": [
+    "Ajuizada",
+    "Ativa em cobrança",
+    "Em cobrança"
+   ],
+   "receitas": [
+    "IPI"
+   ],
+   "cnae_principal": "Atividades de atenção hospitalar",
+   "situacao_cadastral": "ATIVA",
+   "porte": "DEMAIS",
+   "telefone": "(31) 97991-3153",
+   "email": "contato@indstriaqumi.com.br",
+   "data_inscricao_mais_antiga": "2013-11-25",
+   "score": 92
+  },
+  {
+   "cnpj": "42257905072368",
+   "razao_social": "HOSPITAL SANTA DO VALE ME",
+   "nome_fantasia": "Hospital Santa do Vale ME",
+   "uf": "MG",
+   "unidade_responsavel": "DRF BELO HORIZONTE",
+   "regiao": "Belo Horizonte / RMBH",
+   "municipio": "Nova Lima",
+   "divida_total": 8985930.51,
+   "qtd_inscricoes": 6,
+   "qtd_ajuizadas": 3,
+   "ajuizado": true,
+   "situacoes": [
+    "Parcelada",
+    "Suspensa por decisão judicial"
+   ],
+   "receitas": [
+    "CSLL",
+    "IPI",
+    "IRPJ",
+    "IRRF"
+   ],
+   "cnae_principal": "Fabricação de produtos de metal",
+   "situacao_cadastral": "ATIVA",
+   "porte": "DEMAIS",
+   "telefone": "(31) 6285-5503",
+   "email": "contato@hospitalsant.com.br",
+   "data_inscricao_mais_antiga": "2017-11-16",
+   "score": 88
+  },
+  {
+   "cnpj": "92827229927503",
+   "razao_social": "FRIGORÍFICO SANTA FORTE COMÉRCIO E INDÚSTRIA LTDA",
+   "nome_fantasia": "Frigorífico Santa Forte Comérc",
+   "uf": "MG",
+   "unidade_responsavel": "DRF BELO HORIZONTE",
+   "regiao": "Belo Horizonte / RMBH",
+   "municipio": "Sabará",
+   "divida_total": 8528174.51,
+   "qtd_inscricoes": 8,
+   "qtd_ajuizadas": 0,
+   "ajuizado": false,
+   "situacoes": [
+    "Ajuizada"
+   ],
+   "receitas": [
+    "IRPJ",
+    "Multas Diversas",
+    "PIS/PASEP"
+   ],
+   "cnae_principal": "Fabricação de laticínios",
+   "situacao_cadastral": "ATIVA",
+   "porte": "DEMAIS",
+   "telefone": "(31) 63561-8448",
+   "email": "contato@frigorficosa.com.br",
+   "data_inscricao_mais_antiga": "2021-08-08",
+   "score": 69
+  },
+  {
+   "cnpj": "62638380657875",
+   "razao_social": "TRANSPORTES SÃO DO VALE COMÉRCIO E INDÚSTRIA LTDA",
+   "nome_fantasia": "Transportes São do Vale Comérc",
+   "uf": "MG",
+   "unidade_responsavel": "DRF BELO HORIZONTE",
+   "regiao": "Belo Horizonte / RMBH",
+   "municipio": "Nova Lima",
+   "divida_total": 8485590.93,
+   "qtd_inscricoes": 16,
+   "qtd_ajuizadas": 8,
+   "ajuizado": true,
+   "situacoes": [
+    "Ajuizada",
+    "Parcelada"
+   ],
+   "receitas": [
+    "COFINS",
+    "IRPJ"
+   ],
+   "cnae_principal": "Fabricação de laticínios",
+   "situacao_cadastral": "ATIVA",
+   "porte": "DEMAIS",
+   "telefone": "(31) 9679-8728",
+   "email": "contato@transportess.com.br",
+   "data_inscricao_mais_antiga": "2023-10-17",
+   "score": 87
+  },
+  {
+   "cnpj": "39103717058650",
+   "razao_social": "INDÚSTRIA QUÍMICA SÃO VISTA COMÉRCIO E INDÚSTRIA LTDA",
+   "nome_fantasia": "Indústria Química São Vista Co",
+   "uf": "MG",
+   "unidade_responsavel": "DRF BELO HORIZONTE",
+   "regiao": "Belo Horizonte / RMBH",
+   "municipio": "Nova Lima",
+   "divida_total": 8368825.29,
+   "qtd_inscricoes": 19,
+   "qtd_ajuizadas": 11,
+   "ajuizado": true,
+   "situacoes": [
+    "Ativa em cobrança",
+    "Em cobrança",
+    "Suspensa por decisão judicial"
+   ],
+   "receitas": [
+    "PIS/PASEP"
+   ],
+   "cnae_principal": "Comércio varejista de mercadorias",
+   "situacao_cadastral": "ATIVA",
+   "porte": "EPP",
+   "telefone": "(31) 71685-7313",
+   "email": "contato@indstriaqumi.com.br",
+   "data_inscricao_mais_antiga": "2022-10-09",
+   "score": 89
+  },
+  {
+   "cnpj": "12004711382675",
+   "razao_social": "LOGÍSTICA BOA DO VALE S.A.",
+   "nome_fantasia": "Logística Boa do Vale",
+   "uf": "MG",
+   "unidade_responsavel": "DRF BELO HORIZONTE",
+   "regiao": "Belo Horizonte / RMBH",
+   "municipio": "Sabará",
+   "divida_total": 8035477.97,
+   "qtd_inscricoes": 10,
+   "qtd_ajuizadas": 0,
+   "ajuizado": false,
+   "situacoes": [
+    "Ativa em cobrança",
+    "Parcelada",
+    "Suspensa por decisão judicial"
+   ],
+   "receitas": [
+    "IRRF"
+   ],
+   "cnae_principal": "Restaurantes e similares",
+   "situacao_cadastral": "ATIVA",
+   "porte": "ME",
+   "telefone": "(31) 92476-7070",
+   "email": "contato@logsticaboad.com.br",
+   "data_inscricao_mais_antiga": "2019-12-23",
+   "score": 72
+  },
+  {
+   "cnpj": "73121727155188",
+   "razao_social": "MINERAÇÃO NOVA DO VALE LTDA",
+   "nome_fantasia": "Mineração Nova do Vale",
+   "uf": "MG",
+   "unidade_responsavel": "DRF JUIZ DE FORA",
+   "regiao": "Zona da Mata",
+   "municipio": "Cataguases",
+   "divida_total": 7801550.46,
+   "qtd_inscricoes": 10,
+   "qtd_ajuizadas": 0,
+   "ajuizado": false,
+   "situacoes": [
+    "Ativa em cobrança"
+   ],
+   "receitas": [
+    "CSLL",
+    "IRPJ",
+    "PIS/PASEP"
+   ],
+   "cnae_principal": "Transporte rodoviário de carga",
+   "situacao_cadastral": "ATIVA",
+   "porte": "DEMAIS",
+   "telefone": "(31) 5445-6912",
+   "email": "contato@mineraonovad.com.br",
+   "data_inscricao_mais_antiga": "2013-05-28",
+   "score": 72
+  },
+  {
+   "cnpj": "75170166088019",
+   "razao_social": "LOGÍSTICA MINAS FORTE ME",
+   "nome_fantasia": "Logística Minas Forte ME",
+   "uf": "MG",
+   "unidade_responsavel": "DRF BELO HORIZONTE",
+   "regiao": "Belo Horizonte / RMBH",
+   "municipio": "Contagem",
+   "divida_total": 7774455.39,
+   "qtd_inscricoes": 15,
+   "qtd_ajuizadas": 15,
+   "ajuizado": true,
+   "situacoes": [
+    "Ajuizada",
+    "Ativa em cobrança",
+    "Suspensa por decisão judicial"
+   ],
+   "receitas": [
+    "COFINS",
+    "CSLL",
+    "IRPJ",
+    "Multas Diversas"
+   ],
+   "cnae_principal": "Atividades de atenção hospitalar",
+   "situacao_cadastral": "ATIVA",
+   "porte": "DEMAIS",
+   "telefone": "(31) 95933-6952",
+   "email": "contato@logsticamina.com.br",
+   "data_inscricao_mais_antiga": "2018-11-10",
+   "score": 92
+  },
+  {
+   "cnpj": "62174596158657",
+   "razao_social": "TRANSPORTES REAL DO VALE EIRELI",
+   "nome_fantasia": "Transportes Real do Vale Eirel",
+   "uf": "MG",
+   "unidade_responsavel": "DRF BELO HORIZONTE",
+   "regiao": "Belo Horizonte / RMBH",
+   "municipio": "Belo Horizonte",
+   "divida_total": 7723980.73,
+   "qtd_inscricoes": 15,
+   "qtd_ajuizadas": 4,
+   "ajuizado": true,
+   "situacoes": [
+    "Ajuizada",
+    "Ativa em cobrança",
+    "Em cobrança"
+   ],
+   "receitas": [
+    "IRPJ",
+    "Multas Diversas",
+    "PIS/PASEP"
+   ],
+   "cnae_principal": "Restaurantes e similares",
+   "situacao_cadastral": "ATIVA",
+   "porte": "ME",
+   "telefone": "(31) 60153-3725",
+   "email": "contato@transportesr.com.br",
+   "data_inscricao_mais_antiga": "2022-09-02",
+   "score": 89
+  },
+  {
+   "cnpj": "24808613171274",
+   "razao_social": "CONFECÇÕES SÃO ESPERANÇA EIRELI",
+   "nome_fantasia": "Confecções São Esperança Eirel",
+   "uf": "MG",
+   "unidade_responsavel": "DRF JUIZ DE FORA",
+   "regiao": "Zona da Mata",
+   "municipio": "Cataguases",
+   "divida_total": 7695509.24,
+   "qtd_inscricoes": 16,
+   "qtd_ajuizadas": 7,
+   "ajuizado": true,
+   "situacoes": [
+    "Parcelada",
+    "Suspensa por decisão judicial"
+   ],
+   "receitas": [
+    "IPI",
+    "IRRF"
+   ],
+   "cnae_principal": "Transporte rodoviário de carga",
+   "situacao_cadastral": "SUSPENSA",
+   "porte": "EPP",
+   "telefone": "(31) 80561-9327",
+   "email": "contato@confecessoes.com.br",
+   "data_inscricao_mais_antiga": "2017-12-09",
+   "score": 92
+  },
+  {
+   "cnpj": "11219656523413",
+   "razao_social": "CONFECÇÕES BOA CENTER S.A.",
+   "nome_fantasia": "Confecções Boa Center",
+   "uf": "MG",
+   "unidade_responsavel": "DRF JUIZ DE FORA",
+   "regiao": "Zona da Mata",
+   "municipio": "Muriaé",
+   "divida_total": 7352228.63,
+   "qtd_inscricoes": 15,
+   "qtd_ajuizadas": 0,
+   "ajuizado": false,
+   "situacoes": [
+    "Ajuizada",
+    "Parcelada",
+    "Suspensa por decisão judicial"
+   ],
+   "receitas": [
+    "IPI"
+   ],
+   "cnae_principal": "Fabricação de laticínios",
+   "situacao_cadastral": "ATIVA",
+   "porte": "DEMAIS",
+   "telefone": "(31) 40737-1894",
+   "email": "contato@confecesboac.com.br",
+   "data_inscricao_mais_antiga": "2017-10-20",
+   "score": 72
+  },
+  {
+   "cnpj": "91251778528922",
+   "razao_social": "CONFECÇÕES REAL ESPERANÇA COMÉRCIO E INDÚSTRIA LTDA",
+   "nome_fantasia": "Confecções Real Esperança Comé",
+   "uf": "MG",
+   "unidade_responsavel": "DRF BELO HORIZONTE",
+   "regiao": "Belo Horizonte / RMBH",
+   "municipio": "Betim",
+   "divida_total": 7176079.75,
+   "qtd_inscricoes": 16,
+   "qtd_ajuizadas": 13,
+   "ajuizado": true,
+   "situacoes": [
+    "Em cobrança"
+   ],
+   "receitas": [
+    "CSLL",
+    "IPI"
+   ],
+   "cnae_principal": "Transporte rodoviário de carga",
+   "situacao_cadastral": "ATIVA",
+   "porte": "EPP",
+   "telefone": "(31) 47353-9501",
+   "email": "contato@confecesreal.com.br",
+   "data_inscricao_mais_antiga": "2015-09-28",
+   "score": 92
+  },
+  {
+   "cnpj": "26842450882100",
+   "razao_social": "FRIGORÍFICO REAL VISTA EIRELI",
+   "nome_fantasia": "Frigorífico Real Vista Eireli",
+   "uf": "MG",
+   "unidade_responsavel": "DRF BELO HORIZONTE",
+   "regiao": "Belo Horizonte / RMBH",
+   "municipio": "Santa Luzia",
+   "divida_total": 7136472.36,
+   "qtd_inscricoes": 1,
+   "qtd_ajuizadas": 0,
+   "ajuizado": false,
+   "situacoes": [
+    "Ativa em cobrança",
+    "Em cobrança",
+    "Suspensa por decisão judicial"
+   ],
+   "receitas": [
+    "CSLL",
+    "Multas Diversas"
+   ],
+   "cnae_principal": "Restaurantes e similares",
+   "situacao_cadastral": "ATIVA",
+   "porte": "EPP",
+   "telefone": "(31) 26116-4617",
+   "email": "contato@frigorficore.com.br",
+   "data_inscricao_mais_antiga": "2018-10-13",
+   "score": 63
+  },
+  {
+   "cnpj": "95931034131647",
+   "razao_social": "HOSPITAL BOA VISTA ME",
+   "nome_fantasia": "Hospital Boa Vista ME",
+   "uf": "MG",
+   "unidade_responsavel": "DRF BELO HORIZONTE",
+   "regiao": "Belo Horizonte / RMBH",
+   "municipio": "Betim",
+   "divida_total": 6920946.9,
+   "qtd_inscricoes": 10,
+   "qtd_ajuizadas": 0,
+   "ajuizado": false,
+   "situacoes": [
+    "Ajuizada",
+    "Ativa em cobrança"
+   ],
+   "receitas": [
+    "CSLL",
+    "IPI",
+    "Multas Diversas"
+   ],
+   "cnae_principal": "Transporte rodoviário de carga",
+   "situacao_cadastral": "ATIVA",
+   "porte": "EPP",
+   "telefone": "(31) 62589-7216",
+   "email": "contato@hospitalboav.com.br",
+   "data_inscricao_mais_antiga": "2019-06-06",
+   "score": 72
+  },
+  {
+   "cnpj": "89023303070534",
+   "razao_social": "CALÇADOS REAL GERAL LTDA",
+   "nome_fantasia": "Calçados Real Geral",
+   "uf": "MG",
+   "unidade_responsavel": "DRF BELO HORIZONTE",
+   "regiao": "Belo Horizonte / RMBH",
+   "municipio": "Nova Lima",
+   "divida_total": 6044600.21,
+   "qtd_inscricoes": 13,
+   "qtd_ajuizadas": 13,
+   "ajuizado": true,
+   "situacoes": [
+    "Em cobrança",
+    "Suspensa por decisão judicial"
+   ],
+   "receitas": [
+    "Multas Diversas",
+    "PIS/PASEP"
+   ],
+   "cnae_principal": "Atividades de atenção hospitalar",
+   "situacao_cadastral": "ATIVA",
+   "porte": "DEMAIS",
+   "telefone": "(31) 78923-6730",
+   "email": "contato@caladosrealg.com.br",
+   "data_inscricao_mais_antiga": "2014-08-17",
+   "score": 92
+  },
+  {
+   "cnpj": "96631931491905",
+   "razao_social": "HOSPITAL REAL CENTER LTDA",
+   "nome_fantasia": "Hospital Real Center",
+   "uf": "MG",
+   "unidade_responsavel": "DRF JUIZ DE FORA",
+   "regiao": "Zona da Mata",
+   "municipio": "Muriaé",
+   "divida_total": 6043505.95,
+   "qtd_inscricoes": 1,
+   "qtd_ajuizadas": 0,
+   "ajuizado": false,
+   "situacoes": [
+    "Ajuizada",
+    "Em cobrança"
+   ],
+   "receitas": [
+    "Contribuição Previdenciária"
+   ],
+   "cnae_principal": "Atividades de atenção hospitalar",
+   "situacao_cadastral": "ATIVA",
+   "porte": "DEMAIS",
+   "telefone": "(31) 49472-8532",
+   "email": "contato@hospitalreal.com.br",
+   "data_inscricao_mais_antiga": "2017-07-22",
+   "score": 63
+  },
+  {
+   "cnpj": "48016245650609",
+   "razao_social": "MINERAÇÃO NOVA ESPERANÇA S.A.",
+   "nome_fantasia": "Mineração Nova Esperança",
+   "uf": "MG",
+   "unidade_responsavel": "DRF BELO HORIZONTE",
+   "regiao": "Belo Horizonte / RMBH",
+   "municipio": "Nova Lima",
+   "divida_total": 5657632.4,
+   "qtd_inscricoes": 21,
+   "qtd_ajuizadas": 0,
+   "ajuizado": false,
+   "situacoes": [
+    "Ajuizada",
+    "Ativa em cobrança",
+    "Em cobrança"
+   ],
+   "receitas": [
+    "Contribuição Previdenciária",
+    "IPI",
+    "IRRF",
+    "Multas Diversas"
+   ],
+   "cnae_principal": "Comércio varejista de mercadorias",
+   "situacao_cadastral": "ATIVA",
+   "porte": "ME",
+   "telefone": "(31) 53629-7114",
+   "email": "contato@mineraonovae.com.br",
+   "data_inscricao_mais_antiga": "2017-04-12",
+   "score": 72
+  },
+  {
+   "cnpj": "68872588744956",
+   "razao_social": "ENGENHARIA BOA GERAL COMÉRCIO E INDÚSTRIA LTDA",
+   "nome_fantasia": "Engenharia Boa Geral Comércio ",
+   "uf": "MG",
+   "unidade_responsavel": "DRF BELO HORIZONTE",
+   "regiao": "Belo Horizonte / RMBH",
+   "municipio": "Nova Lima",
+   "divida_total": 5582287.06,
+   "qtd_inscricoes": 13,
+   "qtd_ajuizadas": 0,
+   "ajuizado": false,
+   "situacoes": [
+    "Ativa em cobrança",
+    "Em cobrança",
+    "Parcelada"
+   ],
+   "receitas": [
+    "CSLL",
+    "IRRF"
+   ],
+   "cnae_principal": "Restaurantes e similares",
+   "situacao_cadastral": "ATIVA",
+   "porte": "ME",
+   "telefone": "(31) 23068-7375",
+   "email": "contato@engenhariabo.com.br",
+   "data_inscricao_mais_antiga": "2020-03-28",
+   "score": 72
+  },
+  {
+   "cnpj": "18451462704828",
+   "razao_social": "HOSPITAL SÃO FORTE ME",
+   "nome_fantasia": "Hospital São Forte ME",
+   "uf": "MG",
+   "unidade_responsavel": "DRF JUIZ DE FORA",
+   "regiao": "Zona da Mata",
+   "municipio": "Cataguases",
+   "divida_total": 5268383.56,
+   "qtd_inscricoes": 1,
+   "qtd_ajuizadas": 0,
+   "ajuizado": false,
+   "situacoes": [
+    "Ajuizada",
+    "Ativa em cobrança",
+    "Em cobrança"
+   ],
+   "receitas": [
+    "COFINS",
+    "Contribuição Previdenciária",
+    "IPI"
+   ],
+   "cnae_principal": "Fabricação de produtos de metal",
+   "situacao_cadastral": "ATIVA",
+   "porte": "DEMAIS",
+   "telefone": "(31) 4552-2832",
+   "email": "contato@hospitalsofo.com.br",
+   "data_inscricao_mais_antiga": "2023-02-28",
+   "score": 59
+  },
+  {
+   "cnpj": "52058527722170",
+   "razao_social": "MÓVEIS BOA CENTER LTDA",
+   "nome_fantasia": "Móveis Boa Center",
+   "uf": "MG",
+   "unidade_responsavel": "DRF BELO HORIZONTE",
+   "regiao": "Belo Horizonte / RMBH",
+   "municipio": "Nova Lima",
+   "divida_total": 5134637.02,
+   "qtd_inscricoes": 21,
+   "qtd_ajuizadas": 18,
+   "ajuizado": true,
+   "situacoes": [
+    "Em cobrança"
+   ],
+   "receitas": [
+    "IPI",
+    "IRRF",
+    "PIS/PASEP"
+   ],
+   "cnae_principal": "Atividades de atenção hospitalar",
+   "situacao_cadastral": "ATIVA",
+   "porte": "ME",
+   "telefone": "(31) 86790-4131",
+   "email": "contato@mveisboacent.com.br",
+   "data_inscricao_mais_antiga": "2013-04-02",
+   "score": 92
+  },
+  {
+   "cnpj": "30561648408588",
+   "razao_social": "MINERAÇÃO NOVA DO VALE LTDA",
+   "nome_fantasia": "Mineração Nova do Vale",
+   "uf": "MG",
+   "unidade_responsavel": "DRF JUIZ DE FORA",
+   "regiao": "Zona da Mata",
+   "municipio": "Leopoldina",
+   "divida_total": 5124522.39,
+   "qtd_inscricoes": 20,
+   "qtd_ajuizadas": 0,
+   "ajuizado": false,
+   "situacoes": [
+    "Ajuizada",
+    "Ativa em cobrança"
+   ],
+   "receitas": [
+    "CSLL"
+   ],
+   "cnae_principal": "Transporte rodoviário de carga",
+   "situacao_cadastral": "ATIVA",
+   "porte": "ME",
+   "telefone": "(31) 29627-4492",
+   "email": "contato@mineraonovad.com.br",
+   "data_inscricao_mais_antiga": "2016-08-02",
+   "score": 72
+  },
+  {
+   "cnpj": "45116868548709",
+   "razao_social": "INDÚSTRIA QUÍMICA SANTA VISTA ME",
+   "nome_fantasia": "Indústria Química Santa Vista ",
+   "uf": "MG",
+   "unidade_responsavel": "DRF JUIZ DE FORA",
+   "regiao": "Zona da Mata",
+   "municipio": "Ponte Nova",
+   "divida_total": 4624950.64,
+   "qtd_inscricoes": 5,
+   "qtd_ajuizadas": 0,
+   "ajuizado": false,
+   "situacoes": [
+    "Em cobrança",
+    "Parcelada"
+   ],
+   "receitas": [
+    "COFINS",
+    "IPI"
+   ],
+   "cnae_principal": "Comércio varejista de mercadorias",
+   "situacao_cadastral": "ATIVA",
+   "porte": "ME",
+   "telefone": "(31) 39498-9775",
+   "email": "contato@indstriaqumi.com.br",
+   "data_inscricao_mais_antiga": "2018-09-26",
+   "score": 59
+  },
+  {
+   "cnpj": "07836134074517",
+   "razao_social": "COMÉRCIO DE ALIMENTOS NOVA DO VALE ME",
+   "nome_fantasia": "Comércio de Alimentos Nova do ",
+   "uf": "MG",
+   "unidade_responsavel": "DRF BELO HORIZONTE",
+   "regiao": "Belo Horizonte / RMBH",
+   "municipio": "Betim",
+   "divida_total": 3484686.47,
+   "qtd_inscricoes": 12,
+   "qtd_ajuizadas": 12,
+   "ajuizado": true,
+   "situacoes": [
+    "Ativa em cobrança"
+   ],
+   "receitas": [
+    "CSLL",
+    "Contribuição Previdenciária",
+    "IPI"
+   ],
+   "cnae_principal": "Transporte rodoviário de carga",
+   "situacao_cadastral": "ATIVA",
+   "porte": "EPP",
+   "telefone": "(31) 9780-6747",
+   "email": "contato@comrciodeali.com.br",
+   "data_inscricao_mais_antiga": "2022-02-25",
+   "score": 82
+  },
+  {
+   "cnpj": "80737416724342",
+   "razao_social": "AGROPECUÁRIA BOA FORTE EIRELI",
+   "nome_fantasia": "Agropecuária Boa Forte Eireli",
+   "uf": "MG",
+   "unidade_responsavel": "DRF JUIZ DE FORA",
+   "regiao": "Zona da Mata",
+   "municipio": "Ponte Nova",
+   "divida_total": 3480541.71,
+   "qtd_inscricoes": 7,
+   "qtd_ajuizadas": 2,
+   "ajuizado": true,
+   "situacoes": [
+    "Em cobrança",
+    "Parcelada"
+   ],
+   "receitas": [
+    "Contribuição Previdenciária",
+    "IPI",
+    "IRRF",
+    "PIS/PASEP"
+   ],
+   "cnae_principal": "Fabricação de produtos de metal",
+   "situacao_cadastral": "ATIVA",
+   "porte": "ME",
+   "telefone": "(31) 16335-5067",
+   "email": "contato@agropecuriab.com.br",
+   "data_inscricao_mais_antiga": "2020-07-26",
+   "score": 81
+  },
+  {
+   "cnpj": "24103865719182",
+   "razao_social": "METALÚRGICA BOA VISTA ME",
+   "nome_fantasia": "Metalúrgica Boa Vista ME",
+   "uf": "MG",
+   "unidade_responsavel": "DRF BELO HORIZONTE",
+   "regiao": "Belo Horizonte / RMBH",
+   "municipio": "Santa Luzia",
+   "divida_total": 3351337.25,
+   "qtd_inscricoes": 8,
+   "qtd_ajuizadas": 0,
+   "ajuizado": false,
+   "situacoes": [
+    "Ativa em cobrança",
+    "Em cobrança",
+    "Suspensa por decisão judicial"
+   ],
+   "receitas": [
+    "COFINS",
+    "PIS/PASEP"
+   ],
+   "cnae_principal": "Construção de edifícios",
+   "situacao_cadastral": "ATIVA",
+   "porte": "DEMAIS",
+   "telefone": "(31) 93845-6345",
+   "email": "contato@metalrgicabo.com.br",
+   "data_inscricao_mais_antiga": "2019-07-03",
+   "score": 62
+  },
+  {
+   "cnpj": "75304637454990",
+   "razao_social": "INDÚSTRIA QUÍMICA SANTA DO VALE ME",
+   "nome_fantasia": "Indústria Química Santa do Val",
+   "uf": "MG",
+   "unidade_responsavel": "DRF JUIZ DE FORA",
+   "regiao": "Zona da Mata",
+   "municipio": "Leopoldina",
+   "divida_total": 3127591.01,
+   "qtd_inscricoes": 4,
+   "qtd_ajuizadas": 1,
+   "ajuizado": true,
+   "situacoes": [
+    "Ajuizada",
+    "Ativa em cobrança",
+    "Em cobrança"
+   ],
+   "receitas": [
+    "IRRF"
+   ],
+   "cnae_principal": "Construção de edifícios",
+   "situacao_cadastral": "ATIVA",
+   "porte": "DEMAIS",
+   "telefone": "(31) 91925-9233",
+   "email": "contato@indstriaqumi.com.br",
+   "data_inscricao_mais_antiga": "2013-11-12",
+   "score": 78
+  },
+  {
+   "cnpj": "52816850542357",
+   "razao_social": "MÓVEIS BOA CENTER ME",
+   "nome_fantasia": "Móveis Boa Center ME",
+   "uf": "MG",
+   "unidade_responsavel": "DRF BELO HORIZONTE",
+   "regiao": "Belo Horizonte / RMBH",
+   "municipio": "Contagem",
+   "divida_total": 3101347.16,
+   "qtd_inscricoes": 13,
+   "qtd_ajuizadas": 0,
+   "ajuizado": false,
+   "situacoes": [
+    "Em cobrança"
+   ],
+   "receitas": [
+    "CSLL",
+    "Contribuição Previdenciária",
+    "IPI"
+   ],
+   "cnae_principal": "Fabricação de produtos de metal",
+   "situacao_cadastral": "ATIVA",
+   "porte": "EPP",
+   "telefone": "(31) 80282-7172",
+   "email": "contato@mveisboacent.com.br",
+   "data_inscricao_mais_antiga": "2012-04-05",
+   "score": 64
+  },
+  {
+   "cnpj": "31599965047735",
+   "razao_social": "CERÂMICA NOVA CENTER S.A.",
+   "nome_fantasia": "Cerâmica Nova Center",
+   "uf": "MG",
+   "unidade_responsavel": "DRF JUIZ DE FORA",
+   "regiao": "Zona da Mata",
+   "municipio": "Leopoldina",
+   "divida_total": 3019559.98,
+   "qtd_inscricoes": 12,
+   "qtd_ajuizadas": 6,
+   "ajuizado": true,
+   "situacoes": [
+    "Suspensa por decisão judicial"
+   ],
+   "receitas": [
+    "COFINS",
+    "CSLL",
+    "Contribuição Previdenciária",
+    "IPI"
+   ],
+   "cnae_principal": "Fabricação de laticínios",
+   "situacao_cadastral": "ATIVA",
+   "porte": "ME",
+   "telefone": "(31) 37123-3526",
+   "email": "contato@cermicanovac.com.br",
+   "data_inscricao_mais_antiga": "2017-07-14",
+   "score": 84
+  },
+  {
+   "cnpj": "59953428364408",
+   "razao_social": "AUTO PEÇAS NOVA ESPERANÇA COMÉRCIO E INDÚSTRIA LTDA",
+   "nome_fantasia": "Auto Peças Nova Esperança Comé",
+   "uf": "MG",
+   "unidade_responsavel": "DRF BELO HORIZONTE",
+   "regiao": "Belo Horizonte / RMBH",
+   "municipio": "Belo Horizonte",
+   "divida_total": 2733772.46,
+   "qtd_inscricoes": 10,
+   "qtd_ajuizadas": 9,
+   "ajuizado": true,
+   "situacoes": [
+    "Em cobrança",
+    "Parcelada",
+    "Suspensa por decisão judicial"
+   ],
+   "receitas": [
+    "Contribuição Previdenciária",
+    "IPI",
+    "IRRF"
+   ],
+   "cnae_principal": "Fabricação de produtos têxteis",
+   "situacao_cadastral": "SUSPENSA",
+   "porte": "DEMAIS",
+   "telefone": "(31) 21558-5913",
+   "email": "contato@autopeasnova.com.br",
+   "data_inscricao_mais_antiga": "2018-12-06",
+   "score": 84
+  },
+  {
+   "cnpj": "71390053293183",
+   "razao_social": "AGROPECUÁRIA BOA VISTA EIRELI",
+   "nome_fantasia": "Agropecuária Boa Vista Eireli",
+   "uf": "MG",
+   "unidade_responsavel": "DRF BELO HORIZONTE",
+   "regiao": "Belo Horizonte / RMBH",
+   "municipio": "Nova Lima",
+   "divida_total": 1966763.79,
+   "qtd_inscricoes": 9,
+   "qtd_ajuizadas": 1,
+   "ajuizado": true,
+   "situacoes": [
+    "Ajuizada"
+   ],
+   "receitas": [
+    "COFINS",
+    "IRPJ"
+   ],
+   "cnae_principal": "Transporte rodoviário de carga",
+   "situacao_cadastral": "ATIVA",
+   "porte": "DEMAIS",
+   "telefone": "(31) 24871-2801",
+   "email": "contato@agropecuriab.com.br",
+   "data_inscricao_mais_antiga": "2018-04-27",
+   "score": 83
+  },
+  {
+   "cnpj": "03778892554665",
+   "razao_social": "INDÚSTRIA QUÍMICA BOA DO VALE ME",
+   "nome_fantasia": "Indústria Química Boa do Vale ",
+   "uf": "MG",
+   "unidade_responsavel": "DRF BELO HORIZONTE",
+   "regiao": "Belo Horizonte / RMBH",
+   "municipio": "Sabará",
+   "divida_total": 1936583.54,
+   "qtd_inscricoes": 3,
+   "qtd_ajuizadas": 1,
+   "ajuizado": true,
+   "situacoes": [
+    "Ajuizada",
+    "Ativa em cobrança",
+    "Em cobrança"
+   ],
+   "receitas": [
+    "Contribuição Previdenciária"
+   ],
+   "cnae_principal": "Construção de edifícios",
+   "situacao_cadastral": "ATIVA",
+   "porte": "EPP",
+   "telefone": "(31) 45694-2335",
+   "email": "contato@indstriaqumi.com.br",
+   "data_inscricao_mais_antiga": "2019-10-02",
+   "score": 77
+  },
+  {
+   "cnpj": "82278248963834",
+   "razao_social": "FRIGORÍFICO SANTA VISTA S.A.",
+   "nome_fantasia": "Frigorífico Santa Vista",
+   "uf": "MG",
+   "unidade_responsavel": "DRF JUIZ DE FORA",
+   "regiao": "Zona da Mata",
+   "municipio": "Ponte Nova",
+   "divida_total": 1920424.17,
+   "qtd_inscricoes": 3,
+   "qtd_ajuizadas": 0,
+   "ajuizado": false,
+   "situacoes": [
+    "Parcelada",
+    "Suspensa por decisão judicial"
+   ],
+   "receitas": [
+    "PIS/PASEP"
+   ],
+   "cnae_principal": "Fabricação de laticínios",
+   "situacao_cadastral": "ATIVA",
+   "porte": "DEMAIS",
+   "telefone": "(31) 4757-4770",
+   "email": "contato@frigorficosa.com.br",
+   "data_inscricao_mais_antiga": "2015-11-21",
+   "score": 57
+  },
+  {
+   "cnpj": "94531473799650",
+   "razao_social": "COMÉRCIO DE ALIMENTOS MINAS DO VALE EIRELI",
+   "nome_fantasia": "Comércio de Alimentos Minas do",
+   "uf": "MG",
+   "unidade_responsavel": "DRF JUIZ DE FORA",
+   "regiao": "Zona da Mata",
+   "municipio": "Cataguases",
+   "divida_total": 1879426.49,
+   "qtd_inscricoes": 14,
+   "qtd_ajuizadas": 0,
+   "ajuizado": false,
+   "situacoes": [
+    "Ajuizada",
+    "Ativa em cobrança"
+   ],
+   "receitas": [
+    "COFINS",
+    "IPI",
+    "Multas Diversas"
+   ],
+   "cnae_principal": "Construção de edifícios",
+   "situacao_cadastral": "ATIVA",
+   "porte": "EPP",
+   "telefone": "(31) 13221-4954",
+   "email": "contato@comrciodeali.com.br",
+   "data_inscricao_mais_antiga": "2016-06-06",
+   "score": 64
+  },
+  {
+   "cnpj": "21667467621202",
+   "razao_social": "METALÚRGICA SANTA CENTER S.A.",
+   "nome_fantasia": "Metalúrgica Santa Center",
+   "uf": "MG",
+   "unidade_responsavel": "DRF BELO HORIZONTE",
+   "regiao": "Belo Horizonte / RMBH",
+   "municipio": "Belo Horizonte",
+   "divida_total": 1841791.43,
+   "qtd_inscricoes": 3,
+   "qtd_ajuizadas": 2,
+   "ajuizado": true,
+   "situacoes": [
+    "Parcelada",
+    "Suspensa por decisão judicial"
+   ],
+   "receitas": [
+    "Contribuição Previdenciária",
+    "IRRF"
+   ],
+   "cnae_principal": "Fabricação de produtos têxteis",
+   "situacao_cadastral": "ATIVA",
+   "porte": "EPP",
+   "telefone": "(31) 65318-8997",
+   "email": "contato@metalrgicasa.com.br",
+   "data_inscricao_mais_antiga": "2010-07-19",
+   "score": 77
+  },
+  {
+   "cnpj": "94519832731585",
+   "razao_social": "LOGÍSTICA BOA CENTER LTDA",
+   "nome_fantasia": "Logística Boa Center",
+   "uf": "MG",
+   "unidade_responsavel": "DRF BELO HORIZONTE",
+   "regiao": "Belo Horizonte / RMBH",
+   "municipio": "Sabará",
+   "divida_total": 1810411.06,
+   "qtd_inscricoes": 2,
+   "qtd_ajuizadas": 0,
+   "ajuizado": false,
+   "situacoes": [
+    "Parcelada"
+   ],
+   "receitas": [
+    "IPI"
+   ],
+   "cnae_principal": "Fabricação de produtos de metal",
+   "situacao_cadastral": "ATIVA",
+   "porte": "DEMAIS",
+   "telefone": "(31) 94104-6062",
+   "email": "contato@logsticaboac.com.br",
+   "data_inscricao_mais_antiga": "2010-05-19",
+   "score": 56
+  },
+  {
+   "cnpj": "35658804341651",
+   "razao_social": "CERÂMICA NOVA CENTER ME",
+   "nome_fantasia": "Cerâmica Nova Center ME",
+   "uf": "MG",
+   "unidade_responsavel": "DRF JUIZ DE FORA",
+   "regiao": "Zona da Mata",
+   "municipio": "Ponte Nova",
+   "divida_total": 1793034.92,
+   "qtd_inscricoes": 3,
+   "qtd_ajuizadas": 1,
+   "ajuizado": true,
+   "situacoes": [
+    "Ajuizada",
+    "Ativa em cobrança"
+   ],
+   "receitas": [
+    "COFINS",
+    "Contribuição Previdenciária",
+    "Multas Diversas"
+   ],
+   "cnae_principal": "Fabricação de laticínios",
+   "situacao_cadastral": "SUSPENSA",
+   "porte": "EPP",
+   "telefone": "(31) 32783-4965",
+   "email": "contato@cermicanovac.com.br",
+   "data_inscricao_mais_antiga": "2017-03-16",
+   "score": 77
+  },
+  {
+   "cnpj": "02726149331637",
+   "razao_social": "LATICÍNIOS MINAS ESPERANÇA LTDA",
+   "nome_fantasia": "Laticínios Minas Esperança",
+   "uf": "MG",
+   "unidade_responsavel": "DRF JUIZ DE FORA",
+   "regiao": "Zona da Mata",
+   "municipio": "Juiz de Fora",
+   "divida_total": 1744825.83,
+   "qtd_inscricoes": 18,
+   "qtd_ajuizadas": 3,
+   "ajuizado": true,
+   "situacoes": [
+    "Em cobrança",
+    "Parcelada"
+   ],
+   "receitas": [
+    "CSLL"
+   ],
+   "cnae_principal": "Atividades de atenção hospitalar",
+   "situacao_cadastral": "SUSPENSA",
+   "porte": "EPP",
+   "telefone": "(31) 67382-1071",
+   "email": "contato@laticniosmin.com.br",
+   "data_inscricao_mais_antiga": "2022-04-23",
+   "score": 82
+  },
+  {
+   "cnpj": "91624731498643",
+   "razao_social": "TÊXTIL MINAS DO VALE ME",
+   "nome_fantasia": "Têxtil Minas do Vale ME",
+   "uf": "MG",
+   "unidade_responsavel": "DRF BELO HORIZONTE",
+   "regiao": "Belo Horizonte / RMBH",
+   "municipio": "Betim",
+   "divida_total": 1703450.29,
+   "qtd_inscricoes": 12,
+   "qtd_ajuizadas": 11,
+   "ajuizado": true,
+   "situacoes": [
+    "Suspensa por decisão judicial"
+   ],
+   "receitas": [
+    "IRPJ"
+   ],
+   "cnae_principal": "Restaurantes e similares",
+   "situacao_cadastral": "ATIVA",
+   "porte": "DEMAIS",
+   "telefone": "(31) 55588-6935",
+   "email": "contato@txtilminasdo.com.br",
+   "data_inscricao_mais_antiga": "2009-12-24",
+   "score": 84
+  },
+  {
+   "cnpj": "24745171236851",
+   "razao_social": "CERÂMICA MINAS FORTE S.A.",
+   "nome_fantasia": "Cerâmica Minas Forte",
+   "uf": "MG",
+   "unidade_responsavel": "DRF BELO HORIZONTE",
+   "regiao": "Belo Horizonte / RMBH",
+   "municipio": "Betim",
+   "divida_total": 1679769.22,
+   "qtd_inscricoes": 17,
+   "qtd_ajuizadas": 8,
+   "ajuizado": true,
+   "situacoes": [
+    "Em cobrança",
+    "Suspensa por decisão judicial"
+   ],
+   "receitas": [
+    "COFINS",
+    "Contribuição Previdenciária",
+    "IRRF",
+    "Multas Diversas"
+   ],
+   "cnae_principal": "Restaurantes e similares",
+   "situacao_cadastral": "ATIVA",
+   "porte": "ME",
+   "telefone": "(31) 90452-4830",
+   "email": "contato@cermicaminas.com.br",
+   "data_inscricao_mais_antiga": "2021-07-01",
+   "score": 83
+  },
+  {
+   "cnpj": "66210388629127",
+   "razao_social": "ENGENHARIA SANTA DO VALE COMÉRCIO E INDÚSTRIA LTDA",
+   "nome_fantasia": "Engenharia Santa do Vale Comér",
+   "uf": "MG",
+   "unidade_responsavel": "DRF JUIZ DE FORA",
+   "regiao": "Zona da Mata",
+   "municipio": "Ponte Nova",
+   "divida_total": 1586280.2,
+   "qtd_inscricoes": 20,
+   "qtd_ajuizadas": 7,
+   "ajuizado": true,
+   "situacoes": [
+    "Suspensa por decisão judicial"
+   ],
+   "receitas": [
+    "CSLL"
+   ],
+   "cnae_principal": "Atividades de atenção hospitalar",
+   "situacao_cadastral": "ATIVA",
+   "porte": "ME",
+   "telefone": "(31) 90940-8069",
+   "email": "contato@engenhariasa.com.br",
+   "data_inscricao_mais_antiga": "2023-10-20",
+   "score": 79
+  },
+  {
+   "cnpj": "60302992280920",
+   "razao_social": "LATICÍNIOS MINAS ESPERANÇA ME",
+   "nome_fantasia": "Laticínios Minas Esperança ME",
+   "uf": "MG",
+   "unidade_responsavel": "DRF BELO HORIZONTE",
+   "regiao": "Belo Horizonte / RMBH",
+   "municipio": "Santa Luzia",
+   "divida_total": 1580383.49,
+   "qtd_inscricoes": 16,
+   "qtd_ajuizadas": 5,
+   "ajuizado": true,
+   "situacoes": [
+    "Ajuizada",
+    "Em cobrança",
+    "Parcelada"
+   ],
+   "receitas": [
+    "CSLL",
+    "IRRF",
+    "PIS/PASEP"
+   ],
+   "cnae_principal": "Atividades de atenção hospitalar",
+   "situacao_cadastral": "SUSPENSA",
+   "porte": "EPP",
+   "telefone": "(31) 30752-7730",
+   "email": "contato@laticniosmin.com.br",
+   "data_inscricao_mais_antiga": "2011-05-06",
+   "score": 84
+  },
+  {
+   "cnpj": "72522872808010",
+   "razao_social": "ENGENHARIA SANTA FORTE COMÉRCIO E INDÚSTRIA LTDA",
+   "nome_fantasia": "Engenharia Santa Forte Comérci",
+   "uf": "MG",
+   "unidade_responsavel": "DRF BELO HORIZONTE",
+   "regiao": "Belo Horizonte / RMBH",
+   "municipio": "Nova Lima",
+   "divida_total": 1527269.92,
+   "qtd_inscricoes": 21,
+   "qtd_ajuizadas": 0,
+   "ajuizado": false,
+   "situacoes": [
+    "Ativa em cobrança"
+   ],
+   "receitas": [
+    "COFINS"
+   ],
+   "cnae_principal": "Fabricação de produtos de metal",
+   "situacao_cadastral": "ATIVA",
+   "porte": "DEMAIS",
+   "telefone": "(31) 50916-1990",
+   "email": "contato@engenhariasa.com.br",
+   "data_inscricao_mais_antiga": "2021-01-14",
+   "score": 64
+  },
+  {
+   "cnpj": "43888993756798",
+   "razao_social": "COMÉRCIO DE ALIMENTOS MINAS DO VALE LTDA",
+   "nome_fantasia": "Comércio de Alimentos Minas do",
+   "uf": "MG",
+   "unidade_responsavel": "DRF JUIZ DE FORA",
+   "regiao": "Zona da Mata",
+   "municipio": "Ubá",
+   "divida_total": 1467546.81,
+   "qtd_inscricoes": 14,
+   "qtd_ajuizadas": 1,
+   "ajuizado": true,
+   "situacoes": [
+    "Ajuizada",
+    "Em cobrança"
+   ],
+   "receitas": [
+    "CSLL",
+    "IRPJ",
+    "IRRF",
+    "Multas Diversas"
+   ],
+   "cnae_principal": "Fabricação de produtos têxteis",
+   "situacao_cadastral": "ATIVA",
+   "porte": "DEMAIS",
+   "telefone": "(31) 61681-4389",
+   "email": "contato@comrciodeali.com.br",
+   "data_inscricao_mais_antiga": "2011-06-01",
+   "score": 84
+  },
+  {
+   "cnpj": "36971179808932",
+   "razao_social": "SUPERMERCADOS SANTA ESPERANÇA COMÉRCIO E INDÚSTRIA LTDA",
+   "nome_fantasia": "Supermercados Santa Esperança ",
+   "uf": "MG",
+   "unidade_responsavel": "DRF JUIZ DE FORA",
+   "regiao": "Zona da Mata",
+   "municipio": "Juiz de Fora",
+   "divida_total": 1413320.15,
+   "qtd_inscricoes": 8,
+   "qtd_ajuizadas": 0,
+   "ajuizado": false,
+   "situacoes": [
+    "Ajuizada",
+    "Ativa em cobrança",
+    "Suspensa por decisão judicial"
+   ],
+   "receitas": [
+    "COFINS",
+    "Contribuição Previdenciária",
+    "IRPJ",
+    "Multas Diversas"
+   ],
+   "cnae_principal": "Fabricação de produtos têxteis",
+   "situacao_cadastral": "ATIVA",
+   "porte": "ME",
+   "telefone": "(31) 53177-8702",
+   "email": "contato@supermercado.com.br",
+   "data_inscricao_mais_antiga": "2013-07-01",
+   "score": 62
+  },
+  {
+   "cnpj": "82997968845783",
+   "razao_social": "MÓVEIS BOA FORTE ME",
+   "nome_fantasia": "Móveis Boa Forte ME",
+   "uf": "MG",
+   "unidade_responsavel": "DRF BELO HORIZONTE",
+   "regiao": "Belo Horizonte / RMBH",
+   "municipio": "Santa Luzia",
+   "divida_total": 1310876.24,
+   "qtd_inscricoes": 5,
+   "qtd_ajuizadas": 0,
+   "ajuizado": false,
+   "situacoes": [
+    "Ajuizada",
+    "Parcelada"
+   ],
+   "receitas": [
+    "COFINS",
+    "IRPJ",
+    "IRRF"
+   ],
+   "cnae_principal": "Fabricação de produtos de metal",
+   "situacao_cadastral": "ATIVA",
+   "porte": "DEMAIS",
+   "telefone": "(31) 39586-8687",
+   "email": "contato@mveisboafort.com.br",
+   "data_inscricao_mais_antiga": "2021-02-15",
+   "score": 59
+  },
+  {
+   "cnpj": "77169472256996",
+   "razao_social": "HOSPITAL SANTA DO VALE COMÉRCIO E INDÚSTRIA LTDA",
+   "nome_fantasia": "Hospital Santa do Vale Comérci",
+   "uf": "MG",
+   "unidade_responsavel": "DRF BELO HORIZONTE",
+   "regiao": "Belo Horizonte / RMBH",
+   "municipio": "Santa Luzia",
+   "divida_total": 1307657.38,
+   "qtd_inscricoes": 12,
+   "qtd_ajuizadas": 8,
+   "ajuizado": true,
+   "situacoes": [
+    "Ajuizada"
+   ],
+   "receitas": [
+    "COFINS",
+    "Multas Diversas"
+   ],
+   "cnae_principal": "Construção de edifícios",
+   "situacao_cadastral": "ATIVA",
+   "porte": "DEMAIS",
+   "telefone": "(31) 37553-8289",
+   "email": "contato@hospitalsant.com.br",
+   "data_inscricao_mais_antiga": "2022-02-03",
+   "score": 82
+  },
+  {
+   "cnpj": "86209593518638",
+   "razao_social": "CONFECÇÕES BOA DO VALE COMÉRCIO E INDÚSTRIA LTDA",
+   "nome_fantasia": "Confecções Boa do Vale Comérci",
+   "uf": "MG",
+   "unidade_responsavel": "DRF BELO HORIZONTE",
+   "regiao": "Belo Horizonte / RMBH",
+   "municipio": "Betim",
+   "divida_total": 1296706.15,
+   "qtd_inscricoes": 18,
+   "qtd_ajuizadas": 0,
+   "ajuizado": false,
+   "situacoes": [
+    "Ajuizada",
+    "Ativa em cobrança",
+    "Suspensa por decisão judicial"
+   ],
+   "receitas": [
+    "Contribuição Previdenciária",
+    "IPI",
+    "IRPJ",
+    "Multas Diversas"
+   ],
+   "cnae_principal": "Comércio varejista de mercadorias",
+   "situacao_cadastral": "ATIVA",
+   "porte": "EPP",
+   "telefone": "(31) 25414-1512",
+   "email": "contato@confecesboad.com.br",
+   "data_inscricao_mais_antiga": "2019-08-25",
+   "score": 64
+  },
+  {
+   "cnpj": "35048889921075",
+   "razao_social": "METALÚRGICA MINAS VISTA EIRELI",
+   "nome_fantasia": "Metalúrgica Minas Vista Eireli",
+   "uf": "MG",
+   "unidade_responsavel": "DRF BELO HORIZONTE",
+   "regiao": "Belo Horizonte / RMBH",
+   "municipio": "Nova Lima",
+   "divida_total": 1276414.04,
+   "qtd_inscricoes": 1,
+   "qtd_ajuizadas": 0,
+   "ajuizado": false,
+   "situacoes": [
+    "Ativa em cobrança",
+    "Suspensa por decisão judicial"
+   ],
+   "receitas": [
+    "Contribuição Previdenciária",
+    "IPI"
+   ],
+   "cnae_principal": "Construção de edifícios",
+   "situacao_cadastral": "ATIVA",
+   "porte": "DEMAIS",
+   "telefone": "(31) 76588-4562",
+   "email": "contato@metalrgicami.com.br",
+   "data_inscricao_mais_antiga": "2011-03-09",
+   "score": 55
+  },
+  {
+   "cnpj": "97278755886753",
+   "razao_social": "CONSTRUTORA BOA FORTE EIRELI",
+   "nome_fantasia": "Construtora Boa Forte Eireli",
+   "uf": "MG",
+   "unidade_responsavel": "DRF JUIZ DE FORA",
+   "regiao": "Zona da Mata",
+   "municipio": "Muriaé",
+   "divida_total": 1261606.51,
+   "qtd_inscricoes": 10,
+   "qtd_ajuizadas": 0,
+   "ajuizado": false,
+   "situacoes": [
+    "Ativa em cobrança",
+    "Parcelada"
+   ],
+   "receitas": [
+    "Multas Diversas"
+   ],
+   "cnae_principal": "Atividades de atenção hospitalar",
+   "situacao_cadastral": "SUSPENSA",
+   "porte": "DEMAIS",
+   "telefone": "(31) 88991-3492",
+   "email": "contato@construtorab.com.br",
+   "data_inscricao_mais_antiga": "2020-04-19",
+   "score": 64
+  },
+  {
+   "cnpj": "60653074505444",
+   "razao_social": "SUPERMERCADOS NOVA CENTER ME",
+   "nome_fantasia": "Supermercados Nova Center ME",
+   "uf": "MG",
+   "unidade_responsavel": "DRF JUIZ DE FORA",
+   "regiao": "Zona da Mata",
+   "municipio": "Cataguases",
+   "divida_total": 1209569.92,
+   "qtd_inscricoes": 5,
+   "qtd_ajuizadas": 0,
+   "ajuizado": false,
+   "situacoes": [
+    "Ativa em cobrança",
+    "Em cobrança",
+    "Suspensa por decisão judicial"
+   ],
+   "receitas": [
+    "COFINS",
+    "Contribuição Previdenciária",
+    "IRRF"
+   ],
+   "cnae_principal": "Construção de edifícios",
+   "situacao_cadastral": "SUSPENSA",
+   "porte": "ME",
+   "telefone": "(31) 26633-8237",
+   "email": "contato@supermercado.com.br",
+   "data_inscricao_mais_antiga": "2022-08-28",
+   "score": 56
+  },
+  {
+   "cnpj": "90211586938068",
+   "razao_social": "AUTO PEÇAS SANTA GERAL ME",
+   "nome_fantasia": "Auto Peças Santa Geral ME",
+   "uf": "MG",
+   "unidade_responsavel": "DRF BELO HORIZONTE",
+   "regiao": "Belo Horizonte / RMBH",
+   "municipio": "Sabará",
+   "divida_total": 1168662.91,
+   "qtd_inscricoes": 9,
+   "qtd_ajuizadas": 4,
+   "ajuizado": true,
+   "situacoes": [
+    "Ativa em cobrança",
+    "Suspensa por decisão judicial"
+   ],
+   "receitas": [
+    "Contribuição Previdenciária",
+    "IPI",
+    "IRPJ",
+    "PIS/PASEP"
+   ],
+   "cnae_principal": "Transporte rodoviário de carga",
+   "situacao_cadastral": "ATIVA",
+   "porte": "DEMAIS",
+   "telefone": "(31) 24659-3738",
+   "email": "contato@autopeassant.com.br",
+   "data_inscricao_mais_antiga": "2015-09-22",
+   "score": 83
+  },
+  {
+   "cnpj": "91334123281206",
+   "razao_social": "HOSPITAL SANTA DO VALE ME",
+   "nome_fantasia": "Hospital Santa do Vale ME",
+   "uf": "MG",
+   "unidade_responsavel": "DRF JUIZ DE FORA",
+   "regiao": "Zona da Mata",
+   "municipio": "Ponte Nova",
+   "divida_total": 1164081.51,
+   "qtd_inscricoes": 10,
+   "qtd_ajuizadas": 0,
+   "ajuizado": false,
+   "situacoes": [
+    "Ajuizada",
+    "Em cobrança"
+   ],
+   "receitas": [
+    "IPI",
+    "Multas Diversas"
+   ],
+   "cnae_principal": "Construção de edifícios",
+   "situacao_cadastral": "SUSPENSA",
+   "porte": "ME",
+   "telefone": "(31) 92096-4824",
+   "email": "contato@hospitalsant.com.br",
+   "data_inscricao_mais_antiga": "2016-12-20",
+   "score": 64
+  },
+  {
+   "cnpj": "80841241182449",
+   "razao_social": "MÓVEIS SÃO ESPERANÇA EIRELI",
+   "nome_fantasia": "Móveis São Esperança Eireli",
+   "uf": "MG",
+   "unidade_responsavel": "DRF BELO HORIZONTE",
+   "regiao": "Belo Horizonte / RMBH",
+   "municipio": "Contagem",
+   "divida_total": 1157276.86,
+   "qtd_inscricoes": 20,
+   "qtd_ajuizadas": 0,
+   "ajuizado": false,
+   "situacoes": [
+    "Ajuizada"
+   ],
+   "receitas": [
+    "Contribuição Previdenciária",
+    "IPI",
+    "IRPJ",
+    "Multas Diversas"
+   ],
+   "cnae_principal": "Restaurantes e similares",
+   "situacao_cadastral": "ATIVA",
+   "porte": "ME",
+   "telefone": "(31) 2464-6464",
+   "email": "contato@mveissoesper.com.br",
+   "data_inscricao_mais_antiga": "2012-12-11",
+   "score": 64
+  },
+  {
+   "cnpj": "22219693792374",
+   "razao_social": "TÊXTIL BOA VISTA EIRELI",
+   "nome_fantasia": "Têxtil Boa Vista Eireli",
+   "uf": "MG",
+   "unidade_responsavel": "DRF JUIZ DE FORA",
+   "regiao": "Zona da Mata",
+   "municipio": "Juiz de Fora",
+   "divida_total": 1146030.18,
+   "qtd_inscricoes": 19,
+   "qtd_ajuizadas": 0,
+   "ajuizado": false,
+   "situacoes": [
+    "Parcelada"
+   ],
+   "receitas": [
+    "COFINS",
+    "IRPJ",
+    "PIS/PASEP"
+   ],
+   "cnae_principal": "Fabricação de produtos têxteis",
+   "situacao_cadastral": "ATIVA",
+   "porte": "DEMAIS",
+   "telefone": "(31) 92480-5097",
+   "email": "contato@txtilboavist.com.br",
+   "data_inscricao_mais_antiga": "2016-05-22",
+   "score": 64
+  },
+  {
+   "cnpj": "58929750017012",
+   "razao_social": "MÓVEIS SÃO DO VALE ME",
+   "nome_fantasia": "Móveis São do Vale ME",
+   "uf": "MG",
+   "unidade_responsavel": "DRF JUIZ DE FORA",
+   "regiao": "Zona da Mata",
+   "municipio": "Viçosa",
+   "divida_total": 1144464.65,
+   "qtd_inscricoes": 11,
+   "qtd_ajuizadas": 0,
+   "ajuizado": false,
+   "situacoes": [
+    "Ativa em cobrança",
+    "Suspensa por decisão judicial"
+   ],
+   "receitas": [
+    "COFINS",
+    "Contribuição Previdenciária",
+    "IRRF"
+   ],
+   "cnae_principal": "Comércio varejista de mercadorias",
+   "situacao_cadastral": "ATIVA",
+   "porte": "DEMAIS",
+   "telefone": "(31) 12803-7092",
+   "email": "contato@mveissodoval.com.br",
+   "data_inscricao_mais_antiga": "2016-08-01",
+   "score": 64
+  },
+  {
+   "cnpj": "77584161692845",
+   "razao_social": "CERÂMICA BOA VISTA EIRELI",
+   "nome_fantasia": "Cerâmica Boa Vista Eireli",
+   "uf": "MG",
+   "unidade_responsavel": "DRF BELO HORIZONTE",
+   "regiao": "Belo Horizonte / RMBH",
+   "municipio": "Belo Horizonte",
+   "divida_total": 1100032.66,
+   "qtd_inscricoes": 11,
+   "qtd_ajuizadas": 0,
+   "ajuizado": false,
+   "situacoes": [
+    "Ajuizada",
+    "Ativa em cobrança",
+    "Suspensa por decisão judicial"
+   ],
+   "receitas": [
+    "COFINS",
+    "IRRF",
+    "Multas Diversas",
+    "PIS/PASEP"
+   ],
+   "cnae_principal": "Atividades de atenção hospitalar",
+   "situacao_cadastral": "ATIVA",
+   "porte": "DEMAIS",
+   "telefone": "(31) 82589-8126",
+   "email": "contato@cermicaboavi.com.br",
+   "data_inscricao_mais_antiga": "2010-02-11",
+   "score": 64
+  },
+  {
+   "cnpj": "11836736576615",
+   "razao_social": "HOSPITAL MINAS DO VALE COMÉRCIO E INDÚSTRIA LTDA",
+   "nome_fantasia": "Hospital Minas do Vale Comérci",
+   "uf": "MG",
+   "unidade_responsavel": "DRF BELO HORIZONTE",
+   "regiao": "Belo Horizonte / RMBH",
+   "municipio": "Betim",
+   "divida_total": 1071356.6,
+   "qtd_inscricoes": 15,
+   "qtd_ajuizadas": 13,
+   "ajuizado": true,
+   "situacoes": [
+    "Ajuizada",
+    "Ativa em cobrança"
+   ],
+   "receitas": [
+    "CSLL",
+    "Contribuição Previdenciária",
+    "IRPJ",
+    "Multas Diversas"
+   ],
+   "cnae_principal": "Restaurantes e similares",
+   "situacao_cadastral": "ATIVA",
+   "porte": "DEMAIS",
+   "telefone": "(31) 19054-1982",
+   "email": "contato@hospitalmina.com.br",
+   "data_inscricao_mais_antiga": "2015-06-22",
+   "score": 84
+  },
+  {
+   "cnpj": "38347359774688",
+   "razao_social": "HOSPITAL SANTA CENTER ME",
+   "nome_fantasia": "Hospital Santa Center ME",
+   "uf": "MG",
+   "unidade_responsavel": "DRF BELO HORIZONTE",
+   "regiao": "Belo Horizonte / RMBH",
+   "municipio": "Contagem",
+   "divida_total": 1046449.12,
+   "qtd_inscricoes": 20,
+   "qtd_ajuizadas": 14,
+   "ajuizado": true,
+   "situacoes": [
+    "Suspensa por decisão judicial"
+   ],
+   "receitas": [
+    "IPI",
+    "IRPJ"
+   ],
+   "cnae_principal": "Atividades de atenção hospitalar",
+   "situacao_cadastral": "ATIVA",
+   "porte": "ME",
+   "telefone": "(31) 95244-9452",
+   "email": "contato@hospitalsant.com.br",
+   "data_inscricao_mais_antiga": "2015-03-27",
+   "score": 84
+  },
+  {
+   "cnpj": "47812914283411",
+   "razao_social": "AGROPECUÁRIA MINAS CENTER ME",
+   "nome_fantasia": "Agropecuária Minas Center ME",
+   "uf": "MG",
+   "unidade_responsavel": "DRF BELO HORIZONTE",
+   "regiao": "Belo Horizonte / RMBH",
+   "municipio": "Contagem",
+   "divida_total": 1039229.0,
+   "qtd_inscricoes": 16,
+   "qtd_ajuizadas": 11,
+   "ajuizado": true,
+   "situacoes": [
+    "Ajuizada",
+    "Em cobrança",
+    "Parcelada"
+   ],
+   "receitas": [
+    "IPI",
+    "IRPJ"
+   ],
+   "cnae_principal": "Construção de edifícios",
+   "situacao_cadastral": "SUSPENSA",
+   "porte": "EPP",
+   "telefone": "(31) 49948-7430",
+   "email": "contato@agropecuriam.com.br",
+   "data_inscricao_mais_antiga": "2023-01-28",
+   "score": 80
+  },
+  {
+   "cnpj": "21851569154522",
+   "razao_social": "METALÚRGICA BOA DO VALE S.A.",
+   "nome_fantasia": "Metalúrgica Boa do Vale",
+   "uf": "MG",
+   "unidade_responsavel": "DRF BELO HORIZONTE",
+   "regiao": "Belo Horizonte / RMBH",
+   "municipio": "Nova Lima",
+   "divida_total": 1011138.57,
+   "qtd_inscricoes": 2,
+   "qtd_ajuizadas": 2,
+   "ajuizado": true,
+   "situacoes": [
+    "Ajuizada",
+    "Em cobrança",
+    "Parcelada"
+   ],
+   "receitas": [
+    "IPI",
+    "Multas Diversas",
+    "PIS/PASEP"
+   ],
+   "cnae_principal": "Transporte rodoviário de carga",
+   "situacao_cadastral": "SUSPENSA",
+   "porte": "DEMAIS",
+   "telefone": "(31) 98206-5825",
+   "email": "contato@metalrgicabo.com.br",
+   "data_inscricao_mais_antiga": "2020-07-26",
+   "score": 76
+  },
+  {
+   "cnpj": "64170805310033",
+   "razao_social": "TRANSPORTES NOVA ESPERANÇA LTDA",
+   "nome_fantasia": "Transportes Nova Esperança",
+   "uf": "MG",
+   "unidade_responsavel": "DRF BELO HORIZONTE",
+   "regiao": "Belo Horizonte / RMBH",
+   "municipio": "Nova Lima",
+   "divida_total": 991029.0,
+   "qtd_inscricoes": 13,
+   "qtd_ajuizadas": 13,
+   "ajuizado": true,
+   "situacoes": [
+    "Ativa em cobrança"
+   ],
+   "receitas": [
+    "IRRF",
+    "Multas Diversas"
+   ],
+   "cnae_principal": "Comércio varejista de mercadorias",
+   "situacao_cadastral": "ATIVA",
+   "porte": "DEMAIS",
+   "telefone": "(31) 93680-5198",
+   "email": "contato@transportesn.com.br",
+   "data_inscricao_mais_antiga": "2022-01-20",
+   "score": 72
+  },
+  {
+   "cnpj": "85969691557924",
+   "razao_social": "CONSTRUTORA REAL VISTA COMÉRCIO E INDÚSTRIA LTDA",
+   "nome_fantasia": "Construtora Real Vista Comérci",
+   "uf": "MG",
+   "unidade_responsavel": "DRF BELO HORIZONTE",
+   "regiao": "Belo Horizonte / RMBH",
+   "municipio": "Santa Luzia",
+   "divida_total": 988977.37,
+   "qtd_inscricoes": 22,
+   "qtd_ajuizadas": 0,
+   "ajuizado": false,
+   "situacoes": [
+    "Ativa em cobrança"
+   ],
+   "receitas": [
+    "COFINS",
+    "CSLL",
+    "IRRF"
+   ],
+   "cnae_principal": "Comércio varejista de mercadorias",
+   "situacao_cadastral": "ATIVA",
+   "porte": "DEMAIS",
+   "telefone": "(31) 92890-3316",
+   "email": "contato@construtorar.com.br",
+   "data_inscricao_mais_antiga": "2023-10-19",
+   "score": 49
+  },
+  {
+   "cnpj": "49947174648877",
+   "razao_social": "ENGENHARIA MINAS ESPERANÇA ME",
+   "nome_fantasia": "Engenharia Minas Esperança ME",
+   "uf": "MG",
+   "unidade_responsavel": "DRF JUIZ DE FORA",
+   "regiao": "Zona da Mata",
+   "municipio": "Ponte Nova",
+   "divida_total": 837214.18,
+   "qtd_inscricoes": 5,
+   "qtd_ajuizadas": 1,
+   "ajuizado": true,
+   "situacoes": [
+    "Ajuizada",
+    "Suspensa por decisão judicial"
+   ],
+   "receitas": [
+    "CSLL"
+   ],
+   "cnae_principal": "Fabricação de laticínios",
+   "situacao_cadastral": "ATIVA",
+   "porte": "DEMAIS",
+   "telefone": "(31) 77529-1659",
+   "email": "contato@engenhariami.com.br",
+   "data_inscricao_mais_antiga": "2010-10-02",
+   "score": 69
+  },
+  {
+   "cnpj": "56878339187851",
+   "razao_social": "FRIGORÍFICO MINAS VISTA EIRELI",
+   "nome_fantasia": "Frigorífico Minas Vista Eireli",
+   "uf": "MG",
+   "unidade_responsavel": "DRF JUIZ DE FORA",
+   "regiao": "Zona da Mata",
+   "municipio": "Viçosa",
+   "divida_total": 831273.86,
+   "qtd_inscricoes": 5,
+   "qtd_ajuizadas": 4,
+   "ajuizado": true,
+   "situacoes": [
+    "Suspensa por decisão judicial"
+   ],
+   "receitas": [
+    "COFINS",
+    "CSLL"
+   ],
+   "cnae_principal": "Fabricação de produtos têxteis",
+   "situacao_cadastral": "SUSPENSA",
+   "porte": "ME",
+   "telefone": "(31) 91167-4365",
+   "email": "contato@frigorficomi.com.br",
+   "data_inscricao_mais_antiga": "2023-10-04",
+   "score": 64
+  },
+  {
+   "cnpj": "42843479552763",
+   "razao_social": "MINERAÇÃO NOVA GERAL LTDA",
+   "nome_fantasia": "Mineração Nova Geral",
+   "uf": "MG",
+   "unidade_responsavel": "DRF BELO HORIZONTE",
+   "regiao": "Belo Horizonte / RMBH",
+   "municipio": "Belo Horizonte",
+   "divida_total": 816128.58,
+   "qtd_inscricoes": 12,
+   "qtd_ajuizadas": 0,
+   "ajuizado": false,
+   "situacoes": [
+    "Ajuizada",
+    "Parcelada"
+   ],
+   "receitas": [
+    "CSLL",
+    "IPI",
+    "IRRF"
+   ],
+   "cnae_principal": "Transporte rodoviário de carga",
+   "situacao_cadastral": "ATIVA",
+   "porte": "ME",
+   "telefone": "(31) 96478-5422",
+   "email": "contato@mineraonovag.com.br",
+   "data_inscricao_mais_antiga": "2015-12-25",
+   "score": 54
+  },
+  {
+   "cnpj": "94798515832818",
+   "razao_social": "SUPERMERCADOS SÃO GERAL ME",
+   "nome_fantasia": "Supermercados São Geral ME",
+   "uf": "MG",
+   "unidade_responsavel": "DRF BELO HORIZONTE",
+   "regiao": "Belo Horizonte / RMBH",
+   "municipio": "Sabará",
+   "divida_total": 732208.55,
+   "qtd_inscricoes": 20,
+   "qtd_ajuizadas": 20,
+   "ajuizado": true,
+   "situacoes": [
+    "Ativa em cobrança",
+    "Em cobrança",
+    "Parcelada"
+   ],
+   "receitas": [
+    "Multas Diversas",
+    "PIS/PASEP"
+   ],
+   "cnae_principal": "Fabricação de produtos têxteis",
+   "situacao_cadastral": "ATIVA",
+   "porte": "DEMAIS",
+   "telefone": "(31) 40479-4579",
+   "email": "contato@supermercado.com.br",
+   "data_inscricao_mais_antiga": "2011-07-18",
+   "score": 74
+  },
+  {
+   "cnpj": "12126788861015",
+   "razao_social": "TRANSPORTES MINAS FORTE EIRELI",
+   "nome_fantasia": "Transportes Minas Forte Eireli",
+   "uf": "MG",
+   "unidade_responsavel": "DRF BELO HORIZONTE",
+   "regiao": "Belo Horizonte / RMBH",
+   "municipio": "Santa Luzia",
+   "divida_total": 637280.64,
+   "qtd_inscricoes": 12,
+   "qtd_ajuizadas": 0,
+   "ajuizado": false,
+   "situacoes": [
+    "Ajuizada",
+    "Em cobrança",
+    "Parcelada"
+   ],
+   "receitas": [
+    "Contribuição Previdenciária",
+    "IRPJ",
+    "PIS/PASEP"
+   ],
+   "cnae_principal": "Fabricação de laticínios",
+   "situacao_cadastral": "ATIVA",
+   "porte": "DEMAIS",
+   "telefone": "(31) 24216-3274",
+   "email": "contato@transportesm.com.br",
+   "data_inscricao_mais_antiga": "2017-02-20",
+   "score": 54
+  },
+  {
+   "cnpj": "48465648236629",
+   "razao_social": "MINERAÇÃO REAL CENTER S.A.",
+   "nome_fantasia": "Mineração Real Center",
+   "uf": "MG",
+   "unidade_responsavel": "DRF JUIZ DE FORA",
+   "regiao": "Zona da Mata",
+   "municipio": "Juiz de Fora",
+   "divida_total": 604960.72,
+   "qtd_inscricoes": 20,
+   "qtd_ajuizadas": 3,
+   "ajuizado": true,
+   "situacoes": [
+    "Ajuizada",
+    "Ativa em cobrança",
+    "Em cobrança"
+   ],
+   "receitas": [
+    "Contribuição Previdenciária",
+    "IRRF"
+   ],
+   "cnae_principal": "Fabricação de produtos têxteis",
+   "situacao_cadastral": "SUSPENSA",
+   "porte": "DEMAIS",
+   "telefone": "(31) 59954-4501",
+   "email": "contato@mineraorealc.com.br",
+   "data_inscricao_mais_antiga": "2018-05-13",
+   "score": 74
+  },
+  {
+   "cnpj": "00439735989334",
+   "razao_social": "AUTO PEÇAS SANTA DO VALE EIRELI",
+   "nome_fantasia": "Auto Peças Santa do Vale Eirel",
+   "uf": "MG",
+   "unidade_responsavel": "DRF JUIZ DE FORA",
+   "regiao": "Zona da Mata",
+   "municipio": "Leopoldina",
+   "divida_total": 570469.82,
+   "qtd_inscricoes": 22,
+   "qtd_ajuizadas": 17,
+   "ajuizado": true,
+   "situacoes": [
+    "Ativa em cobrança"
+   ],
+   "receitas": [
+    "CSLL",
+    "PIS/PASEP"
+   ],
+   "cnae_principal": "Fabricação de produtos de metal",
+   "situacao_cadastral": "SUSPENSA",
+   "porte": "DEMAIS",
+   "telefone": "(31) 74954-5329",
+   "email": "contato@autopeassant.com.br",
+   "data_inscricao_mais_antiga": "2016-03-22",
+   "score": 74
+  },
+  {
+   "cnpj": "71094777520471",
+   "razao_social": "COMÉRCIO DE ALIMENTOS BOA VISTA COMÉRCIO E INDÚSTRIA LTDA",
+   "nome_fantasia": "Comércio de Alimentos Boa Vist",
+   "uf": "MG",
+   "unidade_responsavel": "DRF BELO HORIZONTE",
+   "regiao": "Belo Horizonte / RMBH",
+   "municipio": "Betim",
+   "divida_total": 568273.55,
+   "qtd_inscricoes": 5,
+   "qtd_ajuizadas": 0,
+   "ajuizado": false,
+   "situacoes": [
+    "Em cobrança",
+    "Suspensa por decisão judicial"
+   ],
+   "receitas": [
+    "COFINS",
+    "Contribuição Previdenciária"
+   ],
+   "cnae_principal": "Construção de edifícios",
+   "situacao_cadastral": "ATIVA",
+   "porte": "EPP",
+   "telefone": "(31) 17525-7818",
+   "email": "contato@comrciodeali.com.br",
+   "data_inscricao_mais_antiga": "2022-02-13",
+   "score": 47
+  },
+  {
+   "cnpj": "40049915478872",
+   "razao_social": "TÊXTIL SANTA FORTE S.A.",
+   "nome_fantasia": "Têxtil Santa Forte",
+   "uf": "MG",
+   "unidade_responsavel": "DRF BELO HORIZONTE",
+   "regiao": "Belo Horizonte / RMBH",
+   "municipio": "Santa Luzia",
+   "divida_total": 554509.77,
+   "qtd_inscricoes": 6,
+   "qtd_ajuizadas": 0,
+   "ajuizado": false,
+   "situacoes": [
+    "Ativa em cobrança",
+    "Em cobrança"
+   ],
+   "receitas": [
+    "COFINS",
+    "Multas Diversas",
+    "PIS/PASEP"
+   ],
+   "cnae_principal": "Construção de edifícios",
+   "situacao_cadastral": "ATIVA",
+   "porte": "ME",
+   "telefone": "(31) 98549-6523",
+   "email": "contato@txtilsantafo.com.br",
+   "data_inscricao_mais_antiga": "2022-09-15",
+   "score": 47
+  },
+  {
+   "cnpj": "21752500743292",
+   "razao_social": "TRANSPORTES SANTA GERAL ME",
+   "nome_fantasia": "Transportes Santa Geral ME",
+   "uf": "MG",
+   "unidade_responsavel": "DRF BELO HORIZONTE",
+   "regiao": "Belo Horizonte / RMBH",
+   "municipio": "Contagem",
+   "divida_total": 494876.64,
+   "qtd_inscricoes": 11,
+   "qtd_ajuizadas": 0,
+   "ajuizado": false,
+   "situacoes": [
+    "Ativa em cobrança",
+    "Parcelada",
+    "Suspensa por decisão judicial"
+   ],
+   "receitas": [
+    "IRPJ",
+    "IRRF",
+    "Multas Diversas",
+    "PIS/PASEP"
+   ],
+   "cnae_principal": "Fabricação de laticínios",
+   "situacao_cadastral": "ATIVA",
+   "porte": "ME",
+   "telefone": "(31) 44233-9700",
+   "email": "contato@transportess.com.br",
+   "data_inscricao_mais_antiga": "2016-02-05",
+   "score": 44
+  },
+  {
+   "cnpj": "06068536153051",
+   "razao_social": "CONSTRUTORA SANTA GERAL ME",
+   "nome_fantasia": "Construtora Santa Geral ME",
+   "uf": "MG",
+   "unidade_responsavel": "DRF JUIZ DE FORA",
+   "regiao": "Zona da Mata",
+   "municipio": "Ubá",
+   "divida_total": 462122.48,
+   "qtd_inscricoes": 15,
+   "qtd_ajuizadas": 0,
+   "ajuizado": false,
+   "situacoes": [
+    "Ativa em cobrança",
+    "Suspensa por decisão judicial"
+   ],
+   "receitas": [
+    "IPI"
+   ],
+   "cnae_principal": "Atividades de atenção hospitalar",
+   "situacao_cadastral": "ATIVA",
+   "porte": "DEMAIS",
+   "telefone": "(31) 60799-1086",
+   "email": "contato@construtoras.com.br",
+   "data_inscricao_mais_antiga": "2022-12-21",
+   "score": 41
+  },
+  {
+   "cnpj": "88263435175183",
+   "razao_social": "CALÇADOS SANTA ESPERANÇA EIRELI",
+   "nome_fantasia": "Calçados Santa Esperança Eirel",
+   "uf": "MG",
+   "unidade_responsavel": "DRF BELO HORIZONTE",
+   "regiao": "Belo Horizonte / RMBH",
+   "municipio": "Sabará",
+   "divida_total": 443016.5,
+   "qtd_inscricoes": 18,
+   "qtd_ajuizadas": 13,
+   "ajuizado": true,
+   "situacoes": [
+    "Em cobrança",
+    "Parcelada",
+    "Suspensa por decisão judicial"
+   ],
+   "receitas": [
+    "IRRF",
+    "PIS/PASEP"
+   ],
+   "cnae_principal": "Fabricação de laticínios",
+   "situacao_cadastral": "ATIVA",
+   "porte": "DEMAIS",
+   "telefone": "(31) 4009-4470",
+   "email": "contato@caladossanta.com.br",
+   "data_inscricao_mais_antiga": "2009-05-13",
+   "score": 64
+  },
+  {
+   "cnpj": "39172513552157",
+   "razao_social": "METALÚRGICA MINAS DO VALE ME",
+   "nome_fantasia": "Metalúrgica Minas do Vale ME",
+   "uf": "MG",
+   "unidade_responsavel": "DRF BELO HORIZONTE",
+   "regiao": "Belo Horizonte / RMBH",
+   "municipio": "Santa Luzia",
+   "divida_total": 440302.79,
+   "qtd_inscricoes": 20,
+   "qtd_ajuizadas": 19,
+   "ajuizado": true,
+   "situacoes": [
+    "Em cobrança"
+   ],
+   "receitas": [
+    "Contribuição Previdenciária",
+    "IPI",
+    "IRPJ"
+   ],
+   "cnae_principal": "Fabricação de produtos de metal",
+   "situacao_cadastral": "ATIVA",
+   "porte": "DEMAIS",
+   "telefone": "(31) 59438-7875",
+   "email": "contato@metalrgicami.com.br",
+   "data_inscricao_mais_antiga": "2009-05-07",
+   "score": 64
+  },
+  {
+   "cnpj": "39537672423884",
+   "razao_social": "LOGÍSTICA SANTA CENTER EIRELI",
+   "nome_fantasia": "Logística Santa Center Eireli",
+   "uf": "MG",
+   "unidade_responsavel": "DRF BELO HORIZONTE",
+   "regiao": "Belo Horizonte / RMBH",
+   "municipio": "Santa Luzia",
+   "divida_total": 437140.77,
+   "qtd_inscricoes": 11,
+   "qtd_ajuizadas": 1,
+   "ajuizado": true,
+   "situacoes": [
+    "Ajuizada",
+    "Em cobrança",
+    "Parcelada"
+   ],
+   "receitas": [
+    "IRPJ",
+    "IRRF"
+   ],
+   "cnae_principal": "Fabricação de produtos de metal",
+   "situacao_cadastral": "ATIVA",
+   "porte": "EPP",
+   "telefone": "(31) 84240-3621",
+   "email": "contato@logsticasant.com.br",
+   "data_inscricao_mais_antiga": "2020-10-14",
+   "score": 64
+  },
+  {
+   "cnpj": "82513534655494",
+   "razao_social": "MÓVEIS REAL GERAL S.A.",
+   "nome_fantasia": "Móveis Real Geral",
+   "uf": "MG",
+   "unidade_responsavel": "DRF JUIZ DE FORA",
+   "regiao": "Zona da Mata",
+   "municipio": "Cataguases",
+   "divida_total": 436255.48,
+   "qtd_inscricoes": 16,
+   "qtd_ajuizadas": 8,
+   "ajuizado": true,
+   "situacoes": [
+    "Suspensa por decisão judicial"
+   ],
+   "receitas": [
+    "IRRF"
+   ],
+   "cnae_principal": "Fabricação de laticínios",
+   "situacao_cadastral": "ATIVA",
+   "porte": "DEMAIS",
+   "telefone": "(31) 71446-5888",
+   "email": "contato@mveisrealger.com.br",
+   "data_inscricao_mais_antiga": "2016-02-16",
+   "score": 64
+  },
+  {
+   "cnpj": "09610556613906",
+   "razao_social": "CERÂMICA NOVA ESPERANÇA ME",
+   "nome_fantasia": "Cerâmica Nova Esperança ME",
+   "uf": "MG",
+   "unidade_responsavel": "DRF JUIZ DE FORA",
+   "regiao": "Zona da Mata",
+   "municipio": "Viçosa",
+   "divida_total": 430282.1,
+   "qtd_inscricoes": 20,
+   "qtd_ajuizadas": 0,
+   "ajuizado": false,
+   "situacoes": [
+    "Ajuizada"
+   ],
+   "receitas": [
+    "IPI",
+    "Multas Diversas"
+   ],
+   "cnae_principal": "Fabricação de laticínios",
+   "situacao_cadastral": "ATIVA",
+   "porte": "ME",
+   "telefone": "(31) 90294-7436",
+   "email": "contato@cermicanovae.com.br",
+   "data_inscricao_mais_antiga": "2009-05-17",
+   "score": 44
+  },
+  {
+   "cnpj": "88574489061203",
+   "razao_social": "DISTRIBUIDORA DE BEBIDAS NOVA ESPERANÇA S.A.",
+   "nome_fantasia": "Distribuidora de Bebidas Nova ",
+   "uf": "MG",
+   "unidade_responsavel": "DRF JUIZ DE FORA",
+   "regiao": "Zona da Mata",
+   "municipio": "Leopoldina",
+   "divida_total": 420014.98,
+   "qtd_inscricoes": 6,
+   "qtd_ajuizadas": 1,
+   "ajuizado": true,
+   "situacoes": [
+    "Ajuizada",
+    "Em cobrança",
+    "Parcelada"
+   ],
+   "receitas": [
+    "COFINS",
+    "Contribuição Previdenciária",
+    "IPI"
+   ],
+   "cnae_principal": "Construção de edifícios",
+   "situacao_cadastral": "ATIVA",
+   "porte": "ME",
+   "telefone": "(31) 55970-2986",
+   "email": "contato@distribuidor.com.br",
+   "data_inscricao_mais_antiga": "2022-05-16",
+   "score": 58
+  },
+  {
+   "cnpj": "18537474112490",
+   "razao_social": "AGROPECUÁRIA SÃO ESPERANÇA S.A.",
+   "nome_fantasia": "Agropecuária São Esperança",
+   "uf": "MG",
+   "unidade_responsavel": "DRF BELO HORIZONTE",
+   "regiao": "Belo Horizonte / RMBH",
+   "municipio": "Betim",
+   "divida_total": 411974.79,
+   "qtd_inscricoes": 15,
+   "qtd_ajuizadas": 13,
+   "ajuizado": true,
+   "situacoes": [
+    "Ativa em cobrança"
+   ],
+   "receitas": [
+    "Contribuição Previdenciária",
+    "IPI",
+    "IRPJ"
+   ],
+   "cnae_principal": "Construção de edifícios",
+   "situacao_cadastral": "ATIVA",
+   "porte": "EPP",
+   "telefone": "(31) 6073-7625",
+   "email": "contato@agropecurias.com.br",
+   "data_inscricao_mais_antiga": "2012-06-05",
+   "score": 64
+  },
+  {
+   "cnpj": "86632663416389",
+   "razao_social": "CALÇADOS NOVA GERAL LTDA",
+   "nome_fantasia": "Calçados Nova Geral",
+   "uf": "MG",
+   "unidade_responsavel": "DRF BELO HORIZONTE",
+   "regiao": "Belo Horizonte / RMBH",
+   "municipio": "Santa Luzia",
+   "divida_total": 406347.68,
+   "qtd_inscricoes": 18,
+   "qtd_ajuizadas": 13,
+   "ajuizado": true,
+   "situacoes": [
+    "Ajuizada",
+    "Suspensa por decisão judicial"
+   ],
+   "receitas": [
+    "CSLL",
+    "Contribuição Previdenciária",
+    "IRPJ",
+    "PIS/PASEP"
+   ],
+   "cnae_principal": "Transporte rodoviário de carga",
+   "situacao_cadastral": "ATIVA",
+   "porte": "ME",
+   "telefone": "(31) 85478-8460",
+   "email": "contato@caladosnovag.com.br",
+   "data_inscricao_mais_antiga": "2021-12-22",
+   "score": 63
+  },
+  {
+   "cnpj": "13389083863794",
+   "razao_social": "SUPERMERCADOS SANTA ESPERANÇA S.A.",
+   "nome_fantasia": "Supermercados Santa Esperança",
+   "uf": "MG",
+   "unidade_responsavel": "DRF JUIZ DE FORA",
+   "regiao": "Zona da Mata",
+   "municipio": "Juiz de Fora",
+   "divida_total": 394588.49,
+   "qtd_inscricoes": 19,
+   "qtd_ajuizadas": 0,
+   "ajuizado": false,
+   "situacoes": [
+    "Parcelada"
+   ],
+   "receitas": [
+    "CSLL",
+    "Contribuição Previdenciária",
+    "IPI"
+   ],
+   "cnae_principal": "Fabricação de produtos têxteis",
+   "situacao_cadastral": "ATIVA",
+   "porte": "ME",
+   "telefone": "(31) 51797-2584",
+   "email": "contato@supermercado.com.br",
+   "data_inscricao_mais_antiga": "2021-01-25",
+   "score": 44
+  },
+  {
+   "cnpj": "12938700516271",
+   "razao_social": "COMÉRCIO DE ALIMENTOS SÃO FORTE EIRELI",
+   "nome_fantasia": "Comércio de Alimentos São Fort",
+   "uf": "MG",
+   "unidade_responsavel": "DRF JUIZ DE FORA",
+   "regiao": "Zona da Mata",
+   "municipio": "Viçosa",
+   "divida_total": 390395.35,
+   "qtd_inscricoes": 4,
+   "qtd_ajuizadas": 3,
+   "ajuizado": true,
+   "situacoes": [
+    "Ativa em cobrança",
+    "Em cobrança",
+    "Suspensa por decisão judicial"
+   ],
+   "receitas": [
+    "CSLL",
+    "IPI",
+    "PIS/PASEP"
+   ],
+   "cnae_principal": "Transporte rodoviário de carga",
+   "situacao_cadastral": "ATIVA",
+   "porte": "ME",
+   "telefone": "(31) 71534-1138",
+   "email": "contato@comrciodeali.com.br",
+   "data_inscricao_mais_antiga": "2012-07-03",
+   "score": 58
+  },
+  {
+   "cnpj": "67854458771753",
+   "razao_social": "LATICÍNIOS MINAS FORTE S.A.",
+   "nome_fantasia": "Laticínios Minas Forte",
+   "uf": "MG",
+   "unidade_responsavel": "DRF JUIZ DE FORA",
+   "regiao": "Zona da Mata",
+   "municipio": "Viçosa",
+   "divida_total": 378250.51,
+   "qtd_inscricoes": 18,
+   "qtd_ajuizadas": 9,
+   "ajuizado": true,
+   "situacoes": [
+    "Suspensa por decisão judicial"
+   ],
+   "receitas": [
+    "COFINS",
+    "IRPJ"
+   ],
+   "cnae_principal": "Construção de edifícios",
+   "situacao_cadastral": "SUSPENSA",
+   "porte": "DEMAIS",
+   "telefone": "(31) 21976-4214",
+   "email": "contato@laticniosmin.com.br",
+   "data_inscricao_mais_antiga": "2014-06-14",
+   "score": 64
+  },
+  {
+   "cnpj": "36675254599102",
+   "razao_social": "METALÚRGICA SANTA ESPERANÇA COMÉRCIO E INDÚSTRIA LTDA",
+   "nome_fantasia": "Metalúrgica Santa Esperança Co",
+   "uf": "MG",
+   "unidade_responsavel": "DRF JUIZ DE FORA",
+   "regiao": "Zona da Mata",
+   "municipio": "Ubá",
+   "divida_total": 362937.85,
+   "qtd_inscricoes": 3,
+   "qtd_ajuizadas": 0,
+   "ajuizado": false,
+   "situacoes": [
+    "Ajuizada",
+    "Ativa em cobrança",
+    "Em cobrança"
+   ],
+   "receitas": [
+    "IPI",
+    "IRRF",
+    "Multas Diversas",
+    "PIS/PASEP"
+   ],
+   "cnae_principal": "Construção de edifícios",
+   "situacao_cadastral": "ATIVA",
+   "porte": "ME",
+   "telefone": "(31) 47242-8043",
+   "email": "contato@metalrgicasa.com.br",
+   "data_inscricao_mais_antiga": "2011-10-02",
+   "score": 37
+  },
+  {
+   "cnpj": "01102481934667",
+   "razao_social": "LATICÍNIOS SANTA DO VALE ME",
+   "nome_fantasia": "Laticínios Santa do Vale ME",
+   "uf": "MG",
+   "unidade_responsavel": "DRF JUIZ DE FORA",
+   "regiao": "Zona da Mata",
+   "municipio": "Cataguases",
+   "divida_total": 358624.46,
+   "qtd_inscricoes": 1,
+   "qtd_ajuizadas": 1,
+   "ajuizado": true,
+   "situacoes": [
+    "Em cobrança",
+    "Parcelada"
+   ],
+   "receitas": [
+    "IRPJ"
+   ],
+   "cnae_principal": "Comércio varejista de mercadorias",
+   "situacao_cadastral": "ATIVA",
+   "porte": "ME",
+   "telefone": "(31) 48884-9238",
+   "email": "contato@laticniossan.com.br",
+   "data_inscricao_mais_antiga": "2019-07-14",
+   "score": 55
+  },
+  {
+   "cnpj": "49578856855744",
+   "razao_social": "LOGÍSTICA SANTA CENTER ME",
+   "nome_fantasia": "Logística Santa Center ME",
+   "uf": "MG",
+   "unidade_responsavel": "DRF JUIZ DE FORA",
+   "regiao": "Zona da Mata",
+   "municipio": "Cataguases",
+   "divida_total": 358361.16,
+   "qtd_inscricoes": 10,
+   "qtd_ajuizadas": 3,
+   "ajuizado": true,
+   "situacoes": [
+    "Ajuizada",
+    "Ativa em cobrança",
+    "Em cobrança"
+   ],
+   "receitas": [
+    "CSLL",
+    "PIS/PASEP"
+   ],
+   "cnae_principal": "Atividades de atenção hospitalar",
+   "situacao_cadastral": "ATIVA",
+   "porte": "DEMAIS",
+   "telefone": "(31) 15176-4180",
+   "email": "contato@logsticasant.com.br",
+   "data_inscricao_mais_antiga": "2013-04-04",
+   "score": 64
+  },
+  {
+   "cnpj": "54443283096520",
+   "razao_social": "MÓVEIS REAL CENTER COMÉRCIO E INDÚSTRIA LTDA",
+   "nome_fantasia": "Móveis Real Center Comércio e ",
+   "uf": "MG",
+   "unidade_responsavel": "DRF BELO HORIZONTE",
+   "regiao": "Belo Horizonte / RMBH",
+   "municipio": "Santa Luzia",
+   "divida_total": 343620.04,
+   "qtd_inscricoes": 11,
+   "qtd_ajuizadas": 0,
+   "ajuizado": false,
+   "situacoes": [
+    "Parcelada",
+    "Suspensa por decisão judicial"
+   ],
+   "receitas": [
+    "Contribuição Previdenciária",
+    "IPI",
+    "IRPJ",
+    "Multas Diversas"
+   ],
+   "cnae_principal": "Fabricação de laticínios",
+   "situacao_cadastral": "ATIVA",
+   "porte": "EPP",
+   "telefone": "(31) 91957-9759",
+   "email": "contato@mveisrealcen.com.br",
+   "data_inscricao_mais_antiga": "2019-08-10",
+   "score": 44
+  },
+  {
+   "cnpj": "78729825952694",
+   "razao_social": "LOGÍSTICA BOA ESPERANÇA S.A.",
+   "nome_fantasia": "Logística Boa Esperança",
+   "uf": "MG",
+   "unidade_responsavel": "DRF JUIZ DE FORA",
+   "regiao": "Zona da Mata",
+   "municipio": "Ubá",
+   "divida_total": 340985.18,
+   "qtd_inscricoes": 5,
+   "qtd_ajuizadas": 0,
+   "ajuizado": false,
+   "situacoes": [
+    "Ajuizada",
+    "Parcelada",
+    "Suspensa por decisão judicial"
+   ],
+   "receitas": [
+    "Contribuição Previdenciária",
+    "IRPJ",
+    "IRRF"
+   ],
+   "cnae_principal": "Fabricação de produtos têxteis",
+   "situacao_cadastral": "ATIVA",
+   "porte": "ME",
+   "telefone": "(31) 56596-6040",
+   "email": "contato@logsticaboae.com.br",
+   "data_inscricao_mais_antiga": "2018-06-17",
+   "score": 39
+  },
+  {
+   "cnpj": "67618472304618",
+   "razao_social": "SUPERMERCADOS REAL DO VALE LTDA",
+   "nome_fantasia": "Supermercados Real do Vale",
+   "uf": "MG",
+   "unidade_responsavel": "DRF BELO HORIZONTE",
+   "regiao": "Belo Horizonte / RMBH",
+   "municipio": "Santa Luzia",
+   "divida_total": 337569.63,
+   "qtd_inscricoes": 2,
+   "qtd_ajuizadas": 0,
+   "ajuizado": false,
+   "situacoes": [
+    "Ativa em cobrança",
+    "Em cobrança",
+    "Parcelada"
+   ],
+   "receitas": [
+    "IPI"
+   ],
+   "cnae_principal": "Comércio varejista de mercadorias",
+   "situacao_cadastral": "ATIVA",
+   "porte": "DEMAIS",
+   "telefone": "(31) 28037-4272",
+   "email": "contato@supermercado.com.br",
+   "data_inscricao_mais_antiga": "2013-10-20",
+   "score": 36
+  },
+  {
+   "cnpj": "17758917839084",
+   "razao_social": "TRANSPORTES SÃO GERAL S.A.",
+   "nome_fantasia": "Transportes São Geral",
+   "uf": "MG",
+   "unidade_responsavel": "DRF JUIZ DE FORA",
+   "regiao": "Zona da Mata",
+   "municipio": "Juiz de Fora",
+   "divida_total": 335541.17,
+   "qtd_inscricoes": 14,
+   "qtd_ajuizadas": 11,
+   "ajuizado": true,
+   "situacoes": [
+    "Parcelada"
+   ],
+   "receitas": [
+    "Contribuição Previdenciária",
+    "IRPJ",
+    "Multas Diversas",
+    "PIS/PASEP"
+   ],
+   "cnae_principal": "Atividades de atenção hospitalar",
+   "situacao_cadastral": "ATIVA",
+   "porte": "ME",
+   "telefone": "(31) 44219-3430",
+   "email": "contato@transportess.com.br",
+   "data_inscricao_mais_antiga": "2016-11-01",
+   "score": 64
+  },
+  {
+   "cnpj": "98262045053315",
+   "razao_social": "SUPERMERCADOS SANTA CENTER ME",
+   "nome_fantasia": "Supermercados Santa Center ME",
+   "uf": "MG",
+   "unidade_responsavel": "DRF JUIZ DE FORA",
+   "regiao": "Zona da Mata",
+   "municipio": "Viçosa",
+   "divida_total": 320672.17,
+   "qtd_inscricoes": 5,
+   "qtd_ajuizadas": 2,
+   "ajuizado": true,
+   "situacoes": [
+    "Ativa em cobrança",
+    "Suspensa por decisão judicial"
+   ],
+   "receitas": [
+    "COFINS",
+    "Contribuição Previdenciária"
+   ],
+   "cnae_principal": "Transporte rodoviário de carga",
+   "situacao_cadastral": "SUSPENSA",
+   "porte": "ME",
+   "telefone": "(31) 25509-6442",
+   "email": "contato@supermercado.com.br",
+   "data_inscricao_mais_antiga": "2021-09-28",
+   "score": 58
+  },
+  {
+   "cnpj": "95543937690426",
+   "razao_social": "AUTO PEÇAS NOVA DO VALE S.A.",
+   "nome_fantasia": "Auto Peças Nova do Vale",
+   "uf": "MG",
+   "unidade_responsavel": "DRF JUIZ DE FORA",
+   "regiao": "Zona da Mata",
+   "municipio": "Ubá",
+   "divida_total": 307097.08,
+   "qtd_inscricoes": 18,
+   "qtd_ajuizadas": 17,
+   "ajuizado": true,
+   "situacoes": [
+    "Suspensa por decisão judicial"
+   ],
+   "receitas": [
+    "IPI",
+    "IRPJ",
+    "Multas Diversas"
+   ],
+   "cnae_principal": "Construção de edifícios",
+   "situacao_cadastral": "ATIVA",
+   "porte": "DEMAIS",
+   "telefone": "(31) 51424-8923",
+   "email": "contato@autopeasnova.com.br",
+   "data_inscricao_mais_antiga": "2017-02-18",
+   "score": 64
+  },
+  {
+   "cnpj": "20037917693676",
+   "razao_social": "COMÉRCIO DE ALIMENTOS MINAS VISTA EIRELI",
+   "nome_fantasia": "Comércio de Alimentos Minas Vi",
+   "uf": "MG",
+   "unidade_responsavel": "DRF BELO HORIZONTE",
+   "regiao": "Belo Horizonte / RMBH",
+   "municipio": "Santa Luzia",
+   "divida_total": 306180.8,
+   "qtd_inscricoes": 22,
+   "qtd_ajuizadas": 6,
+   "ajuizado": true,
+   "situacoes": [
+    "Ativa em cobrança",
+    "Em cobrança",
+    "Suspensa por decisão judicial"
+   ],
+   "receitas": [
+    "COFINS",
+    "Contribuição Previdenciária"
+   ],
+   "cnae_principal": "Atividades de atenção hospitalar",
+   "situacao_cadastral": "ATIVA",
+   "porte": "EPP",
+   "telefone": "(31) 17906-8478",
+   "email": "contato@comrciodeali.com.br",
+   "data_inscricao_mais_antiga": "2012-03-21",
+   "score": 64
+  },
+  {
+   "cnpj": "06403910651801",
+   "razao_social": "CONSTRUTORA REAL FORTE LTDA",
+   "nome_fantasia": "Construtora Real Forte",
+   "uf": "MG",
+   "unidade_responsavel": "DRF JUIZ DE FORA",
+   "regiao": "Zona da Mata",
+   "municipio": "Cataguases",
+   "divida_total": 281372.92,
+   "qtd_inscricoes": 18,
+   "qtd_ajuizadas": 9,
+   "ajuizado": true,
+   "situacoes": [
+    "Ativa em cobrança",
+    "Parcelada"
+   ],
+   "receitas": [
+    "COFINS",
+    "Contribuição Previdenciária"
+   ],
+   "cnae_principal": "Restaurantes e similares",
+   "situacao_cadastral": "SUSPENSA",
+   "porte": "DEMAIS",
+   "telefone": "(31) 51236-2314",
+   "email": "contato@construtorar.com.br",
+   "data_inscricao_mais_antiga": "2023-08-02",
+   "score": 59
+  },
+  {
+   "cnpj": "69849027703843",
+   "razao_social": "CONSTRUTORA SANTA FORTE COMÉRCIO E INDÚSTRIA LTDA",
+   "nome_fantasia": "Construtora Santa Forte Comérc",
+   "uf": "MG",
+   "unidade_responsavel": "DRF JUIZ DE FORA",
+   "regiao": "Zona da Mata",
+   "municipio": "Juiz de Fora",
+   "divida_total": 274150.97,
+   "qtd_inscricoes": 20,
+   "qtd_ajuizadas": 12,
+   "ajuizado": true,
+   "situacoes": [
+    "Ajuizada",
+    "Ativa em cobrança",
+    "Suspensa por decisão judicial"
+   ],
+   "receitas": [
+    "Multas Diversas"
+   ],
+   "cnae_principal": "Fabricação de laticínios",
+   "situacao_cadastral": "ATIVA",
+   "porte": "EPP",
+   "telefone": "(31) 13382-5520",
+   "email": "contato@construtoras.com.br",
+   "data_inscricao_mais_antiga": "2009-10-17",
+   "score": 64
+  },
+  {
+   "cnpj": "79937124065965",
+   "razao_social": "CALÇADOS SANTA VISTA S.A.",
+   "nome_fantasia": "Calçados Santa Vista",
+   "uf": "MG",
+   "unidade_responsavel": "DRF BELO HORIZONTE",
+   "regiao": "Belo Horizonte / RMBH",
+   "municipio": "Betim",
+   "divida_total": 273870.51,
+   "qtd_inscricoes": 12,
+   "qtd_ajuizadas": 3,
+   "ajuizado": true,
+   "situacoes": [
+    "Ativa em cobrança",
+    "Parcelada",
+    "Suspensa por decisão judicial"
+   ],
+   "receitas": [
+    "COFINS",
+    "IRRF",
+    "PIS/PASEP"
+   ],
+   "cnae_principal": "Transporte rodoviário de carga",
+   "situacao_cadastral": "SUSPENSA",
+   "porte": "DEMAIS",
+   "telefone": "(31) 40200-9044",
+   "email": "contato@caladossanta.com.br",
+   "data_inscricao_mais_antiga": "2016-06-14",
+   "score": 64
+  },
+  {
+   "cnpj": "83764520881474",
+   "razao_social": "AUTO PEÇAS SÃO VISTA S.A.",
+   "nome_fantasia": "Auto Peças São Vista",
+   "uf": "MG",
+   "unidade_responsavel": "DRF JUIZ DE FORA",
+   "regiao": "Zona da Mata",
+   "municipio": "Ubá",
+   "divida_total": 253919.16,
+   "qtd_inscricoes": 7,
+   "qtd_ajuizadas": 1,
+   "ajuizado": true,
+   "situacoes": [
+    "Ativa em cobrança",
+    "Em cobrança",
+    "Parcelada"
+   ],
+   "receitas": [
+    "COFINS",
+    "CSLL",
+    "IRPJ",
+    "Multas Diversas"
+   ],
+   "cnae_principal": "Comércio varejista de mercadorias",
+   "situacao_cadastral": "SUSPENSA",
+   "porte": "EPP",
+   "telefone": "(31) 3170-1688",
+   "email": "contato@autopeassovi.com.br",
+   "data_inscricao_mais_antiga": "2012-06-02",
+   "score": 61
+  },
+  {
+   "cnpj": "30365414586850",
+   "razao_social": "AGROPECUÁRIA BOA ESPERANÇA LTDA",
+   "nome_fantasia": "Agropecuária Boa Esperança",
+   "uf": "MG",
+   "unidade_responsavel": "DRF JUIZ DE FORA",
+   "regiao": "Zona da Mata",
+   "municipio": "Cataguases",
+   "divida_total": 253016.69,
+   "qtd_inscricoes": 15,
+   "qtd_ajuizadas": 7,
+   "ajuizado": true,
+   "situacoes": [
+    "Ajuizada",
+    "Em cobrança",
+    "Parcelada"
+   ],
+   "receitas": [
+    "COFINS",
+    "IRRF",
+    "Multas Diversas",
+    "PIS/PASEP"
+   ],
+   "cnae_principal": "Comércio varejista de mercadorias",
+   "situacao_cadastral": "SUSPENSA",
+   "porte": "EPP",
+   "telefone": "(31) 35386-1727",
+   "email": "contato@agropecuriab.com.br",
+   "data_inscricao_mais_antiga": "2010-05-06",
+   "score": 64
+  },
+  {
+   "cnpj": "06174451870534",
+   "razao_social": "CERÂMICA BOA VISTA COMÉRCIO E INDÚSTRIA LTDA",
+   "nome_fantasia": "Cerâmica Boa Vista Comércio e ",
+   "uf": "MG",
+   "unidade_responsavel": "DRF BELO HORIZONTE",
+   "regiao": "Belo Horizonte / RMBH",
+   "municipio": "Santa Luzia",
+   "divida_total": 249123.27,
+   "qtd_inscricoes": 8,
+   "qtd_ajuizadas": 0,
+   "ajuizado": false,
+   "situacoes": [
+    "Ativa em cobrança",
+    "Parcelada",
+    "Suspensa por decisão judicial"
+   ],
+   "receitas": [
+    "CSLL",
+    "IPI",
+    "Multas Diversas",
+    "PIS/PASEP"
+   ],
+   "cnae_principal": "Transporte rodoviário de carga",
+   "situacao_cadastral": "ATIVA",
+   "porte": "DEMAIS",
+   "telefone": "(31) 5133-4817",
+   "email": "contato@cermicaboavi.com.br",
+   "data_inscricao_mais_antiga": "2018-05-24",
+   "score": 34
+  },
+  {
+   "cnpj": "00528127358573",
+   "razao_social": "CALÇADOS MINAS DO VALE S.A.",
+   "nome_fantasia": "Calçados Minas do Vale",
+   "uf": "MG",
+   "unidade_responsavel": "DRF BELO HORIZONTE",
+   "regiao": "Belo Horizonte / RMBH",
+   "municipio": "Santa Luzia",
+   "divida_total": 248559.47,
+   "qtd_inscricoes": 22,
+   "qtd_ajuizadas": 0,
+   "ajuizado": false,
+   "situacoes": [
+    "Ajuizada",
+    "Ativa em cobrança"
+   ],
+   "receitas": [
+    "IRRF"
+   ],
+   "cnae_principal": "Atividades de atenção hospitalar",
+   "situacao_cadastral": "ATIVA",
+   "porte": "DEMAIS",
+   "telefone": "(31) 26874-4057",
+   "email": "contato@caladosminas.com.br",
+   "data_inscricao_mais_antiga": "2009-12-13",
+   "score": 36
+  },
+  {
+   "cnpj": "70213556909275",
+   "razao_social": "CONSTRUTORA MINAS CENTER ME",
+   "nome_fantasia": "Construtora Minas Center ME",
+   "uf": "MG",
+   "unidade_responsavel": "DRF BELO HORIZONTE",
+   "regiao": "Belo Horizonte / RMBH",
+   "municipio": "Belo Horizonte",
+   "divida_total": 245324.45,
+   "qtd_inscricoes": 5,
+   "qtd_ajuizadas": 0,
+   "ajuizado": false,
+   "situacoes": [
+    "Suspensa por decisão judicial"
+   ],
+   "receitas": [
+    "Multas Diversas",
+    "PIS/PASEP"
+   ],
+   "cnae_principal": "Fabricação de produtos têxteis",
+   "situacao_cadastral": "ATIVA",
+   "porte": "EPP",
+   "telefone": "(31) 16869-1424",
+   "email": "contato@construtoram.com.br",
+   "data_inscricao_mais_antiga": "2014-08-25",
+   "score": 31
+  },
+  {
+   "cnpj": "79080759579472",
+   "razao_social": "AGROPECUÁRIA SANTA ESPERANÇA COMÉRCIO E INDÚSTRIA LTDA",
+   "nome_fantasia": "Agropecuária Santa Esperança C",
+   "uf": "MG",
+   "unidade_responsavel": "DRF JUIZ DE FORA",
+   "regiao": "Zona da Mata",
+   "municipio": "Muriaé",
+   "divida_total": 242410.95,
+   "qtd_inscricoes": 22,
+   "qtd_ajuizadas": 0,
+   "ajuizado": false,
+   "situacoes": [
+    "Ativa em cobrança",
+    "Suspensa por decisão judicial"
+   ],
+   "receitas": [
+    "Contribuição Previdenciária"
+   ],
+   "cnae_principal": "Atividades de atenção hospitalar",
+   "situacao_cadastral": "ATIVA",
+   "porte": "DEMAIS",
+   "telefone": "(31) 53605-3863",
+   "email": "contato@agropecurias.com.br",
+   "data_inscricao_mais_antiga": "2021-09-09",
+   "score": 35
+  },
+  {
+   "cnpj": "12382825867362",
+   "razao_social": "CALÇADOS SÃO FORTE ME",
+   "nome_fantasia": "Calçados São Forte ME",
+   "uf": "MG",
+   "unidade_responsavel": "DRF BELO HORIZONTE",
+   "regiao": "Belo Horizonte / RMBH",
+   "municipio": "Betim",
+   "divida_total": 227563.79,
+   "qtd_inscricoes": 1,
+   "qtd_ajuizadas": 0,
+   "ajuizado": false,
+   "situacoes": [
+    "Em cobrança",
+    "Parcelada"
+   ],
+   "receitas": [
+    "IPI",
+    "IRRF"
+   ],
+   "cnae_principal": "Restaurantes e similares",
+   "situacao_cadastral": "SUSPENSA",
+   "porte": "ME",
+   "telefone": "(31) 94371-4519",
+   "email": "contato@caladossofor.com.br",
+   "data_inscricao_mais_antiga": "2011-11-22",
+   "score": 27
+  },
+  {
+   "cnpj": "01197218114374",
+   "razao_social": "MINERAÇÃO SANTA GERAL ME",
+   "nome_fantasia": "Mineração Santa Geral ME",
+   "uf": "MG",
+   "unidade_responsavel": "DRF JUIZ DE FORA",
+   "regiao": "Zona da Mata",
+   "municipio": "Ponte Nova",
+   "divida_total": 218140.48,
+   "qtd_inscricoes": 16,
+   "qtd_ajuizadas": 0,
+   "ajuizado": false,
+   "situacoes": [
+    "Ativa em cobrança"
+   ],
+   "receitas": [
+    "IPI"
+   ],
+   "cnae_principal": "Fabricação de produtos têxteis",
+   "situacao_cadastral": "ATIVA",
+   "porte": "DEMAIS",
+   "telefone": "(31) 98801-2898",
+   "email": "contato@mineraosanta.com.br",
+   "data_inscricao_mais_antiga": "2013-08-02",
+   "score": 36
+  },
+  {
+   "cnpj": "99229959001094",
+   "razao_social": "CONSTRUTORA BOA ESPERANÇA COMÉRCIO E INDÚSTRIA LTDA",
+   "nome_fantasia": "Construtora Boa Esperança Comé",
+   "uf": "MG",
+   "unidade_responsavel": "DRF JUIZ DE FORA",
+   "regiao": "Zona da Mata",
+   "municipio": "Ponte Nova",
+   "divida_total": 209780.41,
+   "qtd_inscricoes": 17,
+   "qtd_ajuizadas": 0,
+   "ajuizado": false,
+   "situacoes": [
+    "Ativa em cobrança",
+    "Em cobrança",
+    "Parcelada"
+   ],
+   "receitas": [
+    "CSLL",
+    "IPI",
+    "PIS/PASEP"
+   ],
+   "cnae_principal": "Restaurantes e similares",
+   "situacao_cadastral": "ATIVA",
+   "porte": "DEMAIS",
+   "telefone": "(31) 11564-1981",
+   "email": "contato@construtorab.com.br",
+   "data_inscricao_mais_antiga": "2019-04-25",
+   "score": 36
+  },
+  {
+   "cnpj": "33083301657120",
+   "razao_social": "CALÇADOS SANTA ESPERANÇA COMÉRCIO E INDÚSTRIA LTDA",
+   "nome_fantasia": "Calçados Santa Esperança Comér",
+   "uf": "MG",
+   "unidade_responsavel": "DRF JUIZ DE FORA",
+   "regiao": "Zona da Mata",
+   "municipio": "Viçosa",
+   "divida_total": 208453.09,
+   "qtd_inscricoes": 20,
+   "qtd_ajuizadas": 0,
+   "ajuizado": false,
+   "situacoes": [
+    "Ajuizada",
+    "Parcelada",
+    "Suspensa por decisão judicial"
+   ],
+   "receitas": [
+    "COFINS",
+    "IPI"
+   ],
+   "cnae_principal": "Construção de edifícios",
+   "situacao_cadastral": "ATIVA",
+   "porte": "ME",
+   "telefone": "(31) 87498-4804",
+   "email": "contato@caladossanta.com.br",
+   "data_inscricao_mais_antiga": "2017-03-14",
+   "score": 36
+  },
+  {
+   "cnpj": "72050614973103",
+   "razao_social": "DISTRIBUIDORA DE BEBIDAS MINAS DO VALE COMÉRCIO E INDÚSTRIA LTDA",
+   "nome_fantasia": "Distribuidora de Bebidas Minas",
+   "uf": "MG",
+   "unidade_responsavel": "DRF BELO HORIZONTE",
+   "regiao": "Belo Horizonte / RMBH",
+   "municipio": "Contagem",
+   "divida_total": 206105.91,
+   "qtd_inscricoes": 13,
+   "qtd_ajuizadas": 13,
+   "ajuizado": true,
+   "situacoes": [
+    "Parcelada"
+   ],
+   "receitas": [
+    "IPI"
+   ],
+   "cnae_principal": "Restaurantes e similares",
+   "situacao_cadastral": "SUSPENSA",
+   "porte": "DEMAIS",
+   "telefone": "(31) 88643-5341",
+   "email": "contato@distribuidor.com.br",
+   "data_inscricao_mais_antiga": "2011-11-10",
+   "score": 56
+  },
+  {
+   "cnpj": "26965827109104",
+   "razao_social": "AGROPECUÁRIA NOVA FORTE LTDA",
+   "nome_fantasia": "Agropecuária Nova Forte",
+   "uf": "MG",
+   "unidade_responsavel": "DRF JUIZ DE FORA",
+   "regiao": "Zona da Mata",
+   "municipio": "Ponte Nova",
+   "divida_total": 196432.7,
+   "qtd_inscricoes": 12,
+   "qtd_ajuizadas": 0,
+   "ajuizado": false,
+   "situacoes": [
+    "Ajuizada",
+    "Suspensa por decisão judicial"
+   ],
+   "receitas": [
+    "Contribuição Previdenciária",
+    "IRPJ",
+    "Multas Diversas",
+    "PIS/PASEP"
+   ],
+   "cnae_principal": "Transporte rodoviário de carga",
+   "situacao_cadastral": "ATIVA",
+   "porte": "ME",
+   "telefone": "(31) 42620-2294",
+   "email": "contato@agropecurian.com.br",
+   "data_inscricao_mais_antiga": "2012-01-02",
+   "score": 36
+  },
+  {
+   "cnpj": "38299737631165",
+   "razao_social": "CONSTRUTORA MINAS CENTER LTDA",
+   "nome_fantasia": "Construtora Minas Center",
+   "uf": "MG",
+   "unidade_responsavel": "DRF BELO HORIZONTE",
+   "regiao": "Belo Horizonte / RMBH",
+   "municipio": "Belo Horizonte",
+   "divida_total": 191576.71,
+   "qtd_inscricoes": 17,
+   "qtd_ajuizadas": 15,
+   "ajuizado": true,
+   "situacoes": [
+    "Em cobrança",
+    "Parcelada",
+    "Suspensa por decisão judicial"
+   ],
+   "receitas": [
+    "CSLL",
+    "Contribuição Previdenciária",
+    "IRPJ",
+    "Multas Diversas"
+   ],
+   "cnae_principal": "Fabricação de laticínios",
+   "situacao_cadastral": "ATIVA",
+   "porte": "DEMAIS",
+   "telefone": "(31) 20373-7912",
+   "email": "contato@construtoram.com.br",
+   "data_inscricao_mais_antiga": "2015-07-15",
+   "score": 56
+  },
+  {
+   "cnpj": "21044789856257",
+   "razao_social": "METALÚRGICA MINAS CENTER S.A.",
+   "nome_fantasia": "Metalúrgica Minas Center",
+   "uf": "MG",
+   "unidade_responsavel": "DRF BELO HORIZONTE",
+   "regiao": "Belo Horizonte / RMBH",
+   "municipio": "Santa Luzia",
+   "divida_total": 190506.28,
+   "qtd_inscricoes": 13,
+   "qtd_ajuizadas": 4,
+   "ajuizado": true,
+   "situacoes": [
+    "Ativa em cobrança",
+    "Em cobrança"
+   ],
+   "receitas": [
+    "COFINS",
+    "CSLL"
+   ],
+   "cnae_principal": "Fabricação de produtos de metal",
+   "situacao_cadastral": "ATIVA",
+   "porte": "ME",
+   "telefone": "(31) 50049-1612",
+   "email": "contato@metalrgicami.com.br",
+   "data_inscricao_mais_antiga": "2014-04-06",
+   "score": 56
+  },
+  {
+   "cnpj": "13261117800681",
+   "razao_social": "ENGENHARIA REAL FORTE ME",
+   "nome_fantasia": "Engenharia Real Forte ME",
+   "uf": "MG",
+   "unidade_responsavel": "DRF JUIZ DE FORA",
+   "regiao": "Zona da Mata",
+   "municipio": "Ubá",
+   "divida_total": 166927.24,
+   "qtd_inscricoes": 22,
+   "qtd_ajuizadas": 22,
+   "ajuizado": true,
+   "situacoes": [
+    "Em cobrança"
+   ],
+   "receitas": [
+    "COFINS",
+    "CSLL",
+    "Contribuição Previdenciária",
+    "IPI"
+   ],
+   "cnae_principal": "Atividades de atenção hospitalar",
+   "situacao_cadastral": "ATIVA",
+   "porte": "EPP",
+   "telefone": "(31) 71041-3795",
+   "email": "contato@engenhariare.com.br",
+   "data_inscricao_mais_antiga": "2010-05-20",
+   "score": 56
+  },
+  {
+   "cnpj": "04786863375243",
+   "razao_social": "LOGÍSTICA SANTA CENTER EIRELI",
+   "nome_fantasia": "Logística Santa Center Eireli",
+   "uf": "MG",
+   "unidade_responsavel": "DRF JUIZ DE FORA",
+   "regiao": "Zona da Mata",
+   "municipio": "Viçosa",
+   "divida_total": 147453.27,
+   "qtd_inscricoes": 8,
+   "qtd_ajuizadas": 0,
+   "ajuizado": false,
+   "situacoes": [
+    "Em cobrança"
+   ],
+   "receitas": [
+    "CSLL",
+    "Contribuição Previdenciária",
+    "IRPJ",
+    "IRRF"
+   ],
+   "cnae_principal": "Comércio varejista de mercadorias",
+   "situacao_cadastral": "ATIVA",
+   "porte": "DEMAIS",
+   "telefone": "(31) 80352-1797",
+   "email": "contato@logsticasant.com.br",
+   "data_inscricao_mais_antiga": "2023-12-25",
+   "score": 29
+  },
+  {
+   "cnpj": "51994101372151",
+   "razao_social": "LOGÍSTICA SANTA VISTA ME",
+   "nome_fantasia": "Logística Santa Vista ME",
+   "uf": "MG",
+   "unidade_responsavel": "DRF JUIZ DE FORA",
+   "regiao": "Zona da Mata",
+   "municipio": "Leopoldina",
+   "divida_total": 140762.94,
+   "qtd_inscricoes": 8,
+   "qtd_ajuizadas": 6,
+   "ajuizado": true,
+   "situacoes": [
+    "Suspensa por decisão judicial"
+   ],
+   "receitas": [
+    "Contribuição Previdenciária",
+    "IRPJ",
+    "IRRF",
+    "PIS/PASEP"
+   ],
+   "cnae_principal": "Restaurantes e similares",
+   "situacao_cadastral": "ATIVA",
+   "porte": "DEMAIS",
+   "telefone": "(31) 30143-4066",
+   "email": "contato@logsticasant.com.br",
+   "data_inscricao_mais_antiga": "2009-08-02",
+   "score": 54
+  },
+  {
+   "cnpj": "32677360260647",
+   "razao_social": "AGROPECUÁRIA SÃO FORTE COMÉRCIO E INDÚSTRIA LTDA",
+   "nome_fantasia": "Agropecuária São Forte Comérci",
+   "uf": "MG",
+   "unidade_responsavel": "DRF BELO HORIZONTE",
+   "regiao": "Belo Horizonte / RMBH",
+   "municipio": "Nova Lima",
+   "divida_total": 139163.49,
+   "qtd_inscricoes": 3,
+   "qtd_ajuizadas": 0,
+   "ajuizado": false,
+   "situacoes": [
+    "Em cobrança",
+    "Parcelada",
+    "Suspensa por decisão judicial"
+   ],
+   "receitas": [
+    "CSLL",
+    "IPI"
+   ],
+   "cnae_principal": "Fabricação de produtos de metal",
+   "situacao_cadastral": "ATIVA",
+   "porte": "DEMAIS",
+   "telefone": "(31) 9492-1821",
+   "email": "contato@agropecurias.com.br",
+   "data_inscricao_mais_antiga": "2013-07-23",
+   "score": 29
+  },
+  {
+   "cnpj": "07925241913800",
+   "razao_social": "CERÂMICA NOVA GERAL COMÉRCIO E INDÚSTRIA LTDA",
+   "nome_fantasia": "Cerâmica Nova Geral Comércio e",
+   "uf": "MG",
+   "unidade_responsavel": "DRF JUIZ DE FORA",
+   "regiao": "Zona da Mata",
+   "municipio": "Juiz de Fora",
+   "divida_total": 125548.8,
+   "qtd_inscricoes": 16,
+   "qtd_ajuizadas": 11,
+   "ajuizado": true,
+   "situacoes": [
+    "Parcelada"
+   ],
+   "receitas": [
+    "CSLL",
+    "Contribuição Previdenciária",
+    "IRRF"
+   ],
+   "cnae_principal": "Fabricação de produtos de metal",
+   "situacao_cadastral": "SUSPENSA",
+   "porte": "EPP",
+   "telefone": "(31) 44179-5067",
+   "email": "contato@cermicanovag.com.br",
+   "data_inscricao_mais_antiga": "2022-01-08",
+   "score": 54
+  },
+  {
+   "cnpj": "34680072290349",
+   "razao_social": "CONSTRUTORA BOA VISTA ME",
+   "nome_fantasia": "Construtora Boa Vista ME",
+   "uf": "MG",
+   "unidade_responsavel": "DRF BELO HORIZONTE",
+   "regiao": "Belo Horizonte / RMBH",
+   "municipio": "Betim",
+   "divida_total": 119860.42,
+   "qtd_inscricoes": 8,
+   "qtd_ajuizadas": 0,
+   "ajuizado": false,
+   "situacoes": [
+    "Ajuizada",
+    "Ativa em cobrança",
+    "Parcelada"
+   ],
+   "receitas": [
+    "COFINS",
+    "CSLL",
+    "IRRF"
+   ],
+   "cnae_principal": "Atividades de atenção hospitalar",
+   "situacao_cadastral": "ATIVA",
+   "porte": "DEMAIS",
+   "telefone": "(31) 78609-2676",
+   "email": "contato@construtorab.com.br",
+   "data_inscricao_mais_antiga": "2021-05-23",
+   "score": 34
+  },
+  {
+   "cnpj": "24451076226838",
+   "razao_social": "ENGENHARIA NOVA DO VALE EIRELI",
+   "nome_fantasia": "Engenharia Nova do Vale Eireli",
+   "uf": "MG",
+   "unidade_responsavel": "DRF BELO HORIZONTE",
+   "regiao": "Belo Horizonte / RMBH",
+   "municipio": "Santa Luzia",
+   "divida_total": 118166.95,
+   "qtd_inscricoes": 7,
+   "qtd_ajuizadas": 3,
+   "ajuizado": true,
+   "situacoes": [
+    "Em cobrança",
+    "Parcelada"
+   ],
+   "receitas": [
+    "Contribuição Previdenciária"
+   ],
+   "cnae_principal": "Fabricação de produtos de metal",
+   "situacao_cadastral": "SUSPENSA",
+   "porte": "ME",
+   "telefone": "(31) 43033-8033",
+   "email": "contato@engenhariano.com.br",
+   "data_inscricao_mais_antiga": "2017-11-26",
+   "score": 53
+  },
+  {
+   "cnpj": "70312073564757",
+   "razao_social": "HOSPITAL NOVA ESPERANÇA EIRELI",
+   "nome_fantasia": "Hospital Nova Esperança Eireli",
+   "uf": "MG",
+   "unidade_responsavel": "DRF JUIZ DE FORA",
+   "regiao": "Zona da Mata",
+   "municipio": "Ubá",
+   "divida_total": 107758.16,
+   "qtd_inscricoes": 4,
+   "qtd_ajuizadas": 1,
+   "ajuizado": true,
+   "situacoes": [
+    "Ativa em cobrança"
+   ],
+   "receitas": [
+    "IPI"
+   ],
+   "cnae_principal": "Restaurantes e similares",
+   "situacao_cadastral": "ATIVA",
+   "porte": "DEMAIS",
+   "telefone": "(31) 25803-4148",
+   "email": "contato@hospitalnova.com.br",
+   "data_inscricao_mais_antiga": "2020-01-11",
+   "score": 50
+  },
+  {
+   "cnpj": "84086211823398",
+   "razao_social": "HOSPITAL NOVA CENTER ME",
+   "nome_fantasia": "Hospital Nova Center ME",
+   "uf": "MG",
+   "unidade_responsavel": "DRF JUIZ DE FORA",
+   "regiao": "Zona da Mata",
+   "municipio": "Viçosa",
+   "divida_total": 106292.71,
+   "qtd_inscricoes": 17,
+   "qtd_ajuizadas": 0,
+   "ajuizado": false,
+   "situacoes": [
+    "Ajuizada",
+    "Em cobrança"
+   ],
+   "receitas": [
+    "CSLL",
+    "IPI",
+    "IRRF",
+    "Multas Diversas"
+   ],
+   "cnae_principal": "Construção de edifícios",
+   "situacao_cadastral": "ATIVA",
+   "porte": "ME",
+   "telefone": "(31) 14255-7640",
+   "email": "contato@hospitalnova.com.br",
+   "data_inscricao_mais_antiga": "2013-06-09",
+   "score": 36
+  }
+ ]
+}
