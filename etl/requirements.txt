@@ -1,0 +1,5 @@
+# Dependências do pipeline de captação (Dívida Ativa PGFN)
+# A leitura/agregação dos CSV usa apenas a biblioteca padrão do Python.
+# Os pacotes abaixo são para download e enriquecimento (opcionais):
+requests>=2.31      # baixar dados da PGFN e consultar APIs de CNPJ
+openpyxl>=3.1       # gerar a planilha .xlsx (além do .csv)
