@@ -1,0 +1,8 @@
+# Planilhas geradas localmente pelo ETL (saída com --saida ..)
+# O dashboard consome apenas dados-captacao.json (versionado).
+empresas_divida_ativa.csv
+empresas_divida_ativa.xlsx
+
+# Dados brutos da PGFN, se baixados na raiz
+pgfn_csv/
+*.zip

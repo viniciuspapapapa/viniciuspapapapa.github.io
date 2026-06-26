@@ -104,6 +104,20 @@ Opções:
 | `--incluir-extintas` | desligado | inclui inscrições quitadas/canceladas/extintas |
 | `--enriquecer N` | `0` | enriquece as **N maiores** empresas via API de CNPJ |
 | `--fonte-cnpj` | `brasilapi` | `brasilapi` ou `minhareceita` |
+| `--regiao-via-municipio` | desligado | classifica BH/RMBH × Zona da Mata pelo **município** do enriquecimento (ver nota abaixo) |
+
+> **A partir do trimestre 2026-1** a PGFN deixou de informar a DRF/município na
+> coluna `unidade_responsavel` (agora traz só a região fiscal, ex.: `1ª REGIÃO`).
+> Com o filtro antigo isso zerava o resultado. Use **`--regiao-via-municipio`**:
+> o pipeline lê todo MG, enriquece as `--enriquecer N` maiores empresas para
+> obter o município e, salvo `--todas-regioes`, mantém só BH/RMBH e Zona da Mata.
+> Como a região só é conhecida após o enriquecimento, use um `N` generoso
+> (ex.: `1000`) para ter boa cobertura nas regiões-alvo. Exemplo:
+>
+> ```bash
+> python captacao_divida_ativa.py processar --input-dir ./pgfn_csv --saida .. \
+>   --valor-relevante 250000 --enriquecer 1000 --regiao-via-municipio
+> ```
 
 Saídas (na pasta `--saida`):
 - `dados-captacao.json` — consumido pelo dashboard;
