@@ -177,26 +177,49 @@ def _abrir_texto(caminho: str):
     return open(caminho, "r", encoding="latin-1", newline="")
 
 
+def _iter_reader(f):
+    """Itera dicts a partir de um stream de texto CSV da PGFN (separador ';')."""
+    sample = f.read(4096)
+    f.seek(0)
+    delim = ";" if sample.count(";") >= sample.count(",") else ","
+    reader = csv.reader(f, delimiter=delim)
+    header = next(reader, None)
+    if not header:
+        return
+    cols = [_strip_acentos(h.strip().lower()).replace(" ", "_") for h in header]
+    tem_header = "cpf_cnpj" in cols or "nome_devedor" in cols
+    if not tem_header:
+        # arquivo sem cabeçalho: assume a ordem padrão
+        cols = COLUNAS
+        yield dict(zip(cols, header))
+    for row in reader:
+        if not row:
+            continue
+        yield dict(zip(cols, row))
+
+
 def iter_linhas_csv(caminho: str):
-    """Itera dicts a partir de um CSV da PGFN (separador ';')."""
+    """Itera as linhas de um arquivo CSV no disco."""
     with _abrir_texto(caminho) as f:
-        sample = f.read(4096)
-        f.seek(0)
-        delim = ";" if sample.count(";") >= sample.count(",") else ","
-        reader = csv.reader(f, delimiter=delim)
-        header = next(reader, None)
-        if not header:
-            return
-        cols = [_strip_acentos(h.strip().lower()).replace(" ", "_") for h in header]
-        tem_header = "cpf_cnpj" in cols or "nome_devedor" in cols
-        if not tem_header:
-            # arquivo sem cabeçalho: assume a ordem padrão
-            cols = COLUNAS
-            yield dict(zip(cols, header))
-        for row in reader:
-            if not row:
+        yield from _iter_reader(f)
+
+
+def iter_linhas_zip(caminho: str):
+    """Itera as linhas de todos os CSV dentro de um .zip (sem extrair)."""
+    with zipfile.ZipFile(caminho) as z:
+        for nome in z.namelist():
+            if not nome.lower().endswith(".csv"):
                 continue
-            yield dict(zip(cols, row))
+            print(f"    · {os.path.basename(caminho)} → {nome}")
+            with z.open(nome) as raw:
+                # PGFN historicamente usa latin-1; utf-8 como fallback
+                try:
+                    txt = io.TextIOWrapper(raw, encoding="latin-1", newline="")
+                    yield from _iter_reader(txt)
+                except UnicodeDecodeError:
+                    with z.open(nome) as raw2:
+                        txt = io.TextIOWrapper(raw2, encoding="utf-8", newline="")
+                        yield from _iter_reader(txt)
 
 
 def coletar_csvs(input_dir: str) -> list[str]:
@@ -207,23 +230,35 @@ def coletar_csvs(input_dir: str) -> list[str]:
     return sorted(set(achados))
 
 
+def coletar_zips(input_dir: str) -> list[str]:
+    achados: list[str] = []
+    for p in ("*.zip", "**/*.zip", "*.ZIP", "**/*.ZIP"):
+        achados.extend(glob.glob(os.path.join(input_dir, p), recursive=True))
+    return sorted(set(achados))
+
+
 # ---------------------------------------------------------------------------
 # Agregação por CNPJ
 # ---------------------------------------------------------------------------
 def processar(input_dir: str, valor_relevante: float, somente_regioes: bool,
               excluir_extintas: bool):
-    """Lê todos os CSV, filtra e agrega por CNPJ. Retorna lista de empresas."""
+    """Lê todos os CSV/ZIP, filtra e agrega por CNPJ. Retorna lista de empresas."""
     csvs = coletar_csvs(input_dir)
-    if not csvs:
-        sys.exit(f"Nenhum CSV encontrado em '{input_dir}'. Baixe os dados da PGFN "
-                 f"ou use o modo 'demo'.")
-    print(f"[i] {len(csvs)} arquivo(s) CSV encontrado(s).")
+    zips = coletar_zips(input_dir)
+    if not csvs and not zips:
+        sys.exit(f"Nenhum CSV ou ZIP encontrado em '{input_dir}'. Baixe os dados "
+                 f"da PGFN ou use o modo 'demo'.")
+    print(f"[i] {len(csvs)} CSV e {len(zips)} ZIP encontrado(s).")
+
+    # fontes: cada item é (rótulo, gerador de linhas)
+    fontes = [(c, iter_linhas_csv(c)) for c in csvs]
+    fontes += [(z, iter_linhas_zip(z)) for z in zips]
 
     agg: dict[str, dict] = {}
     total_linhas = 0
-    for caminho in csvs:
+    for caminho, linhas in fontes:
         print(f"[i] lendo {os.path.basename(caminho)} ...")
-        for row in iter_linhas_csv(caminho):
+        for row in linhas:
             total_linhas += 1
             if total_linhas % 1_000_000 == 0:
                 print(f"    ... {total_linhas:,} linhas")
@@ -410,45 +445,65 @@ def _cnae(d: dict) -> str:
 # ---------------------------------------------------------------------------
 # Download (best-effort) de um trimestre da PGFN
 # ---------------------------------------------------------------------------
-def baixar(trimestre: str, input_dir: str, tipos: list[str]):
+def _baixar_url(requests, url: str, input_dir: str):
+    nome = os.path.basename(url.split("?")[0]) or "download.zip"
+    destino = os.path.join(input_dir, nome)
+    print(f"[i] baixando {nome} ...")
+    with requests.get(url, stream=True, timeout=900) as r:
+        r.raise_for_status()
+        total = int(r.headers.get("content-length", 0))
+        baixado = 0
+        with open(destino, "wb") as fh:
+            for chunk in r.iter_content(1 << 20):
+                fh.write(chunk)
+                baixado += len(chunk)
+                if total:
+                    print(f"\r    {baixado/1e6:,.0f} MB / {total/1e6:,.0f} MB",
+                          end="", flush=True)
+    print(f"\n    salvo em {destino}")
+
+
+def baixar(trimestre: str, input_dir: str, tipos: list[str],
+           urls: list[str] | None = None):
     try:
         import requests
     except ImportError:
         sys.exit("'requests' é necessário para baixar. pip install requests")
 
     os.makedirs(input_dir, exist_ok=True)
+
+    # 1) URLs explícitas têm prioridade (caminho mais confiável).
+    if urls:
+        for u in urls:
+            _baixar_url(requests, u, input_dir)
+        print("[ok] download concluído. Agora rode: processar --input-dir", input_dir)
+        return
+
+    # 2) Descoberta automática a partir do índice da PGFN.
     base = "https://dadosabertos.pgfn.gov.br/"
     print(f"[i] descobrindo arquivos do trimestre {trimestre} em {base} ...")
     try:
         idx = requests.get(base, timeout=60).text
     except Exception as exc:  # noqa: BLE001
         sys.exit(f"Falha ao acessar a PGFN: {exc}\n"
-                 f"Baixe manualmente em {base} e use 'processar --input-dir'.")
+                 f"Baixe manualmente em {base} e use 'baixar --url <zip>' "
+                 f"ou 'processar --input-dir'.")
 
     links = re.findall(r'href=["\']([^"\']+\.zip)["\']', idx, flags=re.I)
     ano, t = trimestre.split("-")
     alvo = [l for l in links if ano in l and (f"trimestre_0{t}" in l.lower()
-            or f"_{t}_" in l or f"-{t}-" in l)]
+            or f"_{t}_" in l or f"-{t}-" in l or f"_{t}." in l)]
     if not alvo:
         print("[!] Não consegui inferir os links automaticamente. "
-              "Links .zip encontrados:")
-        for l in links[:40]:
-            print("    ", l)
-        sys.exit("Baixe o(s) .zip do trimestre desejado e rode 'processar'.")
+              "Links .zip encontrados no índice:")
+        for l in links[:60]:
+            print("    ", l if l.startswith("http") else base + l.lstrip("/"))
+        sys.exit("Copie a(s) URL(s) do trimestre desejado e rode: "
+                 "baixar --url <zip1> --url <zip2>")
 
     for l in alvo:
         url = l if l.startswith("http") else base + l.lstrip("/")
-        nome = os.path.basename(url)
-        print(f"[i] baixando {nome} ...")
-        with requests.get(url, stream=True, timeout=600) as r:
-            r.raise_for_status()
-            buf = io.BytesIO()
-            for chunk in r.iter_content(1 << 20):
-                buf.write(chunk)
-        buf.seek(0)
-        with zipfile.ZipFile(buf) as z:
-            z.extractall(input_dir)
-        print(f"    extraído em {input_dir}")
+        _baixar_url(requests, url, input_dir)
     print("[ok] download concluído. Agora rode: processar --input-dir", input_dir)
 
 
@@ -631,9 +686,11 @@ def main():
     pp.add_argument("--fonte-cnpj", choices=["brasilapi", "minhareceita"],
                     default="brasilapi")
 
-    pb = sub.add_parser("baixar", help="baixa (best-effort) um trimestre da PGFN")
-    pb.add_argument("--trimestre", required=True, help="ex.: 2025-1")
+    pb = sub.add_parser("baixar", help="baixa um trimestre da PGFN (ou URLs diretas)")
+    pb.add_argument("--trimestre", default="", help="ex.: 2025-1 (descoberta automática)")
     pb.add_argument("--input-dir", default="pgfn_csv")
+    pb.add_argument("--url", action="append", default=[], dest="urls",
+                    help="URL .zip direta da PGFN (pode repetir; ignora --trimestre)")
     pb.add_argument("--tipos", nargs="+",
                     default=["nao_previdenciario", "previdenciario", "fgts"])
 
@@ -644,7 +701,9 @@ def main():
     args = p.parse_args()
 
     if args.cmd == "baixar":
-        baixar(args.trimestre, args.input_dir, args.tipos)
+        if not args.urls and not args.trimestre:
+            sys.exit("Informe --trimestre AAAA-T ou ao menos um --url <zip>.")
+        baixar(args.trimestre, args.input_dir, args.tipos, args.urls)
         return
 
     if args.cmd == "demo":
