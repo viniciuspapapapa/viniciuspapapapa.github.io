@@ -64,13 +64,23 @@ Gera `../dados-captacao.json` (sintético) e abre o dashboard já populado.
 
 ### 2) Baixar os dados reais da PGFN
 
+Descoberta automática do trimestre:
 ```bash
 python captacao_divida_ativa.py baixar --trimestre 2025-1 --input-dir ./pgfn_csv
 ```
-Se o download automático falhar (a PGFN muda o layout do site às vezes),
-baixe os `.zip` manualmente em https://dadosabertos.pgfn.gov.br/, extraia em
-`./pgfn_csv` e siga para o passo 3. Os arquivos são grandes (todo o Brasil);
-o filtro de UF reduz para MG.
+
+Ou, se preferir/precisar, informe a(s) URL(s) `.zip` direto (caminho mais
+confiável — copie da página https://dadosabertos.pgfn.gov.br/):
+```bash
+python captacao_divida_ativa.py baixar --input-dir ./pgfn_csv \
+  --url https://dadosabertos.pgfn.gov.br/<arquivo_nao_previdenciario>.zip \
+  --url https://dadosabertos.pgfn.gov.br/<arquivo_previdenciario>.zip
+```
+
+Os `.zip` ficam salvos em `./pgfn_csv` e **não precisam ser descompactados** —
+o passo 3 lê os CSV de dentro dos zips. Se o download automático falhar, o
+script lista as URLs encontradas no índice para você copiar e usar com `--url`.
+Os arquivos são grandes (Brasil inteiro); o filtro de UF reduz para MG.
 
 ### 3) Processar, filtrar e gerar a planilha + JSON
 
@@ -81,6 +91,7 @@ python captacao_divida_ativa.py processar \
   --valor-relevante 250000 \
   --enriquecer 300
 ```
+Lê tanto `.csv` quanto `.zip` da pasta `--input-dir`.
 
 Opções:
 
