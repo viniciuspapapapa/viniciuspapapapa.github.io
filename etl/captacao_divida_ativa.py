@@ -96,11 +96,29 @@ SITUACOES_EXTINTAS = ("EXTINT", "CANCELAD", "QUITAD", "BAIXAD", "REMID",
 
 
 def classificar_regiao(unidade: str) -> str | None:
-    """Retorna o rótulo da região a partir da unidade_responsavel, ou None."""
+    """Retorna o rótulo da região a partir da unidade_responsavel, ou None.
+
+    Observação: a partir do trimestre 2026-1 a PGFN passou a publicar em
+    unidade_responsavel apenas a região fiscal ("1ª REGIÃO", "2ª REGIÃO"),
+    sem o nome da DRF/município. Nesses casos esta função não consegue
+    inferir a cidade — use o modo --regiao-via-municipio, que classifica a
+    região pelo município obtido no enriquecimento (regiao_por_municipio)."""
     u = _strip_acentos((unidade or "").upper())
     for regiao, chaves in REGIOES.items():
         for chave in chaves:
             if chave in u:
+                return regiao
+    return None
+
+
+def regiao_por_municipio(municipio: str) -> str | None:
+    """Classifica a região a partir do município (vindo do enriquecimento)."""
+    m = _strip_acentos((municipio or "").upper())
+    if not m:
+        return None
+    for regiao, chaves in REGIOES.items():
+        for chave in chaves:
+            if chave in m:
                 return regiao
     return None
 
@@ -399,6 +417,13 @@ def enriquecer(empresas: list[dict], limite: int, fonte: str = "brasilapi"):
             dados = _consulta_cnpj(requests, e["cnpj"], fonte)
             if dados:
                 e.update(dados)
+                # A PGFN deixou de trazer a cidade na unidade_responsavel;
+                # reclassifica a região pelo município obtido aqui.
+                nova = regiao_por_municipio(e.get("municipio", ""))
+                if nova:
+                    e["regiao"] = nova
+                elif e.get("municipio"):
+                    e["regiao"] = "Outras (MG)"
             print(f"    [{i}/{len(alvo)}] {e['cnpj']} ok")
         except Exception as exc:  # noqa: BLE001
             print(f"    [{i}/{len(alvo)}] {e['cnpj']} falhou: {exc}")
@@ -685,6 +710,12 @@ def main():
                     help="enriquecer as N maiores empresas via API de CNPJ")
     pp.add_argument("--fonte-cnpj", choices=["brasilapi", "minhareceita"],
                     default="brasilapi")
+    pp.add_argument("--regiao-via-municipio", action="store_true",
+                    help="classifica BH/RMBH x Zona da Mata pelo município do "
+                         "enriquecimento (necessário a partir de 2026-1, quando "
+                         "a PGFN deixou de informar a DRF na unidade_responsavel). "
+                         "Lê todo MG, enriquece as N maiores e, salvo "
+                         "--todas-regioes, mantém só BH/RMBH e Zona da Mata.")
 
     pb = sub.add_parser("baixar", help="baixa um trimestre da PGFN (ou URLs diretas)")
     pb.add_argument("--trimestre", default="", help="ex.: 2025-1 (descoberta automática)")
@@ -715,11 +746,20 @@ def main():
         return
 
     if args.cmd == "processar":
+        via_municipio = args.regiao_via_municipio
+        # No modo via-município lemos todo MG (a região só é conhecida após o
+        # enriquecimento); o filtro geográfico é aplicado depois.
         empresas = processar(args.input_dir, args.valor_relevante,
-                             somente_regioes=not args.todas_regioes,
+                             somente_regioes=not args.todas_regioes
+                                             and not via_municipio,
                              excluir_extintas=not args.incluir_extintas)
         if args.enriquecer > 0:
             enriquecer(empresas, args.enriquecer, args.fonte_cnpj)
+        if via_municipio and not args.todas_regioes:
+            antes = len(empresas)
+            empresas = [e for e in empresas if e.get("regiao") in REGIOES]
+            print(f"[i] filtro por município: {len(empresas)} de {antes} "
+                  f"empresa(s) em BH/RMBH ou Zona da Mata.")
         meta = _meta(f"PGFN CSV ({args.input_dir})", len(empresas),
                      args.valor_relevante, demo=False)
         exportar(empresas, args.saida, meta)
