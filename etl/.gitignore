@@ -5,3 +5,7 @@ saida/
 *.xlsx
 empresas_divida_ativa.csv
 __pycache__/
+# análise de risco penal — USO INTERNO, não publicar
+risco_penal.csv
+dados-captacao-com-risco-penal.json
+qsa_cache.json
