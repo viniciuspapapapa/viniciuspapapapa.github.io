@@ -61,7 +61,27 @@ A inscrição em Dívida Ativa pressupõe **crédito definitivamente constituíd
 4. **QSA do CNPJ** — identificar o responsável penal à época.
 5. **Certidões criminais** (Justiça Federal) do(s) administrador(es).
 
+## Sócios / administradores (QSA)
+
+A planilha traz duas colunas a partir do **QSA** (Quadro de Sócios e
+Administradores), dado público do cadastro CNPJ (BrasilAPI; CPF mascarado):
+
+- **Administradores (resp. penal provável)** — sócios com poder de gestão
+  (Diretor, Presidente, Sócio-Administrador, Conselheiro etc.), que são os
+  candidatos a responder penalmente pelos fatos da empresa.
+- **Todos os sócios (QSA)** — quadro completo.
+
+Cobertura: **615/633** empresas com QSA (18 sem quadro público — ex.: certas
+S.A./naturezas jurídicas); **1.701 sócios**, dos quais **1.107 administradores**.
+
+> ⚠️ O QSA reflete a composição **atual**; a responsabilidade penal é de quem
+> administrava **à época do fato gerador**. Confirme a data dos fatos × entrada/
+> saída de cada sócio (coluna "entrada" do QSA / contrato social).
+> Dado pessoal de sócios — uso interno, base legal/finalidade do escritório.
+
 ## Arquivos gerados (locais, não versionados)
-- `risco_penal.xlsx` / `risco_penal.csv` — ranking por risco penal, com tipificação e fundamentos.
+- `risco_penal.xlsx` — ranking por risco penal, com **sócios/administradores**, tipificação e fundamentos.
+- `risco_penal.csv` — versão CSV (sem QSA).
 - `dados-captacao-com-risco-penal.json` — dataset com o campo `risco_penal` (uso interno).
-- `analise_risco_penal.py` — script reprodutível.
+- `qsa_cache.json` — cache do QSA por CNPJ (dado pessoal — não versionado).
+- `analise_risco_penal.py`, `qsa_fetch.py`, `risco_penal_xlsx.py` — scripts reprodutíveis.
