@@ -879,6 +879,619 @@ const RECIPES = [
  ing:['2 bananas congeladas em rodelas','1 colher de sopa de cacau em pó (opcional)','1 colher de sopa de leite ou bebida vegetal'],
  modo:['Deixe as bananas em rodelas no freezer por pelo menos 4 horas antes de preparar.','Bata as bananas congeladas em um processador ou liquidificador potente até formar um creme espesso.','Se necessário, adicione o leite aos poucos para ajudar a bater.','Misture o cacau em pó, se for usar, e bata mais um pouco até incorporar.','Sirva imediatamente, com a consistência de um sorvete cremoso.'],
  dica:'Bata em intervalos curtos e raspe as laterais do processador várias vezes — a banana congelada trava a lâmina se você tentar bater tudo de uma vez.'},
+
+{id:'r175', nome:'Panqueca integral com recheio de abobrinha e cogumelos', ref:['almoco','jantar'], dif:'medio', min:30, porc:5, kcal:320, tags:['vegetariano','comfort'], emoji:'🥞',
+ ing:['2 xícaras de chá de leite líquido','2 ovos','0,5 xícara de chá de aveia em flocos','1 xícara de chá de farinha de trigo integral','1 colher de chá de sal','1 colher de sopa de azeite','1 cebola picada','1 abobrinha ralada','3 xícaras de chá de cogumelos variados picados (shitake, shimeji e champignon)','Pimenta-do-reino a gosto','Sal a gosto','1 lata de creme de leite','2 colheres de sopa de cebolinha picada'],
+ modo:['Bata no liquidificador o leite, os ovos, a aveia, a farinha integral e o sal até obter uma massa lisa e homogênea.','Aqueça uma frigideira pequena untada com um fio de azeite e despeje porções da massa, dourando dos dois lados; repita até usar toda a massa e reserve as panquecas.','Em uma panela, refogue a cebola no azeite até ficar transparente, depois junte a abobrinha ralada e os cogumelos picados, temperando com sal e pimenta-do-reino.','Refogue bem até os legumes murcharem, desligue o fogo e misture o creme de leite e a cebolinha picada.','Recheie cada panqueca com uma porção generosa do refogado, dobre ao meio e depois novamente para formar um leque, e sirva em seguida.'],
+ dica:'Troque os cogumelos por champignon em conserva picado se não encontrar os frescos — o sabor fica mais suave, mas funciona bem.'},
+
+{id:'r176', nome:'Macarrão com atum cremoso', ref:['almoco','jantar'], dif:'facil', min:15, porc:6, kcal:410, tags:['proteico','rapido'], emoji:'🍝',
+ ing:['400 g de macarrão tipo penne','2 xícaras de chá de molho de tomate','0,5 xícara de chá de ervilhas frescas','1 cenoura média picada','0,5 colher de sopa de sal','1 lata de atum sólido em conserva, escorrido','3 xícaras de chá de água','1 lata de creme de leite'],
+ modo:['Coloque na panela de pressão o macarrão cru, o molho de tomate, as ervilhas, a cenoura, o sal, o atum escorrido e a água.','Tampe a panela e leve ao fogo alto; quando começar a apitar, abaixe o fogo e deixe cozinhar por cerca de 3 minutos.','Desligue o fogo e aguarde a pressão sair completamente antes de abrir a panela com cuidado.','Misture o creme de leite ao macarrão ainda quente e sirva imediatamente.'],
+ dica:'Se sobrar líquido na panela, espere alguns minutos antes de servir: a massa absorve o caldo e fica no ponto certo.'},
+
+{id:'r177', nome:'Macarrão aos 4 queijos', ref:['almoco','jantar'], dif:'facil', min:40, porc:4, kcal:560, tags:['comfort'], emoji:'🧀',
+ ing:['250 g de macarrão tipo espaguete','1 colher de sopa de manteiga','0,5 xícara de chá de leite líquido integral','1 lata de creme de leite','1 pitada de noz-moscada','1 xícara de chá de queijo prato ralado','1 xícara de chá de queijo provolone ralado','1 xícara de chá de queijo parmesão ralado','0,5 xícara de chá de queijo gorgonzola amassado'],
+ modo:['Cozinhe o macarrão em água com sal até ficar al dente, escorra e reserve.','Em outra panela, derreta a manteiga e adicione o leite, o creme de leite e a noz-moscada, aquecendo sem deixar ferver.','Junte os quatro queijos aos poucos, mexendo sempre até derreterem e formarem um molho liso e homogêneo.','Misture o macarrão reservado ao molho de queijos e sirva imediatamente bem quente.'],
+ dica:'Reserve um pouco da água do cozimento do macarrão: se o molho engrossar demais, use-a para ajustar a cremosidade.'},
+
+{id:'r178', nome:'Macarrão cremoso de forno', ref:['almoco','jantar'], dif:'facil', min:35, porc:6, kcal:430, tags:['comfort'], emoji:'🍲',
+ ing:['250 g de macarrão','3 xícaras de chá de leite líquido integral','0,5 xícara de chá de queijo muçarela ralado','0,5 xícara de chá de ervilhas frescas','1 colher de chá de sal','1 pitada de noz-moscada','0,5 colher de sopa de tomilho fresco','1 caixinha de creme de leite','2 colheres de sopa de queijo parmesão ralado'],
+ modo:['Em um refratário, misture o macarrão cru com o leite, o queijo muçarela, as ervilhas, o sal, a noz-moscada e o tomilho.','Cubra com papel-alumínio e leve ao forno médio preaquecido a 180°C por cerca de 20 minutos.','Retire o papel-alumínio, misture bem os ingredientes e volte ao forno, sem cobrir, por mais 10 minutos.','Fora do forno, acrescente o creme de leite, finalize com o parmesão ralado por cima e sirva quente.'],
+ dica:'Use um refratário raso para que o macarrão cozinhe por igual dentro do forno.'},
+
+{id:'r179', nome:'Macarrão à parisiense', ref:['almoco','jantar'], dif:'facil', min:40, porc:4, kcal:470, tags:['proteico','comfort'], emoji:'🍝',
+ ing:['250 g de macarrão tipo espaguete ou ninho','1 colher de sopa de manteiga','2 xícaras de chá de peito de frango cozido e desfiado','200 g de ervilhas frescas','1 xícara de chá de presunto fatiado picado','1 colher de chá de sal','1 pitada de pimenta-do-reino','0,5 xícara de chá de leite líquido integral','1 lata de creme de leite','3 colheres de sopa de queijo parmesão ralado'],
+ modo:['Cozinhe o macarrão em água salada fervente até ficar al dente, escorra e reserve.','Em uma frigideira, derreta a manteiga e doure levemente o frango desfiado.','Acrescente a ervilha, o presunto, o sal e a pimenta-do-reino, misturando bem por alguns minutos.','Adicione o leite e o creme de leite, mexendo até formar um molho cremoso e homogêneo.','Junte o macarrão cozido delicadamente ao molho e sirva polvilhado com o queijo parmesão.'],
+ dica:'Use presunto em cubos em vez de fatiado para dar mais textura ao prato.'},
+
+{id:'r180', nome:'Macarrão cremoso com alho-poró', ref:['almoco','jantar'], dif:'facil', min:30, porc:5, kcal:480, tags:['rapido','comfort'], emoji:'🍝',
+ ing:['2 colheres de sopa de manteiga','1 talo de alho-poró fatiado','1 copo de requeijão','1 lata de creme de leite','500 g de macarrão tipo parafuso cozido'],
+ modo:['Derreta a manteiga em uma panela e refogue o alho-poró fatiado até ficar macio.','Acrescente o requeijão e o creme de leite, mexendo em fogo baixo até aquecer sem ferver.','Misture o macarrão parafuso já cozido ao molho cremoso.','Sirva imediatamente, ainda quente.'],
+ dica:'Refogue o alho-poró em fogo baixo para não queimar as pontas e perder o sabor suave.'},
+
+{id:'r181', nome:'Macarrão integral ao molho de limão, parmesão e manjericão', ref:['almoco','jantar'], dif:'facil', min:10, porc:6, kcal:390, tags:['rapido','vegetariano'], emoji:'🍋',
+ ing:['1 limão (suco e raspas da casca)','3 colheres de sopa de azeite','4 colheres de sopa de queijo parmesão ralado','1 caixinha de creme de leite','0,5 xícara de chá de folhas de manjericão','1 envelope de tempero pronto para massas e molhos','1 pitada de sal','1 pitada de noz-moscada','250 g de macarrão integral tipo parafuso','1 colher de chá de sal'],
+ modo:['Em uma tigela grande, junte o suco e as raspas de limão, o azeite e o parmesão ralado, mexendo com um garfo até o queijo dissolver e formar um creme.','Adicione o creme de leite a essa mistura e combine bem.','Junte as folhas de manjericão, tempere com o tempero pronto, o sal e a noz-moscada, e reserve.','Cozinhe o macarrão integral em água fervente com sal até ficar al dente.','Escorra bem a massa e misture imediatamente com o molho reservado, servindo em seguida, ainda quente.'],
+ dica:'Pique o manjericão na hora de servir para preservar o aroma fresco das folhas.'},
+
+{id:'r182', nome:'Lasanha à bolonhesa com molho branco', ref:['almoco','jantar'], dif:'facil', min:90, porc:12, kcal:520, tags:['comfort'], emoji:'🍝',
+ ing:['500 g de massa para lasanha','100 g de queijo parmesão ralado','250 g de queijo muçarela fatiado','2 colheres de sopa de sal','1 fio de azeite','2 colheres de sopa de óleo','500 g de carne moída','1 cenoura pequena ralada','1 colher de sopa de salsão picado','1 tablete de caldo de carne','1 lata de purê de tomate','1 xícara de chá de água','2 colheres de sopa de manteiga','1,5 colher de sopa de farinha de trigo','2 xícaras de chá de leite líquido integral','0,5 colher de chá de sal','1 pitada de pimenta-do-reino','1 pitada de noz-moscada','1 lata de creme de leite'],
+ modo:['Cozinhe a massa de lasanha em água fervente com sal e um fio de azeite até ficar al dente; escorra e reserve.','Para o molho bolonhesa, refogue a carne moída no óleo até dourar, junte a cenoura e o salsão e deixe dourar mais um pouco.','Dissolva o tablete de caldo de carne no purê de tomate com a água, adicione à carne e cozinhe por 15 minutos, ou até o molho apurar.','Para o molho branco, derreta a manteiga, junte a farinha e doure levemente; acrescente o leite aos poucos, mexendo sem parar para não empelotar.','Tempere com sal, pimenta-do-reino e noz-moscada, e quando engrossar, desligue o fogo e misture o creme de leite.','Em uma forma untada, monte camadas alternadas de molho bolonhesa, massa, molho branco, parmesão e muçarela, repetindo até o final.','Finalize com molho branco e parmesão por cima, e leve ao forno médio-alto preaquecido a 200°C por 20 minutos antes de servir.'],
+ dica:'Intercale camadas com presunto fatiado (cerca de 200 g) para dar ainda mais sabor à lasanha.'},
+
+{id:'r183', nome:'Lasanha com recheio de legumes', ref:['almoco','jantar'], dif:'medio', min:70, porc:8, kcal:380, tags:['vegetariano','comfort'], emoji:'🍆',
+ ing:['1 berinjela em cubos','1 cebola picada','1 abobrinha em cubos','1 xícara de chá de pimentões amarelo e vermelho em cubos','1,5 colher de sopa de azeite','1 colher de chá de sal','1 colher de sopa de azeite (molho)','1 cebola picada (molho)','2 dentes de alho picados','1 caixa de polpa de tomate (520 g)','4 tomates sem sementes picados','0,5 xícara de chá de água','1 colher de chá de sal (molho)','1 pitada de pimenta-do-reino','1 colher de sopa de açúcar mascavo','3 colheres de sopa de manjericão fresco','200 g de massa para lasanha pré-cozida','2 xícaras de chá de queijo muçarela ralado','1 caixinha de creme de leite','4 colheres de sopa de queijo parmesão ralado'],
+ modo:['Deixe a berinjela em cubos de molho em água com sal por 10 minutos, depois escorra e misture com a cebola, a abobrinha e os pimentões; reserve.','Para o molho, refogue a cebola e o alho no azeite até dourarem, junte a polpa de tomate, os tomates picados e a água.','Cozinhe em fogo baixo por 10 minutos, acrescente o sal, a pimenta-do-reino, o açúcar mascavo e o manjericão, e cozinhe por mais 3 minutos.','Em um refratário quadrado, monte camadas de molho, massa, o recheio de legumes e queijo muçarela, repetindo duas vezes e terminando com queijo.','Espalhe o creme de leite por cima e polvilhe o parmesão ralado.','Cubra com papel-alumínio e asse em forno médio preaquecido a 180°C por 30 minutos.','Retire o papel-alumínio e volte ao forno por mais 20 minutos até gratinar, servindo em seguida.'],
+ dica:'Deixar a berinjela de molho em água com sal reduz o amargor natural do legume.'},
+
+{id:'r184', nome:'Lasanha de abobrinha', ref:['almoco','jantar'], dif:'facil', min:65, porc:6, kcal:400, tags:['comfort'], emoji:'🥒',
+ ing:['2 abobrinhas fatiadas no sentido do comprimento','0,5 colher de sopa de óleo','300 g de carne moída','0,5 xícara de chá de molho de tomate','1 tablete de caldo de carne','0,5 xícara de chá de água','1 colher de chá de açúcar','1 caixinha de creme de leite','200 g de queijo muçarela fatiado','0,5 xícara de chá de queijo parmesão ralado'],
+ modo:['Grelhe as fatias de abobrinha em uma frigideira antiaderente até dourarem levemente e reserve.','Em uma panela, aqueça o óleo e refogue a carne moída até dourar por completo.','Junte o molho de tomate, o caldo de carne dissolvido na água e o açúcar, cozinhando por 5 minutos.','Desligue o fogo e misture o creme de leite ao molho.','Em um refratário, alterne camadas de molho, fatias de abobrinha e muçarela, finalizando com molho e parmesão por cima.','Leve ao forno médio-alto preaquecido a 200°C por 30 minutos ou até gratinar, e sirva em seguida.'],
+ dica:'Grelhe a abobrinha em fogo alto e por pouco tempo para que ela não solte muita água na montagem.'},
+
+{id:'r185', nome:'Lasanha de espinafre', ref:['almoco','jantar'], dif:'facil', min:90, porc:12, kcal:410, tags:['comfort'], emoji:'🥬',
+ ing:['300 g de massa para lasanha','1 colher de sopa de sal','2 colheres de sopa de manteiga','0,5 cebola picada','2 colheres de sopa de farinha de trigo','2 xícaras de chá de leite líquido','1 tablete de caldo de galinha','1 maço de espinafre cozido e espremido','1 lata de creme de leite','400 g de queijo muçarela fatiado','3 colheres de sopa de queijo parmesão ralado'],
+ modo:['Cozinhe a massa de lasanha em água fervente com sal conforme as instruções da embalagem e reserve.','Em uma panela, derreta a manteiga e refogue a cebola até murchar.','Junte a farinha de trigo e deixe dourar levemente, depois adicione o leite aos poucos, mexendo sempre.','Esfarele o caldo de galinha na mistura e cozinhe até engrossar.','No liquidificador, bata o espinafre com o creme de leite e misture esse creme à parte do molho que ficou na panela.','Deixe levantar fervura e desligue o fogo.','Em um refratário, monte camadas de creme de espinafre, massa e muçarela, repetindo até o final e polvilhando parmesão por cima.','Leve ao forno médio-alto preaquecido a 200°C por 15 minutos ou até gratinar, e sirva a seguir.'],
+ dica:'Pode substituir o espinafre fresco por 3 xícaras de chá de espinafre congelado, se preferir.'},
+
+{id:'r186', nome:'Nhoque de abóbora gratinado', ref:['almoco','jantar'], dif:'facil', min:80, porc:4, kcal:450, tags:['vegetariano','comfort'], emoji:'🎃',
+ ing:['400 g de abóbora japonesa sem casca picada','1 stick de tempero pronto','2 colheres de sopa de manteiga','2 gemas','5 colheres de sopa de farinha de trigo','0,5 maço de espinafre','0,5 colher de sopa de azeite','1 dente de alho amassado','1 lata de creme de leite','0,5 xícara de chá de leite líquido','1 pitada de noz-moscada','1 pitada de pimenta-do-reino','0,5 colher de chá de sal'],
+ modo:['Tempere a abóbora com o tempero pronto e asse coberta com papel-alumínio em forno médio-alto a 200°C por cerca de 30 minutos até ficar macia.','Amasse a abóbora ainda quente com a manteiga até formar um purê homogêneo.','Junte as gemas e a farinha de trigo, misturando com as mãos até obter uma massa que solte levemente das mãos.','Modele bolinhas de nhoque, polvilhando um pouco de farinha para não grudarem.','Cozinhe as bolinhas em água fervente até subirem à superfície, retirando-as para um refratário untado com azeite forrado com folhas de espinafre.','Para o molho, doure o alho no azeite, desligue o fogo e misture o creme de leite, o leite, a noz-moscada, a pimenta e o sal.','Regue o nhoque e o espinafre com o molho, sem cobrir totalmente, e leve ao forno médio-alto para gratinar antes de servir.'],
+ dica:'Substitua o espinafre por escarola e finalize com um toque de molho de tomate para variar a receita.'},
+
+{id:'r187', nome:'Rondelli', ref:['almoco','jantar'], dif:'medio', min:60, porc:6, kcal:430, tags:['vegetariano','comfort'], emoji:'🧀',
+ ing:['200 g de massa para lasanha','150 g de ricota amassada','0,5 xícara de chá de leite líquido','1 colher de sopa de queijo parmesão ralado','1 pitada de sal','1 pitada de pimenta-do-reino','1 colher de sopa de manteiga','1 cebola pequena ralada','1 colher de sopa de farinha de trigo','1,5 xícara de chá de leite líquido','1 sachê de tempero de alho e cebola','1 lata de creme de leite','250 g de queijo muçarela ralado','2 colheres de sopa de queijo parmesão ralado'],
+ modo:['Cozinhe a massa de lasanha conforme as instruções da embalagem e mantenha em água fria até a hora de montar.','Misture a ricota, o leite, o parmesão, o sal e a pimenta-do-reino em uma tigela até formar um recheio homogêneo.','Para o molho branco, derreta a manteiga, doure a cebola e junte a farinha, mexendo rapidamente para não empelotar.','Acrescente o leite aos poucos, sem parar de mexer, e o tempero de alho e cebola, cozinhando em fogo baixo por 10 minutos até engrossar.','Retire do fogo e misture o creme de leite ao molho.','Espalhe o recheio de ricota sobre as massas, enrole no sentido da largura e corte em fatias.','Em um refratário untado com manteiga, espalhe parte do molho branco, disponha as fatias de rondelli, cubra com o restante do molho e o queijo muçarela.','Polvilhe parmesão e leve ao forno médio-alto preaquecido a 200°C por 15 minutos para gratinar.'],
+ dica:'Acrescente nozes picadas ao recheio de ricota para dar uma textura crocante surpreendente.'},
+
+{id:'r188', nome:'Macarrão integral com molho branco e brócolis', ref:['almoco','jantar'], dif:'facil', min:30, porc:4, kcal:340, tags:['saudavel','proteico'], emoji:'🥦',
+ ing:['1 colher de sopa de creme vegetal','0,5 cebola picada','1 colher de sopa de farinha de trigo','1,5 xícara de chá de leite líquido zero lactose','1 colher de chá de sal','1 pitada de noz-moscada','1 pitada de pimenta-do-reino','1 xícara de chá de brócolis refogado picado','2 colheres de sopa de peito de peru em cubos','1 caixinha de creme de leite zero lactose','250 g de macarrão tipo penne integral cozido'],
+ modo:['Derreta o creme vegetal em uma panela e refogue a cebola até murchar.','Junte a farinha de trigo e mexa até dourar levemente.','Abaixe o fogo e acrescente o leite aos poucos, mexendo sempre para não formar grumos, cozinhando até engrossar.','Tempere com sal, noz-moscada e pimenta-do-reino, depois junte o brócolis, o peito de peru e o creme de leite, misturando bem e aquecendo sem ferver.','Retire do fogo e sirva o molho sobre o macarrão integral já cozido.'],
+ dica:'Use versões zero lactose do leite e do creme de leite para deixar a receita mais leve, sem perder a cremosidade.'},
+
+{id:'r189', nome:'Canelone de abóbora ao molho cremoso', ref:['almoco','jantar'], dif:'facil', min:60, porc:4, kcal:410, tags:['vegetariano','comfort'], emoji:'🎃',
+ ing:['250 g de massa para lasanha','1 colher de sopa de manteiga','500 g de abóbora em cubos cozida','2 colheres de sopa de salsa picada','1 colher de chá de sal','1 colher de sopa de manteiga (molho)','1 cebola picada','2 colheres de sopa de salsa picada (molho)','2 colheres de sopa de cebolinha picada','2 colheres de sopa de tomilho fresco picado','2 colheres de sopa de manjericão picado','1 colher de chá de sal (molho)','1 lata de creme de leite','2 colheres de sopa de queijo parmesão ralado'],
+ modo:['Cozinhe a massa de lasanha conforme as instruções da embalagem e mantenha em água fria até montar.','Derreta a manteiga em uma panela, junte a abóbora, a salsa e o sal, e cozinhe em fogo baixo até a abóbora desmanchar.','Recheie cada massa de lasanha com um pouco do purê de abóbora e enrole formando os canelones.','Para o molho, derreta a manteiga e refogue a cebola até dourar levemente.','Desligue o fogo e misture a salsa, a cebolinha, o tomilho, o manjericão, o sal, o creme de leite e o parmesão.','Forre o fundo de um refratário com um pouco do molho, disponha os canelones e cubra com o restante do molho.','Leve ao forno médio preaquecido a 180°C por 15 minutos e sirva em seguida.'],
+ dica:'Cozinhe a abóbora em cubos pequenos para que ela desmanche mais rápido e fique bem cremosa no recheio.'},
+
+{id:'r190', nome:'Lasanha de vegetais à bolonhesa', ref:['almoco','jantar'], dif:'facil', min:70, porc:8, kcal:390, tags:['comfort'], emoji:'🍆',
+ ing:['1 abobrinha média fatiada no sentido do comprimento','1 berinjela média fatiada no sentido do comprimento','2 colheres de sopa de óleo','500 g de carne moída','1 cebola pequena picada','6 tomates sem sementes picados','1 pitada de pimenta-do-reino','1 colher de sopa de sal','0,5 xícara de chá de polpa de tomate','1 xícara de chá de água','1 caixinha de creme de leite zero lactose','1 colher de sopa de manjericão fresco'],
+ modo:['Grelhe rapidamente as fatias de abobrinha e berinjela em uma frigideira antiaderente e reserve.','Aqueça o óleo em uma panela e refogue a carne moída até dourar bem.','Junte a cebola, os tomates picados, a pimenta-do-reino e o sal, refogando até a cebola murchar.','Acrescente a polpa de tomate e a água, cozinhando por 20 minutos até o molho apurar.','Retire do fogo e incorpore o creme de leite e o manjericão fresco ao molho.','Em um refratário médio, monte camadas alternadas de molho, abobrinha, molho, berinjela, finalizando com o molho restante.','Leve ao forno médio-alto preaquecido a 200°C por 30 minutos e sirva a seguir.'],
+ dica:'Grelhar os legumes antes de montar evita que a lasanha fique com excesso de água ao assar.'},
+
+{id:'r191', nome:'Macarrão à fiorentina', ref:['almoco','jantar'], dif:'facil', min:20, porc:3, kcal:420, tags:['vegetariano','rapido'], emoji:'🍝',
+ ing:['0,5 maço de espinafre limpo e lavado','0,5 colher de sopa de sal','1 fio de azeite','250 g de macarrão tipo farfalle','1 colher de sopa de manteiga','0,5 xícara de chá de queijo prato','0,5 xícara de chá de queijo parmesão ralado','0,5 colher de chá de sal','1 pitada de pimenta-do-reino','1 caixinha de creme de leite','Queijo parmesão ralado para polvilhar'],
+ modo:['Cozinhe o espinafre em fogo baixo, em panela tampada, usando apenas o próprio suco que ele solta.','Quando estiver macio, retire do fogo, esprema bem o excesso de água, pique e reserve.','Em outra panela, cozinhe o macarrão em água com sal e um fio de azeite até ficar al dente.','Em uma frigideira, derreta a manteiga e junte o espinafre picado e os queijos prato e parmesão.','Tempere com sal e pimenta-do-reino, e acrescente o creme de leite, mexendo sempre e sem deixar ferver.','Misture o macarrão já escorrido ao creme de espinafre na travessa.','Polvilhe com queijo parmesão ralado e sirva imediatamente.'],
+ dica:'Substitua o espinafre por uma lata de ervilhas escorridas se quiser uma versão mais rápida.'},
+
+{id:'r192', nome:'Panquecas de frango e funghi', ref:['almoco','jantar'], dif:'facil', min:60, porc:6, kcal:390, tags:['proteico','comfort'], emoji:'🥞',
+ ing:['2 ovos','1 xícara de chá de farinha de trigo','1 xícara de chá de leite líquido integral','0,5 colher de chá de fondo (massa)','0,5 xícara de chá de funghi seco e limpo','2 colheres de sopa de manteiga (molho)','1,5 colher de sopa de farinha de trigo (molho)','2 xícaras de chá de leite líquido integral quente','1 caixinha de creme de leite','1 colher de chá de fondo (molho)','0,5 xícara de chá de água','0,5 xícara de chá de vinho branco seco','1 peito de frango cozido e desfiado','1 colher de sopa de fondo (recheio)','2 colheres de sopa de manteiga (recheio)','2 colheres de sopa de farinha de trigo (recheio)','1 colher de sopa de salsa picada','1 colher de sopa de cebolinha picada','0,5 copo de requeijão'],
+ modo:['Bata no liquidificador os ovos, a farinha, o leite e o fondo até formar uma massa lisa.','Frite pequenas porções da massa em uma frigideira untada com manteiga em fogo baixo, virando para dourar dos dois lados, até usar toda a massa.','Para o molho, hidrate o funghi em água morna por 20 minutos, escorra e pique em pedaços pequenos.','Em uma panela, derreta a manteiga, junte a farinha e deixe dourar, depois adicione o leite quente aos poucos, mexendo bastante para não empelotar.','Misture o creme de leite e o fondo ao molho, e por fim acrescente o funghi picado.','Para o recheio, cozinhe em uma panela a água, o vinho branco, o frango desfiado e o fondo por cerca de 15 minutos após ferver.','Em outra panela, doure a farinha na manteiga e junte aos poucos o caldo reservado, mexendo sem parar até formar um molho grosso.','Adicione o frango desfiado, a salsa, a cebolinha e o requeijão a esse molho grosso, misture bem, recheie as panquecas com essa mistura, cubra com o molho de funghi e sirva.'],
+ dica:'Se não encontrar funghi seco, substitua por champignon fresco fatiado, que também combina muito bem com o molho.'},
+{id:'r225', nome:'Crepe de chocolate com whey', ref:['cafe','lancheT'], dif:'facil', min:12, porc:1, kcal:300, tags:['proteico','doce','rapido'], emoji:'🥞',
+ ing:['5 g de cacau em pó','20 g de chocolate amargo 70% cacau','3 claras de ovo','5 morangos pequenos','30 g de whey protein'],
+ modo:['Coloque o cacau, o chocolate, as claras, os morangos e o whey no liquidificador e bata até virar uma massa lisa.','Aqueça uma frigideira antiaderente com um fio de azeite, retirando o excesso com papel-toalha.','Despeje a massa formando um disco fino e espere a borda soltar do fundo antes de virar.','Doure dos dois lados até firmar.','Recheie com morango, kiwi ou banana fatiada e dobre ao meio para servir.'],
+ dica:'Se a massa grudar na frigideira, deixe cozinhar mais um pouco antes de tentar virar — quando solta sozinha das bordas é sinal de que está no ponto.'},
+
+{id:'r226', nome:'Pé de moleque fitness', ref:['lancheT','ceia'], dif:'facil', min:20, porc:4, kcal:220, tags:['doce','vegetariano','fitness'], emoji:'🍫',
+ ing:['100 g de chocolate amargo 50% cacau','40 g de amendoim torrado sem casca','30 g de biscoito de arroz'],
+ modo:['Derreta o chocolate em banho-maria ou no micro-ondas, mexendo em intervalos curtos para não queimar.','Quebre o biscoito de arroz em pedaços grosseiros.','Misture o amendoim e o biscoito quebrado ao chocolate derretido.','Espalhe a mistura sobre um papel-manteiga, nivelando com uma colher, e leve à geladeira por cerca de 10 minutos até firmar.','Quebre em pedaços para servir.'],
+ dica:'Troque o amendoim por castanha-de-caju ou avelã para variar o sabor sem perder a crocância.'},
+
+{id:'r227', nome:'Mini panquecas de banana', ref:['cafe','lancheM'], dif:'facil', min:15, porc:1, kcal:316, tags:['proteico','rapido'], emoji:'🍌',
+ ing:['1 ovo','30 g de farinha de aveia','1 banana','50 g de morango','1 colher de sopa de mel'],
+ modo:['Bata o ovo com a farinha de aveia até obter uma massa homogênea.','Corte a banana em rodelas pequenas e misture à massa.','Aqueça uma frigideira antiaderente untada com um pouco de óleo de coco.','Despeje pequenas porções da massa formando as mini panquecas e doure dos dois lados.','Sirva com os morangos picados e regue com o mel.'],
+ dica:'Use uma colher de sorvete para porcionar a massa e garantir panquecas do mesmo tamanho.'},
+
+{id:'r228', nome:'Banoffe fit', ref:['lancheT','ceia'], dif:'facil', min:10, porc:1, kcal:263, tags:['doce','rapido'], emoji:'🍮',
+ ing:['4 bolachas ao leite','20 g de doce de leite','1 banana','50 g de iogurte natural grego','Canela em pó a gosto'],
+ modo:['Quebre as bolachas e forre o fundo de um potinho ou copo.','Cubra com o doce de leite formando a segunda camada.','Corte a banana em rodelas e distribua por cima do doce de leite.','Finalize com o iogurte grego e polvilhe canela a gosto.'],
+ dica:'Monte a sobremesa pouco antes de servir para a bolacha não amolecer demais.'},
+
+{id:'r229', nome:'Brownie de micro-ondas', ref:['lancheT','ceia'], dif:'facil', min:12, porc:1, kcal:313, tags:['doce','vegetariano','rapido'], emoji:'🍫',
+ ing:['2 maçãs','20 g de cacau em pó','2 ovos','1 colher de chá de fermento químico em pó'],
+ modo:['Bata todos os ingredientes em um processador até formar uma massa lisa.','Transfira para um recipiente próprio para micro-ondas.','Leve ao micro-ondas por cerca de 4 minutos, até firmar.','Deixe amornar antes de desenformar e cortar.'],
+ dica:'Adicione gotas de chocolate 50% cacau à massa antes de levar ao micro-ondas para um toque extra.'},
+
+{id:'r230', nome:'Cupcake de whey', ref:['cafe','lancheT'], dif:'facil', min:20, porc:1, kcal:295, tags:['proteico','doce'], emoji:'🧁',
+ ing:['Adoçante em pó zero caloria a gosto','20 g de aveia em flocos finos','20 g de cacau em pó sem açúcar','1 clara de ovo','1 colher de chá de fermento químico em pó','50 ml de leite desnatado','30 g de whey protein'],
+ modo:['Em uma vasilha, misture todos os ingredientes secos e a clara, deixando o leite reservado à parte.','Acrescente o leite aos poucos, mexendo até formar uma massa homogênea.','Quando a massa atingir o ponto, molde bolinhas com as mãos ou coloque em forminhas.','Leve para assar por até 6 minutos a 200°C.','Retire quando estiver dourado e deixe amornar antes de saborear.'],
+ dica:'Não deixe passar do ponto no forno — o cupcake de whey resseca rápido se assar demais.'},
+
+{id:'r231', nome:'Bolacha saudável de banana', ref:['lancheM','lancheT'], dif:'facil', min:20, porc:1, kcal:215, tags:['saudavel','vegetariano','doce'], emoji:'🍪',
+ ing:['1 banana pequena (cerca de 75 g)','10 g de coco ralado','10 g de leite em pó'],
+ modo:['Amasse bem a banana com um garfo.','Misture o leite em pó e o coco ralado até formar uma massa que dê para enrolar.','Divida a massa em porções e molde bolinhas achatadas.','Leve à air fryer a 180°C por cerca de 15 minutos, ou até dourar, acompanhando o cozimento.'],
+ dica:'Use uma banana bem madura para dar mais doçura natural às bolachas sem precisar de adoçante.'},
+
+{id:'r232', nome:'Brownie proteico', ref:['lancheT','ceia'], dif:'medio', min:20, porc:1, kcal:305, tags:['proteico','doce'], emoji:'🍫',
+ ing:['3 claras de ovo (cerca de 34 g)','20 g de chocolate 70% cacau','20 g de cacau em pó','20 g de whey protein sabor chocolate'],
+ modo:['Bata as claras em ponto de neve firme, até formarem picos que não caem.','Derreta o chocolate e deixe esfriar um pouco antes de incorporar delicadamente às claras.','Adicione o cacau e o whey aos poucos, misturando com movimentos suaves para não perder o volume — sem usar fermento ou farinha.','Despeje em forminhas individuais ou em uma forma rasa.','Asse a 180°C por cerca de 10 minutos.'],
+ dica:'Incorpore os ingredientes secos em duas ou três etapas para as claras não perderem o ar batido.'},
+
+{id:'r233', nome:'Panqueca de banana proteica', ref:['cafe','lancheM'], dif:'facil', min:10, porc:1, kcal:360, tags:['proteico','rapido'], emoji:'🥞',
+ ing:['30 g de whey protein sabor cookies','1 ovo','1 banana média (cerca de 75 g)','20 g de leite em pó','1 colher de café de canela em pó'],
+ modo:['Leve a banana com a canela e um pouco de água ao micro-ondas por 1 minuto e amasse bem.','Adicione o ovo e misture.','Junte o whey e o leite em pó, mexendo até incorporar por completo.','Aqueça uma frigideira antiaderente e despeje a massa, em uma panqueca única ou em mini porções.','Doure dos dois lados e finalize polvilhando um pouco de canela e leite em pó por cima.'],
+ dica:'Se a massa ficar densa demais, adicione uma colher de água para facilitar espalhar na frigideira.'},
+
+{id:'r234', nome:'Bolo de caneca no micro-ondas', ref:['cafe','lancheT'], dif:'facil', min:8, porc:1, kcal:280, tags:['proteico','rapido','doce'], emoji:'☕',
+ ing:['20 g de aveia em flocos finos','1 banana média (cerca de 75 g)','1 clara de ovo','1 dose de whey protein','Canela em pó a gosto'],
+ modo:['Amasse a banana e misture com a aveia, a clara e o whey até formar uma massa homogênea.','Tempere com canela a gosto.','Transfira para uma caneca ou recipiente próprio para micro-ondas.','Leve ao micro-ondas por cerca de 2 minutos, ajustando o tempo conforme a potência do aparelho.'],
+ dica:'Espete um palito no centro para conferir o ponto — se sair limpo, o bolo está pronto.'},
+
+{id:'r235', nome:'Bombom de chocolate com whey', ref:['lancheT','ceia'], dif:'facil', min:25, porc:6, kcal:123, tags:['proteico','doce'], emoji:'🍬',
+ ing:['85 g de chocolate 70% cacau','30 g de whey protein sabor cookies','20 g de coco ralado desidratado'],
+ modo:['Derreta o chocolate no micro-ondas em intervalos curtos, mexendo entre eles.','Acrescente o coco ralado e o whey, misturando até formar uma pasta homogênea.','Molde pequenas porções sobre uma travessa forrada com papel-manteiga.','Leve ao freezer por 20 minutos até firmar.'],
+ dica:'Divida a massa em porções iguais antes de levar ao freezer para calcular melhor as calorias de cada bombom.'},
+
+{id:'r236', nome:'Mingau de café com banana', ref:['cafe'], dif:'facil', min:8, porc:1, kcal:305, tags:['proteico','rapido'], emoji:'☕',
+ ing:['20 g de aveia em flocos finos','1 banana média (cerca de 75 g)','75 ml de café coado sem açúcar','1 dose de whey protein','Canela em pó a gosto'],
+ modo:['Misture a aveia, a banana amassada, o café e o whey até formar um creme homogêneo.','Leve ao micro-ondas por cerca de 3 minutos.','Polvilhe canela a gosto e, se quiser, finalize com castanhas picadas por cima.'],
+ dica:'Duas castanhas-do-pará picadas por cima deixam o mingau ainda mais nutritivo e crocante.'},
+
+{id:'r237', nome:'Mousse de leite em pó com maracujá', ref:['lancheT','ceia'], dif:'facil', min:15, porc:1, kcal:340, tags:['doce','rapido'], emoji:'🍮',
+ ing:['70 g de leite em pó','200 ml de água gelada','25 g de suco de maracujá em pó sem açúcar'],
+ modo:['Coloque todos os ingredientes no liquidificador.','Bata até obter um creme liso e encorpado.','Leve à geladeira por cerca de 10 minutos antes de servir.'],
+ dica:'Bata por mais tempo se quiser uma mousse mais aerada e cremosa.'},
+
+{id:'r238', nome:'Pudim de chocolate com whey', ref:['ceia','lancheT'], dif:'medio', min:30, porc:2, kcal:155, tags:['proteico','doce'], emoji:'🍫',
+ ing:['Adoçante a gosto','400 ml de água','10 g de cacau em pó','30 g de leite em pó','1 unidade de pudim diet sabor chocolate','0,5 dose de whey protein concentrado'],
+ modo:['Junte em um recipiente o leite em pó, o whey, o cacau, o adoçante, o pó do pudim diet e a água até formar uma pasta homogênea.','Misture bem com uma colher até incorporar tudo.','Transfira para uma panela e leve ao fogo brando, mexendo sem parar até começar a ferver.','Despeje em uma forma redonda e leve à geladeira até firmar.'],
+ dica:'Mexa sem interrupção enquanto ferve para não formar grumos nem grudar no fundo da panela.'},
+
+{id:'r239', nome:'Pudim de leite com whey', ref:['ceia','lancheT'], dif:'facil', min:15, porc:1, kcal:385, tags:['proteico','doce'], emoji:'🍮',
+ ing:['2 ovos','20 g de leite em pó desnatado','30 g de whey protein','50 ml de leite de vaca desnatado','1 colher de sopa de mel'],
+ modo:['Coloque o mel no fundo de um ramekin, formando a calda.','Bata os ovos, o leite em pó, o whey e o leite líquido até ficar homogêneo.','Despeje a massa por cima do mel, com cuidado para não misturar.','Leve à air fryer a 180°C por cerca de 10 minutos.'],
+ dica:'Deixe esfriar um pouco antes de desenformar para a calda de mel escorrer por igual.'},
+
+{id:'r240', nome:'Sorvete de banana com whey', ref:['lancheT','ceia'], dif:'facil', min:15, porc:1, kcal:330, tags:['proteico','doce'], emoji:'🍦',
+ ing:['1 banana média madura (cerca de 75 g)','1 dose de whey protein sabor banana ou baunilha','1 colher de sopa de mel','170 g de iogurte natural desnatado','1 colher de café de canela em pó'],
+ modo:['Bata todos os ingredientes no liquidificador ou processador até formar um creme homogêneo e consistente.','Transfira para um recipiente próprio para freezer.','Leve ao freezer por cerca de três horas, até firmar como um sorvete.','Sirva em taças.'],
+ dica:'Mexa a mistura na metade do tempo de congelamento para render um sorvete mais cremoso e sem cristais de gelo.'},
+
+{id:'r241', nome:'Smoothie de morango', ref:['cafe','lancheM'], dif:'facil', min:5, porc:1, kcal:270, tags:['saudavel','proteico','rapido'], emoji:'🍓',
+ ing:['Adoçante a gosto (opcional)','20 g de aveia em flocos','250 g de iogurte natural','100 g de morango congelado sem adoçante','Gelo a gosto'],
+ modo:['Coloque todos os ingredientes em um liquidificador ou mixer.','Bata até obter uma consistência cremosa.','Sirva imediatamente.'],
+ dica:'Acrescente uma colher de chá de chia para engrossar o smoothie e somar fibras à receita.'},
+
+{id:'r242', nome:'Pão ou rap doce', ref:['cafe','lancheM'], dif:'facil', min:10, porc:1, kcal:295, tags:['proteico','doce','rapido'], emoji:'🍞',
+ ing:['2 fatias de pão integral ou 1 unidade de rap','1 colher de café de pasta de amendoim ou doce de leite','1 banana pequena (cerca de 42 g)','0,5 dose de whey protein','2 colheres de sopa de água'],
+ modo:['Passe a pasta de amendoim ou o doce de leite sobre o pão ou o rap.','Corte a banana em rodelas e distribua por cima.','Misture o whey com a água até formar uma calda cremosa e regue sobre o pão.','Leve ao micro-ondas, forno ou air fryer, se preferir a versão quentinha.'],
+ dica:'Misture bem o whey com pouca água antes de despejar — se colocar líquido demais, a calda não engrossa.'},
+
+{id:'r243', nome:'Sorvete de iogurte grego com whey', ref:['lancheT','ceia'], dif:'facil', min:20, porc:1, kcal:330, tags:['proteico','doce'], emoji:'🍦',
+ ing:['150 g de iogurte grego natural','20 g de creme de leite','Adoçante a gosto','15 g de whey protein'],
+ modo:['Bata todos os ingredientes no liquidificador até ficar homogêneo.','Transfira para um recipiente e leve ao congelador por 8 horas.','Retire e bata novamente para quebrar os cristais de gelo, devolvendo ao congelador.'],
+ dica:'Repetir a batida uma segunda vez depois de mais algumas horas deixa o sorvete ainda mais aveludado.'},
+
+{id:'r244', nome:'Bombom congelado de uva com whey', ref:['lancheT','ceia'], dif:'facil', min:20, porc:4, kcal:480, tags:['proteico','doce'], emoji:'🍇',
+ ing:['200 g de iogurte natural integral','20 g de leite em pó desnatado','30 g de whey protein','100 g de uva verde','20 g de chocolate amargo 70% cacau'],
+ modo:['Misture o iogurte, o leite em pó, o whey e as uvas em um recipiente.','Distribua em pequenas porções sobre uma forma forrada com papel-manteiga.','Leve ao freezer por cerca de 3 horas.','Derreta o chocolate amargo e cubra as porções congeladas antes de servir.'],
+ dica:'Use uvas sem semente para deixar o bombom mais fácil de comer de uma vez.'},
+
+{id:'r245', nome:'Bombom gelado de whey', ref:['lancheT','ceia'], dif:'facil', min:20, porc:1, kcal:360, tags:['proteico','doce'], emoji:'🍫',
+ ing:['50 g de whey protein sabor banoffe','50 ml de água','30 g de pasta de amendoim'],
+ modo:['Adicione a água ao whey aos poucos, mexendo até obter uma consistência cremosa.','Distribua em uma forminha de silicone.','Cubra com a pasta de amendoim por cima.','Leve ao congelador por cerca de 20 minutos até firmar.'],
+ dica:'Adicione a água em pequenas quantidades — whey em excesso de líquido perde a consistência de bombom.'},
+
+{id:'r246', nome:'Sorvete de yopro com frutas', ref:['lancheT','ceia'], dif:'facil', min:10, porc:1, kcal:300, tags:['proteico','rapido','doce'], emoji:'🍨',
+ ing:['1 unidade de YoPRO com 25 g de proteínas, sabor a gosto','1 banana','100 g de morango'],
+ modo:['Leve o YoPRO ao freezer até congelar por completo.','Depois de congelado, corte as pontas da embalagem para soltar o conteúdo, que fica com textura de sorvete.','Corte as frutas em pedaços em uma superfície plana.','Distribua as frutas por cima do YoPRO congelado e sirva.'],
+ dica:'Deixe o YoPRO no freezer de um dia para o outro para garantir uma textura bem firme de sorvete.'},
+
+{id:'r247', nome:'Bolo de milho de caneca', ref:['cafe','lancheT'], dif:'facil', min:8, porc:1, kcal:260, tags:['rapido','doce'], emoji:'🌽',
+ ing:['Adoçante stevia ou xilitol a gosto','1 colher de café de fermento biológico (1,3 g)','10 g de fubá de milho','70 g de milho cozido','2 ovos'],
+ modo:['Em uma caneca, misture o milho, o fubá e os ovos com um mixer até ficar homogêneo.','Adicione o adoçante e mexa bem.','Incorpore o fermento por último, misturando delicadamente.','Leve ao micro-ondas por cerca de 3 minutos.'],
+ dica:'Ótima opção para um lanche intermediário ou antes do treino, pela praticidade e pelo carboidrato de rápida absorção.'},
+
+{id:'r248', nome:'Pudim de milho', ref:['lancheT','ceia'], dif:'medio', min:45, porc:4, kcal:194, tags:['proteico','doce'], emoji:'🌽',
+ ing:['170 g de milho verde sem água','250 ml de leite desnatado','4 ovos','Adoçante a gosto','60 g de whey protein'],
+ modo:['Bata todos os ingredientes no liquidificador.','Coe a massa para retirar o bagaço do milho.','Unte uma forma, coloque um fio de mel no fundo para formar a calda e despeje a massa coada por cima.','Leve à air fryer a 150°C por 35 minutos.','Deixe na geladeira até atingir a consistência de pudim antes de desenformar.'],
+ dica:'Coar bem a massa é o segredo para um pudim liso, sem pedaços de bagaço de milho.'},
+
+{id:'r249', nome:'Brigadeiro de whey protein', ref:['lancheT','ceia'], dif:'medio', min:25, porc:4, kcal:130, tags:['proteico','doce'], emoji:'🍬',
+ ing:['Adoçante a gosto','200 ml de água','25 g de cacau em pó 100% puro','30 g de leite em pó desnatado','1 colher de sopa de margarina light','30 g de whey protein'],
+ modo:['No liquidificador, bata a água com o leite em pó e o whey até ficar homogêneo.','Derreta a margarina em fogo baixo e acrescente a mistura batida.','Mexendo sempre, adicione aos poucos o adoçante e o cacau, cozinhando até a massa soltar do fundo da panela, cerca de 5 minutos.','Deixe esfriar e molde bolinhas com as mãos.','Passe em granulado ou castanhas trituradas e coloque em forminhas.'],
+ dica:'Unte levemente as mãos com óleo de coco para enrolar os brigadeiros sem grudar.'},
+
+{id:'r250', nome:'Brigadeiro de micro-ondas', ref:['lancheT','ceia'], dif:'facil', min:5, porc:1, kcal:232, tags:['doce','rapido'], emoji:'🍫',
+ ing:['40 g de leite condensado','10 g de cacau em pó'],
+ modo:['Misture o leite condensado com o cacau em pó em um recipiente próprio para micro-ondas.','Aqueça por 15 segundos, retire e mexa bem.','Volte ao micro-ondas por mais 15 segundos e mexa novamente até ficar cremoso.'],
+ dica:'Se preferir mais firme para enrolar em bolinhas, deixe esfriar na geladeira por 10 minutos antes de mexer de novo.'},
+
+{id:'r251', nome:'Bolinho de carne com batata', ref:['almoco','jantar'], dif:'facil', min:25, porc:8, kcal:70, tags:['proteico'], emoji:'🥔',
+ ing:['250 g de batata-inglesa cozida','150 g de carne moída magra cozida'],
+ modo:['Amasse a batata cozida ainda quente.','Misture a batata amassada com a carne moída até formar uma massa homogênea.','Tempere a gosto.','Modele bolinhos do tamanho de um croquete.','Leve à air fryer até dourar por fora.'],
+ dica:'A receita rende cerca de 8 bolinhos — cuidado para não exagerar na porção, cada um já soma seu proteico.'},
+
+{id:'r252', nome:'Pastéis de batata-doce', ref:['almoco','jantar','lancheT'], dif:'medio', min:35, porc:4, kcal:192, tags:['proteico'], emoji:'🥟',
+ ing:['200 g de batata-doce cozida sem sal','50 g de farinha de aveia','3 colheres de sopa de azeite de oliva extra virgem (7,6 ml)','100 g de carne moída magra cozida','1 colher de café de sal refinado (3 g)'],
+ modo:['Amasse a batata-doce ainda quente e misture com a farinha, o azeite e o sal até formar uma massa moldável.','Se necessário, ajuste com mais farinha ou uma colher de água morna até dar o ponto de bola.','Abra a massa entre dois plásticos filme com a ajuda de um rolo e corte os discos para os pastéis.','Recheie cada disco com uma colher de sopa da carne moída e feche usando o plástico para ajudar a vedar as bordas.','Pincele gema de ovo por cima e leve à air fryer pré-aquecida por cerca de 18 minutos.'],
+ dica:'Feche bem as bordas com a ajuda do plástico filme para os pastéis não se abrirem durante o cozimento.'},
+
+{id:'r253', nome:'Pão de queijo de frigideira', ref:['cafe','lancheM'], dif:'facil', min:10, porc:1, kcal:300, tags:['proteico','rapido'], emoji:'🧀',
+ ing:['1 ovo','20 g de tapioca de goma','1 fatia de queijo muçarela light','2 colheres de sopa de queijo parmesão ralado (20 a 25 g)','Sal refinado a gosto'],
+ modo:['Misture o ovo, a tapioca, o parmesão e o sal até formar uma massa.','Despeje em uma frigideira antiaderente pré-aquecida em fogo baixo, untando se necessário.','Coloque a fatia de muçarela no centro, como se fosse um recheio.','Vá dobrando e juntando as bordas da massa até formar um pequeno quadrado fechado.','Doure dos dois lados até o queijo derreter por dentro.'],
+ dica:'Use fogo baixo para a massa cozinhar por igual antes de dourar demais por fora.'},
+
+{id:'r254', nome:'Panqueca saudável recheada', ref:['almoco','jantar'], dif:'medio', min:25, porc:8, kcal:270, tags:['proteico'], emoji:'🌯',
+ ing:['1 ovo','40 g de farinha de aveia','120 ml de leite de vaca desnatado','1 colher de café de sal','Pimenta-do-reino a gosto','150 g de carne moída magra','0,75 xícara de extrato de tomate','45 g de requeijão light','3 fatias de queijo muçarela'],
+ modo:['Bata no liquidificador o ovo, a farinha de aveia, o leite, o sal e a pimenta até obter uma massa lisa.','Espalhe porções da massa em uma frigideira untada e espere descolar do fundo antes de retirar. Reserve as massas.','Refogue a carne moída e recheie cada massa como preferir — nesta versão usamos a carne moída com extrato de tomate.','Feche as massas em formato de rocambole e volte para a frigideira.','Cubra com o restante do extrato de tomate, o requeijão e o queijo, tampe e espere derreter antes de servir.'],
+ dica:'A receita rende cerca de 8 panquecas grandes — congele as que sobrarem já recheadas para outro dia.'},
+
+{id:'r255', nome:'Coxinha sem massa', ref:['almoco','jantar','lancheT'], dif:'medio', min:35, porc:2, kcal:365, tags:['proteico','semgluten'], emoji:'🍗',
+ ing:['150 g de peito de frango cozido','150 g de creme de ricota','10 g de farinha de arroz','10 g de farinha de linhaça'],
+ modo:['Cozinhe e desfie o peito de frango, temperando a gosto.','Misture o frango desfiado com o creme de ricota até incorporar bem.','Molde a massa no formato tradicional de coxinha.','Empane passando na farinha de arroz, depois no ovo batido e por último na farinha de linhaça.','Leve à air fryer por 15 minutos e depois ao forno a 180°C por mais 20 minutos até dourar.'],
+ dica:'Use as mãos levemente umedecidas para moldar a coxinha sem a massa grudar nos dedos.'},
+
+{id:'r256', nome:'Kibe de carne com aveia', ref:['almoco','jantar'], dif:'medio', min:70, porc:6, kcal:307, tags:['proteico'], emoji:'🥙',
+ ing:['45 g de farinha de trigo para quibe','90 g de aveia em flocos','500 g de carne de patinho moída cozida','4 colheres de sopa de azeite de oliva extra virgem (7,6 ml)','1 tomate picado sem sementes','1 cebola pequena picada','2 dentes de alho picados','2 colheres de sopa de hortelã fresca picada','2 colheres de sopa de salsa crua picada','1 pitada de pimenta-do-reino','1 colher de chá de sal'],
+ modo:['Hidrate a farinha de trigo para quibe em 3 xícaras de água quente por 30 minutos e reserve.','Em outro recipiente, misture a carne moída com o tomate, a cebola, o alho, as ervas, o sal e a pimenta.','Escorra bem o trigo hidratado e junte à mistura de carne, envolvendo tudo.','Espalhe em um refratário untado com azeite.','Leve ao forno pré-aquecido a 180°C por 35 minutos.'],
+ dica:'Escorrer bem o trigo antes de misturar evita que o quibe fique encharcado depois de assado.'},
+
+{id:'r257', nome:'Mini pizza de rap', ref:['lancheT','jantar'], dif:'facil', min:15, porc:1, kcal:300, tags:['proteico','rapido'], emoji:'🍕',
+ ing:['1 rap 10 integral','20 g de molho de tomate','1 fatia de queijo muçarela','50 g de peito de frango desfiado ou atum light','10 g de cream cheese light','1 colher de chá de orégano'],
+ modo:['Espalhe o molho de tomate sobre o rap.','Distribua o frango ou o atum por cima.','Adicione o cream cheese e a muçarela, espalhando bem.','Finalize com o orégano e leve ao forno ou à air fryer até o queijo dourar.'],
+ dica:'Varie o recheio com os ingredientes que tiver disponíveis — a base de rap combina com quase tudo.'},
+
+{id:'r258', nome:'Rap 10 recheado com carne-seca', ref:['almoco','jantar'], dif:'facil', min:10, porc:1, kcal:540, tags:['proteico','rapido'], emoji:'🌯',
+ ing:['1 rap 10 integral','100 g de carne-seca dessalgada, desfiada e temperada a gosto','1 fatia de queijo muçarela light','1 colher de sopa de azeite de oliva extra virgem'],
+ modo:['Coloque o rap 10 na frigideira e leve ao fogo para dourar levemente.','Vire a tortilha e distribua a carne-seca e o queijo por cima, regando com o azeite.','Feche a tortilha dobrando ao meio e deixe firmar mais um pouco na frigideira.','Transfira para um prato e sirva.'],
+ dica:'Dessalgue bem a carne-seca de véspera, trocando a água algumas vezes, para não deixar o prato salgado demais.'},
+
+{id:'r259', nome:'Coxinha fit de batata-doce', ref:['almoco','jantar','lancheT'], dif:'medio', min:30, porc:2, kcal:300, tags:['proteico','fitness'], emoji:'🍗',
+ ing:['200 g de batata-doce cozida amassada','150 g de peito de frango cozido desfiado','20 g de farinha de aveia','1 colher de sopa de requeijão light','1 colher de sopa de farinha de linhaça dourada'],
+ modo:['Misture a farinha de aveia com a batata-doce amassada e reserve.','Junte o requeijão ao frango desfiado para formar o recheio.','Modele uma bolinha com a massa de batata-doce e recheie com o frango.','Empane passando na farinha de linhaça.','Leve ao forno a 200°C até dourar, ou à air fryer por 20 minutos — a batata-doce pode ser substituída por aipim.'],
+ dica:'Se a massa grudar nas mãos, umedeça levemente os dedos com água antes de moldar cada coxinha.'},
+
+{id:'r260', nome:'Torta de tapioca com frango na air fryer', ref:['almoco','jantar'], dif:'medio', min:30, porc:6, kcal:150, tags:['proteico'], emoji:'🥘',
+ ing:['50 g de tapioca de goma','150 g de peito de frango cozido','50 g de queijo muçarela','2 ovos','2 colheres de sopa de requeijão light','1 colher de café de fermento químico em pó','Sal a gosto','1 colher de chá de orégano','100 g de tomate, palmito e milho picados'],
+ modo:['Em uma tigela, misture a tapioca, os ovos, o requeijão, o sal, o orégano e o fermento até ficar homogêneo.','Acrescente o frango, o palmito, o milho, o tomate e o queijo, envolvendo bem.','Unte com manteiga um refratário que possa ir à air fryer e despeje toda a mistura.','Pré-aqueça a air fryer a 180°C por 5 minutos.','Coloque o refratário no cesto e deixe por 15 a 20 minutos a 180°C.'],
+ dica:'Confira o ponto espetando um palito no centro — se sair limpo, a torta está pronta.'},
+
+{id:'r261', nome:'Bolinho de batata-doce e tapioca', ref:['lancheT','almoco'], dif:'facil', min:20, porc:1, kcal:310, tags:['vegetariano','rapido'], emoji:'🥔',
+ ing:['100 g de batata-doce cozida amassada','20 g de tapioca de goma','20 g de queijo ralado','1 colher de café de azeite de oliva'],
+ modo:['Amasse a batata-doce e misture com a tapioca e o queijo ralado até formar uma massa homogênea.','Molde pequenas bolinhas com as mãos.','Pincele cada bolinha com o azeite de oliva.','Leve à air fryer a 180°C por cerca de 15 minutos.'],
+ dica:'Deixe as bolinhas espaçadas no cesto da air fryer para dourarem por igual em todos os lados.'},
+
+{id:'r262', nome:'Bolinho de frango com batata e requeijão', ref:['almoco','jantar','lancheT'], dif:'facil', min:20, porc:1, kcal:390, tags:['proteico'], emoji:'🍗',
+ ing:['150 g de batata-inglesa cozida','100 g de peito de frango cozido','2 colheres de sopa de requeijão light','Tempero a gosto'],
+ modo:['Coloque a batata, o frango e o requeijão em um multiprocessador.','Bata até formar uma massa homogênea, temperando a gosto.','Modele bolinhas com as mãos.','Leve ao forno ou à air fryer a 180°C por cerca de 15 minutos.'],
+ dica:'Se a massa ficar muito mole para moldar, leve à geladeira por 10 minutos antes de fazer as bolinhas.'},
+
+{id:'r263', nome:'Torta de frango fit', ref:['almoco','jantar'], dif:'medio', min:40, porc:6, kcal:192, tags:['proteico','fitness'], emoji:'🥧',
+ ing:['4 ovos','160 g de tapioca de goma','100 g de peito de frango cozido desfiado','30 g de tomate picado','0,5 cenoura pequena ralada','Sal a gosto','Cebolinha verde a gosto','1 colher de chá de fermento químico em pó','20 g de queijo parmesão ralado'],
+ modo:['Misture todos os ingredientes, exceto o queijo, em uma tigela até formar uma massa homogênea.','Despeje em uma forma untada e adicione o fermento por cima.','Finalize espalhando o parmesão ralado por toda a superfície.','Leve ao forno a 180°C por 35 minutos.'],
+ dica:'Corte a torta em fatias iguais logo depois de assar para facilitar o controle das calorias por porção.'},
+
+{id:'r264', nome:'Shake hipercalórico de abacate', ref:['cafe','lancheM'], dif:'facil', min:5, porc:1, kcal:800, tags:['proteico'], emoji:'🥑',
+ ing:['400 ml de leite de vaca integral','150 g de abacate','50 g de aveia em flocos','2 colheres de sopa de mel (15 g)','20 g de cacau em pó'],
+ modo:['Coloque todos os ingredientes no liquidificador.','Bata até ficar homogêneo e sem pedaços.','Consuma na sequência.'],
+ dica:'Reserve este shake para dias de treino pesado ou fase de ganho de massa — é bem calórico para ser bebida do dia a dia.'},
+
+{id:'r265', nome:'Shake hipercalórico de banana', ref:['cafe','lancheM'], dif:'facil', min:5, porc:1, kcal:840, tags:['proteico'], emoji:'🍌',
+ ing:['400 ml de leite de vaca integral','50 g de leite em pó','50 g de aveia em flocos','1 banana grande (150 g)','20 g de pasta de amendoim','Canela em pó a gosto'],
+ modo:['Coloque todos os ingredientes no liquidificador.','Bata até obter uma bebida homogênea e cremosa.','Sirva em seguida.'],
+ dica:'Use banana bem madura para engrossar naturalmente o shake sem precisar de mais aveia.'},
+
+{id:'r266', nome:'Vitamina hiperproteica de morango', ref:['lancheM','lancheT'], dif:'facil', min:5, porc:1, kcal:220, tags:['proteico','lowcarb','rapido'], emoji:'🍓',
+ ing:['200 ml de leite de vaca integral','30 g de whey protein concentrado ou albumina','100 g de morango congelado'],
+ modo:['Coloque todos os ingredientes no liquidificador.','Bata até ficar homogêneo.','Sirva gelado.'],
+ dica:'Ideal para quem quer controlar as calorias do dia mantendo uma boa dose de proteína.'},
+
+{id:'r267', nome:'Vitamina sorvete de leite', ref:['lancheT','ceia'], dif:'facil', min:10, porc:1, kcal:225, tags:['proteico','rapido'], emoji:'🍦',
+ ing:['200 ml de leite de vaca desnatado','30 g de leite de vaca desnatado em pó','100 g de abacaxi, kiwi ou morango'],
+ modo:['Bata todos os ingredientes no liquidificador.','Leve ao congelador por algumas horas.','Consuma como uma opção de sorvete nos dias quentes.'],
+ dica:'Troque a fruta conforme a estação para variar o sabor sem alterar o valor calórico.'},
+
+{id:'r268', nome:'Vitamina pré-treino', ref:['cafe','lancheM'], dif:'facil', min:5, porc:1, kcal:270, tags:['proteico','rapido'], emoji:'☕',
+ ing:['250 ml de leite de vaca desnatado','30 g de aveia em flocos','20 g de café solúvel','10 g de cacau em pó'],
+ modo:['Coloque todos os ingredientes no liquidificador.','Bata até ficar homogêneo.','Consuma cerca de 30 a 40 minutos antes do treino.'],
+ dica:'A cafeína do café soma-se ao efeito termogênico, sendo ótima combinação como pré-treino.'},
+
+{id:'r269', nome:'Vitamina pós-treino', ref:['lancheT','ceia'], dif:'facil', min:5, porc:1, kcal:315, tags:['proteico','rapido'], emoji:'🥤',
+ ing:['300 ml de leite de vaca desnatado','30 g de whey protein','25 g de achocolatado em pó','Gelo a gosto'],
+ modo:['Coloque todos os ingredientes no liquidificador.','Bata até ficar homogêneo.','Sirva gelado logo após o treino.'],
+ dica:'Consumir esse shake até 30 minutos depois do treino ajuda na recuperação muscular.'},
+
+{id:'r270', nome:'Suco de couve com maçã e gengibre', ref:['cafe','lancheM'], dif:'facil', min:5, porc:1, kcal:90, tags:['saudavel','vegano','rapido'], emoji:'🥬',
+ ing:['500 ml de água gelada','2 folhas de couve','1 maçã','1 limão espremido','1 pedaço pequeno de gengibre'],
+ modo:['Coloque todos os ingredientes no liquidificador.','Bata bem até ficar homogêneo.','Sirva sem coar, aproveitando as fibras.'],
+ dica:'Bater sem coar preserva a pectina e as fibras, ótimas para o funcionamento do intestino.'},
+
+{id:'r271', nome:'Suco de abacaxi com hortelã', ref:['cafe','lancheM'], dif:'facil', min:5, porc:1, kcal:70, tags:['saudavel','vegano','rapido'], emoji:'🍍',
+ ing:['500 ml de água gelada','1 ramo de hortelã','100 g de abacaxi','1 limão espremido','1 pedaço pequeno de gengibre'],
+ modo:['Coloque todos os ingredientes no liquidificador.','Bata bem até ficar homogêneo.','Sirva sem coar.'],
+ dica:'Ótimo para depois de refeições mais pesadas — ajuda na digestão.'},
+
+{id:'r272', nome:'Suco de morango com melancia', ref:['lancheM','lancheT'], dif:'facil', min:5, porc:1, kcal:60, tags:['saudavel','vegano','rapido'], emoji:'🍉',
+ ing:['500 ml de água gelada','1 ramo de hortelã','1 fatia de melancia','4 morangos','1 pedaço pequeno de gengibre','1 pitada de canela'],
+ modo:['Coloque todos os ingredientes no liquidificador.','Bata bem até ficar homogêneo.','Sirva sem coar.'],
+ dica:'A melancia é rica em citrulina, aminoácido que ajuda na vasodilatação — boa pedida antes do treino.'},
+
+{id:'r273', nome:'Suco diurético verde', ref:['lancheM','lancheT'], dif:'facil', min:5, porc:1, kcal:80, tags:['saudavel','vegano','rapido'], emoji:'🥒',
+ ing:['500 ml de água de coco','1 maçã com casca','2 talos de aipo','1 punhado de hortelã','1 punhado de salsinha','1 fatia de gengibre'],
+ modo:['Coloque todos os ingredientes no liquidificador.','Bata bem até ficar homogêneo.','Sirva sem coar.'],
+ dica:'Não substitui uma alimentação equilibrada, mas ajuda a aliviar o inchaço depois de um final de semana mais liberado.'},
+
+{id:'r274', nome:'Chá diurético de cavalinha', ref:['lancheT','ceia'], dif:'facil', min:10, porc:1, kcal:5, tags:['saudavel','vegano'], emoji:'🍵',
+ ing:['1 colher de chá de cavalinha','250 ml de água fervente'],
+ modo:['Coloque a cavalinha em uma xícara.','Cubra com a água fervente e deixe repousar de 5 a 10 minutos.','Coe, deixe amornar e beba.','Repita até 3 vezes ao dia.'],
+ dica:'Use com moderação — não é indicado para gestantes e lactantes, então converse com seu nutricionista antes.'},
+
+{id:'r275', nome:'Chá de hibisco', ref:['lancheT','ceia'], dif:'facil', min:10, porc:1, kcal:5, tags:['saudavel','vegano'], emoji:'🌺',
+ ing:['2 colheres de sopa cheias de flores de hibisco seco','1 litro de água em início de fervura'],
+ modo:['Adicione o hibisco à água ainda quente.','Deixe repousar por 10 minutos com o recipiente tampado.','Coe e beba ao longo do dia.'],
+ dica:'Rico em antocianinas e flavonoides, é uma boa opção para variar a hidratação além da água pura.'},
+
+{id:'r276', nome:'Chá verde', ref:['cafe','lancheT'], dif:'facil', min:5, porc:1, kcal:2, tags:['saudavel','vegano','rapido'], emoji:'🍵',
+ ing:['1 colher de sopa de folhas de chá verde','200 ml de água fervente'],
+ modo:['Coloque as folhas em uma xícara e adicione a água quente.','Deixe repousar de 3 a 5 minutos — quanto mais tempo, mais cafeína e mais amargor.','Coe, deixe amornar e beba, podendo repetir até 3 vezes ao dia.'],
+ dica:'Prove a cada 30 segundos depois dos 3 minutos de infusão até encontrar o ponto de sabor que você prefere.'},
+
+{id:'r277', nome:'Caldo de mandioca com calabresa e bacon', ref:['almoco','jantar'], dif:'medio', min:40, porc:1, kcal:460, tags:['comfort'], emoji:'🍲',
+ ing:['150 g de mandioca cozida','20 g de linguiça calabresa','20 g de bacon','1 cebola média ralada','2 dentes de alho picados','Salsinha e cebolinha picadas a gosto','Sal e pimenta-do-reino a gosto'],
+ modo:['Cozinhe a mandioca na panela de pressão com água e sal por cerca de 20 minutos, até ficar bem macia.','Em outra panela, refogue o bacon e a calabresa até dourarem, acrescente a cebola e refogue até murchar, depois junte o alho.','Bata a mandioca cozida com a água do cozimento no liquidificador até formar um creme.','Devolva o creme à panela com o bacon e a calabresa refogados, ajustando com água se precisar.','Tempere com sal e pimenta e cozinhe em fogo médio por mais 2 minutos.','Sirva decorado com a calabresa frita e o cheiro-verde.'],
+ dica:'Reserve um pouco da calabresa frita para decorar por cima na hora de servir — dá crocância ao caldo cremoso.'},
+
+{id:'r278', nome:'Sopa de lentilha com músculo', ref:['almoco','jantar'], dif:'medio', min:30, porc:1, kcal:435, tags:['proteico','comfort'], emoji:'🍲',
+ ing:['100 g de músculo bovino cozido','100 g de lentilha cozida','100 g de couve-flor','6 folhas de couve','1 cebola pequena picada','0,25 pimenta dedo-de-moça picada sem sementes','0,5 colher de sopa de óleo de girassol','2 dentes de alho amassados','1 colher de sopa de azeite de oliva extra virgem'],
+ modo:['Aqueça o óleo em uma panela funda e refogue a cebola e o alho.','Acrescente a couve-flor, a pimenta e o sal, refogando por 10 minutos enquanto adiciona aos poucos o caldo misturado com água.','Deixe esfriar um pouco e bata no liquidificador.','Devolva o caldo à panela, adicione o músculo, a lentilha e a couve.','Cozinhe por mais 5 minutos e finalize com o azeite.'],
+ dica:'Congele em porções individuais — essa sopa rende bem e mantém a textura depois de descongelada.'},
+
+{id:'r279', nome:'Sopa de batata-doce com feijão', ref:['almoco','jantar'], dif:'medio', min:25, porc:1, kcal:275, tags:['vegetariano','comfort'], emoji:'🍲',
+ ing:['100 g de batata-doce cozida sem sal','500 ml de caldo de legumes','100 g de feijão preto cozido','2 folhas de couve cortadas fininhas','Alho, cebola e alho-poró picadinhos a gosto','1 colher de sopa de azeite de oliva extra virgem','Sal a gosto'],
+ modo:['Bata no liquidificador o feijão, a batata-doce e o caldo de legumes até formar um creme liso.','Refogue o alho, a cebola e o alho-poró em um pouco de óleo.','Junte o creme batido ao refogado e tempere com sal e pimenta-do-reino.','Quando ferver, acrescente a couve, abaixe o fogo e cozinhe por 5 minutos, mexendo para não grudar.','Finalize com um fio de azeite por cima.'],
+ dica:'Use a própria água do cozimento do feijão como parte do caldo — dá mais sabor e economiza ingredientes.'},
+
+{id:'r280', nome:'Sopa de inhame com patinho', ref:['almoco','jantar'], dif:'medio', min:45, porc:1, kcal:560, tags:['proteico','comfort'], emoji:'🍲',
+ ing:['500 ml de caldo de legumes','150 g de inhame cozido','150 g de patinho cozido','1 colher de sopa de azeite de oliva','Salsinha e cebolinha picadas a gosto','Alho e cebola picadinhos a gosto'],
+ modo:['Refogue o alho e a cebola no azeite.','Acrescente a carne moída, temperando com sal e pimenta-do-reino.','Assim que a carne dourar, junte o inhame e o caldo de legumes.','Quando ferver, abaixe o fogo e cozinhe por 30 a 40 minutos, até o inhame começar a desmanchar.','Mexa de vez em quando para não grudar no fundo e ajuste os temperos antes de servir.'],
+ dica:'Deixe o inhame desmanchar naturalmente no cozimento para engrossar a sopa sem precisar bater no liquidificador.'},
+
+{id:'r281', nome:'Sopa proteica de frango com grão-de-bico', ref:['almoco','jantar'], dif:'medio', min:45, porc:1, kcal:470, tags:['proteico','comfort'], emoji:'🍲',
+ ing:['100 g de peito de frango','100 g de grão-de-bico cozido','1 litro de água','1 dente de alho amassado','1 cebola pequena picada','1 cenoura sem casca picada em cubos','100 g de vagem cozida','4 folhas de couve cortadas em tiras','100 g de tomate cortado em cubos','2 colheres de sopa de cebolinha picada','Manjericão para decorar','Sal a gosto'],
+ modo:['Refogue o alho e a cebola com um pouco de água.','Junte o frango temperado com sal e pimenta e refogue até cozinhar.','Acrescente a cenoura, a vagem e a couve, refogando mais um pouco antes de adicionar o tomate.','Junte o grão-de-bico já cozido, a cebolinha e o restante dos temperos, adicionando a água fervente aos poucos.','Tampe a panela e cozinhe em fogo baixo por cerca de 30 minutos.','Finalize com o manjericão fresco por cima.'],
+ dica:'Adicione a água aos poucos, em vez de tudo de uma vez, para o caldo apurar melhor o sabor.'},
+
+{id:'r282', nome:'Sopa de abóbora com carne moída', ref:['almoco','jantar'], dif:'medio', min:40, porc:1, kcal:620, tags:['proteico','comfort'], emoji:'🎃',
+ ing:['500 g de abóbora cabotiá ou japonesa crua, sem casca e sem sementes','125 g de carne moída magra','750 ml de água','2 colheres de sopa de azeite de oliva extra virgem','2 dentes de alho','1 cebola pequena','10 g de tomilho fresco','1 colher de sal refinado'],
+ modo:['Aqueça duas colheres de azeite em uma panela e refogue a cebola, o alho e a carne moída.','Na mesma panela, adicione o restante do azeite, mais um dente de alho e a abóbora em pedaços.','Quando a abóbora começar a dourar, acrescente a água e o sal, cozinhando de 20 a 30 minutos até ficar bem macia.','Bata a mistura no liquidificador e volte para a panela até levantar fervura.','Refogue rapidamente o tomilho picado no azeite e misture à sopa.','Desligue o fogo, misture a carne refogada e sirva.'],
+ dica:'Deixe a abóbora dourar levemente antes de adicionar a água — isso realça o sabor adocicado dela.'},
+
+{id:'r283', nome:'Caldo proteico de batata com frango', ref:['almoco','jantar'], dif:'facil', min:20, porc:1, kcal:330, tags:['proteico','comfort'], emoji:'🍲',
+ ing:['500 ml de água','100 g de peito de frango cozido','100 g de batata-inglesa cozida','100 g de repolho refogado','1 colher de sopa de azeite de oliva extra virgem','1 colher de chá de pimenta-do-reino em pó','Sal a gosto'],
+ modo:['Bata as batatas com a água no liquidificador até formar uma mistura homogênea, acrescentando o restante da água aos poucos.','Tempere com sal e pimenta a gosto.','Se quiser, refogue alho e cebola no azeite e bata novamente junto ao creme.','Misture o frango desfiado e o repolho ao caldo já pronto, sem bater, e sirva.'],
+ dica:'Adicionar o frango e o repolho por último, sem bater, mantém a textura mais interessante do caldo.'},
+
+{id:'r284', nome:'Creme de abóbora com queijo cottage', ref:['almoco','jantar'], dif:'medio', min:35, porc:1, kcal:460, tags:['proteico','comfort'], emoji:'🍲',
+ ing:['200 g de abóbora cozida cortada em cubos','1 cebola média picada','20 g de amido de milho','100 ml de leite de vaca desnatado','80 g de queijo cottage','80 g de peito de peru light picado em cubos','10 g de queijo parmesão ralado','1 colher de sopa de azeite de oliva extra virgem','Água, sal, salsa picada e pimenta-do-reino a gosto'],
+ modo:['Cozinhe a abóbora com meio litro de água e sal até ficar macia.','Retire alguns cubos de abóbora e reserve. Refogue a cebola em um pouco de água, junte a abóbora restante e a água do cozimento.','Bata no liquidificador e volte a sopa para o fogo.','Dissolva o amido de milho no leite, acrescente à panela junto com a pimenta e mexa até ferver.','Retire do fogo e adicione o queijo cottage, os cubos de abóbora reservados e o peito de peru.','Finalize com o parmesão, a salsa e um fio de azeite.'],
+ dica:'Reserve alguns cubos de abóbora inteiros antes de bater — dá textura ao creme em vez de deixá-lo totalmente liso.'},
+
+{id:'r285', nome:'Vitamina de abacate', ref:['cafe','lancheM'], dif:'facil', min:5, porc:1, kcal:941, tags:['proteico'], emoji:'🥑',
+ ing:['400 ml de leite de vaca integral','40 g de whey protein','100 g de aveia em flocos','100 g de abacate'],
+ modo:['Coloque todos os ingredientes no liquidificador.','Bata até obter uma consistência pastosa e fácil de tomar.','Sirva em seguida.'],
+ dica:'Ideal em fase de ganho de massa muscular, como refeição extra entre o almoço e o jantar.'},
+
+{id:'r286', nome:'Vitamina com pasta de amendoim e whey', ref:['cafe','lancheM'], dif:'facil', min:5, porc:1, kcal:1001, tags:['proteico'], emoji:'🥜',
+ ing:['400 ml de leite de vaca integral','40 g de whey protein','50 g de farinha de aveia','75 g de banana','30 g de pasta de amendoim','45 g de maltodextrina'],
+ modo:['Coloque todos os ingredientes no liquidificador.','Bata até obter uma consistência pastosa.','Sirva logo após bater.'],
+ dica:'A maltodextrina soma carboidrato de rápida absorção — vale mais para quem treina pesado e precisa de superávit calórico.'},
+
+{id:'r287', nome:'Mingau de aveia com chocolate e banana', ref:['cafe'], dif:'facil', min:12, porc:1, kcal:947, tags:['proteico'], emoji:'🥣',
+ ing:['11 claras de ovo','1 ovo','100 g de aveia em flocos','150 g de banana','30 g de chocolate 50% cacau'],
+ modo:['Bata as claras, o ovo e a aveia no liquidificador, deixando a banana e o chocolate de fora.','Transfira a mistura para uma panela e leve ao fogo alto.','Mexa continuamente com uma colher até a mistura ganhar consistência de mingau.','Retire do fogo e acrescente a banana em rodelas e o chocolate picado por cima.'],
+ dica:'Mexa sem parar assim que a mistura for ao fogo, para as claras não talharem no fundo da panela.'},
+
+{id:'r288', nome:'Hambúrguer de frango com aveia', ref:['almoco','jantar'], dif:'facil', min:20, porc:1, kcal:947, tags:['proteico'], emoji:'🍔',
+ ing:['250 g de peito de frango desfiado','1 ovo','1 cebola pequena ralada','50 g de aveia em flocos','1 pão de hambúrguer','25 g de maionese','1 fatia de queijo muçarela'],
+ modo:['Misture o frango desfiado, o ovo, a cebola ralada e a aveia até formar uma massa homogênea.','Molde a mistura no formato de hambúrguer com as mãos.','Frite em uma frigideira antiaderente ou leve à air fryer até dourar por completo.','Passe a maionese no pão, monte com a fatia de muçarela, salada a gosto e o hambúrguer.'],
+ dica:'Deixe a massa descansar na geladeira por 10 minutos antes de fritar — ajuda o hambúrguer a manter o formato.'},
+
+{id:'r289', nome:'X-salada de bacon e ovo', ref:['almoco','jantar'], dif:'medio', min:20, porc:1, kcal:1299, tags:['proteico','comfort'], emoji:'🍔',
+ ing:['220 g de patinho moído','1 ovo','3 fatias de queijo muçarela','1 pão de hambúrguer','25 g de maionese','30 g de bacon','Alface a gosto','Tomate a gosto'],
+ modo:['Tempere o patinho moído com sal e molde no formato de hambúrguer.','Coloque na frigideira e deixe fritar por alguns minutos.','Vire o hambúrguer e, quando estiver quase pronto, adicione as fatias de queijo até derreterem.','Em outra frigideira, frite o ovo e as fatias de bacon.','Monte o sanduíche com maionese no pão, o hambúrguer, o ovo, o bacon, a alface e o tomate.'],
+ dica:'Frite o ovo com a gema mole para ela se misturar ao suco da carne na primeira mordida.'},
+
+{id:'r290', nome:'Smoothie de banana com coco', ref:['cafe','lancheM'], dif:'facil', min:8, porc:1, kcal:854, tags:['proteico','doce'], emoji:'🥥',
+ ing:['5 bananas médias','100 ml de leite de coco','20 g de coco ralado','2 doses de whey protein'],
+ modo:['Coloque a banana, o leite de coco e o whey no liquidificador ou processador.','Bata até ficar homogêneo.','Transfira para um recipiente e polvilhe o coco ralado por cima antes de servir.'],
+ dica:'Use bananas congeladas para o smoothie sair mais cremoso e geladinho, quase como um sorvete.'},
+
+{id:'r291', nome:'Cheesecake anabólico', ref:['ceia','lancheT'], dif:'medio', min:90, porc:6, kcal:193, tags:['proteico','doce','fitness'], emoji:'🍰',
+ ing:['300 g de cream cheese light','300 g de iogurte natural desnatado','2 ovos','2 colheres de sopa de adoçante stevia','2 pitadas de sal','2 doses de whey protein','1 colher de chá de essência de baunilha'],
+ modo:['Amasse o cream cheese com uma colher em uma tigela até ficar mais mole.','Adicione os ovos e o adoçante, batendo com uma batedeira elétrica.','Junte o restante dos ingredientes e continue batendo por mais 2 a 3 minutos até incorporar tudo.','Despeje a mistura em uma forma pequena levemente untada com óleo de oliva.','Asse a 160°C por 25 minutos, abaixe para 100°C e deixe por mais 50 minutos.','Leve à geladeira por 4 a 5 horas antes de servir.'],
+ dica:'Não pule o descanso na geladeira — é o que dá firmeza e cremosidade à fatia do cheesecake.'},
+
+{id:'r292', nome:'Requeijão caseiro', ref:['cafe','lancheM'], dif:'medio', min:200, porc:8, kcal:103, tags:['vegetariano'], emoji:'🧀',
+ ing:['1 litro de leite de vaca integral','30 ml de suco de limão ou vinagre de álcool (2 colheres de sopa)','30 g de manteiga (1 e 1/2 colher de sopa)','Sal a gosto'],
+ modo:['Reserve um terço de xícara do leite para dar ponto ao requeijão depois.','Aqueça o restante do leite em fogo médio até ferver, desligue e acrescente o suco de limão ou o vinagre.','Mexa levemente e espere talhar, cerca de 10 a 15 minutos.','Passe por uma peneira fina, apertando com uma colher para soltar o soro.','Bata a massa que ficou na peneira no liquidificador com o sal, a manteiga e um pouco do leite reservado.','Confira a consistência — se quiser mais mole, acrescente um pouco mais de leite — e leve à geladeira por pelo menos 3 horas.'],
+ dica:'Não jogue fora o soro que sobra da coalhada — ele pode ser usado para amaciar pães e massas.'},
+
+{id:'r293', nome:'Patê de atum com iogurte', ref:['lancheT','lancheM'], dif:'facil', min:10, porc:6, kcal:67, tags:['proteico','rapido'], emoji:'🐟',
+ ing:['240 g de atum sólido ao natural','0,5 maço pequeno de salsinha picada','2 colheres de sopa de mostarda','0,5 maço pequeno de cebolinha verde picada','1 pote de iogurte natural (170 g)','1 pitada de sal'],
+ modo:['Escorra bem o atum, retirando quase toda a água.','Em um refratário, misture o atum, a cebolinha e a salsinha com o iogurte natural, usando um garfo.','Acrescente a mostarda e o sal, misturando até ficar homogêneo.','Sirva como preferir, em torradas, pão ou com legumes.'],
+ dica:'A receita rende cerca de 18 porções pequenas — ótimo para deixar pronto e usar em vários lanches da semana.'},
+
+{id:'r294', nome:'Maionese de abacate', ref:['almoco','jantar','lancheT'], dif:'facil', min:10, porc:8, kcal:113, tags:['vegano','vegetariano'], emoji:'🥑',
+ ing:['300 g de abacate','1 dente de alho','6 colheres de sopa de azeite de oliva','Cebolinha a gosto','Suco de 2 limões','Sal a gosto','Salsinha a gosto'],
+ modo:['Coloque o abacate, o alho, o azeite, o suco de limão, o sal, a cebolinha e a salsinha no liquidificador ou processador.','Bata até obter uma maionese consistente e homogênea.','Guarde na geladeira em pote fechado.'],
+ dica:'Controle bem a quantidade que for consumir — por ser rica em azeite, essa maionese é bem calórica.'},
+
+{id:'r295', nome:'Manteiga de azeite com ervas', ref:['cafe','lancheM'], dif:'facil', min:15, porc:20, kcal:145, tags:['vegano','vegetariano'], emoji:'🧈',
+ ing:['350 ml de azeite de oliva extra virgem','Ervas a gosto (orégano, manjericão, alecrim, louro, sálvia)','Pimenta-do-reino em grãos moída na hora a gosto','Alho triturado a gosto'],
+ modo:['Bata todos os ingredientes no liquidificador.','Transfira para um pote com tampa e leve ao congelador durante um dia inteiro para solidificar.','Na noite seguinte, passe para a geladeira para amolecer até ficar com textura de manteiga.','Use como substituto de manteiga ou margarina no pão, na torrada ou na bolacha.'],
+ dica:'Guardada na geladeira, essa manteiga de azeite dura cerca de um mês sem perder a qualidade.'},
+{id:'r305', nome:'Arroz de Couve-Flor Cremoso', ref:['almoco','jantar'], dif:'facil', min:40, porc:5, kcal:110, tags:['saudavel','vegetariano','lowcarb'], emoji:'🥦',
+ ing:['1 couve-flor grande (800 g)','0,5 cebola média (90 g), picada','3 dentes de alho (15 g), picados','1 colher (sopa) (15 ml) de óleo de coco extravirgem ou azeite de oliva extravirgem','4 colheres (sopa) (60 g) de biomassa de banana','2 colheres (sopa) (30 ml) de água','6 tomates-cereja (60 g), cortados ao meio','3 colheres (sopa) (9 g) de salsinha picada','Sal e pimenta-do-reino branca moída na hora a gosto'],
+ modo:['Rale as flores da couve-flor num ralador grosso, guardando o talo para outra receita.','Numa panela, refogue a cebola e o alho no óleo de coco até perfumar.','Adicione a couve-flor ralada, refogue por mais 2 minutos e tempere com sal e pimenta.','Misture a biomassa de banana aos poucos, juntando água até atingir o ponto cremoso desejado.','Finalize com o tomate-cereja e a salsinha picada, ajustando o tempero.','Sirva quente, polvilhado com gergelim preto se desejar.'],
+ dica:'Sem biomassa de banana em casa, substitua por creme de leite ou requeijão para dar cremosidade ao arroz.'},
+
+{id:'r306', nome:'Bolo de Milho Cremoso', ref:['cafe','lancheT'], dif:'facil', min:75, porc:8, kcal:280, tags:['doce','comfort'], emoji:'🌽',
+ ing:['4 espigas de milho verde (700 g)','200 ml de leite de coco','1,5 xícara (262 g) de açúcar demerara orgânico ou de açúcar de coco','4 ovos grandes (280 g)','1 colher (sopa) (15 ml) de óleo de coco extravirgem','0,13 colher (chá) (1 g) de sal marinho','0,5 colher (sopa) (7 ml) de óleo de coco, para untar','2 colheres (sopa) (16 g) de farinha de aveia, para polvilhar'],
+ modo:['Debulhe as espigas e bata os grãos no liquidificador com o leite de coco por cerca de 7 minutos.','Acrescente o açúcar, os ovos, o óleo de coco e o sal, batendo até formar uma massa homogênea e bem líquida.','Unte a forma com óleo de coco e polvilhe com farinha de aveia.','Despeje a massa na forma preparada.','Asse em forno preaquecido a 180°C por cerca de 45 minutos, até dourar e firmar.','Deixe amornar antes de desenformar e cortar em pedaços.'],
+ dica:'Por não ser peneirada, a farinha de milho mantém boa quantidade de fibras — ótimo para comer antes do treino.'},
+
+{id:'r307', nome:'Brigadeiro Diferente', ref:['ceia','lancheT'], dif:'facil', min:80, porc:7, kcal:140, tags:['vegano','doce','saudavel'], emoji:'🍫',
+ ing:['200 g de tâmara seca, sem caroço','1,25 xícara (300 ml) de leite de amêndoa','1 colher (sopa) (5 g) de cacau em pó 100%','0,33 xícara (36 g) de farinha de amêndoa'],
+ modo:['Bata a tâmara com o leite de amêndoa no liquidificador até obter um creme homogêneo.','Transfira para uma panela e junte o cacau e a farinha de amêndoa.','Leve ao fogo baixo, mexendo sem parar, até a mistura soltar do fundo da panela (ponto de brigadeiro mole).','Distribua em potinhos individuais.','Decore com lâminas de amêndoa ou farinha de castanha de caju, se desejar.','Leve à geladeira antes de servir.'],
+ dica:'As tâmaras já adoçam naturalmente o doce, então não é preciso adicionar açúcar extra.'},
+
+{id:'r308', nome:'Creme-Mousse de Chocolate', ref:['ceia','lancheT'], dif:'facil', min:75, porc:10, kcal:120, tags:['vegano','doce','saudavel'], emoji:'🥑',
+ ing:['1 abacate pequeno (370 g)','2 bananas-nanicas maduras (350 g)','3 colheres (sopa) (15 g) de cacau em pó 100%','0,25 xícara (60 ml) de leite de coco light','2 colheres (sopa) (36 g) de mel'],
+ modo:['Bata no liquidificador o abacate, a banana, o cacau e o leite de coco até formar um creme liso.','Adicione o mel e misture delicadamente com uma colher.','Divida a mistura em potinhos individuais.','Leve à geladeira até gelar bem antes de servir.'],
+ dica:'Use bananas bem maduras para garantir doçura natural e uma textura ainda mais cremosa.'},
+
+{id:'r309', nome:'Doce de Tâmara com Coco e Cacau', ref:['lancheT','ceia'], dif:'facil', min:70, porc:20, kcal:60, tags:['vegano','doce'], emoji:'🍬',
+ ing:['250 g de tâmara seca, sem caroço','1,25 xícara (300 ml) de água fervente','1,5 xícara (112 g) de coco ralado fresco','3 colheres (sopa) (15 g) de cacau em pó 100%','3 colheres (sopa) (45 ml) de leite de coco'],
+ modo:['Coloque as tâmaras numa tigela com a água fervente e deixe hidratar por 30 minutos; depois escorra.','Transfira para o liquidificador com os demais ingredientes e bata até ficar homogêneo.','Despeje a mistura numa panela e leve ao fogo, mexendo sempre, por cerca de 12 minutos, até atingir ponto firme.','Deixe esfriar um pouco e leve à geladeira para firmar.','Modele bolinhas com as mãos usando pequenas porções da massa.'],
+ dica:'Enrole as bolinhas com as mãos levemente untadas para a massa não grudar.'},
+
+{id:'r310', nome:'Farofa de Banana', ref:['almoco','jantar'], dif:'facil', min:30, porc:7, kcal:250, tags:['comfort'], emoji:'🍌',
+ ing:['3 colheres (sopa) (45 ml) de óleo de coco','4 bananas-da-terra (910 g), em rodelas','0,5 xícara (100 g) de manteiga clarificada','0,5 cebola média (70 g), picada','1 dente de alho (5 g), picado','2 xícaras (340 g) de farinha de mandioca torrada','Sal a gosto'],
+ modo:['Numa frigideira, aqueça o óleo de coco e frite as rodelas de banana até dourar dos dois lados.','Em outra frigideira, derreta a manteiga clarificada e refogue a cebola com o alho.','Adicione a farinha de mandioca, tempere com sal e mexa sem parar por 1 a 2 minutos para não queimar.','Misture a banana frita à farofa pronta.','Sirva ainda quente.'],
+ dica:'A manteiga clarificada (ghee) tolera temperaturas mais altas sem queimar, deixando a farofa mais crocante.'},
+
+{id:'r311', nome:'Frango com Leite de Coco e Curry', ref:['almoco','jantar'], dif:'facil', min:60, porc:6, kcal:380, tags:['proteico','comfort'], emoji:'🍛',
+ ing:['700 g de peito de frango, em cubos','2 colheres (sopa) (30 ml) de azeite de oliva extravirgem ou óleo de coco extravirgem','1 cebola média (160 g), picada','4 dentes de alho (20 g), picados','1 pimentão amarelo orgânico (150 g), em tiras','1 pimentão vermelho orgânico (160 g), em tiras','1 cenoura pequena (120 g), em cubinhos','0,25 colher (chá) (1 g) de páprica doce','1 colher (sopa) (6 g) de curry em pó','1,67 xícara (400 ml) de leite de coco','1 colher (sopa) (3 g) de salsinha picada','1 colher (sopa) (3 g) de cebolinha picada','Sal marinho fino e pimenta-do-reino preta moída na hora a gosto'],
+ modo:['Tempere os cubos de frango com sal e pimenta e reserve.','Numa panela grande, aqueça metade do azeite e refogue a cebola com o alho.','Junte os pimentões e refogue por mais alguns minutos.','Acrescente a cenoura, tempere com a páprica, tampe e cozinhe até a cenoura ficar quase macia.','Numa frigideira à parte, aqueça o azeite restante e doure bem o frango.','Misture o curry ao frango, transfira tudo para a panela dos legumes, adicione o leite de coco e cozinhe em fogo baixo por 1 a 2 minutos.','Finalize com salsinha e cebolinha e sirva com arroz branco e batata palha.'],
+ dica:'Doure bem o frango antes de juntar o leite de coco — isso concentra o sabor e evita que a carne fique borrachuda no molho.'},
+
+{id:'r312', nome:'Fritada de Espinafre', ref:['cafe','almoco'], dif:'facil', min:35, porc:3, kcal:220, tags:['proteico','vegetariano','semgluten'], emoji:'🍳',
+ ing:['6 ovos grandes orgânicos (420 g)','1 colher (chá) (5 g) de sal marinho fino','2 colheres (sopa) (30 ml) de azeite de oliva extravirgem','1 cebola média (165 g), picada','2 tomates orgânicos (250 g), picados','150 g de folhas de espinafre','Pimenta-do-reino branca moída na hora a gosto'],
+ modo:['Bata os ovos numa tigela com sal e pimenta a gosto.','Aqueça o azeite numa frigideira e refogue a cebola com o tomate até amaciar.','Junte o espinafre e deixe murchar por cerca de 30 segundos.','Despeje os ovos batidos por cima, misture rapidamente com uma espátula e pare de mexer.','Deixe cozinhar por 3 a 4 minutos, até firmar por baixo.','Se preferir uma superfície crocante, leve o refratário ao forno preaquecido a 200°C por 3 a 5 minutos.'],
+ dica:'Para uma fritada mais dourada e crocante por cima, finalize sempre no forno em vez de tampar a frigideira.'},
+
+{id:'r313', nome:'Lasanha de Berinjela com Carne Moída', ref:['almoco','jantar'], dif:'medio', min:90, porc:6, kcal:320, tags:['proteico','lowcarb','comfort'], emoji:'🍆',
+ ing:['1 colher (sopa) (15 ml) de azeite de oliva extravirgem','2 dentes de alho (10 g), amassados','0,5 cebola média (90 g), picada','300 g de patinho moído','800 g de tomate pelado picado em conserva','1 colher (sopa) (3 g) de salsinha picada','1 colher (sopa) (3 g) de cebolinha picada','2 berinjelas (690 g), sem casca, em fatias longitudinais finas','300 g de ricota','Sal e pimenta-do-reino branca moída na hora a gosto'],
+ modo:['Numa frigideira, aqueça o azeite e refogue bem o alho e a cebola.','Adicione a carne moída, tempere e refogue mexendo até desmanchar os grumos e dourar levemente.','Junte o tomate pelado, a salsinha e a cebolinha, ajuste o sal e cozinhe por mais alguns minutos.','Num refratário, monte camadas alternadas de molho de carne, fatias de berinjela e ricota, começando e terminando com o molho.','Leve ao forno preaquecido a 180°C por 30 minutos.','Deixe descansar alguns minutos antes de servir.'],
+ dica:'As fatias cruas de berinjela funcionam como massa da lasanha e reduzem bastante os carboidratos do prato.'},
+
+{id:'r314', nome:'Maionese Caseira', ref:['almoco','jantar'], dif:'facil', min:15, porc:8, kcal:150, tags:['rapido'], emoji:'🥄',
+ ing:['2 ovos caipiras (140 g)','1 colher (sopa) (14 g) de mostarda de Dijon','0,5 colher (chá) (3 g) de sal','1 xícara (240 ml) de azeite de oliva extravirgem','2,67 colheres (sopa) (40 ml) de suco de limão-siciliano'],
+ modo:['Bata os ovos, a mostarda e o sal numa tigela ou no liquidificador.','Sem parar de bater, adicione o azeite bem devagar, em fio contínuo, até formar uma emulsão firme.','Por último, incorpore o suco de limão, batendo até ficar homogêneo.','Guarde na geladeira em pote fechado.'],
+ dica:'Adicionar o azeite bem devagar no início é o segredo para a maionese não talhar e ficar firme.'},
+
+{id:'r315', nome:'Mingau de Aveia e Banana', ref:['cafe'], dif:'facil', min:15, porc:2, kcal:220, tags:['saudavel','rapido'], emoji:'🥣',
+ ing:['2 bananas-nanicas médias bem maduras (236 g)','2 colheres (sopa) (16 g) de farelo de aveia','1 xícara (240 ml) de água','2 colheres (sopa) (30 ml) de leite de coco','30 g de proteína de soro de leite sabor baunilha','1 colher (chá) (3 g) de canela em pó'],
+ modo:['Amasse as bananas numa panela.','Junte o farelo de aveia e a água, misturando bem.','Leve ao fogo médio, mexendo sem parar, por cerca de 8 minutos, até engrossar.','Fora do fogo, incorpore o leite de coco e a proteína.','Sirva polvilhado com canela e mais banana, se quiser.'],
+ dica:'Adicione a proteína somente depois de tirar do fogo, para não perder nutrientes nem empelotar.'},
+
+{id:'r316', nome:'Mousse de Maracujá com Creme de Queijo de Minas', ref:['ceia','lancheT'], dif:'facil', min:195, porc:6, kcal:280, tags:['doce'], emoji:'🍮',
+ ing:['500 ml de polpa de maracujá fresca','1 lata (395 g) de leite condensado light','200 g de creme de queijo de minas frescal','0,5 lata (150 g) de creme de leite'],
+ modo:['Reserve um pouco da polpa com sementes para decorar.','Coe a polpa restante e bata no liquidificador com o leite condensado, o creme de queijo e o creme de leite até homogeneizar.','Despeje em tigelinhas individuais.','Leve à geladeira por 3 horas para firmar.','Na hora de servir, decore com a polpa reservada.'],
+ dica:'Use maracujás bem azedos para equilibrar a doçura do leite condensado.'},
+
+{id:'r317', nome:'Overnight de Coco', ref:['cafe','lancheM'], dif:'facil', min:760, porc:3, kcal:180, tags:['saudavel','proteico','rapido'], emoji:'🥥',
+ ing:['200 ml de leite de coco','2 colheres (sopa) (20 g) de semente de chia','30 g de proteína vegana sabor açaí ou proteína de soro de leite sabor baunilha','230 g de morango fresco ou outra fruta de sua preferência'],
+ modo:['Misture o leite de coco com a chia numa tigela e deixe descansar por 30 minutos.','Incorpore a proteína e um pouco do morango picado.','Transfira para potes individuais, tampe e leve à geladeira até o dia seguinte.','Na hora de servir, finalize com o restante do morango.'],
+ dica:'Prepare na véspera e conserve por até 2 dias na geladeira — ótimo para o café da manhã ou um lanche corrido.'},
+
+{id:'r318', nome:'Pão de Queijo da Jujuba', ref:['cafe','lancheM'], dif:'facil', min:40, porc:8, kcal:90, tags:['semgluten','rapido'], emoji:'🧀',
+ ing:['3 ovos grandes (210 g)','6 colheres (sopa) (60 g) de farinha de tapioca','6 colheres (sopa) (18 g) de queijo de minas meia cura ralado','0,25 colher (chá) (1 g) de fermento em pó químico'],
+ modo:['Bata os ovos numa tigela com um garfo até homogeneizar.','Acrescente a farinha de tapioca e misture bem.','Incorpore o queijo ralado e o fermento, misturando novamente.','Distribua a massa em forminhas untadas com azeite.','Asse em forno preaquecido a 200°C por cerca de 25 minutos, até dourar.'],
+ dica:'Essa receita também pode ser feita na airfryer, reduzindo o tempo de forno para cerca de 15 minutos.'},
+
+{id:'r319', nome:'Pão Delícia de Liquidificador', ref:['cafe','lancheM'], dif:'facil', min:60, porc:6, kcal:240, tags:['semgluten'], emoji:'🍞',
+ ing:['3 ovos grandes (210 g)','5 colheres (sopa) (75 ml) de azeite de oliva extravirgem','1 xícara (240 ml) de leite de amêndoa, arroz ou coco','1 dente de alho (5 g), amassado','0,5 colher (chá) (1 g) de orégano seco','1 colher (chá) (2 g) de alecrim fresco','0,25 colher (chá) (1 g) de sal','0,5 xícara (58 g) de amido de milho','0,5 xícara (55 g) de polvilho doce','0,5 xícara (50 g) de farinha de coco','2 colheres (chá) (3 g) de semente de linhaça dourada (opcional)','1 colher (chá) (5 g) de semente de chia (opcional)','2 colheres (sopa) (30 g) de biomassa de banana (opcional)','0,5 colher (sopa) (7 g) de fermento em pó químico','1 colher (chá) (5 g) de manteiga clarificada, para untar','2 colheres (sopa) (20 g) de farinha de coco, para polvilhar'],
+ modo:['No liquidificador, bata os ovos, o azeite e o leite vegetal até homogeneizar.','Adicione o alho, o orégano, o alecrim, o sal, o amido, o polvilho, a farinha de coco, a linhaça, a chia e a biomassa e bata até incorporar tudo.','Por último, junte o fermento e pulse rapidamente só para misturar.','Despeje a massa na forma untada e polvilhada com farinha de coco.','Asse em forno preaquecido a 180°C por 25 a 30 minutos, até dourar.','Desenforme e sirva quente.'],
+ dica:'Troque o amido de milho, o polvilho e a farinha de coco por fécula de batata, farinha de arroz ou farinha de amêndoa, conforme o que tiver em casa.'},
+
+{id:'r320', nome:'Poke de Salmão', ref:['almoco','jantar'], dif:'facil', min:50, porc:2, kcal:420, tags:['proteico','saudavel'], emoji:'🍣',
+ ing:['0,75 xícara (100 g) de arroz para sushi','375 ml de água','2 colheres (sopa) (30 ml) de shoyu','1 colher (sopa) (18 g) de mel','300 g de salmão fresco, em cubos','1 cenoura média (150 g), ralada','1 nabo (260 g), ralado','145 g de manga Palmer, em cubos','0,5 pepino japonês (110 g), em fatias finas','3 colheres (sopa) (45 ml) de molho tarê','3 colheres (sopa) (12 g) de cebolinha picada','1 pimenta-dedo-de-moça (4 g), em tirinhas','1 colher (chá) (3 g) de gergelim branco torrado','1 colher (chá) (3 g) de gergelim preto torrado','0,25 xícara (37 g) de amendoim torrado com sal','4 folhas de alga nori (10 g), em tirinhas'],
+ modo:['Cozinhe o arroz na água até ficar macio, seguindo o tempo indicado na embalagem.','Numa tigelinha, misture o shoyu com o mel e reserve.','Em cada tigela de servir, coloque uma base de arroz e disponha por cima montinhos de salmão, cenoura, nabo, manga e pepino.','Regue tudo com o molho tarê e o shoyu adoçado.','Finalize com cebolinha, pimenta, os gergelins, o amendoim e as tirinhas de alga.','Sirva em seguida.'],
+ dica:'Monte o poke pouco antes de servir para o salmão e os vegetais manterem a textura fresca e crocante.'},
+
+{id:'r321', nome:'Purê de Couve-Flor', ref:['almoco','jantar'], dif:'facil', min:35, porc:4, kcal:110, tags:['vegetariano','lowcarb'], emoji:'🥔',
+ ing:['520 g de couve-flor','1 litro de água','0,5 xícara (120 ml) de leite de coco','2 colheres (sopa) (30 g) de manteiga clarificada','1 colher (chá) (5 g) de sal','0,5 colher (chá) (1 g) de pimenta-do-reino branca moída na hora','2 dentes de alho (10 g), picadinhos','0,5 xícara (120 ml) de caldo de legumes','1 colher (sopa) (3 g) de salsinha picada'],
+ modo:['Cozinhe a couve-flor na água por 20 minutos e escorra bem.','Transfira para o processador com o leite de coco, a manteiga, o sal, a pimenta e o alho e processe.','Vá acrescentando o caldo de legumes aos poucos, batendo até atingir a cremosidade desejada.','Adicione a salsinha e misture rapidamente.','Sirva quente.'],
+ dica:'Sem caldo de legumes caseiro, use água mesmo — o purê continua saboroso.'},
+
+{id:'r322', nome:'Salmão com Molho de Maracujá e Aspargo', ref:['jantar','almoco'], dif:'facil', min:50, porc:4, kcal:340, tags:['proteico','saudavel'], emoji:'🐟',
+ ing:['700 g de filé de salmão','2 colheres (sopa) (30 g) de manteiga clarificada','2 dentes de alho (10 g), picados','1 cebola pequena (130 g), picada','100 ml de leite de coco','2 maracujás azedos grandes (640 g)','450 g de aspargo verde fresco','1 litro de água','Sal marinho fino a gosto'],
+ modo:['Tempere o salmão com sal e reserve.','Numa frigideira, refogue o alho e a cebola em metade da manteiga.','Bata o refogado no liquidificador junto com o leite de coco, a polpa dos maracujás e a manteiga restante.','Coloque o salmão numa assadeira, cubra com o molho e leve ao forno preaquecido a 180°C por 20 minutos.','Cozinhe os aspargos em água com sal por 15 minutos e escorra.','Sirva o salmão com o molho de maracujá e os aspargos ao lado.'],
+ dica:'O azedinho do maracujá equilibra bem a gordura do salmão — deixe algumas sementes no molho se gostar de textura mais rústica.'},
+
+{id:'r323', nome:'Salpicão de Frango', ref:['almoco','lancheT'], dif:'facil', min:80, porc:4, kcal:260, tags:['proteico'], emoji:'🍗',
+ ing:['400 g de peito de frango','1 litro de água','200 g de iogurte natural integral','100 g de queijo cottage','3,33 colheres (sopa) (50 ml) de suco de limão-taiti','2 colheres (sopa) (30 ml) de azeite de oliva extravirgem','0,25 colher (chá) (1 g) de sal rosa do Himalaia','0,25 colher (chá) (1 g) de pimenta-do-reino branca moída na hora','2 colheres (sopa) (28 g) de mostarda de Dijon','1 cenoura média (170 g), ralada','2 talos de salsão (35 g), picados','1 colher (sopa) (3 g) de salsinha picada','1 maçã verde (270 g), sem casca, em cubinhos','50 g de azeitona verde, sem caroço, picada'],
+ modo:['Cozinhe o frango na água com sal por 30 minutos, escorra, deixe amornar e desfie.','Numa tigela pequena, misture o iogurte, o cottage, o suco de limão, o azeite, o sal, a pimenta e a mostarda; reserve esse molho.','Numa tigela grande, junte o frango desfiado com a cenoura, o salsão, a salsinha, a maçã e a azeitona.','Adicione o molho reservado e misture bem.','Sirva gelado.'],
+ dica:'Trocar a maionese tradicional por iogurte com cottage deixa o salpicão mais leve sem perder a cremosidade.'},
+
+{id:'r324', nome:'Salpicão Vegetariano', ref:['almoco','lancheT'], dif:'facil', min:60, porc:6, kcal:210, tags:['vegetariano','saudavel'], emoji:'🥗',
+ ing:['400 g de creme de queijo de minas frescal','1 colher (sopa) (14 g) de mostarda de Dijon','3 colheres (sopa) (45 ml) de suco de limão-taiti','25 g de salsinha, picada','35 g de cebolinha, picada','1 cenoura média (130 g), ralada','2 maçãs verdes pequenas (380 g), sem casca, picadas','6 talos de salsão (180 g), picados','0,75 xícara (100 g) de azeitona preta, sem caroço, picada','1 beterraba média (165 g), sem casca, ralada','1 nabo (265 g), ralado','0,33 xícara (50 g) de uva-passa escura','Sal e pimenta-do-reino branca moída na hora a gosto'],
+ modo:['Misture o creme de queijo com a mostarda, o suco de limão, a salsinha, a cebolinha, sal e pimenta numa tigela e reserve esse molho.','Numa tigela grande, junte a cenoura, a maçã, o salsão, a azeitona, a beterraba, o nabo e a uva-passa.','Adicione o molho reservado e misture bem.','Sirva gelado, acompanhado de brotos de verduras.'],
+ dica:'Rale a beterraba só na hora de servir para o salpicão não ficar rosado demais.'},
+
+{id:'r325', nome:'Sorvete de Manga com Coco', ref:['ceia','lancheT'], dif:'facil', min:70, porc:1, kcal:180, tags:['vegano','doce'], emoji:'🍨',
+ ing:['1 manga Palmer (432 g), em cubinhos','1 colher (chá) (3 g) de açúcar de coco','1 colher (chá) (5 ml) de óleo de coco','2 colheres (sopa) (30 ml) de leite de coco'],
+ modo:['Congele os cubos de manga numa assadeira por cerca de 1 hora.','Transfira a manga congelada para o liquidificador com os demais ingredientes.','Bata até obter um creme liso e homogêneo.','Sirva imediatamente, como um sorvete cremoso.'],
+ dica:'Quanto mais madura a manga, mais doce fica o sorvete, sem precisar de mais açúcar.'},
+
+{id:'r326', nome:'Torta de Frango', ref:['almoco','jantar'], dif:'facil', min:80, porc:6, kcal:310, tags:['proteico','comfort'], emoji:'🥘',
+ ing:['500 g de peito de frango','1 litro de água','1 colher (sopa) (15 ml) de azeite de oliva extravirgem','1 cebola pequena (100 g), picada','1 dente de alho (5 g), picado','100 g de requeijão light ou sem lactose','Sal a gosto','4 ovos grandes (280 g)','0,5 colher (sopa) (2 g) de pimenta-do-reino preta moída na hora','0,5 colher (chá) (2 g) de cúrcuma (açafrão-da-terra)','1 colher (chá) (5 g) de sal marinho ou sal rosa do Himalaia','1 xícara (110 g) de farelo de aveia','1 colher (sopa) (15 ml) de azeite de oliva extravirgem, para untar','2 colheres (sopa) (10 g) de farelo de aveia, para polvilhar'],
+ modo:['Cozinhe o frango na água com sal por 25 minutos, escorra, deixe amornar e desfie.','Numa panela, refogue a cebola e o alho no azeite.','Junte o frango desfiado, misture e retire do fogo.','Incorpore o requeijão ao recheio e ajuste o sal.','No liquidificador, bata os ovos com a pimenta, a cúrcuma e o sal até homogeneizar; depois misture o farelo de aveia com uma espátula.','Despeje metade da massa na forma untada e polvilhada, espalhe o recheio por cima e cubra com o restante da massa.','Asse em forno preaquecido a 180°C por 40 a 50 minutos.'],
+ dica:'Troque o frango por sardinha, atum ou ricota com espinafre para variar o recheio dessa torta.'},
+
+{id:'r327', nome:'Tortinha de Atum', ref:['lancheM','lancheT'], dif:'facil', min:20, porc:3, kcal:180, tags:['proteico','rapido'], emoji:'🐠',
+ ing:['0,5 colher (chá) (1 g) de pimenta-do-reino branca moída na hora','1 colher (sopa) (10 g) de semente de chia','1,5 colher (sopa) (12 g) de farelo de aveia','170 g de atum sólido em conserva de água','2 ovos grandes (140 g)','0,5 cenoura pequena (55 g), ralada','2 colheres (sopa) (6 g) de cebolinha picada','Sal a gosto'],
+ modo:['Misture todos os ingredientes numa tigela com um garfo até incorporar bem.','Divida a mistura em refratários individuais.','Leve ao micro-ondas em potência alta por cerca de 3 minutos e 30 segundos.','Sirva quente ou morno.'],
+ dica:'Pode trocar o atum por 100 g de frango cozido desfiado ou uma lata de sardinha em conserva.'},
+
+{id:'r328', nome:'Bolinhos Escoceses de Salmão', ref:['almoco','jantar'], dif:'medio', min:80, porc:6, kcal:230, tags:['proteico'], emoji:'🧆',
+ ing:['1 batata Monalisa grande (250 g)','3 xícaras (720 ml) de água','1 ovo grande (70 g)','1 xícara (240 ml) de leite semidesnatado','1 cebola média (170 g), em cubinhos','350 g de filé de salmão limpo, sem pele e sem espinhas, em cubos de 2 cm','1 colher (sopa) (3 g) de raspas de casca de limão-taiti','2 colheres (sopa) (30 g) de manteiga sem sal, em temperatura ambiente','2 colheres (sopa) (18 g) de farinha de trigo','0,13 colher (chá) (1 g) de pimenta-de-caiena','0,25 xícara (17 g) de salsinha bem picadinha','1 clara (36 g)','2 colheres (sopa) (30 ml) de óleo de canola','Sal a gosto'],
+ modo:['Cozinhe a batata em parte da água por 15 minutos, escorra e passe no espremedor.','Cozinhe o ovo em outra porção de água por 15 minutos, descasque e amasse com um garfo.','Aqueça o leite com a cebola numa panela; quando ferver, adicione o salmão e cozinhe por 10 minutos, até ficar bem macio.','Retire o salmão do leite, desfie em lascas e reserve numa tigela, descartando metade do leite.','Junte a batata, o ovo amassado, as raspas de limão, a manteiga, a farinha e a salsinha ao salmão, temperando com sal e pimenta-de-caiena, até formar uma massa macia.','Bata a clara em neve firme e incorpore delicadamente à massa; deixe descansar por 30 minutos.','Modele porções da massa em bolinhos achatados e frite em frigideira com um fio de óleo até dourar dos dois lados.'],
+ dica:'Deixar a massa descansar antes de fritar ajuda os bolinhos a manterem a forma na frigideira.'},
+
+{id:'r329', nome:'Bruschetta de Abobrinha e Berinjela Grelhadas', ref:['lancheT','jantar'], dif:'medio', min:20, porc:1, kcal:320, tags:['vegetariano','rapido'], emoji:'🍅',
+ ing:['1 fatia de pão italiano (50 g)','1 dente de alho (5 g)','2 colheres (sopa) (30 ml) de azeite de oliva extravirgem','4 fatias longitudinais de abobrinha italiana (50 g)','2 fatias longitudinais de berinjela (50 g)','3 colheres (sopa) (45 ml) de molho de tomate','35 g de queijo parmesão ralado grosso','Sal e pimenta-do-reino branca moída na hora a gosto'],
+ modo:['Toste a fatia de pão dos dois lados, depois esfregue com o alho e regue com metade do azeite.','Tempere as fatias de abobrinha e berinjela com sal e pimenta e grelhe-as numa frigideira com o azeite restante.','Espalhe metade do molho de tomate sobre o pão tostado.','Arrume as fatias grelhadas por cima e cubra com o molho de tomate restante.','Polvilhe o parmesão ralado e leve para gratinar em forno preaquecido a 200°C.','Sirva assim que sair do forno.'],
+ dica:'Esfregar o alho cru direto no pão tostado dá um aroma marcante sem precisar refogar nada.'},
+
+{id:'r330', nome:'Filé de Vitela ao Sal com Tomate Fresco e Ervas', ref:['jantar','almoco'], dif:'medio', min:70, porc:6, kcal:320, tags:['proteico'], emoji:'🥩',
+ ing:['2 kg de sal grosso','1 peça de filé-mignon de vitela (500 g)','165 ml de azeite de oliva extravirgem','5 dentes de alho (25 g), inteiros','6 galhos de alecrim (3 g)','8 tomates italianos (1 kg), sem pele e sem sementes, em cubos','0,5 colher (sopa) (1 g) de alecrim fresco','0,5 colher (sopa) (1 g) de sálvia fresca','0,5 colher (sopa) (1 g) de orégano fresco','0,5 colher (sopa) (1 g) de salsinha picada','0,5 colher (sopa) (1 g) de cebolinha picada','0,5 colher (sopa) (1 g) de manjerona fresca','2 colheres (sopa) (6 g) de manjericão fresco picado','3,33 colheres (sopa) (50 ml) de conhaque','Sal e pimenta-do-reino branca moída na hora a gosto'],
+ modo:['Forre o fundo de uma assadeira com um terço do sal grosso.','Numa panela bem quente, sele o filé em metade do azeite até dourar por completo.','Transfira a carne para a assadeira, distribua o alho e os galhos de alecrim por cima, cubra com o restante do sal grosso e leve ao forno preaquecido a 220°C por 30 minutos.','Retire do forno, quebre a crosta de sal e limpe a carne antes de transferi-la para uma travessa.','Numa panela, aqueça o azeite restante, junte o tomate e as ervas frescas e refogue por alguns minutos.','Regue com o conhaque, flambe, tempere com sal e pimenta e desligue o fogo.','Fatie o filé e sirva coberto com o molho de tomate e ervas.'],
+ dica:'A crosta de sal cozinha a carne no próprio vapor, então não é preciso salgar o filé antes de assar.'},
+
+{id:'r331', nome:'Couscous de Peixe e Camarão', ref:['almoco','jantar'], dif:'medio', min:90, porc:4, kcal:410, tags:['proteico'], emoji:'🍤',
+ ing:['5 colheres (sopa) (75 ml) de azeite de oliva','2 talos de salsão (50 g), fatiados','1 cebola média (170 g), picada','2 colheres (chá) (6 g) de alho picado','1 maço de salsinha (185 g), picado','1 robalo (2 kg), em filés (reserve a cabeça e a carcaça)','500 g de tomate maduro, sem pele e sem sementes, picadinho','2 cravos-da-índia (1 g)','1 folha de louro (1 g)','1,5 litro de água','12 camarões grandes (385 g)','Sal e pimenta-do-reino branca moída na hora a gosto','1 envelope (1 g) de açafrão em pó','2,25 xícaras (382 g) de couscous marroquino','0,13 colher (chá) (1 g) de canela em pó','0,13 colher (chá) (1 g) de cravo-da-índia em pó','0,13 colher (chá) (1 g) de noz-moscada ralada','1 colher (sopa) (3 g) de salsinha picada'],
+ modo:['Numa caçarola, aqueça o azeite e refogue o salsão, a cebola, o alho e a salsinha.','Junte a cabeça e a carcaça do peixe, o tomate, os cravos e o louro e refogue mexendo por alguns minutos.','Tempere com sal e pimenta, adicione a água e cozinhe com a panela tampada por 30 minutos; depois passe todo o caldo por uma peneira.','Cozinhe os filés de robalo e os camarões diretamente em 1 litro desse caldo coado.','Dissolva o açafrão numa parte do caldo restante e misture ao couscous, hidratando-o por 15 minutos numa peneira sobre a panela.','Tempere o couscous com sal, canela, cravo e noz-moscada.','Disponha o peixe e os camarões cozidos sobre o couscous, polvilhe salsinha e sirva.'],
+ dica:'Para um sabor mais concentrado, reduza um pouco do caldo de peixe e incorpore-o ao couscous antes de servir.'},
+
+{id:'r332', nome:'Omelete Japonesa', ref:['cafe','jantar'], dif:'medio', min:30, porc:4, kcal:180, tags:['proteico','semgluten'], emoji:'🍙',
+ ing:['4 ovos grandes (280 g)','1 colher (sopa) (15 ml) de shoyu','1 colher (sopa) (11 g) de açúcar','0,5 colher (chá) (3 g) de sal','1 colher (sopa) (15 ml) de saquê','0,33 xícara (32 g) de nabo ralado','1 colher (sopa) (3 g) de cebolinha-francesa','2 colheres (sopa) (30 ml) de óleo de canola, para untar'],
+ modo:['Bata rapidamente os ovos com o shoyu, o açúcar, o sal e o saquê, evitando formar espuma, e coe a mistura numa peneira.','Incorpore o nabo ralado à mistura coada.','Unte um tabuleiro antiaderente com o óleo e leve ao fogo para aquecer.','Despeje uma camada fina da mistura de ovos e deixe fritar.','Assim que começar a soltar das bordas, enrole a omelete com cuidado, como um rocambole.','Polvilhe cebolinha picada por cima e sirva quente, ou embrulhe em filme plástico ainda quente para servir fria em rodelas depois.'],
+ dica:'Coar a mistura de ovos antes de fritar é o que garante a textura lisa e sedosa característica dessa omelete.'},
+
+{id:'r333', nome:'Penne com Atum Grelhado, Rúcula e Molho Balsâmico', ref:['almoco','jantar'], dif:'medio', min:30, porc:4, kcal:430, tags:['proteico'], emoji:'🍝',
+ ing:['2 colheres (sopa) (18 g) de açúcar mascavo claro','0,5 xícara (120 ml) de vinagre balsâmico','0,33 xícara (80 ml) de caldo de frango','1 colher (sopa) (10 g) de gengibre ralado','1 colher (sopa) (15 ml) de óleo de amendoim','200 g de filé de atum','3 colheres (sopa) (45 ml) de azeite de oliva extravirgem','170 g de tomate-cereja, cortado ao meio','0,5 cebola média (70 g), em pedaços grandes','1 colher (chá) (3 g) de açúcar mascavo claro','Sal e pimenta-do-reino branca moída na hora a gosto','200 g de penne','2 litros de água','10 folhas de rúcula bem fresca (5 g)','2 colheres (sopa) (12 g) de queijo parmesão em lascas','1 colher (sopa) (15 ml) de azeite de oliva extravirgem','1 colher (sopa) (3 g) de cebolinha-francesa picada','Sal a gosto'],
+ modo:['Derreta o açúcar mascavo numa frigideira, junte o vinagre balsâmico e deixe reduzir um pouco.','Acrescente o caldo, o gengibre e o óleo de amendoim, cozinhando por 15 minutos até engrossar levemente; reserve.','Tempere o atum com sal e pimenta, sele em azeite bem quente dos dois lados deixando malpassado, e corte em lascas.','Na mesma frigideira, salteie o tomate-cereja até murchar levemente e reserve com o atum.','Doure a cebola na frigideira, finalize com uma pitada de açúcar e junte ao prato do peixe.','Cozinhe o penne em água fervente com sal até ficar al dente e escorra.','Misture a massa ao molho balsâmico na frigideira, adicionando o atum, o tomate, a cebola e a rúcula com cuidado.','Sirva finalizado com lascas de parmesão, um fio de azeite e a cebolinha-francesa.'],
+ dica:'Sele o atum rapidamente em fogo alto para mantê-lo malpassado por dentro — isso preserva a suculência.'},
+
+{id:'r334', nome:'Picolé de Manga com Iogurte', ref:['lancheT','ceia'], dif:'medio', min:260, porc:7, kcal:90, tags:['doce','saudavel'], emoji:'🍧',
+ ing:['1 manga Palmer madura (480 g), sem casca, picada','340 g de iogurte natural integral','0,25 xícara (45 g) de açúcar'],
+ modo:['Bata a manga com o iogurte e o açúcar no liquidificador até formar um creme liso.','Preencha os copinhos com a mistura, batendo-os levemente contra a bancada para tirar bolhas de ar.','Leve ao freezer por 1 hora e então espete um palito no centro de cada picolé.','Volte ao freezer por mais 3 horas até firmar completamente.','Na hora de servir, quebre a borda do copo para desenformar com facilidade.'],
+ dica:'Bater os copinhos contra a bancada elimina bolhas de ar e deixa o picolé com textura mais lisa.'},
+
+{id:'r335', nome:'Pizza de Massa Integral de Rúcula e Tomatinhos', ref:['jantar','almoco'], dif:'medio', min:110, porc:8, kcal:310, tags:['comfort','vegetariano'], emoji:'🍕',
+ ing:['130 g de tomate pelado em conserva','1 tomate italiano (190 g), sem sementes','2 folhas de manjericão (1 g)','2 colheres (chá) (10 ml) de azeite de oliva extravirgem','3 colheres (sopa) (30 g) de cebola picada','0,5 dente de alho (2 g), picado','0,5 colher (chá) (2 g) de açúcar','Sal e pimenta-do-reino branca moída na hora a gosto','1 xícara (240 ml) de água morna','1 tablete (15 g) de fermento biológico fresco','1 colher (sopa) (15 g) de margarina sem sal light, derretida','310 g de farinha de trigo integral','0,5 xícara (68 g) de farinha de trigo, para polvilhar','4 xícaras (400 g) de mussarela ralada','4 xícaras (88 g) de folhas de rúcula','2 xícaras (340 g) de tomate-cereja'],
+ modo:['Bata no liquidificador o tomate pelado, o tomate fresco e o manjericão.','Refogue a cebola no azeite até ficar transparente, junte o alho e o tomate batido.','Tempere com açúcar, sal e pimenta e cozinhe por mais 10 minutos; deixe esfriar.','Dissolva o fermento e o sal na água morna, junte a margarina derretida e metade da farinha, misturando com uma colher.','Vá incorporando a farinha restante com as mãos até a massa soltar das mãos, sove bem e deixe descansar coberta por 40 minutos.','Divida a massa ao meio, abra dois discos com um rolo e pré-asse cada um com um pouco do molho de tomate por 10 minutos em forno a 230°C.','Espalhe mais molho, cubra com a mussarela e volte ao forno até dourar e o queijo borbulhar.','Finalize com as folhas de rúcula e os tomatinhos frescos antes de servir.'],
+ dica:'Pré-assar a massa com uma primeira camada de molho evita que a pizza integral fique úmida no centro.'},
+
+{id:'r336', nome:'Quiche de Queijo, Alho-Poró e Tomate', ref:['almoco','jantar'], dif:'complexo', min:150, porc:6, kcal:390, tags:['comfort','vegetariano'], emoji:'🧇',
+ ing:['1,33 xícara (180 g) de farinha de trigo','0,5 colher (chá) (3 g) de sal','5 colheres (sopa) (75 g) de manteiga sem sal, gelada, em cubinhos','3 colheres (sopa) (45 ml) de água gelada','2 colheres (sopa) (30 g) de manteiga sem sal','2 talos de alho-poró grandes (360 g), cortados em meias-luas','1,5 colher (sopa) (23 ml) de vinho branco seco','0,75 xícara (180 ml) de creme de leite fresco','2 ovos grandes (140 g)','6 colheres (sopa) (18 g) de queijo parmesão ralado','1 xícara (100 g) de queijo Canastra ralado grosseiramente','3 galhos de tomilho fresco (2 g)','0,13 colher (chá) (1 g) de noz-moscada ralada','6 tomates-cereja (80 g), cortados ao meio no sentido do comprimento','Sal e pimenta-do-reino branca moída na hora a gosto'],
+ modo:['No processador, misture a farinha e o sal, junte a manteiga gelada e pulse até virar uma farofa grossa.','Adicione a água gelada aos poucos, pulsando só até a massa se unir; envolva em filme plástico e leve à geladeira por 1 hora.','Abra a massa, forre uma forma de fundo removível, fure o fundo com um garfo e leve ao freezer por 20 minutos.','Cubra a massa com papel-alumínio, coloque grãos de feijão cru por cima e asse a 180°C por 15 a 20 minutos; retire os pesos e asse por mais 10 minutos.','Enquanto isso, refogue o alho-poró na manteiga até amaciar, regue com o vinho e cozinhe até o álcool evaporar.','Bata o creme de leite, os ovos e o parmesão; misture o alho-poró já frio, três quartos do queijo Canastra, a noz-moscada, sal e pimenta.','Despeje o recheio sobre a massa pré-assada, distribua os tomates-cereja por cima e polvilhe o restante do queijo Canastra.','Volte ao forno e asse por 25 a 30 minutos, até o recheio firmar e a superfície dourar.'],
+ dica:'Assar a massa cega com peso antes do recheio evita que o fundo da quiche fique mole e empapado.'},
+
+{id:'r337', nome:'Salada de Beterraba Assada com Ricota Caseira e Molho de Uvas', ref:['almoco','jantar'], dif:'medio', min:120, porc:6, kcal:260, tags:['vegetariano','saudavel'], emoji:'🍇',
+ ing:['7 beterrabas pequenas (1 kg)','2 litros de água','Sal a gosto','1 litro de leite integral','2 colheres (sopa) (30 ml) de vinagre de maçã','Sal e pimenta-do-reino branca moída na hora a gosto','500 g de uva verde, sem caroço','3 colheres (sopa) (45 ml) de azeite de oliva','5 colheres (sopa) (20 g) de tomilho fresco','1 colher (sopa) (15 ml) de conhaque','4 colheres (20 g) de mostarda','3 colheres (sopa) (54 g) de mel','2 colheres (sopa) (30 ml) de suco de limão-siciliano','1 colher (sopa) (15 ml) de vinagre de maçã'],
+ modo:['Cozinhe as beterrabas na panela de pressão com água e sal por 35 minutos, até ficarem bem macias; escorra e descasque.','Achate levemente as beterrabas e doure-as numa grelha bem quente, pressionando com uma espátula.','Para a ricota, ferva o leite, junte o vinagre e deixe ferver por mais 1 minuto; retire do fogo e deixe esfriar.','Coe o leite talhado numa peneira forrada com pano fino por 40 minutos e tempere com sal e pimenta.','No liquidificador, bata metade das uvas até virar suco e coe; corte as uvas restantes ao meio.','Numa frigideira, doure as uvas cortadas no azeite com o tomilho, regue com o conhaque e vá juntando o suco de uva coado.','Junte a mostarda, o mel e o suco de limão, mexendo sempre, e finalize com o vinagre restante até obter um molho cremoso.','Sirva as beterrabas com o molho de uvas por cima e a ricota caseira ao lado.'],
+ dica:'Prepare a ricota caseira com antecedência — ela ganha ainda mais sabor se descansar na geladeira por algumas horas antes de servir.'},
+
+{id:'r338', nome:'Salada de Folhas Mistas com Frutas Secas Tostadas', ref:['almoco','lancheT'], dif:'medio', min:40, porc:4, kcal:280, tags:['vegetariano','saudavel'], emoji:'🍃',
+ ing:['170 g de iogurte natural integral','1 colher (sopa) (15 ml) de suco de limão-taiti','1 colher (chá) (6 g) de mel','0,5 colher (chá) (3 g) de mostarda de Dijon','Sal e pimenta-do-reino branca moída na hora a gosto','2 colheres (sopa) (30 g) de manteiga sem sal','0,33 xícara (60 g) de amêndoa crua','0,5 xícara (50 g) de nozes-pecãs','2 colheres (sopa) (20 g) de pinoli','1 colher (chá) (5 ml) de molho inglês','0,5 colher (chá) (1 g) de pimenta chili em pó','0,13 colher (chá) (1 g) de cominho em pó','Sal a gosto','1 pé (60 g) de alface-lisa','1 pé (70 g) de alface-lisa roxa','1 pé (35 g) de alface-crespa roxa','20 folhas (20 g) de rúcula','20 folhas (65 g) de espinafre','10 folhas (24 g) de azedinha'],
+ modo:['Bata todos os ingredientes do molho de iogurte com uma colher até ficar liso e homogêneo; tempere com sal e pimenta.','Derreta a manteiga numa panela, junte as castanhas e nozes com o molho inglês e as especiarias, refogando por 1 minuto.','Espalhe as frutas secas numa assadeira e leve ao grill por 10 minutos, até tostar; deixe esfriar.','Misture as folhas variadas numa saladeira grande.','Regue com o molho de iogurte e misture delicadamente.','Finalize espalhando as frutas secas tostadas por cima e sirva.'],
+ dica:'Deixe as frutas secas esfriarem completamente antes de misturar na salada, para manterem a crocância.'},
 ];
 
 /* conversor de medidas caseiras -> gramas por unidade */
