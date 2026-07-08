@@ -1,0 +1,15 @@
+{
+  "name": "SABOR — Receitas & Modo de Preparo",
+  "short_name": "Sabor",
+  "description": "Receitas fáceis, medianas e complexas para todas as refeições do dia, com modo de preparo passo a passo, planejador semanal e lista de compras.",
+  "start_url": "/receitas.html",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#0e0b09",
+  "theme_color": "#0e0b09",
+  "orientation": "portrait",
+  "icons": [
+    { "src": "/icon-receitas-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "/icon-receitas-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}

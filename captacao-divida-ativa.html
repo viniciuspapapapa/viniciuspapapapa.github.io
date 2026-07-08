@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Captação — Empresas com Dívida Ativa · MG · BH e Zona da Mata</title>
+<meta name="description" content="Painel de prospecção de empresas de Minas Gerais (Belo Horizonte e Zona da Mata) com dívidas relevantes inscritas em Dívida Ativa da União (PGFN).">
+<meta name="theme-color" content="#1d4ed8">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<style>
+  :root{
+    --bg:#f4f6fb; --surface:#ffffff; --surface2:#f8fafc;
+    --border:#e6e9f2; --border2:#eef1f8;
+    --ink:#0f172a; --muted:#64748b; --faint:#94a3b8;
+    --brand:#1d4ed8; --brand2:#3b82f6; --brand-soft:#eff4ff;
+    --green:#059669; --green-soft:#ecfdf5;
+    --red:#dc2626; --red-soft:#fef2f2;
+    --amber:#d97706; --amber-soft:#fffbeb;
+    --purple:#7c3aed; --purple-soft:#f5f3ff;
+    --shadow:0 1px 2px rgba(15,23,42,.04), 0 8px 24px -12px rgba(15,23,42,.12);
+    --radius:16px; --radius-sm:11px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{
+    background:linear-gradient(180deg,#eef2fb 0%,#f4f6fb 240px);
+    color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
+    min-height:100vh;line-height:1.5;-webkit-font-smoothing:antialiased;
+  }
+  ::selection{background:var(--brand-soft);color:var(--brand)}
+
+  /* HEADER */
+  header{
+    background:linear-gradient(120deg,#1e3a8a 0%,#1d4ed8 55%,#2563eb 100%);
+    color:#fff;padding:24px 0 28px;position:relative;overflow:hidden;
+  }
+  header::after{content:"";position:absolute;inset:0;background:
+    radial-gradient(640px 240px at 88% -40%,rgba(255,255,255,.18),transparent 60%);}
+  .wrap{max-width:1340px;margin:0 auto;padding:0 22px;position:relative}
+  .brandrow{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+  .logo{width:46px;height:46px;border-radius:13px;background:rgba(255,255,255,.16);
+    display:grid;place-items:center;font-size:23px;backdrop-filter:blur(6px);
+    border:1px solid rgba(255,255,255,.22);flex:none}
+  h1{font-size:21px;font-weight:800;letter-spacing:-.02em;line-height:1.15}
+  .sub{font-size:12.5px;color:#dbeafe;margin-top:2px;font-weight:500}
+  .legal{margin-top:14px;display:flex;gap:8px;flex-wrap:wrap}
+  .pill{font-size:11.5px;font-weight:600;background:rgba(255,255,255,.13);
+    border:1px solid rgba(255,255,255,.22);color:#fff;padding:5px 11px;border-radius:999px;
+    display:inline-flex;align-items:center;gap:6px}
+  .pill b{font-weight:800}
+
+  main{max-width:1340px;margin:-14px auto 60px;padding:0 22px;position:relative;z-index:2}
+
+  /* BANNERS */
+  .banner{border-radius:var(--radius-sm);padding:11px 15px;font-size:13px;
+    display:flex;gap:10px;align-items:flex-start;margin-bottom:16px;box-shadow:var(--shadow)}
+  .banner.demo{background:var(--amber-soft);border:1px solid #fde68a;color:#92400e}
+  .banner.info{background:var(--brand-soft);border:1px solid #c7d7fe;color:#1e40af}
+  .banner b{font-weight:800}
+  .banner .x{margin-left:auto;cursor:pointer;font-weight:800;opacity:.6;padding:0 4px}
+  .banner .x:hover{opacity:1}
+
+  /* KPIs */
+  .kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;margin-bottom:18px}
+  @media(max-width:900px){.kpis{grid-template-columns:repeat(2,1fr)}}
+  .kpi{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
+    padding:15px 16px;box-shadow:var(--shadow)}
+  .kpi .lbl{font-size:11.5px;color:var(--muted);font-weight:600;text-transform:uppercase;
+    letter-spacing:.03em;display:flex;align-items:center;gap:6px}
+  .kpi .val{font-size:23px;font-weight:800;letter-spacing:-.02em;margin-top:4px}
+  .kpi .val.small{font-size:19px}
+  .kpi.accent .val{color:var(--brand)}
+  .kpi.red .val{color:var(--red)}
+  .kpi.green .val{color:var(--green)}
+
+  /* CARD / FILTERS */
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
+    box-shadow:var(--shadow);margin-bottom:18px}
+  .card-h{padding:14px 18px;border-bottom:1px solid var(--border2);display:flex;
+    align-items:center;gap:10px;flex-wrap:wrap}
+  .card-h h2{font-size:15px;font-weight:800;letter-spacing:-.01em}
+  .card-h .count{font-size:12px;color:var(--muted);font-weight:600}
+  .toolbar{display:flex;gap:10px;flex-wrap:wrap;padding:14px 18px;align-items:flex-end}
+  .field{display:flex;flex-direction:column;gap:4px}
+  .field label{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.03em}
+  input[type=text],input[type=number],select{
+    border:1px solid var(--border);border-radius:9px;padding:8px 11px;font-size:13.5px;
+    background:var(--surface2);color:var(--ink);font-family:inherit;outline:none;min-width:120px}
+  input[type=text]:focus,select:focus,input[type=number]:focus{border-color:var(--brand2);background:#fff;
+    box-shadow:0 0 0 3px var(--brand-soft)}
+  .field.grow{flex:1;min-width:220px}
+  .field.grow input{width:100%}
+  .btn{border:1px solid var(--border);background:var(--surface2);color:var(--ink);
+    border-radius:9px;padding:8px 14px;font-size:13px;font-weight:700;cursor:pointer;
+    font-family:inherit;display:inline-flex;align-items:center;gap:7px;transition:.12s}
+  .btn:hover{background:#fff;border-color:var(--brand2)}
+  .btn.primary{background:var(--brand);color:#fff;border-color:var(--brand)}
+  .btn.primary:hover{background:#1e40af}
+  .btn.ghost{background:transparent;border-color:transparent;color:var(--muted)}
+  .btn.ghost:hover{color:var(--brand);background:var(--brand-soft)}
+
+  /* TABLE */
+  .tablewrap{overflow-x:auto}
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  thead th{background:var(--surface2);text-align:left;padding:11px 12px;font-size:11.5px;
+    font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.03em;
+    border-bottom:1px solid var(--border);white-space:nowrap;cursor:pointer;user-select:none;position:sticky;top:0}
+  thead th.nosort{cursor:default}
+  thead th .arr{opacity:.4;font-size:10px;margin-left:3px}
+  thead th.active .arr{opacity:1;color:var(--brand)}
+  tbody td{padding:10px 12px;border-bottom:1px solid var(--border2);vertical-align:top}
+  tbody tr:hover{background:var(--surface2)}
+  tbody tr.det td{background:#fbfcff;border-bottom:1px solid var(--border)}
+  .razao{font-weight:700;color:var(--ink);cursor:pointer}
+  .razao:hover{color:var(--brand)}
+  .fant{font-size:11.5px;color:var(--muted);font-weight:500}
+  .cnpj{font-variant-numeric:tabular-nums;font-size:12.5px;color:var(--muted);white-space:nowrap}
+  .valor{font-weight:800;font-variant-numeric:tabular-nums;white-space:nowrap}
+  .valor.big{color:var(--red)}
+  .tag{display:inline-block;font-size:11px;font-weight:700;padding:2px 8px;border-radius:999px;
+    background:var(--surface2);border:1px solid var(--border);color:var(--muted);white-space:nowrap}
+  .tag.bh{background:var(--brand-soft);border-color:#c7d7fe;color:var(--brand)}
+  .tag.zm{background:var(--purple-soft);border-color:#ddd6fe;color:var(--purple)}
+  .tag.ajz{background:var(--red-soft);border-color:#fecaca;color:var(--red)}
+  .score{display:inline-grid;place-items:center;width:38px;height:30px;border-radius:8px;
+    font-weight:800;font-size:13px;font-variant-numeric:tabular-nums}
+  .sc-hi{background:var(--red-soft);color:var(--red);border:1px solid #fecaca}
+  .sc-md{background:var(--amber-soft);color:var(--amber);border:1px solid #fde68a}
+  .sc-lo{background:var(--surface2);color:var(--muted);border:1px solid var(--border)}
+  select.status{min-width:130px;font-size:12px;padding:5px 8px;font-weight:700}
+  .st-novo{color:var(--muted)} .st-pesquisar{color:var(--brand)}
+  .st-contatar{color:var(--amber)} .st-contato{color:var(--purple)}
+  .st-reuniao{color:var(--green)} .st-cliente{color:var(--green)}
+  .st-descartado{color:var(--faint)}
+
+  /* DETAIL PANEL */
+  .detail{display:grid;grid-template-columns:1.3fr 1fr;gap:20px;padding:6px 4px 12px}
+  @media(max-width:760px){.detail{grid-template-columns:1fr}}
+  .dgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px 22px}
+  .ditem .k{font-size:10.5px;color:var(--faint);font-weight:700;text-transform:uppercase;letter-spacing:.03em}
+  .ditem .v{font-size:13px;font-weight:600;margin-top:1px;word-break:break-word}
+  .dnote label{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.03em}
+  .dnote textarea{width:100%;min-height:88px;margin-top:5px;border:1px solid var(--border);
+    border-radius:10px;padding:10px;font-size:13px;font-family:inherit;resize:vertical;background:var(--surface2);outline:none}
+  .dnote textarea:focus{border-color:var(--brand2);background:#fff;box-shadow:0 0 0 3px var(--brand-soft)}
+  .chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:4px}
+  .saved{font-size:11px;color:var(--green);font-weight:700;opacity:0;transition:.3s}
+  .saved.show{opacity:1}
+
+  .empty{padding:50px 20px;text-align:center;color:var(--muted)}
+  .empty .ico{font-size:34px;margin-bottom:8px}
+  .foot{font-size:11.5px;color:var(--faint);text-align:center;margin-top:24px;line-height:1.7}
+  .foot a{color:var(--brand);text-decoration:none}
+  .drop{border:2px dashed var(--border);border-radius:var(--radius-sm);padding:18px;text-align:center;
+    color:var(--muted);font-size:13px;cursor:pointer;transition:.15s;margin:0 18px 16px}
+  .drop:hover,.drop.over{border-color:var(--brand2);background:var(--brand-soft);color:var(--brand)}
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <div class="brandrow">
+      <div class="logo">⚖️</div>
+      <div>
+        <h1>Captação — Empresas com Dívida Ativa</h1>
+        <div class="sub">Minas Gerais · Belo Horizonte/RMBH e Zona da Mata · fonte: Dívida Ativa da União (PGFN)</div>
+      </div>
+    </div>
+    <div class="legal">
+      <span class="pill">📊 <b id="pillTotal">—</b> empresas</span>
+      <span class="pill">💰 <b id="pillDivida">—</b> em dívida</span>
+      <span class="pill">📍 BH + Zona da Mata</span>
+      <span class="pill" id="pillUpdate">atualizado em —</span>
+    </div>
+  </div>
+</header>
+
+<main>
+  <div id="banners"></div>
+
+  <div class="kpis" id="kpis"></div>
+
+  <div class="card">
+    <div class="card-h">
+      <h2>Empresas para prospecção</h2>
+      <span class="count" id="resCount"></span>
+      <div style="margin-left:auto;display:flex;gap:8px">
+        <button class="btn" id="btnExport">⬇️ Exportar CSV (filtro)</button>
+        <button class="btn ghost" id="btnLoad" title="Carregar arquivo gerado pelo ETL">📂 Carregar dados</button>
+      </div>
+    </div>
+
+    <div class="toolbar">
+      <div class="field grow">
+        <label>Busca (razão social, CNPJ, CNAE, município)</label>
+        <input type="text" id="q" placeholder="Ex.: metalúrgica, 12.345.678/0001-99, Juiz de Fora…">
+      </div>
+      <div class="field">
+        <label>Região</label>
+        <select id="fRegiao"><option value="">Todas</option></select>
+      </div>
+      <div class="field">
+        <label>Dívida mínima</label>
+        <select id="fValor">
+          <option value="0">Qualquer</option>
+          <option value="100000">≥ R$ 100 mil</option>
+          <option value="250000">≥ R$ 250 mil</option>
+          <option value="500000">≥ R$ 500 mil</option>
+          <option value="1000000">≥ R$ 1 milhão</option>
+          <option value="5000000">≥ R$ 5 milhões</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Execução fiscal</label>
+        <select id="fAjuiz">
+          <option value="">Todas</option>
+          <option value="sim">Ajuizadas</option>
+          <option value="nao">Não ajuizadas</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Situação captação</label>
+        <select id="fStatus"><option value="">Todos</option></select>
+      </div>
+      <button class="btn ghost" id="btnClear">limpar</button>
+    </div>
+
+    <div class="drop" id="drop" style="display:none">
+      Arraste aqui o <b>dados-captacao.json</b> (ou .csv) gerado pelo ETL, ou clique para escolher.
+      <input type="file" id="file" accept=".json,.csv" hidden>
+    </div>
+
+    <div class="tablewrap">
+      <table id="tbl">
+        <thead>
+          <tr>
+            <th data-sort="score" class="active">Score<span class="arr">▼</span></th>
+            <th data-sort="razao_social">Empresa<span class="arr">▼</span></th>
+            <th data-sort="divida_total">Dívida<span class="arr">▼</span></th>
+            <th data-sort="qtd_inscricoes">Inscr.<span class="arr">▼</span></th>
+            <th data-sort="regiao">Região<span class="arr">▼</span></th>
+            <th class="nosort">Situação</th>
+            <th data-sort="_status" class="nosort">Captação</th>
+          </tr>
+        </thead>
+        <tbody id="rows"></tbody>
+      </table>
+    </div>
+    <div class="empty" id="empty" style="display:none">
+      <div class="ico">🔍</div>
+      <div id="emptyMsg">Nenhuma empresa corresponde aos filtros.</div>
+    </div>
+  </div>
+
+  <div class="foot">
+    Dados públicos — Dívida Ativa da União (<a href="https://dadosabertos.pgfn.gov.br/" target="_blank" rel="noopener">PGFN · Dados Abertos</a>).
+    Ferramenta de apoio à prospecção B2B; confirme a situação atual de cada inscrição no
+    <a href="https://www.regularize.pgfn.gov.br/" target="_blank" rel="noopener">Regularize/e-CAC</a> antes de qualquer abordagem.
+    Anotações de captação ficam salvas apenas neste navegador (localStorage).
+  </div>
+</main>
+
+<script>
+const CRM_KEY = "captacao_crm_v1";
+const STATUS = ["Novo","A pesquisar","Contatar","Em contato","Reunião marcada","Cliente","Descartado"];
+const STATUS_CLS = {"Novo":"st-novo","A pesquisar":"st-pesquisar","Contatar":"st-contatar",
+  "Em contato":"st-contato","Reunião marcada":"st-reuniao","Cliente":"st-cliente","Descartado":"st-descartado"};
+
+let DATA = [];      // empresas
+let META = {};
+let crm = loadCRM();
+let sortKey = "score", sortDir = -1;
+let openCnpj = null;
+
+const $ = s => document.querySelector(s);
+const fmtBRL = v => (v||0).toLocaleString("pt-BR",{style:"currency",currency:"BRL",maximumFractionDigits:0});
+const fmtNum = v => (v||0).toLocaleString("pt-BR");
+const fmtCNPJ = c => { c=(c||"").replace(/\D/g,"").padStart(14,"0");
+  return c.length===14 ? `${c.slice(0,2)}.${c.slice(2,5)}.${c.slice(5,8)}/${c.slice(8,12)}-${c.slice(12)}` : c; };
+
+function loadCRM(){ try{return JSON.parse(localStorage.getItem(CRM_KEY))||{};}catch(e){return {};} }
+function saveCRM(){ localStorage.setItem(CRM_KEY, JSON.stringify(crm)); }
+function crmOf(cnpj){ return crm[cnpj] || {status:"Novo", obs:""}; }
+function setCRM(cnpj, patch){ crm[cnpj] = Object.assign(crmOf(cnpj), patch, {updated:new Date().toISOString()}); saveCRM(); }
+
+/* ---------- carga de dados ---------- */
+async function boot(){
+  try{
+    const r = await fetch("dados-captacao.json", {cache:"no-store"});
+    if(r.ok){ const j = await r.json(); apply(j); return; }
+  }catch(e){}
+  // sem arquivo: mostra área de upload
+  $("#drop").style.display = "block";
+  $("#emptyMsg").textContent = "Nenhum dado carregado. Gere com o ETL (pasta /etl) ou carregue um arquivo.";
+  render();
+}
+function apply(j){
+  DATA = (j.empresas||j||[]).map(normalize);
+  META = j.meta || {};
+  buildFilters(); renderBanners(); render();
+  $("#pillTotal").textContent = fmtNum(DATA.length);
+  $("#pillDivida").textContent = fmtBRL(DATA.reduce((s,e)=>s+e.divida_total,0));
+  $("#pillUpdate").textContent = "atualizado em " + (META.gerado_em? new Date(META.gerado_em).toLocaleString("pt-BR") : "—");
+}
+function normalize(e){
+  return {
+    cnpj:(e.cnpj||"").replace(/\D/g,""), razao_social:e.razao_social||e.nome_devedor||"—",
+    nome_fantasia:e.nome_fantasia||"", regiao:e.regiao||"Outras (MG)",
+    municipio:e.municipio||"", unidade_responsavel:e.unidade_responsavel||"",
+    divida_total:+e.divida_total||0, qtd_inscricoes:+e.qtd_inscricoes||0,
+    qtd_ajuizadas:+e.qtd_ajuizadas||0, ajuizado:!!e.ajuizado || (+e.qtd_ajuizadas>0),
+    situacoes:e.situacoes||[], receitas:e.receitas||[], score:+e.score||0,
+    cnae_principal:e.cnae_principal||"", situacao_cadastral:e.situacao_cadastral||"",
+    porte:e.porte||"", telefone:e.telefone||"", email:e.email||"",
+    data_inscricao_mais_antiga:e.data_inscricao_mais_antiga||"",
+  };
+}
+
+/* ---------- filtros ---------- */
+function buildFilters(){
+  const reg = $("#fRegiao"); reg.length=1;
+  [...new Set(DATA.map(e=>e.regiao))].sort().forEach(r=>{
+    const o=document.createElement("option"); o.value=r; o.textContent=r; reg.appendChild(o);});
+  const st = $("#fStatus"); st.length=1;
+  STATUS.forEach(s=>{const o=document.createElement("option");o.value=s;o.textContent=s;st.appendChild(o);});
+}
+function filtered(){
+  const q = $("#q").value.trim().toLowerCase();
+  const reg = $("#fRegiao").value, minV = +$("#fValor").value, aj = $("#fAjuiz").value, stf = $("#fStatus").value;
+  return DATA.filter(e=>{
+    if(reg && e.regiao!==reg) return false;
+    if(minV && e.divida_total<minV) return false;
+    if(aj==="sim" && !e.ajuizado) return false;
+    if(aj==="nao" && e.ajuizado) return false;
+    if(stf && crmOf(e.cnpj).status!==stf) return false;
+    if(q){
+      const hay = (e.razao_social+" "+e.nome_fantasia+" "+fmtCNPJ(e.cnpj)+" "+e.cnpj+" "+
+        e.municipio+" "+e.cnae_principal+" "+e.unidade_responsavel+" "+e.receitas.join(" ")).toLowerCase();
+      if(!hay.includes(q)) return false;
+    }
+    return true;
+  });
+}
+function sorted(list){
+  const k=sortKey;
+  return list.slice().sort((a,b)=>{
+    let va,vb;
+    if(k==="_status"){va=STATUS.indexOf(crmOf(a.cnpj).status);vb=STATUS.indexOf(crmOf(b.cnpj).status);}
+    else {va=a[k];vb=b[k];}
+    if(typeof va==="string"){va=va.toLowerCase();vb=(vb||"").toLowerCase();}
+    return (va<vb?-1:va>vb?1:0)*sortDir;
+  });
+}
+
+/* ---------- render ---------- */
+function scoreCls(s){ return s>=70?"sc-hi":s>=45?"sc-md":"sc-lo"; }
+function regCls(r){ return r.includes("Belo")?"bh":r.includes("Zona")?"zm":""; }
+
+function render(){
+  renderKpis();
+  const list = sorted(filtered());
+  $("#resCount").textContent = list.length ? `${fmtNum(list.length)} de ${fmtNum(DATA.length)}` : "";
+  const tb = $("#rows"); tb.innerHTML="";
+  document.querySelectorAll("thead th").forEach(th=>{
+    th.classList.toggle("active", th.dataset.sort===sortKey);
+    const a=th.querySelector(".arr"); if(a) a.textContent = sortDir<0?"▼":"▲";
+  });
+  $("#empty").style.display = list.length? "none":"block";
+  for(const e of list){
+    const c = crmOf(e.cnpj);
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td><span class="score ${scoreCls(e.score)}">${e.score}</span></td>
+      <td>
+        <div class="razao" data-cnpj="${e.cnpj}">${esc(e.razao_social)}</div>
+        ${e.nome_fantasia?`<div class="fant">${esc(e.nome_fantasia)}</div>`:""}
+        <div class="cnpj">${fmtCNPJ(e.cnpj)}${e.municipio?` · ${esc(e.municipio)}`:""}</div>
+      </td>
+      <td><span class="valor ${e.divida_total>=1e6?"big":""}">${fmtBRL(e.divida_total)}</span></td>
+      <td>${e.qtd_inscricoes}${e.ajuizado?` <span class="tag ajz">${e.qtd_ajuizadas} ajuiz.</span>`:""}</td>
+      <td><span class="tag ${regCls(e.regiao)}">${esc(e.regiao)}</span></td>
+      <td>${(e.situacoes[0]?`<span class="tag">${esc(e.situacoes[0])}</span>`:"—")}${e.situacoes.length>1?` <span class="fant">+${e.situacoes.length-1}</span>`:""}</td>
+      <td>${statusSelect(e.cnpj,c.status)}</td>`;
+    tb.appendChild(tr);
+    if(openCnpj===e.cnpj) tb.appendChild(detailRow(e,c));
+  }
+}
+function statusSelect(cnpj,cur){
+  return `<select class="status ${STATUS_CLS[cur]||""}" data-status="${cnpj}">`+
+    STATUS.map(s=>`<option ${s===cur?"selected":""}>${s}</option>`).join("")+`</select>`;
+}
+function detailRow(e,c){
+  const tr=document.createElement("tr"); tr.className="det";
+  const dl=(k,v)=>v?`<div class="ditem"><div class="k">${k}</div><div class="v">${esc(v)}</div></div>`:"";
+  tr.innerHTML=`<td colspan="7"><div class="detail">
+    <div>
+      <div class="dgrid">
+        ${dl("Razão social",e.razao_social)}
+        ${dl("CNPJ",fmtCNPJ(e.cnpj))}
+        ${dl("Dívida consolidada",fmtBRL(e.divida_total))}
+        ${dl("Inscrições",e.qtd_inscricoes+(e.qtd_ajuizadas?` (${e.qtd_ajuizadas} ajuizadas)`:""))}
+        ${dl("Região",e.regiao)}
+        ${dl("Unidade PGFN/RFB",e.unidade_responsavel)}
+        ${dl("Município",e.municipio)}
+        ${dl("CNAE principal",e.cnae_principal)}
+        ${dl("Situação cadastral",e.situacao_cadastral)}
+        ${dl("Porte",e.porte)}
+        ${dl("Telefone",e.telefone)}
+        ${dl("E-mail",e.email)}
+        ${dl("Inscrição mais antiga",e.data_inscricao_mais_antiga)}
+      </div>
+      ${e.receitas.length?`<div style="margin-top:12px"><div class="k" style="font-size:10.5px;color:var(--faint);font-weight:700;text-transform:uppercase">Tributos/receitas</div><div class="chips">${e.receitas.map(r=>`<span class="tag">${esc(r)}</span>`).join("")}</div></div>`:""}
+      ${e.situacoes.length?`<div style="margin-top:10px"><div class="k" style="font-size:10.5px;color:var(--faint);font-weight:700;text-transform:uppercase">Situações das inscrições</div><div class="chips">${e.situacoes.map(r=>`<span class="tag">${esc(r)}</span>`).join("")}</div></div>`:""}
+    </div>
+    <div class="dnote">
+      <label>Anotações de captação <span class="saved" data-saved="${e.cnpj}">salvo ✓</span></label>
+      <textarea data-obs="${e.cnpj}" placeholder="Histórico de contato, decisor, próximos passos, área do escritório a oferecer…">${esc(c.obs||"")}</textarea>
+      <div style="margin-top:8px;font-size:11.5px;color:var(--muted)">
+        Pesquisar:
+        <a href="https://www.google.com/search?q=${encodeURIComponent(e.razao_social+' '+(e.municipio||'MG'))}" target="_blank" rel="noopener">Google</a> ·
+        <a href="https://cnpj.biz/${e.cnpj}" target="_blank" rel="noopener">cnpj.biz</a> ·
+        <a href="https://www.regularize.pgfn.gov.br/" target="_blank" rel="noopener">Regularize</a>
+      </div>
+    </div>
+  </div></td>`;
+  return tr;
+}
+function esc(s){return (s==null?"":String(s)).replace(/[&<>"]/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[m]));}
+
+function renderKpis(){
+  const L=filtered();
+  const total=L.reduce((s,e)=>s+e.divida_total,0);
+  const ajz=L.filter(e=>e.ajuizado).length;
+  const fila=L.filter(e=>["Contatar","Em contato","Reunião marcada"].includes(crmOf(e.cnpj).status)).length;
+  const k=[
+    {l:"Empresas (filtro)",v:fmtNum(L.length),c:"accent"},
+    {l:"Dívida somada",v:fmtBRL(total),c:"red",small:true},
+    {l:"Com execução fiscal",v:L.length?Math.round(ajz/L.length*100)+"%":"—",c:""},
+    {l:"Ticket médio",v:fmtBRL(L.length?total/L.length:0),c:"",small:true},
+    {l:"Na fila de contato",v:fmtNum(fila),c:"green"},
+  ];
+  $("#kpis").innerHTML = k.map(x=>`<div class="kpi ${x.c}"><div class="lbl">${x.l}</div><div class="val ${x.small?"small":""}">${x.v}</div></div>`).join("");
+}
+function renderBanners(){
+  const b=$("#banners"); b.innerHTML="";
+  if(META.demo){
+    b.innerHTML += `<div class="banner demo"><span>⚠️</span><div><b>Dados de demonstração (sintéticos).</b>
+      Estes registros são fictícios, apenas para visualizar a ferramenta. Para usar dados reais, rode o pipeline em <b>/etl</b>
+      (<code>processar --enriquecer N</code>) e substitua o <b>dados-captacao.json</b>.</div>
+      <span class="x" onclick="this.parentElement.remove()">✕</span></div>`;
+  }
+  b.innerHTML += `<div class="banner info"><span>ℹ️</span><div>
+    <b>Como usar:</b> ordene por <b>Score</b> (prioridade comercial), filtre por região e valor, abra a empresa para ver detalhes
+    e registre o andamento em <b>Captação</b>. Exporte o recorte filtrado em CSV para a equipe.</div>
+    <span class="x" onclick="this.parentElement.remove()">✕</span></div>`;
+}
+
+/* ---------- export ---------- */
+function exportCSV(){
+  const L=sorted(filtered());
+  const cols=["Score","Razão social","Nome fantasia","CNPJ","Dívida (R$)","Inscrições","Ajuizadas",
+    "Região","Município","Unidade PGFN","CNAE","Situação cadastral","Telefone","E-mail","Situação captação","Anotações"];
+  const rows=L.map(e=>{const c=crmOf(e.cnpj);return [e.score,e.razao_social,e.nome_fantasia,fmtCNPJ(e.cnpj),
+    e.divida_total.toFixed(2).replace(".",","),e.qtd_inscricoes,e.qtd_ajuizadas,e.regiao,e.municipio,
+    e.unidade_responsavel,e.cnae_principal,e.situacao_cadastral,e.telefone,e.email,c.status,(c.obs||"").replace(/\n/g," ")];});
+  const csv=[cols,...rows].map(r=>r.map(v=>`"${String(v??"").replace(/"/g,'""')}"`).join(";")).join("\r\n");
+  const blob=new Blob(["﻿"+csv],{type:"text/csv;charset=utf-8"});
+  const a=document.createElement("a");a.href=URL.createObjectURL(blob);
+  a.download=`captacao_divida_ativa_${new Date().toISOString().slice(0,10)}.csv`;a.click();
+}
+
+/* ---------- upload de arquivo ---------- */
+function handleFile(f){
+  const rd=new FileReader();
+  rd.onload=()=>{
+    try{
+      if(f.name.toLowerCase().endsWith(".json")){ apply(JSON.parse(rd.result)); }
+      else { apply({empresas:parseCSV(rd.result), meta:{origem:"CSV carregado",gerado_em:new Date().toISOString()}}); }
+      $("#drop").style.display="none";
+    }catch(err){ alert("Não foi possível ler o arquivo: "+err.message); }
+  };
+  rd.readAsText(f,"utf-8");
+}
+function parseCSV(txt){
+  const lines=txt.split(/\r?\n/).filter(x=>x.trim());
+  const delim=(lines[0].match(/;/g)||[]).length>=(lines[0].match(/,/g)||[]).length?";":",";
+  const head=splitCsv(lines[0],delim).map(h=>h.toLowerCase().trim());
+  const idx=n=>head.findIndex(h=>h.includes(n));
+  const iN=idx("nome")>=0?idx("nome"):idx("raz"), iC=idx("cnpj"), iV=idx("dívid")>=0?idx("dívid"):idx("divid")>=0?idx("divid"):idx("valor");
+  return lines.slice(1).map(l=>{const c=splitCsv(l,delim);
+    return {razao_social:c[iN]||"",cnpj:(c[iC]||"").replace(/\D/g,""),
+      divida_total:parseFloat((c[iV]||"0").replace(/\./g,"").replace(",","."))||0,
+      regiao:c[idx("regi")]||"Outras (MG)",municipio:c[idx("munic")]||"",score:+c[idx("score")]||0,
+      qtd_inscricoes:+c[idx("inscr")]||0,qtd_ajuizadas:+c[idx("ajuiz")]||0,
+      situacoes:[],receitas:[]};});
+}
+function splitCsv(line,d){const out=[];let cur="",q=false;
+  for(let i=0;i<line.length;i++){const ch=line[i];
+    if(ch==='"'){ if(q&&line[i+1]==='"'){cur+='"';i++;} else q=!q; }
+    else if(ch===d&&!q){out.push(cur);cur="";} else cur+=ch;}
+  out.push(cur);return out;}
+
+/* ---------- eventos ---------- */
+["q","fRegiao","fValor","fAjuiz","fStatus"].forEach(id=>$("#"+id).addEventListener("input",render));
+$("#btnClear").addEventListener("click",()=>{$("#q").value="";$("#fRegiao").value="";$("#fValor").value="0";
+  $("#fAjuiz").value="";$("#fStatus").value="";render();});
+$("#btnExport").addEventListener("click",exportCSV);
+$("#btnLoad").addEventListener("click",()=>{const d=$("#drop");d.style.display=d.style.display==="none"?"block":"none";});
+document.querySelectorAll("thead th[data-sort]").forEach(th=>th.addEventListener("click",()=>{
+  const k=th.dataset.sort; if(sortKey===k) sortDir*=-1; else {sortKey=k; sortDir=(k==="razao_social"||k==="regiao")?1:-1;} render();}));
+$("#rows").addEventListener("click",ev=>{
+  const r=ev.target.closest(".razao"); if(r){ openCnpj = openCnpj===r.dataset.cnpj?null:r.dataset.cnpj; render(); }});
+$("#rows").addEventListener("change",ev=>{
+  const s=ev.target.closest("[data-status]");
+  if(s){ setCRM(s.dataset.status,{status:s.value}); s.className="status "+(STATUS_CLS[s.value]||""); renderKpis(); }});
+$("#rows").addEventListener("input",ev=>{
+  const t=ev.target.closest("[data-obs]");
+  if(t){ setCRM(t.dataset.obs,{obs:t.value});
+    const tag=document.querySelector(`[data-saved="${t.dataset.obs}"]`);
+    if(tag){tag.classList.add("show");clearTimeout(tag._t);tag._t=setTimeout(()=>tag.classList.remove("show"),1200);} }});
+const file=$("#file"), drop=$("#drop");
+drop.addEventListener("click",()=>file.click());
+file.addEventListener("change",()=>file.files[0]&&handleFile(file.files[0]));
+["dragover","dragenter"].forEach(e=>drop.addEventListener(e,ev=>{ev.preventDefault();drop.classList.add("over");}));
+["dragleave","drop"].forEach(e=>drop.addEventListener(e,ev=>{ev.preventDefault();drop.classList.remove("over");}));
+drop.addEventListener("drop",ev=>ev.dataTransfer.files[0]&&handleFile(ev.dataTransfer.files[0]));
+
+boot();
+</script>
+</body>
+</html>
