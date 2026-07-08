@@ -206,6 +206,9 @@ select.field{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xml
 .mp.on{border-color:var(--p1);background:rgba(255,46,99,.08)}
 .mp .ic{width:36px;height:36px;flex-shrink:0}
 .swap-x{color:var(--mut);font-size:13px;font-weight:700;padding:6px 10px;border-radius:9px;background:var(--card2);border:1px solid var(--line)}
+.swap-btn{flex-shrink:0;display:flex;flex-direction:column;align-items:center;gap:1px;padding:8px 10px;border-radius:11px;background:var(--card2);border:1px solid var(--line);color:var(--a1);font-size:16px;font-weight:800;line-height:1}
+.swap-btn span{font-size:9.5px;color:var(--mut);text-transform:uppercase;letter-spacing:.03em}
+.swap-btn:active{transform:scale(.94)}
 .hist-row{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--line)}
 .hist-row .d{width:46px;height:46px;border-radius:12px;background:var(--card2);display:grid;place-items:center;text-align:center;flex-shrink:0;line-height:1}
 .hist-row .d b{font-size:18px;display:block;font-weight:900}
@@ -836,10 +839,11 @@ function openFicha(id){
     </div>
     <button class="btn green block" onclick="startWorkout('${f.id}')" style="margin:10px 0 16px">▶ Iniciar este treino</button>
     <div class="list-head" style="margin-top:0;display:flex;justify-content:space-between;align-items:center">Exercícios <button class="swap-x" onclick="editFicha('${f.id}')">✎ Editar</button></div>
-    <div>${f.exs.map(x=>{const e=EXS.find(z=>z.id===x.exId);if(!e)return"";const u=e.g==="Cardio"?"min":(e.name==="Prancha"?"s":"reps");
-      return `<div class="ex-item" onclick="openExercise('${e.id}')">
-        <div class="ex-thumb">${fig(e.g)}</div>
-        <div class="meta"><h4>${e.name}</h4><div class="note">${x.sets} × ${x.rmin}-${x.rmax} ${u}${x.rest?` · ${x.rest}s desc`:""}</div></div>
+    <div>${f.exs.map((x,i)=>{const e=EXS.find(z=>z.id===x.exId);if(!e)return"";const u=e.g==="Cardio"?"min":(e.name==="Prancha"?"s":"reps");
+      return `<div class="ex-item" style="cursor:default">
+        <div class="ex-thumb" onclick="openExercise('${e.id}')">${fig(e.g)}</div>
+        <div class="meta" onclick="openExercise('${e.id}')"><h4>${e.name}</h4><div class="note">${x.sets} × ${x.rmin}-${x.rmax} ${u}${x.rest?` · ${x.rest}s desc`:""}</div></div>
+        <button class="swap-btn" onclick="event.stopPropagation();swapExercise('${f.id}',${i})">⇄<span>Trocar</span></button>
       </div>`}).join("")||'<p class="note">Sem exercícios. Toque em Editar para adicionar.</p>'}</div>
     <div style="height:10px"></div>
     <button class="btn ghost block" style="color:#ff6b8a" onclick="deleteFicha('${f.id}')">🗑 Excluir ficha</button>
@@ -848,6 +852,43 @@ function openFicha(id){
 function deleteFicha(id){
   if(!confirm("Excluir esta ficha?"))return;
   state.fichas=state.fichas.filter(f=>f.id!==id);persist();closeSheet();renderFichas();renderHome();toast("Ficha excluída");
+}
+
+/* ---------- trocar exercício por outro do mesmo grupo muscular ---------- */
+let swapEqFilter="Todos";
+function swapExercise(fid,i){
+  const f=state.fichas.find(x=>x.id===fid);if(!f)return;
+  const cur=EXS.find(e=>e.id===f.exs[i].exId);if(!cur)return;
+  swapEqFilter="Todos";
+  const equips=["Todos",...[...new Set(EXS.filter(e=>e.g===cur.g).map(e=>e.e))]];
+  openSheet(`
+    <h3>Trocar exercício</h3>
+    <p class="note" style="margin:2px 0 2px">Substituindo <b style="color:var(--txt)">${cur.name}</b></p>
+    <p class="note" style="margin-bottom:12px">Alternativas de <b style="color:var(--p1)">${cur.g}</b> (mesmo grupo muscular)</p>
+    <div class="chip-row" id="swap_chips">${equips.map(q=>`<button class="chip ${q==='Todos'?'on':''}" data-q="${q}" onclick="setSwapFilter('${fid}',${i},'${q}')">${q==='Todos'?'Todos':(EQ[q]||q)}</button>`).join("")}</div>
+    <div id="swap_list" style="max-height:56vh;overflow-y:auto"></div>
+    <div style="height:10px"></div>
+    <button class="btn ghost block" onclick="openFicha('${fid}')">← Voltar à ficha</button>
+  `);
+  renderSwapList(fid,i);
+}
+function setSwapFilter(fid,i,q){swapEqFilter=q;document.querySelectorAll("#swap_chips .chip").forEach(c=>c.classList.toggle("on",c.dataset.q===q));renderSwapList(fid,i);}
+function renderSwapList(fid,i){
+  const f=state.fichas.find(x=>x.id===fid);
+  const curId=f.exs[i].exId, cur=EXS.find(e=>e.id===curId);
+  const opts=EXS.filter(e=>e.g===cur.g && e.id!==curId && (swapEqFilter==="Todos"||e.e===swapEqFilter));
+  document.getElementById("swap_list").innerHTML = opts.length ? opts.map(e=>`
+    <div class="ex-item" onclick="replaceExercise('${fid}',${i},'${e.id}')">
+      <div class="ex-thumb">${fig(e.g)}</div>
+      <div class="meta"><h4>${e.name}</h4><div class="tags"><span class="tag e">${EQ[e.e]}</span><span class="tag lvl">${LVL[e.lvl]}</span></div></div>
+      <div class="go" style="color:var(--a3);font-size:22px">⇄</div>
+    </div>`).join("") : '<p class="note">Nenhuma alternativa com esse filtro.</p>';
+}
+function replaceExercise(fid,i,newId){
+  const f=state.fichas.find(x=>x.id===fid);
+  const e=EXS.find(z=>z.id===newId);if(!e)return;
+  f.exs[i].exId=newId; // mantém séries, repetições e descanso
+  persist();openFicha(fid);renderFichas();renderHome();toast(`Trocado por ${e.name}`);
 }
 
 /* ---------- editor de ficha ---------- */
