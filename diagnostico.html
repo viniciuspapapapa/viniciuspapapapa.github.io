@@ -1096,6 +1096,58 @@ const successView = document.getElementById('successView');
 const submitBtn = document.getElementById('submitBtn');
 const submitText = document.getElementById('submitText');
 
+/* ============ RÓTULOS LEGÍVEIS PARA O ENVIO ============ */
+const STATIC_LABELS = {
+  nome_completo: 'Nome completo',
+  email: 'E-mail',
+  telefone: 'Telefone / WhatsApp',
+  cidade: 'Cidade',
+  profissao: 'Profissão / ocupação',
+  patriarca: 'Nome do patriarca',
+  matriarca: 'Nome da matriarca',
+  regime_patriarca_matriarca: 'Regime de casamento (patriarca/matriarca)',
+  valor_irpf: 'Valor declarado no IRPF',
+  valor_mercado: 'Valor de mercado estimado',
+  receita_aluguel_anual: 'Receita anual de aluguéis',
+  observacoes: 'Observações adicionais',
+  lgpd: 'Consentimento LGPD'
+};
+const DYNAMIC_SUFFIXES = {
+  filho: {
+    nome: 'Nome', regime: 'Regime de casamento'
+  },
+  imovel: {
+    local: 'Localidade', alugado: 'Alugado?', valor: 'Aluguel mensal'
+  },
+  empresa: {
+    nome: 'Nome / razão social', cnpj: 'CNPJ', atividade: 'Atividade principal',
+    natureza_juridica: 'Natureza jurídica', regime_tributario: 'Regime tributário',
+    municipio: 'Município sede', faturamento: 'Faturamento anual estimado',
+    funcionarios: 'Nº de funcionários', participacao: 'Participação da família (%)',
+    tem_dividas: 'Possui dívidas?', natureza_dividas: 'Natureza das dívidas',
+    valor_dividas: 'Valor estimado das dívidas'
+  }
+};
+const GROUP_NAMES = { filho: 'Filho', imovel: 'Imóvel', empresa: 'Empresa' };
+
+function labelFor(name) {
+  if (STATIC_LABELS[name]) return STATIC_LABELS[name];
+  const m = name.match(/^(filho|imovel|empresa)_(\d+)_(.+)$/);
+  if (m) {
+    const [, grupo, idx, campo] = m;
+    const sufixo = (DYNAMIC_SUFFIXES[grupo] && DYNAMIC_SUFFIXES[grupo][campo]) || campo;
+    return `${GROUP_NAMES[grupo]} ${idx} — ${sufixo}`;
+  }
+  return name;
+}
+
+/* Monta pares [rótulo, valor] em ordem, ignorando campos vazios e de controle */
+function buildReadablePairs(fd) {
+  return Array.from(fd.entries())
+    .filter(([k, v]) => k !== '_gotcha' && k !== 'lgpd' && String(v).trim() !== '')
+    .map(([k, v]) => [labelFor(k), v]);
+}
+
 form.addEventListener('submit', async (e) => {
   e.preventDefault();
 
@@ -1116,21 +1168,30 @@ form.addEventListener('submit', async (e) => {
   if (form._gotcha && form._gotcha.value) { return; }
 
   const fd = new FormData(form);
+  const nome = fd.get('nome_completo') || 'Novo lead';
+  const pares = buildReadablePairs(fd);
+  const consentiu = document.getElementById('lgpd').checked ? 'Sim' : 'Não';
 
   // Se o endpoint não foi configurado, usa mailto como fallback
   if (FORMSPREE_ENDPOINT.includes('SEU_CODIGO_AQUI')) {
-    const body = Array.from(fd.entries())
-      .filter(([k]) => k !== '_gotcha' && k !== 'lgpd')
-      .map(([k, v]) => `${k}: ${v}`).join('\n');
-    window.location.href = `mailto:contato@tpcadvogados.com.br?subject=Diagnóstico Patrimonial - ${encodeURIComponent(fd.get('nome_completo') || 'Novo lead')}&body=${encodeURIComponent(body)}`;
+    const body = pares.map(([l, v]) => `${l}: ${v}`).join('\n')
+      + `\n${STATIC_LABELS.lgpd}: ${consentiu}`;
+    window.location.href = `mailto:contato@tpcadvogados.com.br?subject=${encodeURIComponent('Diagnóstico Patrimonial - ' + nome)}&body=${encodeURIComponent(body)}`;
     showSuccess();
     return;
   }
 
+  // Payload com rótulos legíveis para o Formspree
+  const payload = new FormData();
+  payload.append('_subject', `Diagnóstico Patrimonial — ${nome}`);
+  payload.append('_replyto', fd.get('email') || '');
+  pares.forEach(([label, value]) => payload.append(label, value));
+  payload.append(STATIC_LABELS.lgpd, consentiu);
+
   try {
     const resp = await fetch(FORMSPREE_ENDPOINT, {
       method: 'POST',
-      body: fd,
+      body: payload,
       headers: { 'Accept': 'application/json' }
     });
     if (resp.ok) {
