@@ -160,6 +160,10 @@
   footer{max-width:1280px;margin:0 auto;padding:0 40px 40px;font-size:11.5px;color:#8A8A8A;line-height:1.6;border-top:1px solid var(--linha);padding-top:16px;}
   footer b{color:var(--grafite);}
   .legend-note{font-size:11.5px;color:#8A8A8A;margin-top:6px;line-height:1.5;}
+  .rate-bar{display:flex;gap:14px;align-items:center;flex-wrap:wrap;background:var(--branco);border:1px solid var(--linha);border-left:4px solid var(--amarelo);padding:12px 16px;margin-bottom:12px;}
+  .rate-bar label{font-size:12.5px;font-weight:600;color:var(--grafite);display:flex;align-items:center;gap:8px;}
+  .rate-bar input{font:inherit;font-size:13px;padding:7px 11px;border:1px solid var(--linha);border-radius:6px;width:120px;}
+  .nat-dot{display:inline-block;width:11px;height:11px;border-radius:2px;margin-right:7px;vertical-align:middle;}
   @media(max-width:1000px){
     .kpis{grid-template-columns:repeat(2,1fr);}
     .grid,.grid.g3,.hl{grid-template-columns:1fr;}
@@ -215,6 +219,16 @@ const CFG = {
     'diligencia','diligência','andamento','processo','peticao','petição','despacho',
     'email','e-mail','ligacao','ligação','ok','minuta','audiencia','audiência',
     'movimentacao','movimentação','prazo','revisao','revisão','manifestacao','manifestação'
+  ],
+  // tipos de serviço de elaboração/revisão de peças e petições (aplicado ao "Tipo de Serviço")
+  pecaPattern: /minuta|manifest|alega|embargo|agravo|peticao|petição|peça|\bpeca\b|recurso|apela|contesta|impugna|memoria|memória|notifica|contrarraz|razoes|razões|parecer|inicial|distribuic|distribuiç/i,
+  // natureza da atividade (1ª regra que casar vence) — para gestão do mix contencioso × consultivo
+  naturaPatterns: [
+    ['Contencioso',           /minuta|manifest|alega|embargo|agravo|peticao|petição|peça|\bpeca\b|recurso|apela|contesta|impugna|memoria|memória|audiencia|audiência|movimentacao|movimentação|despacho|decisao|decisão|monitorar|verificar status|diligencia|diligência|protocolo|distribuic|distribuiç|juntada|habilitar|oitiva|jecrim|prazo|processo|instrucao|instrução|conciliacao|conciliação|autos/i],
+    ['Captação/Prospecção',   /prospect|captac|captaç/i],
+    ['Consultivo',            /consultoria|parecer|consulta|notifica|procuracao|procuração|pesquisa|estudo|contrato/i],
+    ['Reuniões/Alinhamento',  /reuniao|reunião|call|alinhamento/i],
+    ['Gestão/Administrativo', /cadastr|ficha tempo|relatorio|relatório|ausencia|ausência|apresentac|apresentaç|\bbi\b|resposta de e-?mail|contato|envio|organizac|organizaç|orientac|orientaç|e-?mail|guia|custas/i]
   ]
 };
 
@@ -225,6 +239,7 @@ let ANALISE = null;
 let atual = '__equipe__';
 let charts = {};
 let clientChartMode = 'horas';   // horas | tarefas
+let RATE = +(localStorage.getItem('tpc_rate')||0);   // valor/hora (R$) p/ estimativa de faturamento
 const tableState = {};           // por-view estado das tabelas
 
 /* ============================================================
@@ -233,6 +248,13 @@ const tableState = {};           // por-view estado das tabelas
 const norm = s => (s||'').toString().trim();
 const semAcento = s => norm(s).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'');
 const isInterno = cli => CFG.internoPatterns.some(rx => rx.test(cli||''));
+const isPeca = tipo => CFG.pecaPattern.test(tipo||'');
+function classifyNatureza(tipo){
+  const t=tipo||'';
+  for(const [nome,rx] of CFG.naturaPatterns){ if(rx.test(t)) return nome; }
+  return 'Outros';
+}
+function fmtRS(v){ return 'R$ '+(v||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}); }
 function fmtH(min){ // decimal horas
   return (min/60).toLocaleString('pt-BR',{maximumFractionDigits:1})+'h';
 }
@@ -367,6 +389,9 @@ function descProblema(desc){
 function agg(records){
   const porCliente={}, porTipo={}, porTipoMin={}, porClienteMin={};
   const dias={}, diaSem={}, semanas={}, porDiaAdv={};
+  const porDesc={};        // descrição normalizada -> {count,min,ex,tipos}
+  const natureza={};       // natureza -> {min,count}
+  const pecas=[];          // lançamentos de elaboração/revisão de peças
   let totalMin=0, internoMin=0, internoTasks=0;
   const flags=[]; // registros problemáticos
   // duplicidade
@@ -382,6 +407,17 @@ function agg(records){
     porCliente[r.cliente]=(porCliente[r.cliente]||0)+1;
     porClienteMin[r.cliente]=(porClienteMin[r.cliente]||0)+r.min;
     if(r.tipo){ porTipo[r.tipo]=(porTipo[r.tipo]||0)+1; porTipoMin[r.tipo]=(porTipoMin[r.tipo]||0)+r.min; }
+    // descrição normalizada (para "descrições mais recorrentes")
+    if(r.descricao){
+      const dk=semAcento(r.descricao);
+      const d=porDesc[dk]=porDesc[dk]||{count:0,min:0,ex:r.descricao,tipos:{}};
+      d.count++; d.min+=r.min; if(r.tipo) d.tipos[r.tipo]=(d.tipos[r.tipo]||0)+1;
+    }
+    // natureza da atividade
+    const nat=classifyNatureza(r.tipo);
+    natureza[nat]=natureza[nat]||{min:0,count:0}; natureza[nat].min+=r.min; natureza[nat].count++;
+    // peças/petições
+    if(isPeca(r.tipo)) pecas.push(r);
     if(r.data){
       dias[r.data]=true;
       const ds=diaSemana(r.data); diaSem[ds]=(diaSem[ds]||0)+1;
@@ -415,6 +451,31 @@ function agg(records){
      .sort((a,b)=>b.min-a.min);
   const externoMin=totalMin-internoMin;
   const sortEntries=o=>Object.entries(o).sort((a,b)=>b[1]-a[1]);
+  // descrições recorrentes (só as que repetem)
+  const descArr=Object.values(porDesc).sort((a,b)=> b.count-a.count || b.min-a.min);
+  // peças agrupadas por "peça" (cliente+tipo) => tempo total de elaboração de cada uma
+  const pecaGrpMap={};
+  pecas.forEach(p=>{
+    const k=semAcento(p.advogado)+'¦'+semAcento(p.cliente)+'¦'+semAcento(p.tipo);
+    const g=pecaGrpMap[k]=pecaGrpMap[k]||{cliente:p.cliente,tipo:p.tipo,adv:p.advogado,min:0,lanc:0,datas:new Set()};
+    g.min+=p.min; g.lanc++; if(p.data) g.datas.add(p.data);
+  });
+  const pecaGrupos=Object.values(pecaGrpMap).map(g=>({...g,dias:g.datas.size})).sort((a,b)=>b.min-a.min);
+  // peças por advogado (contagem + tempo)  e por tipo de peça
+  const pecasPorAdv={}, pecasPorTipo={}, pecasPorTipoMin={};
+  pecas.forEach(p=>{
+    (pecasPorAdv[p.advogado]=pecasPorAdv[p.advogado]||{lanc:0,min:0})&&0;
+    pecasPorAdv[p.advogado].lanc++; pecasPorAdv[p.advogado].min+=p.min;
+    if(p.tipo){ pecasPorTipo[p.tipo]=(pecasPorTipo[p.tipo]||0)+1; pecasPorTipoMin[p.tipo]=(pecasPorTipoMin[p.tipo]||0)+p.min; }
+  });
+  // natureza ordenada
+  const natArr=Object.entries(natureza).map(([k,v])=>({nome:k,min:v.min,count:v.count}))
+     .sort((a,b)=>b.min-a.min);
+  // concentração da carteira (só clientes externos = faturáveis)
+  const extClientes=sortEntries(porClienteMin).filter(e=>!isInterno(e[0]));
+  const topCliMin=extClientes[0]?extClientes[0][1]:0;
+  const top3Min=extClientes.slice(0,3).reduce((a,e)=>a+e[1],0);
+  const adminMin=(natureza['Gestão/Administrativo']||{min:0}).min;
   return {
     nTasks, totalMin, internoMin, externoMin,
     pctInterno: totalMin?internoMin/totalMin*100:0,
@@ -424,6 +485,16 @@ function agg(records){
     porClienteMin: sortEntries(porClienteMin),
     porTipoCount: sortEntries(porTipo),
     porTipoMin: sortEntries(porTipoMin),
+    descArr, pecas, pecaGrupos, pecasPorAdv,
+    pecasPorTipo: sortEntries(pecasPorTipo),
+    pecasPorTipoMin: sortEntries(pecasPorTipoMin),
+    natArr, adminMin,
+    carteira:{
+      nClientesExt: extClientes.length,
+      topCliente: extClientes[0]?extClientes[0][0]:'—',
+      topClientePct: externoMin? topCliMin/externoMin*100 : 0,
+      top3Pct: externoMin? top3Min/externoMin*100 : 0
+    },
     diaSem, semanas,
     flags,
     diag:{
@@ -601,6 +672,125 @@ function diagTable(s, viewKey){
   return {rows:body};
 }
 
+/* ---- cores por natureza da atividade ---- */
+const NAT_CORES={'Contencioso':'#2B2B2B','Consultivo':'#2A78D6','Captação/Prospecção':'#1BAF7A','Reuniões/Alinhamento':'#E8E347','Gestão/Administrativo':'#EB6834','Outros':'#B8B8B8'};
+function natBadge(nome){ return `<span class="nat-dot" style="background:${NAT_CORES[nome]||'#B8B8B8'}"></span>${nome}`; }
+
+/* Rentabilidade estimada + concentração da carteira */
+function rentabilidadeSection(s){
+  const rate=RATE;
+  const fatExt = rate? s.externoMin/60*rate : null;
+  const custoInt = rate? s.internoMin/60*rate : null;
+  const custoAdmin = rate? s.adminMin/60*rate : null;
+  const c=s.carteira;
+  const concClass = c.topClientePct>50?'bad':(c.topClientePct>35?'flag':'good');
+  return sectionTitle('$','Rentabilidade &amp; carteira','estimativa de faturamento e risco de concentração de clientes')
+  + `<div class="rate-bar">
+       <label>Valor/hora (R$): <input id="rateInput" type="number" min="0" step="10" placeholder="ex.: 350" value="${rate||''}"></label>
+       <span class="muted">Aplicado às horas faturáveis para estimar o faturamento. Fica salvo neste navegador; não altera os demais indicadores.</span>
+     </div>
+     <div class="kpis" style="grid-template-columns:repeat(5,1fr)">
+       <div class="kpi good"><div class="label">Faturamento estimado</div>
+         <div class="value">${fatExt!=null?fmtRS(fatExt):'—'}</div>
+         <div class="sub"><b>${fmtH(s.externoMin)}</b> faturáveis${fatExt==null?' · defina o valor/hora':''}</div></div>
+       <div class="kpi flag"><div class="label">Custo do tempo interno</div>
+         <div class="value">${custoInt!=null?fmtRS(custoInt):'—'}</div>
+         <div class="sub"><b>${fmtH(s.internoMin)}</b> não faturados (TPC)</div></div>
+       <div class="kpi ${s.totalMin&&s.adminMin/s.totalMin>0.2?'flag':''}"><div class="label">Tempo administrativo</div>
+         <div class="value">${fmtPct(s.totalMin?s.adminMin/s.totalMin*100:0)}</div>
+         <div class="sub"><b>${fmtH(s.adminMin)}</b>${custoAdmin!=null?' · '+fmtRS(custoAdmin):''}</div></div>
+       <div class="kpi ${concClass}"><div class="label">Maior cliente (carteira)</div>
+         <div class="value">${fmtPct(c.topClientePct)}</div>
+         <div class="sub">${c.topCliente.length>24?c.topCliente.slice(0,24)+'…':c.topCliente}</div></div>
+       <div class="kpi"><div class="label">Concentração top 3</div>
+         <div class="value">${fmtPct(c.top3Pct)}</div>
+         <div class="sub"><b>${c.nClientesExt}</b> clientes faturáveis no período</div></div>
+     </div>`;
+}
+
+/* Natureza da atividade (mix contencioso × consultivo × gestão) */
+function naturezaSection(s){
+  return sectionTitle('◧','Natureza da atividade','onde o tempo da área é investido — visão estratégica do mix')
+  + `<div class="grid">
+       <div class="panel"><h3>Horas por natureza</h3><canvas id="cNatureza"></canvas></div>
+       <div class="panel"><h3>Detalhamento</h3>
+         <div class="tablewrap" style="border:none"><table>
+           <thead><tr><th>Natureza</th><th class="num">Horas</th><th class="num">% do tempo</th><th class="num">Lançamentos</th></tr></thead>
+           <tbody>${s.natArr.map(n=>`<tr><td>${natBadge(n.nome)}</td><td class="num">${fmtHM(n.min)}</td><td class="num">${fmtPct(s.totalMin?n.min/s.totalMin*100:0)}</td><td class="num">${n.count}</td></tr>`).join('')}</tbody>
+         </table></div>
+         <div class="legend-note">Classificação automática pelo tipo de serviço. Contencioso = trabalho processual; Consultivo = pareceres e consultoria; Gestão/Administrativo = cadastros, relatórios e tarefas internas (custo, não receita).</div>
+       </div>
+     </div>`;
+}
+
+/* Descrições de tarefas mais recorrentes */
+function descricoesSection(s){
+  const rec=s.descArr.filter(d=>d.count>1).slice(0,15);
+  const maxc=rec.length?rec[0].count:1;
+  const totalRep=s.descArr.filter(d=>d.count>1).reduce((a,d)=>a+d.count,0);
+  let html=sectionTitle('▣','Descrições de tarefas mais recorrentes','quais descrições foram lançadas mais vezes');
+  html+=`<div class="legend-note" style="margin-bottom:8px">${rec.length
+     ? `A descrição mais repetida foi <b>"${rec[0].ex}"</b> — <b>${rec[0].count} lançamentos</b> (${fmtHM(rec[0].min)}). Ao todo, <b>${totalRep} lançamentos</b> usam descrições que se repetem: padrões de trabalho recorrentes, candidatos a automação, delegação ou consolidação em um único apontamento.`
+     : 'Nenhuma descrição se repete neste recorte.'}</div>`;
+  if(rec.length) html+=`<div class="tablewrap"><table>
+    <thead><tr><th style="width:26px">#</th><th>Descrição (texto exatamente como lançado)</th><th>Tipo de serviço predominante</th><th class="num">Lançamentos</th><th class="num">Horas</th></tr></thead>
+    <tbody>${rec.map((d,i)=>{
+      const tp=Object.entries(d.tipos).sort((a,b)=>b[1]-a[1])[0];
+      return `<tr>
+        <td><span class="rank-tag">${i+1}</span></td>
+        <td>"${d.ex}"</td>
+        <td class="muted">${tp?tp[0]:'—'}</td>
+        <td class="num">${d.count}<span class="bar-inline" style="width:${Math.max(4,d.count/maxc*60)}px"></span></td>
+        <td class="num">${fmtHM(d.min)}</td>
+      </tr>`;}).join('')}</tbody></table></div>`;
+  return html;
+}
+
+/* Elaboração de peças e petições — por advogado e tempo por peça */
+function pecasSection(s){
+  const title=sectionTitle('§','Elaboração de peças e petições','prazos elaborados por advogado e tempo gasto em cada peça');
+  if(!s.pecas.length) return title+`<div class="empty-state">Nenhum lançamento de elaboração/revisão de peças neste recorte.</div>`;
+  const tipoTop=s.pecasPorTipo[0]||['—',0];
+  const tipoTopMin=(s.pecasPorTipoMin.find(e=>e[0]===tipoTop[0])||[0,0])[1];
+  const grpTop=s.pecaGrupos[0];
+  let html=title;
+  html+=`<div class="hl">
+    <div class="hl-card"><div class="hl-k">Peça mais elaborada (nº de lançamentos)</div>
+      <div class="hl-v">${tipoTop[0]}</div>
+      <div class="hl-s"><b>${tipoTop[1]}</b> lançamentos · ${fmtHM(tipoTopMin)} no total</div></div>
+    <div class="hl-card"><div class="hl-k">Peça que mais consumiu tempo</div>
+      <div class="hl-v">${grpTop.tipo}</div>
+      <div class="hl-s"><b>${fmtHM(grpTop.min)}</b> — ${grpTop.cliente.length>30?grpTop.cliente.slice(0,30)+'…':grpTop.cliente}</div></div>
+  </div>`;
+  // resumo por advogado (visão de equipe)
+  if(atual==='__equipe__'){
+    const adv=Object.entries(s.pecasPorAdv).sort((a,b)=>b[1].min-a[1].min);
+    html+=`<div class="tablewrap" style="margin-top:14px"><table>
+      <thead><tr><th>Advogado</th><th class="num">Peças (lançamentos)</th><th class="num">Horas em peças</th><th class="num">Tempo médio/lançamento</th><th>Peça predominante</th></tr></thead>
+      <tbody>${adv.map(([a,v])=>{
+        const sa=ANALISE[a]; const tp=sa&&sa.pecasPorTipo[0]?sa.pecasPorTipo[0]:null;
+        return `<tr><td><b>${primeiroNome(a)}</b></td><td class="num">${v.lanc}</td><td class="num">${fmtHM(v.min)}</td><td class="num">${fmtHM(v.min/v.lanc)}</td><td>${tp?tp[0]+' ('+tp[1]+'×)':'—'}</td></tr>`;
+      }).join('')}</tbody></table></div>`;
+  }
+  // chart + tempo por tipo
+  html+=`<div class="grid" style="margin-top:14px">
+    <div class="panel canvas-tall"><h3>Tipos de peça — nº de lançamentos</h3><canvas id="cPecas"></canvas></div>
+    <div class="panel"><h3>Tempo por tipo de peça</h3>
+      <div class="tablewrap" style="border:none"><table>
+        <thead><tr><th>Tipo de peça</th><th class="num">Qtd</th><th class="num">Total</th><th class="num">Médio</th></tr></thead>
+        <tbody>${s.pecasPorTipo.map(([t,cc])=>{const tot=(s.pecasPorTipoMin.find(e=>e[0]===t)||[0,0])[1];return `<tr><td>${t}</td><td class="num">${cc}</td><td class="num">${fmtHM(tot)}</td><td class="num">${fmtHM(tot/cc)}</td></tr>`;}).join('')}</tbody>
+      </table></div></div>
+  </div>`;
+  // tempo de elaboração por peça (cliente+tipo)
+  html+=`<div style="margin-top:14px">
+    <div class="legend-note" style="margin-bottom:8px">Tempo de elaboração de <b>cada peça</b> (cliente + tipo) — soma todos os lançamentos, mostrando quanto cada petição levou de fato, mesmo dividida em vários dias.</div>
+    <div class="tablewrap" style="max-height:460px;overflow-y:auto"><table>
+    <thead><tr>${atual==='__equipe__'?'<th>Advogado</th>':''}<th>Cliente</th><th>Tipo de peça</th><th class="num">Lançs.</th><th class="num">Dias</th><th class="num">Tempo total</th></tr></thead>
+    <tbody>${s.pecaGrupos.map(g=>`<tr>${atual==='__equipe__'?`<td>${primeiroNome(g.adv)}</td>`:''}<td>${g.cliente}${isInterno(g.cliente)?' <span class="pill pill-int">int</span>':''}</td><td>${g.tipo}</td><td class="num">${g.lanc}</td><td class="num">${g.dias}</td><td class="num">${fmtHM(g.min)}</td></tr>`).join('')}</tbody>
+    </table></div></div>`;
+  return html;
+}
+
 function render(){
   const s=ANALISE[atual];
   const app=document.getElementById('app');
@@ -627,6 +817,10 @@ function render(){
     <div class="panel"><h3>Faturável × Interno</h3><canvas id="cInterno"></canvas>
       <div class="legend-note" style="text-align:center">${fmtH(s.externoMin)} para clientes · ${fmtH(s.internoMin)} interno TPC</div></div>
   </div>`;
+
+  // Rentabilidade & carteira + Natureza da atividade (adicionais de gestão)
+  html+=rentabilidadeSection(s);
+  html+=naturezaSection(s);
 
   // (a) cliente mais atendido + (d) principais clientes
   html+=sectionTitle('a','Cliente mais atendido','+ principais clientes por tempo dedicado (item d)');
@@ -660,6 +854,10 @@ function render(){
     <div class="panel canvas-tall"><h3>Tipos de serviço — horas dedicadas (item c)</h3><canvas id="cTiposMin"></canvas></div>
   </div>`;
 
+  // Descrições recorrentes + Peças/petições (adicionais)
+  html+=descricoesSection(s);
+  html+=pecasSection(s);
+
   // (e) diagnósticos + (f) descrições
   html+=sectionTitle('e','Diagnóstico de falhas no lançamento','clique em uma categoria para filtrar a tabela');
   html+=diagCards(s);
@@ -691,6 +889,8 @@ function render(){
   html+=sectionTitle('▤','Base completa de lançamentos','todos os apontamentos — pesquisável');
   html+=fullTable(s,atual);
 
+  // destrói gráficos antigos ANTES de trocar o DOM (evita frames em canvas destacado)
+  if(typeof Chart!=='undefined') destroyCharts();
   app.innerHTML=html;
 
   // gráficos isolados: se o Chart.js (CDN) falhar, as tabelas ainda funcionam
@@ -705,6 +905,17 @@ function render(){
   }
   wireDiagTable(s,atual,dt);
   wireFullTable(s,atual);
+  wireRate();
+}
+
+function wireRate(){
+  const inp=document.getElementById('rateInput');
+  if(!inp) return;
+  inp.onchange=()=>{
+    RATE=Math.max(0,+inp.value||0);
+    try{ localStorage.setItem('tpc_rate',RATE); }catch(e){}
+    render();
+  };
 }
 
 function diagCards(s){
@@ -859,6 +1070,27 @@ function buildCharts(s){
     options:{indexAxis:'y',plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>c.parsed.x+'h'}}},
       scales:{x:{beginAtZero:true,grid:{color:gridC}},y:{grid:{display:false},ticks:{font:{size:10.5}}}}}
   });
+  // natureza da atividade (doughnut)
+  if(document.getElementById('cNatureza') && s.natArr.length){
+    charts.natureza=new Chart(document.getElementById('cNatureza'),{
+      type:'doughnut',
+      data:{labels:s.natArr.map(n=>n.nome),
+        datasets:[{data:s.natArr.map(n=>+(n.min/60).toFixed(1)),
+          backgroundColor:s.natArr.map(n=>NAT_CORES[n.nome]||'#B8B8B8'),borderWidth:2,borderColor:'#fff'}]},
+      options:{cutout:'58%',plugins:{legend:{position:'bottom',labels:{boxWidth:11,font:{size:10.5}}},
+        tooltip:{callbacks:{label:c=>c.label+': '+c.parsed+'h'}}}}
+    });
+  }
+  // tipos de peça (nº de lançamentos)
+  if(document.getElementById('cPecas') && s.pecasPorTipo.length){
+    const pt=s.pecasPorTipo.slice(0,10);
+    charts.pecas=new Chart(document.getElementById('cPecas'),{
+      type:'bar',
+      data:{labels:pt.map(t=>t[0]),datasets:[{data:pt.map(t=>t[1]),backgroundColor:CORES.grafite,borderRadius:3}]},
+      options:{indexAxis:'y',plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>c.parsed.x+' lançamentos'}}},
+        scales:{x:{beginAtZero:true,grid:{color:gridC},ticks:{precision:0}},y:{grid:{display:false},ticks:{font:{size:10.5}}}}}
+    });
+  }
 }
 function toggleBtns(){
   document.getElementById('tgHoras').classList.toggle('on',clientChartMode==='horas');
@@ -887,6 +1119,9 @@ function renderFooter(){
     <b>Como ler este painel.</b> Os itens <b>a</b> a <b>f</b> respondem diretamente à gestão da área:
     (a) cliente mais atendido por nº de tarefas e por horas; (b) atividade mais frequente; (c) tipos de serviço que mais consumiram horas de cada advogado;
     (d) principais clientes por tempo dedicado; (e) diagnóstico de falhas de lançamento; (f) descrições incompletas.<br>
+    <b>Análises complementares de gestão:</b> rentabilidade &amp; carteira (faturamento estimado a partir do valor/hora e risco de concentração de clientes); natureza da atividade (mix contencioso × consultivo × captação × gestão);
+    descrições de tarefas mais recorrentes; e elaboração de peças e petições — quantas cada advogado produziu, por tipo, e o tempo gasto em cada peça (somando lançamentos da mesma peça ao longo dos dias).
+    Peça/petição = tipo de serviço de elaboração ou revisão de peça processual (minuta, manifestação, alegações, embargos, agravo, recurso, parecer etc.).<br>
     <b>Parâmetros:</b> lançamento curto &lt; ${CFG.curtoMin} min · muito curto ≤ ${CFG.muitoCurtoMin} min · descrição incompleta &lt; ${CFG.descMinChars} caracteres, uma só palavra ou termo genérico ·
     possível duplicidade = mesmo advogado + cliente + tipo + data · tempo interno = cliente "TPC" (escritório, não faturável) · carga alta &gt; 10h/dia.
     A coluna de horas do ADVWin vem no formato <i>01/01/1900&nbsp;00:15:00</i>; o painel converte automaticamente para a duração real (00:15 = 15 min).<br>
