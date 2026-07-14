@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="robots" content="noindex, nofollow">
 <title>Diagnóstico Patrimonial e Sucessório · TPC Advogados</title>
-<meta name="description" content="Diagnóstico individual de planejamento patrimonial e sucessório, com projeção dos impactos da reforma tributária. Exclusivo para convidados.">
+<meta name="description" content="Diagnóstico individual de planejamento patrimonial e sucessório, com projeção dos impactos da reforma tributária. Sob medida, sem custo e sem compromisso.">
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -352,6 +352,26 @@ section { padding: 120px 0; position: relative; }
   padding: 16px; background: var(--off-white); border: 1px solid rgba(0,0,0,0.06);
 }
 .dyn-item.imovel { grid-template-columns: 2fr 1fr 1fr auto; }
+
+/* Empresa: cartão em bloco com grade interna */
+.dyn-item.empresa { display: block; padding: 24px; position: relative; }
+.dyn-item.empresa .emp-head {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 18px;
+}
+.dyn-item.empresa .emp-head .emp-title {
+  font-family: 'Instrument Serif', serif; font-style: italic;
+  font-size: 20px; color: var(--gray-1);
+}
+.dyn-item.empresa .emp-head .remove-btn { margin-top: 0; }
+.emp-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.emp-grid .field.full { grid-column: 1 / -1; }
+.emp-grid .dividas-extra { grid-column: 1 / -1; display: none; }
+.emp-grid .dividas-extra.active { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+@media (max-width: 640px) {
+  .emp-grid, .emp-grid .dividas-extra.active { grid-template-columns: 1fr; }
+}
+
 @media (max-width: 640px) {
   .dyn-item, .dyn-item.imovel { grid-template-columns: 1fr; }
   .dyn-item .remove-btn { justify-self: start; }
@@ -457,7 +477,7 @@ footer .bottom a:hover { color: var(--yellow); }
 <!-- ====== HERO ====== -->
 <header class="hero">
   <div class="container">
-    <div class="eyebrow"><span class="dot"></span> Convite exclusivo · Evento Alvinópolis</div>
+    <div class="eyebrow"><span class="dot"></span> Diagnóstico patrimonial e sucessório · Sob medida</div>
     <h1>O seu patrimônio merece um diagnóstico <span class="accent">sob medida</span>.</h1>
     <p class="lede">
       O diagnóstico patrimonial e sucessório TPC projeta, em números concretos, o impacto da reforma
@@ -472,7 +492,7 @@ footer .bottom a:hover { color: var(--yellow); }
     </div>
     <div class="meta-row">
       <div class="scroll">Role para continuar</div>
-      <div class="stamp">Diagnóstico n.º <span id="stamp-num">—</span> · Sem custo ao convidado</div>
+      <div class="stamp">Diagnóstico n.º <span id="stamp-num">—</span> · Sem custo e sem compromisso</div>
     </div>
   </div>
 </header>
@@ -651,11 +671,11 @@ footer .bottom a:hover { color: var(--yellow); }
           <div class="row">
             <div class="field">
               <label>Cidade</label>
-              <input type="text" name="cidade" placeholder="Alvinópolis, MG">
+              <input type="text" name="cidade" placeholder="Sua cidade / UF">
             </div>
             <div class="field">
-              <label>Empresa (se aplicável)</label>
-              <input type="text" name="empresa">
+              <label>Profissão / ocupação principal</label>
+              <input type="text" name="profissao" placeholder="Empresário, produtor rural, médico…">
             </div>
           </div>
         </div>
@@ -713,9 +733,20 @@ footer .bottom a:hover { color: var(--yellow); }
           <button type="button" class="add-btn" id="addImovel"><span class="plus">+</span> Adicionar imóvel</button>
         </div>
 
-        <!-- BLOCO 5: VALORES -->
+        <!-- BLOCO 5: EMPRESAS -->
         <div class="form-block">
-          <div class="block-label"><span class="idx">V.</span><h3>Valores patrimoniais</h3></div>
+          <div class="block-label"><span class="idx">V.</span><h3>Empresas e participações societárias</h3></div>
+          <p class="block-desc">Cadastre as empresas em que a família detém participação (operacionais, holdings, rurais). Se não houver empresas, pode deixar em branco e remover o cartão.</p>
+
+          <div class="dynamic-list" id="empresasList">
+            <!-- empresas serão adicionadas via JS -->
+          </div>
+          <button type="button" class="add-btn" id="addEmpresa"><span class="plus">+</span> Adicionar empresa</button>
+        </div>
+
+        <!-- BLOCO 6: VALORES -->
+        <div class="form-block">
+          <div class="block-label"><span class="idx">VI.</span><h3>Valores patrimoniais</h3></div>
           <p class="block-desc">Valores aproximados, mesmo estimados, são suficientes nesta etapa. Refinamos os números durante a elaboração.</p>
 
           <div class="row three">
@@ -737,9 +768,9 @@ footer .bottom a:hover { color: var(--yellow); }
           </div>
         </div>
 
-        <!-- BLOCO 6: OBSERVAÇÕES -->
+        <!-- BLOCO 7: OBSERVAÇÕES -->
         <div class="form-block">
-          <div class="block-label"><span class="idx">VI.</span><h3>Observações adicionais</h3></div>
+          <div class="block-label"><span class="idx">VII.</span><h3>Observações adicionais</h3></div>
           <p class="block-desc">Informações que considere relevantes: sociedades empresárias, participações societárias, investimentos financeiros, bens no exterior, testamento já elaborado, questões familiares, etc.</p>
           <div class="field full">
             <textarea name="observacoes" rows="5" placeholder="Campo livre"></textarea>
@@ -927,6 +958,127 @@ function observeImoveisMask() {
 }
 observeImoveisMask();
 
+/* ============ MÁSCARA CNPJ ============ */
+function maskCNPJ(input) {
+  input.addEventListener('input', (e) => {
+    let v = e.target.value.replace(/\D/g, '').slice(0, 14);
+    v = v.replace(/^(\d{2})(\d)/, '$1.$2');
+    v = v.replace(/^(\d{2})\.(\d{3})(\d)/, '$1.$2.$3');
+    v = v.replace(/\.(\d{3})(\d)/, '.$1/$2');
+    v = v.replace(/(\d{4})(\d)/, '$1-$2');
+    e.target.value = v;
+  });
+}
+
+/* ============ EMPRESAS DINÂMICAS ============ */
+const empresasList = document.getElementById('empresasList');
+const addEmpresaBtn = document.getElementById('addEmpresa');
+let empresaCount = 0;
+
+function addEmpresa() {
+  empresaCount++;
+  const idx = empresaCount;
+  const item = document.createElement('div');
+  item.className = 'dyn-item empresa';
+  item.innerHTML = `
+    <div class="emp-head">
+      <span class="emp-title">Empresa ${idx}</span>
+      <button type="button" class="remove-btn" aria-label="Remover">×</button>
+    </div>
+    <div class="emp-grid">
+      <div class="field full">
+        <label>Nome / razão social da empresa ${idx}</label>
+        <input type="text" name="empresa_${idx}_nome">
+      </div>
+      <div class="field">
+        <label>CNPJ</label>
+        <input type="text" name="empresa_${idx}_cnpj" placeholder="00.000.000/0000-00" inputmode="numeric">
+      </div>
+      <div class="field">
+        <label>Atividade principal</label>
+        <input type="text" name="empresa_${idx}_atividade" placeholder="Ramo / objeto social">
+      </div>
+      <div class="field">
+        <label>Natureza jurídica</label>
+        <select name="empresa_${idx}_natureza_juridica">
+          <option value="">Selecione</option>
+          <option value="Empresário individual">Empresário individual</option>
+          <option value="EIRELI">EIRELI</option>
+          <option value="Sociedade Limitada (LTDA)">Sociedade Limitada (LTDA)</option>
+          <option value="Sociedade Limitada Unipessoal (SLU)">Sociedade Limitada Unipessoal (SLU)</option>
+          <option value="Sociedade Anônima (S/A)">Sociedade Anônima (S/A)</option>
+          <option value="Holding patrimonial">Holding patrimonial</option>
+          <option value="Produtor rural / atividade rural">Produtor rural / atividade rural</option>
+          <option value="Outra">Outra</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Regime tributário</label>
+        <select name="empresa_${idx}_regime_tributario">
+          <option value="">Selecione</option>
+          <option value="Simples Nacional">Simples Nacional</option>
+          <option value="Lucro Presumido">Lucro Presumido</option>
+          <option value="Lucro Real">Lucro Real</option>
+          <option value="MEI">MEI</option>
+          <option value="Não sei">Não sei</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Município sede</label>
+        <input type="text" name="empresa_${idx}_municipio" placeholder="Cidade / UF">
+      </div>
+      <div class="field">
+        <label>Faturamento anual estimado (R$)</label>
+        <input type="text" name="empresa_${idx}_faturamento" placeholder="R$">
+      </div>
+      <div class="field">
+        <label>Nº de funcionários</label>
+        <input type="number" name="empresa_${idx}_funcionarios" min="0" placeholder="0">
+      </div>
+      <div class="field">
+        <label>Participação da família (%)</label>
+        <input type="number" name="empresa_${idx}_participacao" min="0" max="100" placeholder="0 a 100">
+      </div>
+      <div class="field">
+        <label>Possui dívidas?</label>
+        <select name="empresa_${idx}_tem_dividas" class="tem-dividas">
+          <option value="">Selecione</option>
+          <option value="Sim">Sim</option>
+          <option value="Não">Não</option>
+          <option value="Não sei">Não sei</option>
+        </select>
+      </div>
+      <div class="dividas-extra">
+        <div class="field">
+          <label>Natureza das dívidas</label>
+          <input type="text" name="empresa_${idx}_natureza_dividas" placeholder="Tributária, trabalhista, bancária, fornecedores…">
+        </div>
+        <div class="field">
+          <label>Valor estimado das dívidas (R$)</label>
+          <input type="text" name="empresa_${idx}_valor_dividas" placeholder="R$">
+        </div>
+      </div>
+    </div>
+  `;
+  item.querySelector('.remove-btn').addEventListener('click', () => item.remove());
+
+  // máscaras deste cartão
+  maskCNPJ(item.querySelector(`input[name="empresa_${idx}_cnpj"]`));
+  maskCurrency(item.querySelector(`input[name="empresa_${idx}_faturamento"]`));
+  maskCurrency(item.querySelector(`input[name="empresa_${idx}_valor_dividas"]`));
+
+  // exibir campos de dívida apenas quando "Sim"
+  const temDividas = item.querySelector('.tem-dividas');
+  const dividasExtra = item.querySelector('.dividas-extra');
+  temDividas.addEventListener('change', () => {
+    dividasExtra.classList.toggle('active', temDividas.value === 'Sim');
+  });
+
+  empresasList.appendChild(item);
+}
+addEmpresaBtn.addEventListener('click', addEmpresa);
+addEmpresa(); // começa com uma empresa
+
 /* ============ MÁSCARA TELEFONE ============ */
 const tel = document.querySelector('input[name="telefone"]');
 tel.addEventListener('input', (e) => {
@@ -943,6 +1095,58 @@ const form = document.getElementById('diagForm');
 const successView = document.getElementById('successView');
 const submitBtn = document.getElementById('submitBtn');
 const submitText = document.getElementById('submitText');
+
+/* ============ RÓTULOS LEGÍVEIS PARA O ENVIO ============ */
+const STATIC_LABELS = {
+  nome_completo: 'Nome completo',
+  email: 'E-mail',
+  telefone: 'Telefone / WhatsApp',
+  cidade: 'Cidade',
+  profissao: 'Profissão / ocupação',
+  patriarca: 'Nome do patriarca',
+  matriarca: 'Nome da matriarca',
+  regime_patriarca_matriarca: 'Regime de casamento (patriarca/matriarca)',
+  valor_irpf: 'Valor declarado no IRPF',
+  valor_mercado: 'Valor de mercado estimado',
+  receita_aluguel_anual: 'Receita anual de aluguéis',
+  observacoes: 'Observações adicionais',
+  lgpd: 'Consentimento LGPD'
+};
+const DYNAMIC_SUFFIXES = {
+  filho: {
+    nome: 'Nome', regime: 'Regime de casamento'
+  },
+  imovel: {
+    local: 'Localidade', alugado: 'Alugado?', valor: 'Aluguel mensal'
+  },
+  empresa: {
+    nome: 'Nome / razão social', cnpj: 'CNPJ', atividade: 'Atividade principal',
+    natureza_juridica: 'Natureza jurídica', regime_tributario: 'Regime tributário',
+    municipio: 'Município sede', faturamento: 'Faturamento anual estimado',
+    funcionarios: 'Nº de funcionários', participacao: 'Participação da família (%)',
+    tem_dividas: 'Possui dívidas?', natureza_dividas: 'Natureza das dívidas',
+    valor_dividas: 'Valor estimado das dívidas'
+  }
+};
+const GROUP_NAMES = { filho: 'Filho', imovel: 'Imóvel', empresa: 'Empresa' };
+
+function labelFor(name) {
+  if (STATIC_LABELS[name]) return STATIC_LABELS[name];
+  const m = name.match(/^(filho|imovel|empresa)_(\d+)_(.+)$/);
+  if (m) {
+    const [, grupo, idx, campo] = m;
+    const sufixo = (DYNAMIC_SUFFIXES[grupo] && DYNAMIC_SUFFIXES[grupo][campo]) || campo;
+    return `${GROUP_NAMES[grupo]} ${idx} — ${sufixo}`;
+  }
+  return name;
+}
+
+/* Monta pares [rótulo, valor] em ordem, ignorando campos vazios e de controle */
+function buildReadablePairs(fd) {
+  return Array.from(fd.entries())
+    .filter(([k, v]) => k !== '_gotcha' && k !== 'lgpd' && String(v).trim() !== '')
+    .map(([k, v]) => [labelFor(k), v]);
+}
 
 form.addEventListener('submit', async (e) => {
   e.preventDefault();
@@ -964,21 +1168,30 @@ form.addEventListener('submit', async (e) => {
   if (form._gotcha && form._gotcha.value) { return; }
 
   const fd = new FormData(form);
+  const nome = fd.get('nome_completo') || 'Novo lead';
+  const pares = buildReadablePairs(fd);
+  const consentiu = document.getElementById('lgpd').checked ? 'Sim' : 'Não';
 
   // Se o endpoint não foi configurado, usa mailto como fallback
   if (FORMSPREE_ENDPOINT.includes('SEU_CODIGO_AQUI')) {
-    const body = Array.from(fd.entries())
-      .filter(([k]) => k !== '_gotcha' && k !== 'lgpd')
-      .map(([k, v]) => `${k}: ${v}`).join('\n');
-    window.location.href = `mailto:contato@tpcadvogados.com.br?subject=Diagnóstico Patrimonial - ${encodeURIComponent(fd.get('nome_completo') || 'Novo lead')}&body=${encodeURIComponent(body)}`;
+    const body = pares.map(([l, v]) => `${l}: ${v}`).join('\n')
+      + `\n${STATIC_LABELS.lgpd}: ${consentiu}`;
+    window.location.href = `mailto:contato@tpcadvogados.com.br?subject=${encodeURIComponent('Diagnóstico Patrimonial - ' + nome)}&body=${encodeURIComponent(body)}`;
     showSuccess();
     return;
   }
 
+  // Payload com rótulos legíveis para o Formspree
+  const payload = new FormData();
+  payload.append('_subject', `Diagnóstico Patrimonial — ${nome}`);
+  payload.append('_replyto', fd.get('email') || '');
+  pares.forEach(([label, value]) => payload.append(label, value));
+  payload.append(STATIC_LABELS.lgpd, consentiu);
+
   try {
     const resp = await fetch(FORMSPREE_ENDPOINT, {
       method: 'POST',
-      body: fd,
+      body: payload,
       headers: { 'Accept': 'application/json' }
     });
     if (resp.ok) {
