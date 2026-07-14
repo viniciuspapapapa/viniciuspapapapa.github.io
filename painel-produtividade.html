@@ -612,6 +612,50 @@ function topList(entries, fmt, unit){
     </tr>`).join('')+`</tbody></table></div>`;
 }
 
+/* lista COMPLETA de clientes (todos os que tiveram lançamento) */
+function clienteRowsHtml(s, filtro){
+  const countMap=Object.fromEntries(s.porClienteCount);
+  const total=s.totalMin||1;
+  const max=s.porClienteMin.length?s.porClienteMin[0][1]:1;
+  const f=semAcento(filtro||'');
+  const ranked=s.porClienteMin.map((e,i)=>({e,rank:i+1}));
+  const arr=ranked.filter(x=>!f||semAcento(x.e[0]).includes(f));
+  if(!arr.length) return `<tr><td colspan="5" style="text-align:center;color:#9A9A9A;padding:20px">Nenhum cliente encontrado.</td></tr>`;
+  return arr.map(({e,rank})=>`
+    <tr>
+      <td style="width:26px"><span class="rank-tag">${rank}</span></td>
+      <td>${e[0]}${isInterno(e[0])?' <span class="pill pill-int">interno</span>':''}</td>
+      <td class="num">${countMap[e[0]]||0}</td>
+      <td class="num">${fmtHM(e[1])}<span class="bar-inline" style="width:${Math.max(4,e[1]/max*55)}px"></span></td>
+      <td class="num">${fmtPct(e[1]/total*100)}</td>
+    </tr>`).join('');
+}
+function clienteListaCompleta(s){
+  const n=s.porClienteMin.length;
+  const nExt=s.porClienteMin.filter(e=>!isInterno(e[0])).length;
+  return `<div class="panel">
+    <h3>Todos os clientes atendidos (${n})</h3>
+    <div class="table-tools" style="margin-bottom:8px">
+      <input id="buscaCli" placeholder="filtrar cliente…">
+      <span class="count" id="cntCli">${nExt} faturáveis · ${fmtHM(s.totalMin)}</span>
+    </div>
+    <div class="tablewrap" style="max-height:320px;overflow-y:auto;border:none">
+      <table><thead><tr><th style="width:26px">#</th><th>Cliente</th><th class="num">Tarefas</th><th class="num">Horas</th><th class="num">% total</th></tr></thead>
+      <tbody id="tbodyCli">${clienteRowsHtml(s,'')}</tbody></table>
+    </div>
+  </div>`;
+}
+function wireClienteBusca(s){
+  const inp=document.getElementById('buscaCli'); if(!inp) return;
+  const tb=document.getElementById('tbodyCli'), cnt=document.getElementById('cntCli');
+  inp.oninput=()=>{
+    tb.innerHTML=clienteRowsHtml(s,inp.value);
+    const f=semAcento(inp.value);
+    const nv=s.porClienteMin.filter(e=>!f||semAcento(e[0]).includes(f)).length;
+    cnt.textContent = inp.value ? `${nv} de ${s.porClienteMin.length}` : `${s.porClienteMin.filter(e=>!isInterno(e[0])).length} faturáveis · ${fmtHM(s.totalMin)}`;
+  };
+}
+
 function sectionTitle(tag,txt,hint){
   return `<div class="section-title"><span class="tag">${tag}</span>${txt}${hint?` <span class="hint">— ${hint}</span>`:''}</div>`;
 }
@@ -823,7 +867,7 @@ function render(){
   html+=naturezaSection(s);
 
   // (a) cliente mais atendido + (d) principais clientes
-  html+=sectionTitle('a','Cliente mais atendido','+ principais clientes por tempo dedicado (item d)');
+  html+=sectionTitle('a','Cliente mais atendido','principais clientes + lista completa de todos os atendidos (item d)');
   html+=`<div class="hl">
     <div class="hl-card"><div class="hl-k">Mais atendido — por nº de tarefas</div>
       <div class="hl-v">${clienteMaisTasks[0]}</div>
@@ -833,10 +877,10 @@ function render(){
       <div class="hl-s"><b>${fmtHM(clienteMaisMin[1])}</b> apontadas</div></div>
   </div>`;
   html+=`<div class="grid" style="margin-top:14px">
-    <div class="panel canvas-tall"><h3>Top clientes
+    <div class="panel canvas-tall"><h3>Principais clientes
       <span class="toggle"><button id="tgHoras" class="on">Horas</button><button id="tgTarefas">Tarefas</button></span></h3>
       <canvas id="cClientes"></canvas></div>
-    <div class="panel">${topList(s.porClienteMin,fmtHM)}</div>
+    ${clienteListaCompleta(s)}
   </div>`;
 
   // (b) atividade mais realizada
@@ -905,6 +949,7 @@ function render(){
   }
   wireDiagTable(s,atual,dt);
   wireFullTable(s,atual);
+  wireClienteBusca(s);
   wireRate();
 }
 
