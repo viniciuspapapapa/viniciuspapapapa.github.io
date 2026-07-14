@@ -1,0 +1,944 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Painel de Produtividade — TPC Advogados</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+  :root{
+    --preto:#0F0F10;
+    --grafite:#2B2B2B;
+    --grafite2:#4A4A4A;
+    --claro:#EDEDED;
+    --branco:#FFFFFF;
+    --texto-escuro:#3A3A3A;
+    --amarelo:#E8E347;
+    --amarelo-suave:#F2EE80;
+    --verde:#0CA30C;
+    --verde-esc:#006300;
+    --vermelho:#D03B3B;
+    --laranja:#EB6834;
+    --azul:#2A78D6;
+    --linha:#DCDCDC;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  html{scroll-behavior:smooth;}
+  body{
+    font-family:'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+    background:var(--claro);
+    color:var(--texto-escuro);
+    -webkit-font-smoothing:antialiased;
+  }
+  header{
+    background:var(--preto);
+    padding:26px 40px 22px;
+    position:relative;
+    overflow:hidden;
+  }
+  header::after{
+    content:"";
+    position:absolute;
+    top:0; right:0;
+    width:280px; height:100%;
+    background:linear-gradient(135deg, transparent 40%, #1A1A1B 40%);
+  }
+  .head-inner{position:relative;z-index:2;display:flex;justify-content:space-between;align-items:flex-start;gap:20px;flex-wrap:wrap;}
+  .eyebrow{color:var(--amarelo-suave);font-size:11px;letter-spacing:2.5px;text-transform:uppercase;font-weight:600;}
+  h1{color:var(--branco);font-size:25px;font-weight:600;letter-spacing:0.5px;margin-top:6px;}
+  h1 span{color:var(--amarelo);}
+  .periodo{color:#B8B8B8;font-size:12.5px;margin-top:4px;}
+  /* upload */
+  .uploader{
+    position:relative;z-index:2;border:1.5px dashed #5A5A5A;border-radius:8px;
+    padding:12px 16px;min-width:250px;cursor:pointer;transition:all .15s;background:#181819;
+  }
+  .uploader:hover,.uploader.drag{border-color:var(--amarelo);background:#1E1E20;}
+  .uploader .u-title{color:var(--amarelo);font-size:12px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;}
+  .uploader .u-sub{color:#9A9A9A;font-size:11.5px;margin-top:4px;line-height:1.45;}
+  .uploader input{display:none;}
+  nav{
+    background:var(--grafite);padding:0 40px;display:flex;gap:2px;
+    border-bottom:3px solid var(--amarelo);position:sticky;top:0;z-index:20;flex-wrap:wrap;
+  }
+  .tab{
+    padding:13px 20px;color:#C9C9C9;font-size:13.5px;font-weight:600;cursor:pointer;
+    border-bottom:3px solid transparent;margin-bottom:-3px;transition:all .15s;letter-spacing:.3px;
+  }
+  .tab:hover{color:var(--branco);}
+  .tab.active{color:var(--preto);background:var(--amarelo);border-bottom:3px solid var(--amarelo);}
+  main{max-width:1280px;margin:0 auto;padding:28px 40px 60px;}
+  .section-title{
+    font-size:13px;text-transform:uppercase;letter-spacing:1.4px;color:var(--grafite);
+    font-weight:800;margin:30px 0 14px;display:flex;align-items:center;gap:10px;
+  }
+  .section-title:first-child{margin-top:4px;}
+  .section-title .tag{
+    background:var(--preto);color:var(--amarelo);font-size:11px;font-weight:800;
+    width:24px;height:24px;display:inline-flex;align-items:center;justify-content:center;border-radius:5px;flex:0 0 auto;
+  }
+  .section-title .hint{font-size:11.5px;font-weight:500;color:#9A9A9A;text-transform:none;letter-spacing:0;}
+  .kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:13px;margin-bottom:6px;}
+  .kpi{background:var(--branco);border:1px solid var(--linha);border-top:3px solid var(--grafite);padding:15px 17px;}
+  .kpi.flag{border-top:3px solid var(--amarelo);}
+  .kpi.good{border-top:3px solid var(--verde);}
+  .kpi.bad{border-top:3px solid var(--vermelho);}
+  .kpi .label{font-size:10.5px;text-transform:uppercase;letter-spacing:.8px;color:#8A8A8A;font-weight:600;}
+  .kpi .value{font-size:26px;font-weight:700;color:var(--preto);margin-top:5px;line-height:1;}
+  .kpi .sub{font-size:11.5px;color:#8A8A8A;margin-top:5px;line-height:1.35;}
+  .kpi .sub b{color:var(--grafite);}
+  .insights{margin:14px 0 0;display:grid;gap:8px;}
+  .insight-card{
+    background:var(--branco);border-left:4px solid var(--amarelo);padding:11px 16px;
+    font-size:13px;line-height:1.5;color:var(--texto-escuro);
+  }
+  .insight-card.sev-crit{border-left-color:var(--vermelho);}
+  .insight-card.sev-warn{border-left-color:var(--laranja);}
+  .insight-card b{color:var(--preto);}
+  .insight-card .badge{
+    font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;
+    padding:2px 7px;border-radius:4px;margin-right:8px;vertical-align:middle;
+  }
+  .b-crit{background:#FBE3E3;color:#B02020;}
+  .b-warn{background:#FCEFD9;color:#9A5A15;}
+  .b-info{background:#F4F2C8;color:#7A7600;}
+  .insight-empty{background:var(--branco);border-left:4px solid #B9D9B0;padding:11px 16px;font-size:13px;color:#4A6B44;}
+  .insight-empty b{color:#2E5228;}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+  .grid.g3{grid-template-columns:1.1fr 1fr 1fr;}
+  .grid.full{grid-template-columns:1fr;}
+  .panel{background:var(--branco);border:1px solid var(--linha);padding:16px 18px 12px;}
+  .panel h3{
+    font-size:12px;text-transform:uppercase;letter-spacing:.8px;color:var(--grafite);font-weight:700;
+    margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid #EFEFEF;display:flex;justify-content:space-between;align-items:center;gap:8px;
+  }
+  .panel h3::before{content:"";display:inline-block;width:8px;height:8px;background:var(--amarelo);margin-right:8px;vertical-align:middle;flex:0 0 auto;}
+  .panel h3 .toggle{display:flex;gap:4px;}
+  .panel h3 .toggle button{
+    font:inherit;font-size:10.5px;font-weight:700;border:1px solid var(--linha);background:#F7F7F7;
+    color:#7A7A7A;padding:3px 9px;border-radius:4px;cursor:pointer;text-transform:none;letter-spacing:0;
+  }
+  .panel h3 .toggle button.on{background:var(--preto);color:var(--amarelo);border-color:var(--preto);}
+  canvas{max-height:280px;}
+  .canvas-tall canvas{max-height:340px;}
+  /* highlight card (a / b) */
+  .hl{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:2px;}
+  .hl-card{background:linear-gradient(135deg,var(--preto),#232324);color:#fff;padding:18px 20px;border-left:4px solid var(--amarelo);}
+  .hl-card .hl-k{font-size:10.5px;text-transform:uppercase;letter-spacing:1px;color:var(--amarelo-suave);font-weight:700;}
+  .hl-card .hl-v{font-size:20px;font-weight:700;margin-top:6px;line-height:1.2;}
+  .hl-card .hl-s{font-size:12px;color:#B8B8B8;margin-top:6px;}
+  .hl-card .hl-s b{color:var(--amarelo);}
+  /* tables */
+  .tablewrap{background:var(--branco);border:1px solid var(--linha);overflow-x:auto;}
+  table{border-collapse:collapse;width:100%;font-size:12.5px;}
+  thead th{
+    background:var(--grafite);color:#fff;text-align:left;padding:9px 12px;font-weight:600;
+    font-size:11px;text-transform:uppercase;letter-spacing:.5px;white-space:nowrap;position:sticky;top:0;
+  }
+  thead th.num{text-align:right;}
+  tbody td{padding:8px 12px;border-bottom:1px solid #F0F0F0;vertical-align:top;}
+  tbody td.num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap;}
+  tbody tr:hover{background:#FCFBEE;}
+  tbody tr:last-child td{border-bottom:none;}
+  .pill{display:inline-block;font-size:10.5px;font-weight:700;padding:2px 8px;border-radius:10px;white-space:nowrap;}
+  .pill-crit{background:#FBE3E3;color:#B02020;}
+  .pill-warn{background:#FCEFD9;color:#9A5A15;}
+  .pill-info{background:#EEF3FB;color:#2A5FA8;}
+  .pill-int{background:#F4F2C8;color:#7A7600;}
+  .pill-neu{background:#EFEFEF;color:#666;}
+  .muted{color:#9A9A9A;}
+  .table-tools{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:10px;}
+  .table-tools input,.table-tools select{
+    font:inherit;font-size:12.5px;padding:7px 11px;border:1px solid var(--linha);border-radius:6px;background:#fff;color:var(--texto-escuro);
+  }
+  .table-tools input{min-width:230px;}
+  .table-tools .count{font-size:12px;color:#8A8A8A;margin-left:auto;}
+  .rank-tag{display:inline-flex;width:20px;height:20px;background:var(--preto);color:var(--amarelo);border-radius:4px;align-items:center;justify-content:center;font-size:11px;font-weight:800;margin-right:2px;}
+  .empty-state{background:var(--branco);border:1px solid var(--linha);padding:40px;text-align:center;color:#9A9A9A;font-size:13.5px;}
+  .bar-inline{display:inline-block;height:8px;background:var(--amarelo);border-radius:2px;vertical-align:middle;margin-left:6px;}
+  footer{max-width:1280px;margin:0 auto;padding:0 40px 40px;font-size:11.5px;color:#8A8A8A;line-height:1.6;border-top:1px solid var(--linha);padding-top:16px;}
+  footer b{color:var(--grafite);}
+  .legend-note{font-size:11.5px;color:#8A8A8A;margin-top:6px;line-height:1.5;}
+  @media(max-width:1000px){
+    .kpis{grid-template-columns:repeat(2,1fr);}
+    .grid,.grid.g3,.hl{grid-template-columns:1fr;}
+    header,nav,main,footer{padding-left:20px;padding-right:20px;}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="head-inner">
+    <div>
+      <div class="eyebrow">TPC Advogados · Controladoria &amp; Gestão da Equipe</div>
+      <h1>Painel de Produtividade <span>&amp; Rentabilidade</span></h1>
+      <div class="periodo" id="periodoLabel">Carregando…</div>
+    </div>
+    <label class="uploader" id="drop">
+      <div class="u-title">⤒ Anexar planilhas (.xlsx)</div>
+      <div class="u-sub">Arraste os arquivos do ADVWin aqui ou clique para selecionar.<br>Vários advogados de uma vez. Processado no seu navegador.</div>
+      <input type="file" id="fileInput" accept=".xlsx,.xls" multiple>
+    </label>
+  </div>
+</header>
+
+<nav id="tabs"></nav>
+
+<main id="app"></main>
+
+<footer id="metodologia"></footer>
+
+<script>
+/* ============================================================
+   PAINEL DE PRODUTIVIDADE — TPC ADVOGADOS
+   Motor de análise 100% client-side. Reprocessa a cada upload.
+   Registro (record): {cliente,tipo,descricao,advogado,data(YYYY-MM-DD),min}
+   ============================================================ */
+
+/* ---- dataset padrão (Junho/2026) embutido ---- */
+const RECORDS_DEFAULT = /*__RECORDS__*/[{"cliente": "CRISTIANO PANTALEAO MASCHIO", "tipo": "Reunião DISCUSSAO DE TESE", "descricao": "Reunião de alinhamento", "advogado": "RODRIGO PEIXOTO DA SILVA", "data": "2026-06-01", "min": 15}, {"cliente": "PILAR DE GÓIAS DESENVOLVIMENTO MINERAL LTDA", "tipo": "Agravo interno - Criminal", "descricao": "Correção de petição", "advogado": "RODRIGO PEIXOTO DA SILVA", "data": "2026-06-01", "min": 65}, {"cliente": "TPC - TPC TOLEDO, PAOLIELLO, DE PAULA, CAMPOS, CUNHA E CORDEIRO ADVOGADOS", "tipo": "Consultoria - Outros", "descricao": "Leitura de e-mails", "advogado": "RODRIGO PEIXOTO DA SILVA", "data": "2026-06-01", "min": 35}, {"cliente": "TPC - TPC TOLEDO, PAOLIELLO, DE PAULA, CAMPOS, CUNHA E CORDEIRO ADVOGADOS", "tipo": "Consultoria - Outros", "descricao": "Análise de movimentações", "advogado": "RODRIGO PEIXOTO DA SILVA", "data": "2026-06-01", "min": 65}, {"cliente": "TPC - TPC TOLEDO, PAOLIELLO, DE PAULA, CAMPOS, CUNHA E CORDEIRO ADVOGADOS", "tipo": "Consultoria - Outros", "descricao": "Registro de ficha tempo", "advogado": "RODRIGO PEIXOTO DA SILVA", "data": "2026-06-01", "min": 5}, {"cliente": "THIAGO JOSÉ DA COSTA NOGUEIRA", "tipo": "Consultoria - Outros", "descricao": "Elaboração de petição", "advogado": "RODRIGO PEIXOTO DA SILVA", "data": "2026-06-01", "min": 105}, {"cliente": "PARTNER INDUSTRIAL LTDA.", "tipo": "Reunião DISCUSSAO DE TESE", "descricao": "Reunião de alinhamento", "advogado": "RODRIGO PEIXOTO DA SILVA", "data": "2026-06-01", "min": 20}, {"cliente": "PARTNER INDUSTRIAL LTDA.", "tipo": "Manifestação", "descricao": "Manifestação sobre ofício", "advogado": "RODRIGO PEIXOTO DA SILVA", "data": "2026-06-01", "min": 90}, {"cliente": "THIAGO JOSÉ DA COSTA NOGUEIRA", "tipo": "Consultoria - Outros", "descricao": "Elaboração de petição", "advogado": "RODRIGO PEIXOTO DA SILVA", "data": "2026-06-02", "min": 120}, {"cliente": "THIAGO JOSÉ DA COSTA NOGUEIRA", "tipo": "Consultoria - Reunião/call", "descricao": "Alinhamento com o cliente", "advogado": "RODRIGO PEIXOTO DA SILVA", "data": "2026-06-02", "min": 20}, {"cliente": "LUCAS MENDES", "tipo": "Consultoria - Outros", "descricao": "Análise de alegações finais do MP", "advogado": "RODRIGO PEIXOTO DA SILVA", "data": "2026-06-02", "min": 45}, {"cliente": "TPC - TPC TOLEDO, PAOLIELLO, DE PAULA, CAMPOS, CUNHA E CORDEIRO ADVOGADOS", "tipo": "Consultoria - Outros", "descricao": "Leitura de e-mails", "advogado": "RODRIGO PEIXOTO DA SILVA", "data": "2026-06-02", "min": 35}, {"cliente": "TPC - TPC TOLEDO, PAOLIELLO, DE PAULA, CAMPOS, CUNHA E CORDEIRO ADVOGADOS", "tipo": "Consultoria - Outros", "descricao": "Análise de movimentações", "advogado": "RODRIGO PEIXOTO DA SILVA", "data": "2026-06-02", "min": 60}, {"cliente": "TPC - TPC TOLEDO, PAOLIELLO, DE PAULA, CAMPOS, CUNHA E CORDEIRO ADVOGADOS", "tipo": "Consultoria - Outros", "descricao": "Registro de ficha tempo", "advogado": "RODRIGO PEIXOTO DA SILVA", "data": "2026-06-02", "min": 5}, {"cliente": "TPC - TPC TOLEDO, PAOLIELLO, DE PAULA, CAMPOS, CUNHA E CORDEIRO ADVOGADOS", "tipo": "Prospect - Reunião", "descricao": "Reunião Ferreira Ulhoa", "advogado": "RODRIGO PEIXOTO DA SILVA", "data": "2026-06-02", "min": 30}, {"cliente": "JOÃO BATISTA DUTRA", "tipo": "Consultoria - Outros", "descricao": "Corerção de petição - exceção de suspeição)", "advogado": "RODRIGO PEIXOTO DA SILVA", "data": "2026-06-02", "min": 85}, {"cliente": "BEONE DIGITAL LTDA", "tipo": "Consultoria - Outros", "descricao": "Consultoria sobre publicações do verador - analise de implicações criminais", "advogado": "RODRIGO PEIXOTO DA SILVA", "data": "2026-06-03", "min": 30}, {"cliente": "CRISTIANO PANTALEAO MASCHIO", "tipo": "Manifestação", "descricao": "Elaboração de petição para nova habilitação", "advogado": "RODRIGO PEIXOTO DA SILVA", "data": "2026-06-03", "min": 15}, {"cliente": "TPC - TPC TOLEDO, PAOLIELLO, DE PAULA, CAMPOS, CUNHA E CORDEIRO ADVOGADOS", "tipo": "Consultoria - Outros", "descricao": "Leitura de jurisprudência", "advogado": "RODRIGO PEIXOTO DA SILVA", "data": "2026-06-03", "min": 40}, {"cliente": "TPC - TPC TOLEDO, PAOLIELLO, DE PAULA, CAMPOS, CUNHA E CORDEIRO ADVOGADOS", "tipo": "Consultoria - Outros", "descricao": "Leitura de e-mails", "advogado": "RODRIGO PEIXOTO DA SILVA", "data": "2026-06-03", "min": 35}, {"cliente": "TPC - TPC TOLEDO, PAOLIELLO, DE PAULA, CAMPOS, CUNHA E CORDEIRO ADVOGADOS", "tipo": "Consultoria - Outros", "descricao": "Análise de movimentações", "advogado": "RODRIGO PEIXOTO DA SILVA", "data": "2026-06-03", "min": 60}, {"cliente": "TPC - TPC TOLEDO, PAOLIELLO, DE PAULA, CAMPOS, CUNHA E CORDEIRO ADVOGADOS", "tipo": "Consultoria - Outros", "descricao": "Registro de ficha tempo", "advogado": "RODRIGO PEIXOTO DA SILVA", "data": "2026-06-03", "min": 5}, {"cliente": "THIAGO JOSÉ DA COSTA NOGUEIRA", "tipo": "Consultoria - Outros", "descricao": "Elaboração de petição", "advogado": "RODRIGO PEIXOTO DA SILVA", "data": "2026-06-03", "min": 75}, {"cliente": "THIAGO JOSÉ DA COSTA NOGUEIRA", "tipo": "Consultoria - Reunião/call", "descricao": "Alinhamento com o cliente", "advogado": "RODRIGO PEIXOTO DA SILVA", "data": "2026-06-03", "min": 10}, {"cliente": "THIAGO JOSÉ DA COSTA NOGUEIRA", "tipo": "Consultoria - Outros", "descricao": "Finalização de petição", "advogado": "RODRIGO PEIXOTO DA SILVA", "data": "2026-06-08", "min": 35}, {"cliente": "THIAGO JOSÉ DA COSTA NOGUEIRA", "tipo": "Consultoria - Reunião/call", "descricao": "Alinhamento com o cliente", "advogado": "RODRIGO PEIXOTO DA SILVA", "data": "2026-06-08", "min": 10}, {"cliente": "ROGERIO MENDES DE OLIVEIRA JUNIOR", "tipo": "Consultoria - Outros", "descricao": "Despacho com a desembargadora", "advogado": "RODRIGO PEIXOTO DA SILVA", "data": "2026-06-08", "min": 25}, {"cliente": "MARIA DAS GRAÇAS DE BARROSDO NASCIMENTO", "tipo": "Manifestação", "descricao": "Elaboração de pedido de saída pra consulta", "advogado": "RODRIGO PEIXOTO DA SILVA", "data": "2026-06-08", "min": 35}, {"cliente": "BERNARDO DECINA ARANTES", "tipo": "Consultoria - Outros", "descricao": "Elaboração de petição - resposta à acusação", "advogado": "RODRIGO PEIXOTO DA SILVA", "data": "2026-06-08", "min": 105}, {"cliente": "Hayslam Nicacio", "tipo": "Diligência", "descricao": "Alinhamento pré audiência", "advogado": "RODRIGO PEIXOTO DA SILVA", "data": "2026-06-08", "min": 25}, {"cliente": "TPC - TPC TOLEDO, PAOLIELLO, DE PAULA, CAMPOS, CUNHA E CORDEIRO ADVOGADOS", "tipo": "Consultoria - Outros", "descricao": "Leitura de e-mails", "advogado": "RODRIGO PEIXOTO DA SILVA", "data": "2026-06-08", "min": 30}, {"cliente": "TPC - TPC TOLEDO, PAOLIELLO, DE PAULA, CAMPOS, CUNHA E CORDEIRO ADVOGADOS", "tipo": "Consultoria - Outros", "descricao": "Análise de movimentações", "advogado": "RODRIGO PEIXOTO DA SILVA", "data": "2026-06-08", "min": 40}, {"cliente": "TPC - TPC TOLEDO, PAOLIELLO, DE PAULA, CAMPOS, CUNHA E CORDEIRO ADVOGADOS", "tipo": "Consultoria - Outros", "descricao": "Registro de ficha tempo", "advogado": "RODRIGO PEIXOTO DA SILVA", "data": "2026-06-08", "min": 5}, {"cliente": "FUNDAÇÃO FORLUMINAS DE SEGURIDADE SOCIAL - FORLUZ", "tipo": "Consultoria - Outros", "descricao": "Complementação de relatório", "advogado": "RODRIGO PEIXOTO DA SILVA", "data": "2026-06-08", "min": 20}, {"cliente": "RIMA INDUSTRIAL S/A", "tipo": "Diligência", "descricao": "Diligências sobre atualização de cópias", "advogado": "RODRIGO PEIXOTO DA SILVA", "data": "2026-06-08", "min": 15}, {"cliente": "CARLOS AUGUSTO MARTINS MESQUITA", "tipo": "Manifestação", "descricao": "Juntada de comprovante de pagamento", "advogado": "RODRIGO PEIXOTO DA SILVA", "data": "2026-06-08", "min": 15}, {"cliente": "WAGNER LUIZ AUGUSTO", "tipo": "Manifestação", "descricao": "Elaboração de petição sobre acesso e reagendamento da oitiva", "advogado": "RODRIGO PEIXOTO DA SILVA", "data": "2026-06-08", "min": 15}, {"cliente": "WAGNER LUIZ AUGUSTO", "tipo": "Diligência", "descricao": "Diligência sobre oitiva", "advogado": "RODRIGO PEIXOTO DA SILVA", "data": "2026-06-08", "min": 15}, {"cliente": "TPC - TPC TOLEDO, PAOLIELLO, DE PAULA, CAMPOS, CUNHA E CORDEIRO ADVOGADOS", "tipo": "Consultoria - Outros", "descricao": "Leitura de e-mails", "advogado": "RODRIGO PEIXOTO DA SILVA", "data": "2026-06-09", "min": 30}, {"cliente": "TPC - TPC TOLEDO, PAOLIELLO, DE PAULA, CAMPOS, CUNHA E CORDEIRO ADVOGADOS", "tipo": "Consultoria - Outros", "descricao": "Análise de movimentações", "advogado": "RODRIGO PEIXOTO DA SILVA", "data": "2026-06-09", "min": 65}, {"cliente": "TPC - TPC TOLEDO, PAOLIELLO, DE PAULA, CAMPOS, CUNHA E CORDEIRO ADVOGADOS", "tipo": "Consultoria - Outros", "descricao": "Registro de ficha tempo", "advogado": "RODRIGO PEIXOTO DA SILVA", "data": "2026-06-09", "min": 5}, {"cliente": "FRIGOLIMA INDUSTRIA DE RACOES LTDA", "tipo": "Manifestação", "descricao": "Manifestação pela extinção da punibilidade", "advogado": "RODRIGO PEIXOTO DA SILVA", "data": "2026-06-09", "min": 20}, {"cliente": "Hayslam Nicacio", "tipo": "Audiência de Conciliação", "descricao": "Deslocamento e participação em audiência", "advogado": "RODRIGO PEIXOTO DA SILVA", "data": "2026-06-09", "min": 90}, {"cliente": "BERNARDO DECINA ARANTES", "tipo": "Consultoria - Outros", "descricao": "Elaboração de petição - resposta à acusação", "advogado": "RODRIGO PEIXOTO DA SILVA", "data": "2026-06-09", "min": 135}, {"cliente": "THIAGO JOSÉ DA COSTA NOGUEIRA", "tipo": "Consultoria - Outros", "descricao": "Orientação sobre coleta de documentos", "advogado": "RODRIGO PEIXOTO DA SILVA", "data": "2026-06-09", "min": 35}, {"cliente": "MARIA DAS GRAÇAS DE BARROSDO NASCIMENTO", "tipo": "Manifestação", "descricao": "conferencia de documentação sobre pedido de saída pra consulta", "advogado": "RODRIGO PEIXOTO DA SILVA", "data": "2026-06-09", "min": 5}, {"cliente": "THIAGO JOSÉ DA COSTA NOGUEIRA", "tipo": "Consultoria - Outros", "descricao": "Organização da documentação encaminhada", "advogado": "RODRIGO PEIXOTO DA SILVA", "data": "2026-06-10", "min": 50}, {"cliente": "BERNARDO DECINA ARANTES", "tipo": "Manifestação", "descricao": "Elaboração de petição - resposta à acusação", "advogado": "RODRIGO PEIXOTO DA SILVA", "data": "2026-06-10", "min": 115}, {"cliente": "TPC - TPC TOLEDO, PAOLIELLO, DE PAULA, CAMPOS, CUNHA E CORDEIRO ADVOGADOS", "tipo": "Pesquisas/Estudos", "descricao": "Leitura de jurisprudências", "advogado": "RODRIGO PEIXOTO DA SILVA", "data": "2026-06-10", "min": 40}, {"cliente": "TPC - TPC TOLEDO, PAOLIELLO, DE PAULA, CAMPOS, CUNHA E CORDEIRO ADVOGADOS", "tipo": "Consultoria - Outros", "descricao": "Leitura de e-mails", "advogado": "RODRIGO PEIXOTO DA SILVA", "data": "2026-06-10", "min": 30}, {"cliente": "TPC - TPC TOLEDO, PAOLIELLO, DE PAULA, CAMPOS, CUNHA E CORDEIRO ADVOGADOS", "tipo": "Consultoria - Outros", "descricao": "Análise de movimentações", "advogado": "RODRIGO PEIXOTO DA SILVA", "data": "2026-06-10", "min": 70}, {"cliente": "TPC - TPC TOLEDO, PAOLIELLO, DE PAULA, CAMPOS, CUNHA E CORDEIRO ADVOGADOS", "tipo": "Consultoria - Outros", "descricao": "Registro de ficha tempo", "advogado": "RODRIGO PEIXOTO DA SILVA", "data": "2026-06-10", "min": 5}, {"cliente": "WAGNER LUIZ AUGUSTO", "tipo": "Diligência", "descricao": "Ligação para verificação de acesso e remarcação", "advogado": "RODRIGO PEIXOTO DA SILVA", "data": "2026-06-10", "min": 20}, {"cliente": "JOÃO BATISTA DUTRA", "tipo": "Alegações Finais por memoriais - Criminal", "descricao": "Correção de Alegações finais", "advogado": "RODRIGO PEIXOTO DA SILVA", "data": "2026-06-10", "min": 85}, {"cliente": "JOÃO BATISTA DUTRA", "tipo": "Alegações Finais por memoriais - Criminal", "descricao": "Correção de Alegações finais", "advogado": "RODRIGO PEIXOTO DA SILVA", "data": "2026-06-11", "min": 150}, {"cliente": "TPC - TPC TOLEDO, PAOLIELLO, DE PAULA, CAMPOS, CUNHA E CORDEIRO ADVOGADOS", "tipo": "Pesquisas/Estudos", "descricao": "Leitura de jurisprudências", "advogado": "RODRIGO PEIXOTO DA SILVA", "data": "2026-06-11", "min": 35}, {"cliente": "TPC - TPC TOLEDO, PAOLIELLO, DE PAULA, CAMPOS, CUNHA E CORDEIRO ADVOGADOS", "tipo": "Consultoria - Outros", "descricao": "Leitura de e-mails", "advogado": "RODRIGO PEIXOTO DA SILVA", "data": "2026-06-11", "min": 25}, {"cliente": "TPC - TPC TOLEDO, PAOLIELLO, DE PAULA, CAMPOS, CUNHA E CORDEIRO ADVOGADOS", "tipo": "Consultoria - Outros", "descricao": "Análise de movimentações", "advogado": "RODRIGO PEIXOTO DA SILVA", "data": "2026-06-11", "min": 55}, {"cliente": "TPC - TPC TOLEDO, PAOLIELLO, DE PAULA, CAMPOS, CUNHA E CORDEIRO ADVOGADOS", "tipo": "Consultoria - Outros", "descricao": "Registro de ficha tempo", "advogado": "RODRIGO PEIXOTO DA SILVA", "data": "2026-06-11", "min": 5}, {"cliente": "THIAGO JOSÉ DA COSTA NOGUEIRA", "tipo": "Consultoria - Outros", "descricao": "protocolo de petição com anexos", "advogado": "RODRIGO PEIXOTO DA SILVA", "data": "2026-06-11", "min": 75}, {"cliente": "MARIA DAS GRAÇAS DE BARROSDO NASCIMENTO", "tipo": "Manifestação", "descricao": "Juntada de petição e documentos sobre novo pedido de saída", "advogado": "RODRIGO PEIXOTO DA SILVA", "data": "2026-06-11", "min": 30}, {"cliente": "MARIA DAS GRAÇAS DE BARROSDO NASCIMENTO", "tipo": "Diligência", "descricao": "Cobrança de movimentação da secretaria", "advogado": "RODRIGO PEIXOTO DA SILVA", "data": "2026-06-12", "min": 15}, {"cliente": "ROGERIO MENDES DE OLIVEIRA JUNIOR", "tipo": "Diligência", "descricao": "Informação junto a cliente", "advogado": "RODRIGO PEIXOTO DA SILVA", "data": "2026-06-12", "min": 20}, {"cliente": "TPC - TPC TOLEDO, PAOLIELLO, DE PAULA, CAMPOS, CUNHA E CORDEIRO ADVOGADOS", "tipo": "Consultoria - Outros", "descricao": "Análise de movimentações", "advogado": "RODRIGO PEIXOTO DA SILVA", "data": "2026-06-12", "min": 65}, {"cliente": "TPC - TPC TOLEDO, PAOLIELLO, DE PAULA, CAMPOS, CUNHA E CORDEIRO ADVOGADOS", "tipo": "Consultoria - Outros", "descricao": "Leitura de e-mails", "advogado": "RODRIGO PEIXOTO DA SILVA", "data": "2026-06-12", "min": 25}, {"cliente": "TPC - TPC TOLEDO, PAOLIELLO, DE PAULA, CAMPOS, CUNHA E CORDEIRO ADVOGADOS", "tipo": "Consultoria - Outros", "descricao": "Análise de movimentações", "advogado": "RODRIGO PEIXOTO DA SILVA", "data": "2026-06-12", "min": 55}, {"cliente": "TPC - TPC TOLEDO, PAOLIELLO, DE PAULA, CAMPOS, CUNHA E CORDEIRO ADVOGADOS", "tipo": "Consultoria - Outros", "descricao": "Registro de ficha tempo", "advogado": "RODRIGO PEIXOTO DA SILVA", "data": "2026-06-12", "min": 5}, {"cliente": "WAGNER LUIZ AUGUSTO", "tipo": "Consultoria - Outros", "descricao": "Estudo de caso", "advogado": "RODRIGO PEIXOTO DA SILVA", "data": "2026-06-12", "min": 100}, {"cliente": "JOÃO BATISTA DUTRA", "tipo": "Alegações Finais por memoriais - Criminal", "descricao": "Correção de petição", "advogado": "RODRIGO PEIXOTO DA SILVA", "data": "2026-06-12", "min": 55}, {"cliente": "CRISTIANO PANTALEAO MASCHIO", "tipo": "Manifestação", "descricao": "Elaboração de petição sobre acesso do inquérito", "advogado": "RODRIGO PEIXOTO DA SILVA", "data": "2026-06-15", "min": 35}, {"cliente": "TPC - TPC TOLEDO, PAOLIELLO, DE PAULA, CAMPOS, CUNHA E CORDEIRO ADVOGADOS", "tipo": "Prospect - Acompanhamento de Proposta", "descricao": "Conversas sobre proposta enviada - Ferreira Ulhoa", "advogado": "RODRIGO PEIXOTO DA SILVA", "data": "2026-06-15", "min": 15}, {"cliente": "TPC - TPC TOLEDO, PAOLIELLO, DE PAULA, CAMPOS, CUNHA E CORDEIRO ADVOGADOS", "tipo": "Consultoria - Outros", "descricao": "Organização de prazos", "advogado": "RODRIGO PEIXOTO DA SILVA", "data": "2026-06-15", "min": 35}, {"cliente": "TPC - TPC TOLEDO, PAOLIELLO, DE PAULA, CAMPOS, CUNHA E CORDEIRO ADVOGADOS", "tipo": "Consultoria - Outros", "descricao": "Leitura de jurisprudências (conjur)", "advogado": "RODRIGO PEIXOTO DA SILVA", "data": "2026-06-15", "min": 40}, {"cliente": "TPC - TPC TOLEDO, PAOLIELLO, DE PAULA, CAMPOS, CUNHA E CORDEIRO ADVOGADOS", "tipo": "Consultoria - Outros", "descricao": "Leitura de e-mails", "advogado": "RODRIGO PEIXOTO DA SILVA", "data": "2026-06-15", "min": 20}, {"cliente": "TPC - TPC TOLEDO, PAOLIELLO, DE PAULA, CAMPOS, CUNHA E CORDEIRO ADVOGADOS", "tipo": "Consultoria - Outros", "descricao": "Análise de movimentações", "advogado": "RODRIGO PEIXOTO DA SILVA", "data": "2026-06-15", "min": 55}, {"cliente": "TPC - TPC TOLEDO, PAOLIELLO, DE PAULA, CAMPOS, CUNHA E CORDEIRO ADVOGADOS", "tipo": "Consultoria - Outros", "descricao": "Registro de ficha tempo", "advogado": "RODRIGO PEIXOTO DA SILVA", "data": "2026-06-15", "min": 5}, {"cliente": "ROGERIO MENDES DE OLIVEIRA JUNIOR", "tipo": "Análise de decisão", "descricao": "Leitura de acórdão e verificação de ED", "advogado": "RODRIGO PEIXOTO DA SILVA", "data": "2026-06-15", "min": 50}, {"cliente": "MARIA DAS GRAÇAS DE BARROSDO NASCIMENTO", "tipo": "Diligência", "descricao": "Cobrança da secretaria quanto a movimentações", "advogado": "RODRIGO PEIXOTO DA SILVA", "data": "2026-06-15", "min": 20}, {"cliente": "LUCAS MENDES", "tipo": "Manifestação", "descricao": "Elaboração de petição sobre assistente de acusação", "advogado": "RODRIGO PEIXOTO DA SILVA", "data": "2026-06-15", "min": 30}, {"cliente": "SUELY RIBEIRO DE CARVALHO", "tipo": "Consultoria - Outros", "descricao": "Leitura de sentença e organização de pasta e sistema", "advogado": "RODRIGO PEIXOTO DA SILVA", "data": "2026-06-15", "min": 25}, {"cliente": "THIAGO JOSÉ DA COSTA NOGUEIRA", "tipo": "Pesquisas/Estudos", "descricao": "Leitura e análise de manifestação da parte contrária", "advogado": "RODRIGO PEIXOTO DA SILVA", "data": "2026-06-16", "min": 40}, {"cliente": "LUCAS MENDES", "tipo": "Alegações Finais por memoriais - Criminal", "descricao": "Conitnuação Alegações Finais", "advogado": "RODRIGO PEIXOTO DA SILVA", "data": "2026-06-16", "min": 135}, {"cliente": "BERNARDO DECINA ARANTES", "tipo": "Diligência", "descricao": "Protocolo de petição", "advogado": "RODRIGO PEIXOTO DA SILVA", "data": "2026-06-16", "min": 15}, {"cliente": "TPC - TPC TOLEDO, PAOLIELLO, DE PAULA, CAMPOS, CUNHA E CORDEIRO ADVOGADOS", "tipo": "Consultoria - Outros", "descricao": "Leitura de jurisprudências", "advogado": "RODRIGO PEIXOTO DA SILVA", "data": "2026-06-16", "min": 45}, {"cliente": "TPC - TPC TOLEDO, PAOLIELLO, DE PAULA, CAMPOS, CUNHA E CORDEIRO ADVOGADOS", "tipo": "Consultoria - Outros", "descricao": "Leitura de e-mails", "advogado": "RODRIGO PEIXOTO DA SILVA", "data": "2026-06-16", "min": 25}, {"cliente": "TPC - TPC TOLEDO, PAOLIELLO, DE PAULA, CAMPOS, CUNHA E CORDEIRO ADVOGADOS", "tipo": "Consultoria - Outros", "descricao": "Análise de movimentações", "advogado": "RODRIGO PEIXOTO DA SILVA", "data": "2026-06-16", "min": 70}, {"cliente": "TPC - TPC TOLEDO, PAOLIELLO, DE PAULA, CAMPOS, CUNHA E CORDEIRO ADVOGADOS", "tipo": "Consultoria - Outros", "descricao": "Registro de ficha tempo", "advogado": "RODRIGO PEIXOTO DA SILVA", "data": "2026-06-16", "min": 5}, {"cliente": "WAGNER LUIZ AUGUSTO", "tipo": "Consultoria - Outros", "descricao": "Estudo de caso", "advogado": "RODRIGO PEIXOTO DA SILVA", "data": "2026-06-16", "min": 35}, {"cliente": "TPC - TPC TOLEDO, PAOLIELLO, DE PAULA, CAMPOS, CUNHA E CORDEIRO ADVOGADOS", "tipo": "Consultoria - Outros", "descricao": "Leitura de e-mails", "advogado": "RODRIGO PEIXOTO DA SILVA", "data": "2026-06-17", "min": 25}, {"cliente": "TPC - TPC TOLEDO, PAOLIELLO, DE PAULA, CAMPOS, CUNHA E CORDEIRO ADVOGADOS", "tipo": "Consultoria - Outros", "descricao": "Análise de movimentações", "advogado": "RODRIGO PEIXOTO DA SILVA", "data": "2026-06-17", "min": 60}, {"cliente": "TPC - TPC TOLEDO, PAOLIELLO, DE PAULA, CAMPOS, CUNHA E CORDEIRO ADVOGADOS", "tipo": "Consultoria - Outros", "descricao": "Registro de ficha tempo", "advogado": "RODRIGO PEIXOTO DA SILVA", "data": "2026-06-17", "min": 5}, {"cliente": "TPC - TPC TOLEDO, PAOLIELLO, DE PAULA, CAMPOS, CUNHA E CORDEIRO ADVOGADOS", "tipo": "Prospect - Acompanhamento de Proposta", "descricao": "Tentativa de contato", "advogado": "RODRIGO PEIXOTO DA SILVA", "data": "2026-06-17", "min": 15}, {"cliente": "TPC - TPC TOLEDO, PAOLIELLO, DE PAULA, CAMPOS, CUNHA E CORDEIRO ADVOGADOS", "tipo": "Consultoria - Outros", "descricao": "Leitura de jurisprudencia (dizer o direito)", "advogado": "RODRIGO PEIXOTO DA SILVA", "data": "2026-06-17", "min": 30}, {"cliente": "LUCAS MENDES", "tipo": "Alegações Finais por memoriais - Criminal", "descricao": "Conitnuação Alegações Finais", "advogado": "RODRIGO PEIXOTO DA SILVA", "data": "2026-06-17", "min": 95}, {"cliente": "MARIA DAS GRAÇAS DE BARROSDO NASCIMENTO", "tipo": "Consultoria - Outros", "descricao": "Cobrança à secretaria sobre movimentação", "advogado": "RODRIGO PEIXOTO DA SILVA", "data": "2026-06-17", "min": 15}, {"cliente": "MARLON HENRIQUE NONATO SIQUEIRA", "tipo": "Consultoria - Outros", "descricao": "orientações ao cliente", "advogado": "RODRIGO PEIXOTO DA SILVA", "data": "2026-06-17", "min": 15}, {"cliente": "ROGERIO MENDES DE OLIVEIRA JUNIOR", "tipo": "Consultoria - Outros", "descricao": "Análise de decisão e alinhamento de estratégia", "advogado": "RODRIGO PEIXOTO DA SILVA", "data": "2026-06-17", "min": 20}, {"cliente": "ROGERIO MENDES DE OLIVEIRA JUNIOR", "tipo": "Consultoria - Outros", "descricao": "Elaboração e protocolo de ED", "advogado": "RODRIGO PEIXOTO DA SILVA", "data": "2026-06-17", "min": 75}, {"cliente": "THIAGO JOSÉ DA COSTA NOGUEIRA", "tipo": "Diligência", "descricao": "Conversas com o cliente", "advogado": "RODRIGO PEIXOTO DA SILVA", "data": "2026-06-17", "min": 20}, {"cliente": "Maria Clara Veriano dos Santos Queiroz", "tipo": "Consultoria - Outros", "descricao": "Análise de decisões no processo", "advogado": "RODRIGO PEIXOTO DA SILVA", "data": "2026-06-18", "min": 20}, {"cliente": "Maria Clara Veriano dos Santos Queiroz", "tipo": "Consultoria - Outros", "descricao": "Análise de movimentações do processo e diligências a serem feitas", "advogado": "RODRIGO PEIXOTO DA SILVA", "data": "2026-06-18", "min": 35}, {"cliente": "LUCAS MENDES", "tipo": "Alegações Finais por memoriais - Criminal", "descricao": "Conitnuação Alegações Finais", "advogado": "RODRIGO PEIXOTO DA SILVA", "data": "2026-06-18", "min": 95}, {"cliente": "TPC - TPC TOLEDO, PAOLIELLO, DE PAULA, CAMPOS, CUNHA E CORDEIRO ADVOGADOS", "tipo": "Consultoria - Outros", "descricao": "Leitura de e-mails", "advogado": "RODRIGO PEIXOTO DA SILVA", "data": "2026-06-18", "min": 25}, {"cliente": "TPC - TPC TOLEDO, PAOLIELLO, DE PAULA, CAMPOS, CUNHA E CORDEIRO ADVOGADOS", "tipo": "Consultoria - Outros", "descricao": "Análise de movimentações", "advogado": "RODRIGO PEIXOTO DA SILVA", "data": "2026-06-18", "min": 60}, {"cliente": "TPC - TPC TOLEDO, PAOLIELLO, DE PAULA, CAMPOS, CUNHA E CORDEIRO ADVOGADOS", "tipo": "Consultoria - Outros", "descricao": "Registro de ficha tempo", "advogado": "RODRIGO PEIXOTO DA SILVA", "data": "2026-06-18", "min": 5}, {"cliente": "PROSPER MINERACAO S.A", "tipo": "Consultoria - Outros", "descricao": "habilitação de advogado", "advogado": "RODRIGO PEIXOTO DA SILVA", "data": "2026-06-18", "min": 15}, {"cliente": "PROSPER MINERACAO S.A", "tipo": "Consultoria - Outros", "descricao": "habilitação de advogado", "advogado": "RODRIGO PEIXOTO DA SILVA", "data": "2026-06-18", "min": 15}, {"cliente": "PROSPER MINERACAO S.A", "tipo": "Consultoria - Outros", "descricao": "Organização da pasta e redesignação de oitiva", "advogado": "RODRIGO PEIXOTO DA SILVA", "data": "2026-06-18", "min": 15}, {"cliente": "PROSPER MINERACAO S.A", "tipo": "Pesquisas/Estudos", "descricao": "Estudo de caso", "advogado": "RODRIGO PEIXOTO DA SILVA", "data": "2026-06-18", "min": 45}, {"cliente": "PROSPER MINERACAO S.A", "tipo": "Protocolo de petição", "descricao": "habilitação de advogado", "advogado": "RODRIGO PEIXOTO DA SILVA", "data": "2026-06-22", "min": 15}, {"cliente": "Claudio Luiz Gonçalves Cota", "tipo": "Reunião", "descricao": "Alinhamento de estratégia", "advogado": "RODRIGO PEIXOTO DA SILVA", "data": "2026-06-22", "min": 15}, {"cliente": "DOUGLAS PIOVESAN", "tipo": "Consultoria - Outros", "descricao": "Elaboração de guia de pagamento", "advogado": "RODRIGO PEIXOTO DA SILVA", "data": "2026-06-22", "min": 35}, {"cliente": "TPC - TPC TOLEDO, PAOLIELLO, DE PAULA, CAMPOS, CUNHA E CORDEIRO ADVOGADOS", "tipo": "Consultoria - Outros", "descricao": "Leitura de e-mails", "advogado": "RODRIGO PEIXOTO DA SILVA", "data": "2026-06-22", "min": 35}, {"cliente": "TPC - TPC TOLEDO, PAOLIELLO, DE PAULA, CAMPOS, CUNHA E CORDEIRO ADVOGADOS", "tipo": "Consultoria - Outros", "descricao": "Análise de movimentações", "advogado": "RODRIGO PEIXOTO DA SILVA", "data": "2026-06-22", "min": 45}, {"cliente": "TPC - TPC TOLEDO, PAOLIELLO, DE PAULA, CAMPOS, CUNHA E CORDEIRO ADVOGADOS", "tipo": "Consultoria - Outros", "descricao": "Registro de ficha tempo", "advogado": "RODRIGO PEIXOTO DA SILVA", "data": "2026-06-22", "min": 10}, {"cliente": "TPC - TPC TOLEDO, PAOLIELLO, DE PAULA, CAMPOS, CUNHA E CORDEIRO ADVOGADOS", "tipo": "Consultoria - Outros", "descricao": "Leitura de jurisprudencia", "advogado": "RODRIGO PEIXOTO DA SILVA", "data": "2026-06-22", "min": 50}, {"cliente": "LUCAS MENDES", "tipo": "Alegações Finais por memoriais - Criminal", "descricao": "Conitnuação Alegações Finais", "advogado": "RODRIGO PEIXOTO DA SILVA", "data": "2026-06-22", "min": 95}, {"cliente": "LEONARDO RONDON CHEBLY", "tipo": "Elaborar Petição", "descricao": "Elaboração de petição", "advogado": "RODRIGO PEIXOTO DA SILVA", "data": "2026-06-22", "min": 25}, {"cliente": "JOAQUIM JOSÉ DE ANDRADE CARVALHO", "tipo": "Análise de decisão", "descricao": "Análise de decisão juntada no processo (acórdão de julgamento de corréu)", "advogado": "RODRIGO PEIXOTO DA SILVA", "data": "2026-06-22", "min": 40}, {"cliente": "MARIA DAS GRAÇAS DE BARROSDO NASCIMENTO", "tipo": "Consultoria - Outros", "descricao": "Conferência de processo e cobrança de andamento", "advogado": "RODRIGO PEIXOTO DA SILVA", "data": "2026-06-22", "min": 10}, {"cliente": "JOAQUIM JOSÉ DE ANDRADE CARVALHO", "tipo": "Pesquisas/Estudos", "descricao": "Estudo de caso para verificação sobre pedido de provas", "advogado": "RODRIGO PEIXOTO DA SILVA", "data": "2026-06-23", "min": 35}, {"cliente": "JOAQUIM JOSÉ DE ANDRADE CARVALHO", "tipo": "Análise de decisão", "descricao": "Análise de decisão juntada no processo (acórdão de julgamento de corréu)", "advogado": "RODRIGO PEIXOTO DA SILVA", "data": "2026-06-23", "min": 40}, {"cliente": "LUCAS MENDES", "tipo": "Alegações Finais por memoriais - Criminal", "descricao": "Conitnuação Alegações Finais", "advogado": "RODRIGO PEIXOTO DA SILVA", "data": "2026-06-23", "min": 160}, {"cliente": "TPC - TPC TOLEDO, PAOLIELLO, DE PAULA, CAMPOS, CUNHA E CORDEIRO ADVOGADOS", "tipo": "Consultoria - Outros", "descricao": "Leitura de jurisprudencia", "advogado": "RODRIGO PEIXOTO DA SILVA", "data": "2026-06-23", "min": 50}, {"cliente": "TPC - TPC TOLEDO, PAOLIELLO, DE PAULA, CAMPOS, CUNHA E CORDEIRO ADVOGADOS", "tipo": "Consultoria - Outros", "descricao": "Conferência Workflow", "advogado": "RODRIGO PEIXOTO DA SILVA", "data": "2026-06-23", "min": 20}, {"cliente": "TPC - TPC TOLEDO, PAOLIELLO, DE PAULA, CAMPOS, CUNHA E CORDEIRO ADVOGADOS", "tipo": "Reunião", "descricao": "Reunião de alinhamento da equipe", "advogado": "RODRIGO PEIXOTO DA SILVA", "data": "2026-06-23", "min": 60}, {"cliente": "TPC - TPC TOLEDO, PAOLIELLO, DE PAULA, CAMPOS, CUNHA E CORDEIRO ADVOGADOS", "tipo": "Consultoria - Outros", "descricao": "Leitura de e-mails", "advogado": "RODRIGO PEIXOTO DA SILVA", "data": "2026-06-23", "min": 20}, {"cliente": "TPC - TPC TOLEDO, PAOLIELLO, DE PAULA, CAMPOS, CUNHA E CORDEIRO ADVOGADOS", "tipo": "Consultoria - Outros", "descricao": "Análise de movimentações", "advogado": "RODRIGO PEIXOTO DA SILVA", "data": "2026-06-23", "min": 65}, {"cliente": "TPC - TPC TOLEDO, PAOLIELLO, DE PAULA, CAMPOS, CUNHA E CORDEIRO ADVOGADOS", "tipo": "Consultoria - Outros", "descricao": "Registro de ficha tempo", "advogado": "RODRIGO PEIXOTO DA SILVA", "data": "2026-06-23", "min": 10}, {"cliente": "RIMA INDUSTRIAL S/A", "tipo": "Consultoria - Outros", "descricao": "Resposta sobre movimentação do processo", "advogado": "RODRIGO PEIXOTO DA SILVA", "data": "2026-06-23", "min": 20}, {"cliente": "Claudio Luiz Gonçalves Cota", "tipo": "Reunião", "descricao": "Alinhamento de estratégia", "advogado": "RODRIGO PEIXOTO DA SILVA", "data": "2026-06-23", "min": 15}, {"cliente": "Claudio Luiz Gonçalves Cota", "tipo": "Reunião", "descricao": "Alinhamento de estratégia", "advogado": "RODRIGO PEIXOTO DA SILVA", "data": "2026-06-24", "min": 15}, {"cliente": "CASSIA AZEVEDO SILVEIRA", "tipo": "Consultoria - Outros", "descricao": "Verificação de processo e alinhamento", "advogado": "RODRIGO PEIXOTO DA SILVA", "data": "2026-06-24", "min": 20}, {"cliente": "TPC - TPC TOLEDO, PAOLIELLO, DE PAULA, CAMPOS, CUNHA E CORDEIRO ADVOGADOS", "tipo": "Consultoria - Outros", "descricao": "Leitura de e-mails", "advogado": "RODRIGO PEIXOTO DA SILVA", "data": "2026-06-24", "min": 25}, {"cliente": "TPC - TPC TOLEDO, PAOLIELLO, DE PAULA, CAMPOS, CUNHA E CORDEIRO ADVOGADOS", "tipo": "Consultoria - Outros", "descricao": "Análise de movimentações", "advogado": "RODRIGO PEIXOTO DA SILVA", "data": "2026-06-24", "min": 50}, {"cliente": "TPC - TPC TOLEDO, PAOLIELLO, DE PAULA, CAMPOS, CUNHA E CORDEIRO ADVOGADOS", "tipo": "Consultoria - Outros", "descricao": "Registro de ficha tempo", "advogado": "RODRIGO PEIXOTO DA SILVA", "data": "2026-06-24", "min": 10}, {"cliente": "TPC - TPC TOLEDO, PAOLIELLO, DE PAULA, CAMPOS, CUNHA E CORDEIRO ADVOGADOS", "tipo": "Pesquisas/Estudos", "descricao": "Leitura de jurisprudência (dizer o direito)", "advogado": "RODRIGO PEIXOTO DA SILVA", "data": "2026-06-24", "min": 70}, {"cliente": "TPC - TPC TOLEDO, PAOLIELLO, DE PAULA, CAMPOS, CUNHA E CORDEIRO ADVOGADOS", "tipo": "Consultoria - Outros", "descricao": "Leitura de jurisprudencia", "advogado": "RODRIGO PEIXOTO DA SILVA", "data": "2026-06-24", "min": 50}, {"cliente": "LUCAS MENDES", "tipo": "Alegações Finais por memoriais - Criminal", "descricao": "Conitnuação Alegações Finais", "advogado": "RODRIGO PEIXOTO DA SILVA", "data": "2026-06-24", "min": 85}, {"cliente": "LUCAS MENDES", "tipo": "Reunião", "descricao": "Alinhamento sobre estratégica quanto ao prazo para AF", "advogado": "RODRIGO PEIXOTO DA SILVA", "data": "2026-06-24", "min": 20}, {"cliente": "JOAQUIM JOSÉ DE ANDRADE CARVALHO", "tipo": "Análise de decisão", "descricao": "Análise de decisão juntada no processo (acórdão de julgamento de corréu)", "advogado": "RODRIGO PEIXOTO DA SILVA", "data": "2026-06-24", "min": 40}, {"cliente": "PARTNER INDUSTRIAL LTDA.", "tipo": "Pesquisas/Estudos", "descricao": "organização de pastas", "advogado": "RODRIGO PEIXOTO DA SILVA", "data": "2026-06-24", "min": 10}, {"cliente": "THIAGO JOSÉ DA COSTA NOGUEIRA", "tipo": "Embargos de declaração", "descricao": "Leitura de sentença, análise de recurso e elaboração de ED", "advogado": "RODRIGO PEIXOTO DA SILVA", "data": "2026-06-25", "min": 165}, {"cliente": "THIAGO JOSÉ DA COSTA NOGUEIRA", "tipo": "Reunião CLIENTE", "descricao": "Informações prestadas via ligação", "advogado": "RODRIGO PEIXOTO DA SILVA", "data": "2026-06-25", "min": 15}, {"cliente": "TPC - TPC TOLEDO, PAOLIELLO, DE PAULA, CAMPOS, CUNHA E CORDEIRO ADVOGADOS", "tipo": "Pesquisas/Estudos", "descricao": "Leitura de jurisprudência (dizer o direito)", "advogado": "RODRIGO PEIXOTO DA SILVA", "data": "2026-06-25", "min": 30}, {"cliente": "TPC - TPC TOLEDO, PAOLIELLO, DE PAULA, CAMPOS, CUNHA E CORDEIRO ADVOGADOS", "tipo": "Pesquisas/Estudos", "descricao": "organização de pastas", "advogado": "RODRIGO PEIXOTO DA SILVA", "data": "2026-06-25", "min": 75}, {"cliente": "TPC - TPC TOLEDO, PAOLIELLO, DE PAULA, CAMPOS, CUNHA E CORDEIRO ADVOGADOS", "tipo": "Consultoria - Outros", "descricao": "Leitura de e-mails", "advogado": "RODRIGO PEIXOTO DA SILVA", "data": "2026-06-25", "min": 30}, {"cliente": "TPC - TPC TOLEDO, PAOLIELLO, DE PAULA, CAMPOS, CUNHA E CORDEIRO ADVOGADOS", "tipo": "Consultoria - Outros", "descricao": "Análise de movimentações", "advogado": "RODRIGO PEIXOTO DA SILVA", "data": "2026-06-25", "min": 50}, {"cliente": "TPC - TPC TOLEDO, PAOLIELLO, DE PAULA, CAMPOS, CUNHA E CORDEIRO ADVOGADOS", "tipo": "Consultoria - Outros", "descricao": "Registro de ficha tempo", "advogado": "RODRIGO PEIXOTO DA SILVA", "data": "2026-06-25", "min": 5}, {"cliente": "TPC - TPC TOLEDO, PAOLIELLO, DE PAULA, CAMPOS, CUNHA E CORDEIRO ADVOGADOS", "tipo": "Pesquisas/Estudos", "descricao": "organização de pastas", "advogado": "RODRIGO PEIXOTO DA SILVA", "data": "2026-06-26", "min": 205}, {"cliente": "TPC - TPC TOLEDO, PAOLIELLO, DE PAULA, CAMPOS, CUNHA E CORDEIRO ADVOGADOS", "tipo": "Consultoria - Outros", "descricao": "Leitura de e-mails", "advogado": "RODRIGO PEIXOTO DA SILVA", "data": "2026-06-26", "min": 30}, {"cliente": "TPC - TPC TOLEDO, PAOLIELLO, DE PAULA, CAMPOS, CUNHA E CORDEIRO ADVOGADOS", "tipo": "Consultoria - Outros", "descricao": "Análise de movimentações", "advogado": "RODRIGO PEIXOTO DA SILVA", "data": "2026-06-26", "min": 75}, {"cliente": "TPC - TPC TOLEDO, PAOLIELLO, DE PAULA, CAMPOS, CUNHA E CORDEIRO ADVOGADOS", "tipo": "Consultoria - Outros", "descricao": "Registro de ficha tempo", "advogado": "RODRIGO PEIXOTO DA SILVA", "data": "2026-06-26", "min": 5}, {"cliente": "THIAGO JOSÉ DA COSTA NOGUEIRA", "tipo": "Embargos de declaração", "descricao": "Protocolo de ED", "advogado": "RODRIGO PEIXOTO DA SILVA", "data": "2026-06-26", "min": 15}, {"cliente": "MATHEUS VIEIRA DE ALMEIDA", "tipo": "Consultoria - Outros", "descricao": "protocolo de hc", "advogado": "RODRIGO PEIXOTO DA SILVA", "data": "2026-06-26", "min": 15}, {"cliente": "JANELMA FREITAS NELO", "tipo": "Consultoria - Outros", "descricao": "Análise de processo e emissão de guia", "advogado": "RODRIGO PEIXOTO DA SILVA", "data": "2026-06-26", "min": 20}, {"cliente": "MATHEUS VIEIRA DE ALMEIDA", "tipo": "Consultoria - Outros", "descricao": "Consulta processo", "advogado": "RODRIGO PEIXOTO DA SILVA", "data": "2026-06-29", "min": 15}, {"cliente": "TPC - TPC TOLEDO, PAOLIELLO, DE PAULA, CAMPOS, CUNHA E CORDEIRO ADVOGADOS", "tipo": "Consultoria - Outros", "descricao": "Leitura de e-mails", "advogado": "RODRIGO PEIXOTO DA SILVA", "data": "2026-06-29", "min": 40}, {"cliente": "TPC - TPC TOLEDO, PAOLIELLO, DE PAULA, CAMPOS, CUNHA E CORDEIRO ADVOGADOS", "tipo": "Consultoria - Outros", "descricao": "Análise de movimentações", "advogado": "RODRIGO PEIXOTO DA SILVA", "data": "2026-06-29", "min": 45}, {"cliente": "TPC - TPC TOLEDO, PAOLIELLO, DE PAULA, CAMPOS, CUNHA E CORDEIRO ADVOGADOS", "tipo": "Consultoria - Outros", "descricao": "Registro de ficha tempo", "advogado": "RODRIGO PEIXOTO DA SILVA", "data": "2026-06-29", "min": 5}, {"cliente": "TPC - TPC TOLEDO, PAOLIELLO, DE PAULA, CAMPOS, CUNHA E CORDEIRO ADVOGADOS", "tipo": "Pesquisas/Estudos", "descricao": "organização de pastas", "advogado": "RODRIGO PEIXOTO DA SILVA", "data": "2026-06-29", "min": 170}, {"cliente": "Hayslam Nicacio", "tipo": "Consultoria - Outros", "descricao": "Peticionamento de link", "advogado": "RODRIGO PEIXOTO DA SILVA", "data": "2026-06-29", "min": 10}, {"cliente": "Hayslam Nicacio", "tipo": "Consultoria - Outros", "descricao": "elaboração de termo de representação", "advogado": "RODRIGO PEIXOTO DA SILVA", "data": "2026-06-30", "min": 15}, {"cliente": "LUCAS MENDES", "tipo": "Alegações Finais por memoriais - Criminal", "descricao": "Elaboração de alegações finais", "advogado": "RODRIGO PEIXOTO DA SILVA", "data": "2026-06-30", "min": 70}, {"cliente": "SANDRO MAGNO BARBOSA LEAL", "tipo": "Consultoria - Outros", "descricao": "Correção de ED", "advogado": "RODRIGO PEIXOTO DA SILVA", "data": "2026-06-30", "min": 15}, {"cliente": "MARIA DAS GRAÇAS DE BARROSDO NASCIMENTO", "tipo": "PETICAO DIVERSA", "descricao": "Elaboração de petição", "advogado": "RODRIGO PEIXOTO DA SILVA", "data": "2026-06-30", "min": 20}, {"cliente": "MATHEUS VIEIRA DE ALMEIDA", "tipo": "Consultoria - Outros", "descricao": "Consulta processo", "advogado": "RODRIGO PEIXOTO DA SILVA", "data": "2026-06-30", "min": 10}, {"cliente": "MATHEUS VIEIRA DE ALMEIDA", "tipo": "Consultoria - Outros", "descricao": "Elaboração de parecer", "advogado": "RODRIGO PEIXOTO DA SILVA", "data": "2026-06-30", "min": 45}, {"cliente": "THIAGO JOSÉ DA COSTA NOGUEIRA", "tipo": "Consultoria - Reunião/call", "descricao": "Alinhamento com o cliente por telefone", "advogado": "RODRIGO PEIXOTO DA SILVA", "data": "2026-06-30", "min": 10}, {"cliente": "TPC - TPC TOLEDO, PAOLIELLO, DE PAULA, CAMPOS, CUNHA E CORDEIRO ADVOGADOS", "tipo": "Consultoria - Outros", "descricao": "Pedido de reagendamento de oitiva (Luciano Teixeira - ainda não assinou)", "advogado": "RODRIGO PEIXOTO DA SILVA", "data": "2026-06-30", "min": 10}, {"cliente": "TPC - TPC TOLEDO, PAOLIELLO, DE PAULA, CAMPOS, CUNHA E CORDEIRO ADVOGADOS", "tipo": "Consultoria - Outros", "descricao": "Leitura de e-mails", "advogado": "RODRIGO PEIXOTO DA SILVA", "data": "2026-06-30", "min": 40}, {"cliente": "TPC - TPC TOLEDO, PAOLIELLO, DE PAULA, CAMPOS, CUNHA E CORDEIRO ADVOGADOS", "tipo": "Consultoria - Outros", "descricao": "Análise de movimentações", "advogado": "RODRIGO PEIXOTO DA SILVA", "data": "2026-06-30", "min": 55}, {"cliente": "TPC - TPC TOLEDO, PAOLIELLO, DE PAULA, CAMPOS, CUNHA E CORDEIRO ADVOGADOS", "tipo": "Consultoria - Outros", "descricao": "Registro de ficha tempo", "advogado": "RODRIGO PEIXOTO DA SILVA", "data": "2026-06-30", "min": 5}, {"cliente": "TPC - TPC TOLEDO, PAOLIELLO, DE PAULA, CAMPOS, CUNHA E CORDEIRO ADVOGADOS", "tipo": "Reunião", "descricao": "Reunião de alinhamento da equipe", "advogado": "RODRIGO PEIXOTO DA SILVA", "data": "2026-06-30", "min": 85}, {"cliente": "ROBSON FERNANDES LIMA", "tipo": "Consultoria - Outros", "descricao": "Emissão de nova guia Juntada de comprovantes", "advogado": "RODRIGO PEIXOTO DA SILVA", "data": "2026-06-30", "min": 15}, {"cliente": "VIVIANE SANTUARI PARISOTTO MARINO", "tipo": "Consultoria - Outros", "descricao": "leitura de petição", "advogado": "RODRIGO PEIXOTO DA SILVA", "data": "2026-06-30", "min": 10}, {"cliente": "DOUGLAS PIOVESAN", "tipo": "Consultoria - Outros", "descricao": "Emissão de nova guia e Juntada de comprovantes", "advogado": "RODRIGO PEIXOTO DA SILVA", "data": "2026-06-30", "min": 15}, {"cliente": "BRAZIL TOWER COMPANY", "tipo": "Contratação de diligência", "descricao": "Contato com BTC; obtenção de dados para diligência; solicitação para contratação", "advogado": "VINICIUS PAPA SOARES", "data": "2026-06-01", "min": 25}, {"cliente": "AMARO LTDA.", "tipo": "Análise de movimentação processual", "descricao": "Envio de solicitação de acesso aos procedimentos para fins de atualização", "advogado": "VINICIUS PAPA SOARES", "data": "2026-06-01", "min": 10}, {"cliente": "PARTNER INDUSTRIAL LTDA.", "tipo": "Revisão de Minuta", "descricao": "Revisão minuta partner", "advogado": "VINICIUS PAPA SOARES", "data": "2026-06-01", "min": 20}, {"cliente": "JESUILSON JOSE BRAGA SANTOS", "tipo": "Revisão de Minuta", "descricao": "Revisão alegações finais", "advogado": "VINICIUS PAPA SOARES", "data": "2026-06-01", "min": 95}, {"cliente": "BANCO MERCANTIL DO BRASIL S.A", "tipo": "Elaboração de Minuta", "descricao": "Elaboração manifestação Banco Mercantil sobre AIJ; Lançamento tarefa; protocolo e preenchimento do sistema", "advogado": "VINICIUS PAPA SOARES", "data": "2026-06-01", "min": 30}, {"cliente": "TPC - TPC TOLEDO, PAOLIELLO, DE PAULA, CAMPOS, CUNHA E CORDEIRO ADVOGADOS", "tipo": "Consultoria - Outros", "descricao": "Lançamento horas mês de maio; lançamento manual devido a instabilidade do adwin.", "advogado": "VINICIUS PAPA SOARES", "data": "2026-06-01", "min": 85}, {"cliente": "TPC - TPC TOLEDO, PAOLIELLO, DE PAULA, CAMPOS, CUNHA E CORDEIRO ADVOGADOS", "tipo": "Reunião", "descricao": "Reunião Renato e Rodrigo; alinhamento casos Jesuilson; Cristiano", "advogado": "VINICIUS PAPA SOARES", "data": "2026-06-01", "min": 50}, {"cliente": "TPC - TPC TOLEDO, PAOLIELLO, DE PAULA, CAMPOS, CUNHA E CORDEIRO ADVOGADOS", "tipo": "Análise de movimentação processual", "descricao": "Análise da agenda de tarefas; organização de pendência; cancelamento e reagendamento de tarefas", "advogado": "VINICIUS PAPA SOARES", "data": "2026-06-01", "min": 25}, {"cliente": "PAULO CEZAR DE FARIA", "tipo": "Reunião", "descricao": "reunião com Laís e Renato sobre despacho; alinhamento da estratégia; download dos autos da recuperação judicial - extração por partes, considerando o tamanho do arquivo; arquivo com mais de 2.8GB, sendo necessário subdividir em arquivos com no maximo 11MB", "advogado": "VINICIUS PAPA SOARES", "data": "2026-06-01", "min": 170}, {"cliente": "CENCOSUD BRASIL COMERCIAL LTDA.", "tipo": "Revisar Cadastro", "descricao": "Revisão cadastro cencosud; solicitação para lançamento de prazos e tarefas", "advogado": "VINICIUS PAPA SOARES", "data": "2026-06-02", "min": 15}, {"cliente": "WAGNER LUIZ AUGUSTO", "tipo": "Revisar Cadastro", "descricao": "Verificação dos autos para confirmação da ligação do MP; alinhamento com Rodrigo; verificação de contrato junto ao financeiro; download do IPL para verificação do andamento e envio de solicitação para retificação de campos à controladoria", "advogado": "VINICIUS PAPA SOARES", "data": "2026-06-02", "min": 65}, {"cliente": "WILKER NEVES DOS REIS", "tipo": "Análise de movimentação processual", "descricao": "Autorização reagendamento de tarefa", "advogado": "VINICIUS PAPA SOARES", "data": "2026-06-02", "min": 5}, {"cliente": "TPC - TPC TOLEDO, PAOLIELLO, DE PAULA, CAMPOS, CUNHA E CORDEIRO ADVOGADOS", "tipo": "Revisar Cadastro", "descricao": "Verificação dos prazos da equipe para fins de organização", "advogado": "VINICIUS PAPA SOARES", "data": "2026-06-02", "min": 30}, {"cliente": "TPC - TPC TOLEDO, PAOLIELLO, DE PAULA, CAMPOS, CUNHA E CORDEIRO ADVOGADOS", "tipo": "Análise de movimentação processual", "descricao": "Análise de eventuais intimações no SEEU e envio para controladoria (Amália)", "advogado": "VINICIUS PAPA SOARES", "data": "2026-06-02", "min": 5}, {"cliente": "TPC - TPC TOLEDO, PAOLIELLO, DE PAULA, CAMPOS, CUNHA E CORDEIRO ADVOGADOS", "tipo": "Consultoria - Outros", "descricao": "Elaboração de dashboard para acompanhamento de propostas; tarefas administrativas, internas e judiciais. Dashboard criado para toda equipe, para facilitar monitorando das tarefas (administrativas, pessoais, judiciais etc).", "advogado": "VINICIUS PAPA SOARES", "data": "2026-06-02", "min": 110}, {"cliente": "TPC - TPC TOLEDO, PAOLIELLO, DE PAULA, CAMPOS, CUNHA E CORDEIRO ADVOGADOS", "tipo": "Reunião CLIENTE", "descricao": "Reunião Rayane - caso QESH", "advogado": "VINICIUS PAPA SOARES", "data": "2026-06-02", "min": 20}, {"cliente": "ALLUGATOR SERVIÇOS DIGITAIS LTDA", "tipo": "Consultoria - Análise de documentos", "descricao": "Análise e organização dos documentos encaminhados pelo Renato, sobre caso da KINSOL para distribuição. Organização do instrumento; correção da Notícia-Crime e envio de pendências para o dilly", "advogado": "VINICIUS PAPA SOARES", "data": "2026-06-02", "min": 40}, {"cliente": "ALLUGATOR SERVIÇOS DIGITAIS LTDA", "tipo": "Protocolo de petição", "descricao": "Organização do instrumento da Notícia-Crime do Santanna; revisão da minuta de notícia-crime; distribuição e envio dos documentos para Renato", "advogado": "VINICIUS PAPA SOARES", "data": "2026-06-02", "min": 65}, {"cliente": "CELIO GONCALVES SOARES", "tipo": "RESPOSTA DE E-MAIL", "descricao": "Resposta a email do Renato, questionando se tivemos algum retorno sobre proposta relacioanda a procedimento identificado por mim", "advogado": "VINICIUS PAPA SOARES", "data": "2026-06-02", "min": 10}, {"cliente": "UNIMED NACIONAL - COOPERATIVA CENTRAL", "tipo": "Análise de movimentação processual", "descricao": "Autorização reagendamento de tarefa", "advogado": "VINICIUS PAPA SOARES", "data": "2026-06-02", "min": 5}, {"cliente": "LEONARDO RONDON CHEBLY", "tipo": "Consultoria - Elaboração de Procuração", "descricao": "Elaboração de procuração para o Inquérito Policial", "advogado": "VINICIUS PAPA SOARES", "data": "2026-06-02", "min": 5}, {"cliente": "SHIRLENE RABELO SIMÕES", "tipo": "Análise de movimentação processual", "descricao": "Autorização reagendamento de tarefa", "advogado": "VINICIUS PAPA SOARES", "data": "2026-06-02", "min": 5}, {"cliente": "AMARO LTDA.", "tipo": "Envio de relatório", "descricao": "Análise das cópias dos PICs encaminhado pelo MPPE e MPPB e envio de relatório ao cliente com o status atual", "advogado": "VINICIUS PAPA SOARES", "data": "2026-06-02", "min": 35}, {"cliente": "BRAZIL TOWER COMPANY", "tipo": "Contratação de diligência", "descricao": "Confirmação do correspondente; contato com cliente para fins de autorização e formalização da contratação", "advogado": "VINICIUS PAPA SOARES", "data": "2026-06-02", "min": 15}, {"cliente": "BRAZIL TOWER COMPANY", "tipo": "Consultoria - Elaboração de Notificação/Contranotificação", "descricao": "Elaboração de resposta à demanda vinculada ao caso de São Roque/SP; organização da documentação e contato com Khadika", "advogado": "VINICIUS PAPA SOARES", "data": "2026-06-03", "min": 45}, {"cliente": "AMARO LTDA.", "tipo": "Análise de movimentação processual", "descricao": "Autorização reagendamento de tarefa", "advogado": "VINICIUS PAPA SOARES", "data": "2026-06-03", "min": 5}, {"cliente": "JACQUELINE GONCALVES DOS SANTOS", "tipo": "Análise de movimentação processual", "descricao": "Autorização reagendamento de tarefa", "advogado": "VINICIUS PAPA SOARES", "data": "2026-06-03", "min": 5}, {"cliente": "UNIMED NACIONAL - COOPERATIVA CENTRAL", "tipo": "Análise de movimentação processual", "descricao": "Autorização reagendamento de tarefa", "advogado": "VINICIUS PAPA SOARES", "data": "2026-06-03", "min": 5}, {"cliente": "UNIMED NACIONAL - COOPERATIVA CENTRAL", "tipo": "Análise de movimentação processual", "descricao": "Autorização reagendamento de tarefa", "advogado": "VINICIUS PAPA SOARES", "data": "2026-06-03", "min": 5}, {"cliente": "TPC - TPC TOLEDO, PAOLIELLO, DE PAULA, CAMPOS, CUNHA E CORDEIRO ADVOGADOS", "tipo": "Análise de movimentação processual", "descricao": "Análise da agenda de tarefas; organização de pendência; cancelamento e reagendamento de tarefas", "advogado": "VINICIUS PAPA SOARES", "data": "2026-06-03", "min": 40}, {"cliente": "ORGANIZACOES FRANCAP S/A", "tipo": "Análise de movimentação processual", "descricao": "Autorização reagendamento de tarefa", "advogado": "VINICIUS PAPA SOARES", "data": "2026-06-03", "min": 5}, {"cliente": "ORGANIZACOES FRANCAP S/A", "tipo": "Revisão de Minuta", "descricao": "Revisão da resposta à acusação; análise dos autos e pesquisa de jurisprudência", "advogado": "VINICIUS PAPA SOARES", "data": "2026-06-03", "min": 80}, {"cliente": "BANCO MERCANTIL DO BRASIL S.A", "tipo": "Análise de movimentação processual", "descricao": "Autorização reagendamento de tarefa", "advogado": "VINICIUS PAPA SOARES", "data": "2026-06-03", "min": 5}, {"cliente": "STELLANTIS AUTOMOVEIS BRASIL LTDA (Usar para Peugeot)", "tipo": "Contratação de diligência", "descricao": "Solicitação de contratação de correspondente; protocolo petição em delegacia", "advogado": "VINICIUS PAPA SOARES", "data": "2026-06-03", "min": 10}, {"cliente": "JOÃO BATISTA DUTRA", "tipo": "Análise de processo", "descricao": "Análise do processo para identificar possíveis teses para as alegações finais", "advogado": "VINICIUS PAPA SOARES", "data": "2026-06-03", "min": 35}, {"cliente": "JOÃO BATISTA DUTRA", "tipo": "Reunião DISCUSSAO DE TESE", "descricao": "Reunião por telefone com Rodrigo; Dilly, sobre tese (exceção; preliminar de nulidade) e retorno para Mariana", "advogado": "VINICIUS PAPA SOARES", "data": "2026-06-03", "min": 35}, {"cliente": "JOÃO BATISTA DUTRA", "tipo": "Revisão de Minuta", "descricao": "Revisão exceção de suspeição", "advogado": "VINICIUS PAPA SOARES", "data": "2026-06-03", "min": 65}, {"cliente": "CENCOSUD BRASIL COMERCIAL LTDA.", "tipo": "Elaboração de Minuta", "descricao": "Elaboração de minuta - quebra de sigilo; arresto e sequestro", "advogado": "VINICIUS PAPA SOARES", "data": "2026-06-03", "min": 35}, {"cliente": "TPC - TPC TOLEDO, PAOLIELLO, DE PAULA, CAMPOS, CUNHA E CORDEIRO ADVOGADOS", "tipo": "Ausência", "descricao": "Feriado", "advogado": "VINICIUS PAPA SOARES", "data": "2026-06-04", "min": 480}, {"cliente": "JOSE AMADEU SANTOS", "tipo": "Elaboração de Minuta", "descricao": "Elaboração de contrarrazões ao RESE", "advogado": "VINICIUS PAPA SOARES", "data": "2026-06-05", "min": 105}, {"cliente": "JOSE AMADEU SANTOS", "tipo": "Elaboração de Minuta", "descricao": "Finalização e revisão contrarrazões ao RESE", "advogado": "VINICIUS PAPA SOARES", "data": "2026-06-08", "min": 140}, {"cliente": "WILKER NEVES DOS REIS", "tipo": "Análise de movimentação processual", "descricao": "Autorização reagendamento de tarefa", "advogado": "VINICIUS PAPA SOARES", "data": "2026-06-08", "min": 5}, {"cliente": "WAGNER LUIZ AUGUSTO", "tipo": "ELABORACAO DE RELATORIO", "descricao": "Elaboração de estudo de caso sobre a operação (fase 1 e fase 2), para preparação de oitiva. Relatório com 78 páginas", "advogado": "VINICIUS PAPA SOARES", "data": "2026-06-08", "min": 255}, {"cliente": "WAGNER LUIZ AUGUSTO", "tipo": "Consultoria - Outros", "descricao": "Verificação da 2 fase da operação; alinhamento com Renato e Rodrigo; Elaboração de procuração", "advogado": "VINICIUS PAPA SOARES", "data": "2026-06-08", "min": 35}, {"cliente": "TPC - TPC TOLEDO, PAOLIELLO, DE PAULA, CAMPOS, CUNHA E CORDEIRO ADVOGADOS", "tipo": "Cadastrar dados e Agendar prazos", "descricao": "Cadastro de duas novas pastas e solicitação para lançamento dos prazos para controle", "advogado": "VINICIUS PAPA SOARES", "data": "2026-06-08", "min": 20}, {"cliente": "TPC - TPC TOLEDO, PAOLIELLO, DE PAULA, CAMPOS, CUNHA E CORDEIRO ADVOGADOS", "tipo": "Reunião", "descricao": "Conversa com Quites sobre questão criminal", "advogado": "VINICIUS PAPA SOARES", "data": "2026-06-08", "min": 10}, {"cliente": "TPC - TPC TOLEDO, PAOLIELLO, DE PAULA, CAMPOS, CUNHA E CORDEIRO ADVOGADOS", "tipo": "Reunião", "descricao": "Verificação da pauta de audiências e organização com Renato", "advogado": "VINICIUS PAPA SOARES", "data": "2026-06-08", "min": 40}, {"cliente": "BANCO MERCANTIL DO BRASIL S.A", "tipo": "Contato", "descricao": "Contato com secretaria para enviar autos à conclusão", "advogado": "VINICIUS PAPA SOARES", "data": "2026-06-08", "min": 10}, {"cliente": "ORGANIZACOES FRANCAP S/A", "tipo": "Análise de movimentação processual", "descricao": "Autorização reagendamento de tarefa", "advogado": "VINICIUS PAPA SOARES", "data": "2026-06-08", "min": 5}, {"cliente": "ALLUGATOR SERVIÇOS DIGITAIS LTDA", "tipo": "Revisão de Peça Processual", "descricao": "Ajustes na petição da kinsol, enviada pelo Renato", "advogado": "VINICIUS PAPA SOARES", "data": "2026-06-08", "min": 20}, {"cliente": "ALLUGATOR SERVIÇOS DIGITAIS LTDA", "tipo": "Revisão de Peça Processual", "descricao": "Organização instrumento Kinsol; protocolo MPMG", "advogado": "VINICIUS PAPA SOARES", "data": "2026-06-08", "min": 30}, {"cliente": "SHIRLENE RABELO SIMÕES", "tipo": "Análise de movimentação processual", "descricao": "Autorização reagendamento de tarefa", "advogado": "VINICIUS PAPA SOARES", "data": "2026-06-08", "min": 5}, {"cliente": "UNIMED NACIONAL - COOPERATIVA CENTRAL", "tipo": "Análise de movimentação processual", "descricao": "Autorização reagendamento de tarefa", "advogado": "VINICIUS PAPA SOARES", "data": "2026-06-09", "min": 5}, {"cliente": "UNIMED NACIONAL - COOPERATIVA CENTRAL", "tipo": "Análise de movimentação processual", "descricao": "Autorização reagendamento de tarefa", "advogado": "VINICIUS PAPA SOARES", "data": "2026-06-09", "min": 5}, {"cliente": "BERNARDO DECINA ARANTES", "tipo": "Revisão de Minuta", "descricao": "Revisão Resposta à Acusação", "advogado": "VINICIUS PAPA SOARES", "data": "2026-06-09", "min": 20}, {"cliente": "JOAO VICTOR MARQUES DE LANA CASTRO", "tipo": "Revisar Cadastro", "descricao": "Cadastro de novo caso", "advogado": "VINICIUS PAPA SOARES", "data": "2026-06-09", "min": 10}, {"cliente": "TPC - TPC TOLEDO, PAOLIELLO, DE PAULA, CAMPOS, CUNHA E CORDEIRO ADVOGADOS", "tipo": "Análise de movimentação processual", "descricao": "Análise das movimentações processuais, dispensa de prazos e organização da agenda", "advogado": "VINICIUS PAPA SOARES", "data": "2026-06-09", "min": 15}, {"cliente": "TPC - TPC TOLEDO, PAOLIELLO, DE PAULA, CAMPOS, CUNHA E CORDEIRO ADVOGADOS", "tipo": "Consultoria - Análise de documentos", "descricao": "Organização de documentos para envio de propostas e agendamento de reuniões (karine e maurinho)", "advogado": "VINICIUS PAPA SOARES", "data": "2026-06-09", "min": 40}, {"cliente": "BANCO MERCANTIL DO BRASIL S.A", "tipo": "Envio de relatório", "descricao": "Envio de relatório sobre sobre andamento do processo ao cliente", "advogado": "VINICIUS PAPA SOARES", "data": "2026-06-10", "min": 15}, {"cliente": "TPC - TPC TOLEDO, PAOLIELLO, DE PAULA, CAMPOS, CUNHA E CORDEIRO ADVOGADOS", "tipo": "Consultoria - Outros", "descricao": "Análise dos prazos da equipe e gestão das atividades (dashboard)", "advogado": "VINICIUS PAPA SOARES", "data": "2026-06-10", "min": 35}, {"cliente": "WAGNER LUIZ AUGUSTO", "tipo": "ELABORACAO DE RELATORIO", "descricao": "Elaboração de estudo sobre a fase 2 da operação", "advogado": "VINICIUS PAPA SOARES", "data": "2026-06-10", "min": 130}, {"cliente": "WAGNER LUIZ AUGUSTO", "tipo": "ELABORACAO DE RELATORIO", "descricao": "Relatório sobre as medidas cautelares fase 2", "advogado": "VINICIUS PAPA SOARES", "data": "2026-06-10", "min": 120}, {"cliente": "JOSUE JACINTO DA COSTA", "tipo": "Envio de relatório", "descricao": "Envio relatório joão magnecom", "advogado": "VINICIUS PAPA SOARES", "data": "2026-06-10", "min": 10}, {"cliente": "BERNARDO DECINA ARANTES", "tipo": "Revisão de Minuta", "descricao": "Revisão final Resposta à Acusação após correções", "advogado": "VINICIUS PAPA SOARES", "data": "2026-06-10", "min": 35}, {"cliente": "ANA PAULA PEREIRA", "tipo": "Pesquisas/Estudos", "descricao": "Estudo Ação Penal Ana Paula Pereira", "advogado": "VINICIUS PAPA SOARES", "data": "2026-06-11", "min": 25}, {"cliente": "ANA PAULA PEREIRA", "tipo": "Análise de movimentação processual", "descricao": "Autorização reagendamento de tarefa", "advogado": "VINICIUS PAPA SOARES", "data": "2026-06-11", "min": 5}, {"cliente": "LUCAS LACERDA BALBINO", "tipo": "Envio de relatório", "descricao": "Envio atualização cliente", "advogado": "VINICIUS PAPA SOARES", "data": "2026-06-11", "min": 10}, {"cliente": "JOÃO BATISTA DUTRA", "tipo": "Revisão de Minuta", "descricao": "Revisão alegações finais", "advogado": "VINICIUS PAPA SOARES", "data": "2026-06-11", "min": 110}, {"cliente": "WAGNER LUIZ AUGUSTO", "tipo": "Análise de processo", "descricao": "Download do processo no sistema do MP Online", "advogado": "VINICIUS PAPA SOARES", "data": "2026-06-11", "min": 45}, {"cliente": "SILVIO JUNIO ALVES", "tipo": "Análise de movimentação processual", "descricao": "Autorização reagendamento de tarefa", "advogado": "VINICIUS PAPA SOARES", "data": "2026-06-11", "min": 5}, {"cliente": "SILVIO JUNIO ALVES", "tipo": "Revisão de Minuta", "descricao": "Revisão Embargos de Declaração", "advogado": "VINICIUS PAPA SOARES", "data": "2026-06-11", "min": 15}, {"cliente": "CENCOSUD BRASIL COMERCIAL LTDA.", "tipo": "Reunião CLIENTE", "descricao": "Reunião CENCOSUD - Andamento Criminal", "advogado": "VINICIUS PAPA SOARES", "data": "2026-06-11", "min": 40}, {"cliente": "TPC - TPC TOLEDO, PAOLIELLO, DE PAULA, CAMPOS, CUNHA E CORDEIRO ADVOGADOS", "tipo": "Análise de movimentação processual", "descricao": "Análise das movimentações processuais, dispensa de prazos e organização da agenda", "advogado": "VINICIUS PAPA SOARES", "data": "2026-06-11", "min": 65}, {"cliente": "TPC - TPC TOLEDO, PAOLIELLO, DE PAULA, CAMPOS, CUNHA E CORDEIRO ADVOGADOS", "tipo": "Reunião", "descricao": "Reunião RUCR Law - Parceria", "advogado": "VINICIUS PAPA SOARES", "data": "2026-06-11", "min": 90}, {"cliente": "TPC - TPC TOLEDO, PAOLIELLO, DE PAULA, CAMPOS, CUNHA E CORDEIRO ADVOGADOS", "tipo": "Reunião", "descricao": "Reunião Karine Guimarães Alvinópolis", "advogado": "VINICIUS PAPA SOARES", "data": "2026-06-11", "min": 30}, {"cliente": "TPC - TPC TOLEDO, PAOLIELLO, DE PAULA, CAMPOS, CUNHA E CORDEIRO ADVOGADOS", "tipo": "Pesquisas/Estudos", "descricao": "Estudo de caso para Renato - proposta", "advogado": "VINICIUS PAPA SOARES", "data": "2026-06-11", "min": 30}, {"cliente": "TPC - TPC TOLEDO, PAOLIELLO, DE PAULA, CAMPOS, CUNHA E CORDEIRO ADVOGADOS", "tipo": "Ausência", "descricao": "Ausência - quimioterapia pai", "advogado": "VINICIUS PAPA SOARES", "data": "2026-06-12", "min": 180}, {"cliente": "TPC - TPC TOLEDO, PAOLIELLO, DE PAULA, CAMPOS, CUNHA E CORDEIRO ADVOGADOS", "tipo": "Análise de movimentação processual", "descricao": "Análise dos pedidos de reagendamento de prazo", "advogado": "VINICIUS PAPA SOARES", "data": "2026-06-12", "min": 5}, {"cliente": "TPC - TPC TOLEDO, PAOLIELLO, DE PAULA, CAMPOS, CUNHA E CORDEIRO ADVOGADOS", "tipo": "Prospect - Reunião", "descricao": "Reunião Maurinho - Vinícius Michel", "advogado": "VINICIUS PAPA SOARES", "data": "2026-06-12", "min": 65}, {"cliente": "JOÃO BATISTA DUTRA", "tipo": "Revisão de Minuta", "descricao": "Revisão minuta final alegações finais", "advogado": "VINICIUS PAPA SOARES", "data": "2026-06-12", "min": 20}, {"cliente": "VITORIA GONCALVES DA SILVA", "tipo": "Envio de orientações para audiência", "descricao": "ennvio orientações audiência", "advogado": "VINICIUS PAPA SOARES", "data": "2026-06-12", "min": 10}, {"cliente": "JOÃO BATISTA DUTRA", "tipo": "Revisão de Minuta", "descricao": "Revisão minuta final alegações finais para protocolo", "advogado": "VINICIUS PAPA SOARES", "data": "2026-06-15", "min": 15}, {"cliente": "RENATO DINIZ SILVA", "tipo": "Manifestar nos Autos", "descricao": "Manifestação juntada folha de maio", "advogado": "VINICIUS PAPA SOARES", "data": "2026-06-15", "min": 10}, {"cliente": "TPC - TPC TOLEDO, PAOLIELLO, DE PAULA, CAMPOS, CUNHA E CORDEIRO ADVOGADOS", "tipo": "Análise de movimentação processual", "descricao": "Análise das movimentações processuais, dispensa de prazos e organização da agenda", "advogado": "VINICIUS PAPA SOARES", "data": "2026-06-15", "min": 25}, {"cliente": "TPC - TPC TOLEDO, PAOLIELLO, DE PAULA, CAMPOS, CUNHA E CORDEIRO ADVOGADOS", "tipo": "Consultoria - Outros", "descricao": "Elaboração de POP para a área criminal", "advogado": "VINICIUS PAPA SOARES", "data": "2026-06-15", "min": 55}, {"cliente": "TPC - TPC TOLEDO, PAOLIELLO, DE PAULA, CAMPOS, CUNHA E CORDEIRO ADVOGADOS", "tipo": "Consultoria - Outros", "descricao": "Leitura de artigo jurídico, atualização jurisprudencias, no site conjur", "advogado": "VINICIUS PAPA SOARES", "data": "2026-06-15", "min": 25}, {"cliente": "TPC - TPC TOLEDO, PAOLIELLO, DE PAULA, CAMPOS, CUNHA E CORDEIRO ADVOGADOS", "tipo": "Ausência", "descricao": "Acompanhamento de oitiva em caso pessoal", "advogado": "VINICIUS PAPA SOARES", "data": "2026-06-15", "min": 65}, {"cliente": "ISAQUE DANIEL DE MOURA", "tipo": "Contato", "descricao": "Contato com cliente para comunicar andamento do inquérito policial", "advogado": "VINICIUS PAPA SOARES", "data": "2026-06-15", "min": 15}, {"cliente": "BANCO MERCANTIL DO BRASIL S.A", "tipo": "RESPOSTA DE E-MAIL", "descricao": "envio de email ao cliente para comunicar sobre manutenção da audiência", "advogado": "VINICIUS PAPA SOARES", "data": "2026-06-15", "min": 10}, {"cliente": "BANCO MERCANTIL DO BRASIL S.A", "tipo": "Alegações Finais por memoriais - Criminal", "descricao": "Elaboração das alegações finais e revisão", "advogado": "VINICIUS PAPA SOARES", "data": "2026-06-15", "min": 70}, {"cliente": "ARTHUR CASSIM FERNANDES VENTURA", "tipo": "Revisar Cadastro", "descricao": "Solicitação para criação de subpasta - recurso de apelação", "advogado": "VINICIUS PAPA SOARES", "data": "2026-06-15", "min": 10}, {"cliente": "DEBORA THAYNA DOS SANTOS", "tipo": "Envio de relatório", "descricao": "Envio de relatório sobre andamento dos casos para cliente", "advogado": "VINICIUS PAPA SOARES", "data": "2026-06-15", "min": 15}, {"cliente": "FERNANDO DUARTE LEMOS", "tipo": "Análise de decisão", "descricao": "Análise da decisão e envio para Renato; Preenchimento e atualização do sistema", "advogado": "VINICIUS PAPA SOARES", "data": "2026-06-15", "min": 10}, {"cliente": "UNIMED NACIONAL - COOPERATIVA CENTRAL", "tipo": "Análise de movimentação processual", "descricao": "Autorização reagendamento de tarefa", "advogado": "VINICIUS PAPA SOARES", "data": "2026-06-16", "min": 5}, {"cliente": "SHIRLENE RABELO SIMÕES", "tipo": "Análise de movimentação processual", "descricao": "Autorização reagendamento de tarefa", "advogado": "VINICIUS PAPA SOARES", "data": "2026-06-16", "min": 5}, {"cliente": "STEPHANO DA CUNHA E FARIAS", "tipo": "Completar cadastro", "descricao": "Revisão dos dados cadastrais da pasta, considerando migração para Pje", "advogado": "VINICIUS PAPA SOARES", "data": "2026-06-16", "min": 10}, {"cliente": "ULISSES CAMPELO DAVILA TOLEDO", "tipo": "Análise de movimentação processual", "descricao": "Autorização reagendamento de tarefa", "advogado": "VINICIUS PAPA SOARES", "data": "2026-06-16", "min": 5}, {"cliente": "TPC - TPC TOLEDO, PAOLIELLO, DE PAULA, CAMPOS, CUNHA E CORDEIRO ADVOGADOS", "tipo": "Consultoria - Outros", "descricao": "Organização das tarefas da área", "advogado": "VINICIUS PAPA SOARES", "data": "2026-06-16", "min": 35}, {"cliente": "TPC - TPC TOLEDO, PAOLIELLO, DE PAULA, CAMPOS, CUNHA E CORDEIRO ADVOGADOS", "tipo": "Prospect - Reunião", "descricao": "Reunião Pretinha (Alvinópolis) - não entrou na reunião", "advogado": "VINICIUS PAPA SOARES", "data": "2026-06-16", "min": 20}, {"cliente": "PROSPER MINERACAO S.A", "tipo": "Consultoria - Elaboração de Procuração", "descricao": "Elaboração de procuração para nova demanda encaminhada pelo Renato", "advogado": "VINICIUS PAPA SOARES", "data": "2026-06-16", "min": 10}, {"cliente": "ISAQUE DANIEL DE MOURA", "tipo": "Contato", "descricao": "Contato com cliente para comunicar andamento do inquérito policial", "advogado": "VINICIUS PAPA SOARES", "data": "2026-06-16", "min": 10}, {"cliente": "ISAQUE DANIEL DE MOURA", "tipo": "Elaboração de Minuta", "descricao": "Elaboração de minuta para envio ao cliente, visando reembolso dos valores", "advogado": "VINICIUS PAPA SOARES", "data": "2026-06-16", "min": 15}, {"cliente": "TPC - TPC TOLEDO, PAOLIELLO, DE PAULA, CAMPOS, CUNHA E CORDEIRO ADVOGADOS", "tipo": "Análise de movimentação processual", "descricao": "Análise das movimentações processuais, dispensa de prazos e organização da agenda", "advogado": "VINICIUS PAPA SOARES", "data": "2026-06-16", "min": 25}, {"cliente": "TPC - TPC TOLEDO, PAOLIELLO, DE PAULA, CAMPOS, CUNHA E CORDEIRO ADVOGADOS", "tipo": "Reunião", "descricao": "Reunião Dilly e Mariana - saída", "advogado": "VINICIUS PAPA SOARES", "data": "2026-06-16", "min": 15}, {"cliente": "TPC - TPC TOLEDO, PAOLIELLO, DE PAULA, CAMPOS, CUNHA E CORDEIRO ADVOGADOS", "tipo": "Contato", "descricao": "Contato Nathalia Passaro Verde - possível nova demanda", "advogado": "VINICIUS PAPA SOARES", "data": "2026-06-16", "min": 10}, {"cliente": "TPC - TPC TOLEDO, PAOLIELLO, DE PAULA, CAMPOS, CUNHA E CORDEIRO ADVOGADOS", "tipo": "Consultoria - Outros", "descricao": "Elaboração de POP para a área criminal; Revisão e Alinhamento com Renato", "advogado": "VINICIUS PAPA SOARES", "data": "2026-06-16", "min": 85}, {"cliente": "STELLANTIS AUTOMOVEIS BRASIL LTDA (Usar para Peugeot)", "tipo": "RESPOSTA DE E-MAIL", "descricao": "Resposta de email Andrey; solicitação para assinatura do documento e elaboração de resposta para a Polícia Civil", "advogado": "VINICIUS PAPA SOARES", "data": "2026-06-16", "min": 15}, {"cliente": "WAGNER LUIZ AUGUSTO", "tipo": "Análise de processo", "descricao": "Análise do Inquérito Civil da GTBIOS", "advogado": "VINICIUS PAPA SOARES", "data": "2026-06-16", "min": 95}, {"cliente": "VITORIA GONCALVES DA SILVA", "tipo": "Consultoria - Elaboração de Procuração", "descricao": "Elaboração procuração vitória e envio para cliente (263687106-000016)", "advogado": "VINICIUS PAPA SOARES", "data": "2026-06-17", "min": 10}, {"cliente": "BANCO MERCANTIL DO BRASIL S.A", "tipo": "Elaboração de Minuta", "descricao": "Elaboração de minuta requerendo isençaõ das verbas para expedição da carta precatória", "advogado": "VINICIUS PAPA SOARES", "data": "2026-06-17", "min": 30}, {"cliente": "BANCO MERCANTIL DO BRASIL S.A", "tipo": "Elaboração de Minuta", "descricao": "Organização de perguntas e estrutura para evental alegações finais orais", "advogado": "VINICIUS PAPA SOARES", "data": "2026-06-17", "min": 55}, {"cliente": "BANCO MERCANTIL DO BRASIL S.A", "tipo": "Audiência de Instrução e Julgamento", "descricao": "Audiência de instrução e julgamento", "advogado": "VINICIUS PAPA SOARES", "data": "2026-06-17", "min": 95}, {"cliente": "BANCO MERCANTIL DO BRASIL S.A", "tipo": "Juntada de carta de preposição", "descricao": "Elaboração carta de preposição; contato com rodrigo e envio por email ao Dr. Valter", "advogado": "VINICIUS PAPA SOARES", "data": "2026-06-17", "min": 15}, {"cliente": "PROSPER MINERACAO S.A", "tipo": "Cadastrar dados e Agendar prazos", "descricao": "Consulta e cadastro de duas novas pastas; envio das orientações para advogado; contato com Mariana; organização dos documentos e envio dos prazos a serem lançados pela controladoria", "advogado": "VINICIUS PAPA SOARES", "data": "2026-06-17", "min": 35}, {"cliente": "TPC - TPC TOLEDO, PAOLIELLO, DE PAULA, CAMPOS, CUNHA E CORDEIRO ADVOGADOS", "tipo": "Prospect - Acompanhamento de Proposta", "descricao": "Envio de proposta para Natalia da Pássaro Verde", "advogado": "VINICIUS PAPA SOARES", "data": "2026-06-17", "min": 5}, {"cliente": "TPC - TPC TOLEDO, PAOLIELLO, DE PAULA, CAMPOS, CUNHA E CORDEIRO ADVOGADOS", "tipo": "Reunião", "descricao": "Reunião com Dilly para alinhar pendências da área (contratos e demandas em aberto)", "advogado": "VINICIUS PAPA SOARES", "data": "2026-06-17", "min": 35}, {"cliente": "ANA PAULA PEREIRA", "tipo": "Análise de movimentação processual", "descricao": "Autorização reagendamento de tarefa", "advogado": "VINICIUS PAPA SOARES", "data": "2026-06-17", "min": 5}, {"cliente": "ROGERIO MENDES DE OLIVEIRA JUNIOR", "tipo": "Revisão de Minuta", "descricao": "Revisão Embargos de Declaração", "advogado": "VINICIUS PAPA SOARES", "data": "2026-06-17", "min": 10}, {"cliente": "UNIMED NACIONAL - COOPERATIVA CENTRAL", "tipo": "Análise de movimentação processual", "descricao": "Autorização reagendamento de tarefa", "advogado": "VINICIUS PAPA SOARES", "data": "2026-06-17", "min": 5}, {"cliente": "Marcel Collin de Noronha Guarani", "tipo": "Análise de movimentação processual", "descricao": "Autorização reagendamento de tarefa", "advogado": "VINICIUS PAPA SOARES", "data": "2026-06-18", "min": 5}, {"cliente": "TPC - TPC TOLEDO, PAOLIELLO, DE PAULA, CAMPOS, CUNHA E CORDEIRO ADVOGADOS", "tipo": "Ausência", "descricao": "Consulta médica com meu pai - quimioterapia", "advogado": "VINICIUS PAPA SOARES", "data": "2026-06-18", "min": 90}, {"cliente": "TPC - TPC TOLEDO, PAOLIELLO, DE PAULA, CAMPOS, CUNHA E CORDEIRO ADVOGADOS", "tipo": "Análise de movimentação processual", "descricao": "análise de movimentações processuais, dispensa de prazos, organização da agenda e leitura de emails", "advogado": "VINICIUS PAPA SOARES", "data": "2026-06-18", "min": 40}, {"cliente": "TPC - TPC TOLEDO, PAOLIELLO, DE PAULA, CAMPOS, CUNHA E CORDEIRO ADVOGADOS", "tipo": "Ausência", "descricao": "Festa junina", "advogado": "VINICIUS PAPA SOARES", "data": "2026-06-18", "min": 90}, {"cliente": "TPC - TPC TOLEDO, PAOLIELLO, DE PAULA, CAMPOS, CUNHA E CORDEIRO ADVOGADOS", "tipo": "Consultoria - Outros", "descricao": "Análise das pastas/horas da Mariana, considerando a saída", "advogado": "VINICIUS PAPA SOARES", "data": "2026-06-18", "min": 25}, {"cliente": "ALLUGATOR SERVIÇOS DIGITAIS LTDA", "tipo": "Distribuição de Petição Inicial", "descricao": "Redistribuição dos autos em Belo Horizonte", "advogado": "VINICIUS PAPA SOARES", "data": "2026-06-18", "min": 20}, {"cliente": "BANCO MERCANTIL DO BRASIL S.A", "tipo": "Alegações Finais por memoriais - Criminal", "descricao": "Elaboração final das alegações finais, após audiência", "advogado": "VINICIUS PAPA SOARES", "data": "2026-06-18", "min": 65}, {"cliente": "VITORIA GONCALVES DA SILVA", "tipo": "Habilitar advogado - Criminal", "descricao": "Elaboração de petição requerendo habilitação; protocolo e conclusão da tarefa", "advogado": "VINICIUS PAPA SOARES", "data": "2026-06-18", "min": 10}, {"cliente": "WAGNER LUIZ AUGUSTO", "tipo": "Completar cadastro", "descricao": "Solicitação de cadastro de 3 novas pastas, referentes à operação tallow eco - fase 2", "advogado": "VINICIUS PAPA SOARES", "data": "2026-06-18", "min": 20}, {"cliente": "ISAQUE DANIEL DE MOURA", "tipo": "Contato", "descricao": "Contato com cliente; envio de carta escrita à próprio punho e contato com Google", "advogado": "VINICIUS PAPA SOARES", "data": "2026-06-19", "min": 25}, {"cliente": "TPC - TPC TOLEDO, PAOLIELLO, DE PAULA, CAMPOS, CUNHA E CORDEIRO ADVOGADOS", "tipo": "Ausência", "descricao": "Quimioterapia pai (09 às 11h30)", "advogado": "VINICIUS PAPA SOARES", "data": "2026-06-19", "min": 150}, {"cliente": "TPC - TPC TOLEDO, PAOLIELLO, DE PAULA, CAMPOS, CUNHA E CORDEIRO ADVOGADOS", "tipo": "Prospect - Reunião", "descricao": "Contato com Eliane para agendamento de reunião com Pretinha (Alvinópolis)", "advogado": "VINICIUS PAPA SOARES", "data": "2026-06-19", "min": 20}, {"cliente": "TPC - TPC TOLEDO, PAOLIELLO, DE PAULA, CAMPOS, CUNHA E CORDEIRO ADVOGADOS", "tipo": "Consultoria - Análise de documentos", "descricao": "Análise das horas lançadas por Mariana ao longo de 2026 para redistribuição dos casos da equipe", "advogado": "VINICIUS PAPA SOARES", "data": "2026-06-19", "min": 35}, {"cliente": "TPC - TPC TOLEDO, PAOLIELLO, DE PAULA, CAMPOS, CUNHA E CORDEIRO ADVOGADOS", "tipo": "Consultoria - Outros", "descricao": "Análise das pastas/horas da Mariana, considerando a saída", "advogado": "VINICIUS PAPA SOARES", "data": "2026-06-22", "min": 20}, {"cliente": "TPC - TPC TOLEDO, PAOLIELLO, DE PAULA, CAMPOS, CUNHA E CORDEIRO ADVOGADOS", "tipo": "RESPOSTA DE E-MAIL", "descricao": "Resposta email controladoria sobre processos não cadastrados no sistema", "advogado": "VINICIUS PAPA SOARES", "data": "2026-06-22", "min": 10}, {"cliente": "TPC - TPC TOLEDO, PAOLIELLO, DE PAULA, CAMPOS, CUNHA E CORDEIRO ADVOGADOS", "tipo": "Consultoria - Outros", "descricao": "Análise pastas equipe e horas lançadas para redistribuição dos casos após saída Mariana; Sanemanento base - casos Laís", "advogado": "VINICIUS PAPA SOARES", "data": "2026-06-22", "min": 285}, {"cliente": "TPC - TPC TOLEDO, PAOLIELLO, DE PAULA, CAMPOS, CUNHA E CORDEIRO ADVOGADOS", "tipo": "Reunião", "descricao": "Reunião com Dilly sobre pastas e horas Mariana", "advogado": "VINICIUS PAPA SOARES", "data": "2026-06-22", "min": 30}, {"cliente": "ADRIANO REIS DE OLIVEIRA", "tipo": "Análise de movimentação processual", "descricao": "Autorização reagendamento de prazo", "advogado": "VINICIUS PAPA SOARES", "data": "2026-06-22", "min": 5}, {"cliente": "JOSE AUGUSTO PECANHA GUEDES JUNIOR", "tipo": "Elaboração de Minuta", "descricao": "Elaboração minuta requerendo descadastramento execução", "advogado": "VINICIUS PAPA SOARES", "data": "2026-06-22", "min": 20}, {"cliente": "BANCO MERCANTIL DO BRASIL S.A", "tipo": "Elaboração de Minuta", "descricao": "Revisão final das alegações finais, diante da juntada da mídia", "advogado": "VINICIUS PAPA SOARES", "data": "2026-06-22", "min": 60}, {"cliente": "TPC - TPC TOLEDO, PAOLIELLO, DE PAULA, CAMPOS, CUNHA E CORDEIRO ADVOGADOS", "tipo": "Reunião", "descricao": "Reunião dilly reogarnização de pastas - saneamento", "advogado": "VINICIUS PAPA SOARES", "data": "2026-06-23", "min": 80}, {"cliente": "QESH TECNOLOGIA LTDA", "tipo": "Análise de movimentação processual", "descricao": "Autorização de reagendamento de prazo", "advogado": "VINICIUS PAPA SOARES", "data": "2026-06-23", "min": 5}, {"cliente": "ORGANIZACOES FRANCAP S/A", "tipo": "Revisão de Minuta", "descricao": "Revisão minuta resposta ofício FRANCAP", "advogado": "VINICIUS PAPA SOARES", "data": "2026-06-23", "min": 10}, {"cliente": "DIANA PEREIRA DO NASCIMENTO", "tipo": "Análise de movimentação processual", "descricao": "Autorização de reagendamento de prazo", "advogado": "VINICIUS PAPA SOARES", "data": "2026-06-23", "min": 5}, {"cliente": "ADRIANO REIS DE OLIVEIRA", "tipo": "Análise de movimentação processual", "descricao": "Autorização de reagendamento de prazo", "advogado": "VINICIUS PAPA SOARES", "data": "2026-06-23", "min": 5}, {"cliente": "SANDRO MAGNO BARBOSA LEAL", "tipo": "Análise de movimentação processual", "descricao": "Autorização de reagendamento de prazo", "advogado": "VINICIUS PAPA SOARES", "data": "2026-06-23", "min": 5}, {"cliente": "SANDRO MAGNO BARBOSA LEAL", "tipo": "Análise de movimentação processual", "descricao": "Autorização de reagendamento de prazo", "advogado": "VINICIUS PAPA SOARES", "data": "2026-06-23", "min": 5}, {"cliente": "Marcel Collin de Noronha Guarani", "tipo": "Análise de movimentação processual", "descricao": "Autorização de reagendamento de prazo", "advogado": "VINICIUS PAPA SOARES", "data": "2026-06-23", "min": 5}, {"cliente": "ANA PAULA PEREIRA", "tipo": "Análise de movimentação processual", "descricao": "Autorização de reagendamento de prazo", "advogado": "VINICIUS PAPA SOARES", "data": "2026-06-23", "min": 5}, {"cliente": "ULISSES CAMPELO DAVILA TOLEDO", "tipo": "Análise de movimentação processual", "descricao": "Autorização de reagendamento de prazo", "advogado": "VINICIUS PAPA SOARES", "data": "2026-06-23", "min": 5}, {"cliente": "ANA FARIA PAOLIELLO", "tipo": "Acompanhamento das oitivas", "descricao": "Acompanhamento Eduardo oitiva", "advogado": "VINICIUS PAPA SOARES", "data": "2026-06-23", "min": 100}, {"cliente": "TPC - TPC TOLEDO, PAOLIELLO, DE PAULA, CAMPOS, CUNHA E CORDEIRO ADVOGADOS", "tipo": "Consultoria - Outros", "descricao": "Análise pastas equipe e horas lançadas para redistribuição dos casos após saída Mariana; Sanemanento base - casos Mariana", "advogado": "VINICIUS PAPA SOARES", "data": "2026-06-23", "min": 125}, {"cliente": "TPC - TPC TOLEDO, PAOLIELLO, DE PAULA, CAMPOS, CUNHA E CORDEIRO ADVOGADOS", "tipo": "Reunião", "descricao": "Reunião de área", "advogado": "VINICIUS PAPA SOARES", "data": "2026-06-23", "min": 65}, {"cliente": "TPC - TPC TOLEDO, PAOLIELLO, DE PAULA, CAMPOS, CUNHA E CORDEIRO ADVOGADOS", "tipo": "Prospect - Reunião", "descricao": "Reunião RUCR Law - Parceria", "advogado": "VINICIUS PAPA SOARES", "data": "2026-06-23", "min": 50}, {"cliente": "TPC - TPC TOLEDO, PAOLIELLO, DE PAULA, CAMPOS, CUNHA E CORDEIRO ADVOGADOS", "tipo": "Análise de movimentação processual", "descricao": "Análise das movimentações processuais, dispensa de prazos e organização da agenda", "advogado": "VINICIUS PAPA SOARES", "data": "2026-06-23", "min": 40}, {"cliente": "TPC - TPC TOLEDO, PAOLIELLO, DE PAULA, CAMPOS, CUNHA E CORDEIRO ADVOGADOS", "tipo": "Elaborar Apresentação/BI", "descricao": "Elaboração de apresentação para reunião comercial/rentabilidade", "advogado": "VINICIUS PAPA SOARES", "data": "2026-06-23", "min": 70}, {"cliente": "TPC - TPC TOLEDO, PAOLIELLO, DE PAULA, CAMPOS, CUNHA E CORDEIRO ADVOGADOS", "tipo": "Consultoria - Outros", "descricao": "Avaliação equipe", "advogado": "VINICIUS PAPA SOARES", "data": "2026-06-23", "min": 15}, {"cliente": "TPC - TPC TOLEDO, PAOLIELLO, DE PAULA, CAMPOS, CUNHA E CORDEIRO ADVOGADOS", "tipo": "Consultoria - Outros", "descricao": "Análise pastas equipe e horas lançadas para redistribuição dos casos após saída Mariana; Sanemanento base - casos Rodrigo", "advogado": "VINICIUS PAPA SOARES", "data": "2026-06-24", "min": 165}, {"cliente": "TPC - TPC TOLEDO, PAOLIELLO, DE PAULA, CAMPOS, CUNHA E CORDEIRO ADVOGADOS", "tipo": "Consultoria - Outros", "descricao": "Envio de instruções para a equipe para saneamento da base", "advogado": "VINICIUS PAPA SOARES", "data": "2026-06-24", "min": 45}, {"cliente": "TPC - TPC TOLEDO, PAOLIELLO, DE PAULA, CAMPOS, CUNHA E CORDEIRO ADVOGADOS", "tipo": "Análise de movimentação processual", "descricao": "Análise e autorização dos pedidos de reagendamento", "advogado": "VINICIUS PAPA SOARES", "data": "2026-06-24", "min": 10}, {"cliente": "BIOSEG SEGURANCA DO TRABALHO S.A.", "tipo": "RESPOSTA DE E-MAIL", "descricao": "Resposta e-mail BIOSEG sobre possibilidade de restituição de coisas apreendidas", "advogado": "VINICIUS PAPA SOARES", "data": "2026-06-24", "min": 35}, {"cliente": "FELIPE MORAES DE OLIVEIRA", "tipo": "Elaboração de Minuta", "descricao": "Elaboração de embargos de declaração no Agravo Regimental no ARESP", "advogado": "VINICIUS PAPA SOARES", "data": "2026-06-24", "min": 45}, {"cliente": "FELIPE MORAES DE OLIVEIRA", "tipo": "Revisão de Minuta", "descricao": "Revisão Embargos e protocolo", "advogado": "VINICIUS PAPA SOARES", "data": "2026-06-25", "min": 15}, {"cliente": "SECULUS DA AMAZONIA INDUSTRIA E COMERCIO S.A", "tipo": "Contato", "descricao": "Contato Debora para reagendamento reunião", "advogado": "VINICIUS PAPA SOARES", "data": "2026-06-25", "min": 5}, {"cliente": "ITAMBE ALIMENTOS LTDA", "tipo": "Consultoria - Outros", "descricao": "Tentativa de acesso ao sistema da LACTALIS para preenchimento de informações do processo", "advogado": "VINICIUS PAPA SOARES", "data": "2026-06-25", "min": 20}, {"cliente": "BANCO MERCANTIL DO BRASIL S.A", "tipo": "Elaboração de Minuta", "descricao": "Elaboração de minuta requerendo descadastramento do Renato", "advogado": "VINICIUS PAPA SOARES", "data": "2026-06-25", "min": 10}, {"cliente": "TPC - TPC TOLEDO, PAOLIELLO, DE PAULA, CAMPOS, CUNHA E CORDEIRO ADVOGADOS", "tipo": "Análise de movimentação processual", "descricao": "Análise e autorização dos pedidos de reagendamento", "advogado": "VINICIUS PAPA SOARES", "data": "2026-06-25", "min": 10}, {"cliente": "TPC - TPC TOLEDO, PAOLIELLO, DE PAULA, CAMPOS, CUNHA E CORDEIRO ADVOGADOS", "tipo": "Consultoria - Outros", "descricao": "Análise de processos não cadastrados e retorno para controladoria", "advogado": "VINICIUS PAPA SOARES", "data": "2026-06-25", "min": 15}, {"cliente": "TPC - TPC TOLEDO, PAOLIELLO, DE PAULA, CAMPOS, CUNHA E CORDEIRO ADVOGADOS", "tipo": "Consultoria - Outros", "descricao": "Desenvolvimento de ferramenta para identificar pessoas jurídicas vinculadas aos clientes da área penal", "advogado": "VINICIUS PAPA SOARES", "data": "2026-06-25", "min": 135}, {"cliente": "TPC - TPC TOLEDO, PAOLIELLO, DE PAULA, CAMPOS, CUNHA E CORDEIRO ADVOGADOS", "tipo": "Revisar Cadastro", "descricao": "Solicitação de cadastro de nova pasta - marambaia", "advogado": "VINICIUS PAPA SOARES", "data": "2026-06-25", "min": 10}, {"cliente": "TPC - TPC TOLEDO, PAOLIELLO, DE PAULA, CAMPOS, CUNHA E CORDEIRO ADVOGADOS", "tipo": "Reunião SOCIOS", "descricao": "Reunião apresentação com sócios (rentabilidade e gestão)", "advogado": "VINICIUS PAPA SOARES", "data": "2026-06-25", "min": 75}, {"cliente": "MATHEUS VIEIRA DE ALMEIDA", "tipo": "Revisão de Minuta", "descricao": "Revisão minuta HC Renato Dilly", "advogado": "VINICIUS PAPA SOARES", "data": "2026-06-25", "min": 40}, {"cliente": "THIAGO JOSÉ DA COSTA NOGUEIRA", "tipo": "Análise de decisão", "descricao": "Análise decisão medidas protetivas e envio ao Renato e Rodrigo; redistribuição da pasta", "advogado": "VINICIUS PAPA SOARES", "data": "2026-06-25", "min": 10}, {"cliente": "THIAGO JOSÉ DA COSTA NOGUEIRA", "tipo": "Revisão de Minuta", "descricao": "revisão embargos de declaração", "advogado": "VINICIUS PAPA SOARES", "data": "2026-06-25", "min": 10}, {"cliente": "TPC - TPC TOLEDO, PAOLIELLO, DE PAULA, CAMPOS, CUNHA E CORDEIRO ADVOGADOS", "tipo": "Ausência", "descricao": "Deslocamento para Tiradentes e casamento em que fui padrinho", "advogado": "VINICIUS PAPA SOARES", "data": "2026-06-26", "min": 360}, {"cliente": "TPC - TPC TOLEDO, PAOLIELLO, DE PAULA, CAMPOS, CUNHA E CORDEIRO ADVOGADOS", "tipo": "Análise de movimentação processual", "descricao": "Leitura de emails, organização pendências, análise das movimentações processuais e dispensa de prazos", "advogado": "VINICIUS PAPA SOARES", "data": "2026-06-29", "min": 60}, {"cliente": "TPC - TPC TOLEDO, PAOLIELLO, DE PAULA, CAMPOS, CUNHA E CORDEIRO ADVOGADOS", "tipo": "Consultoria - Outros", "descricao": "Autorização pedidos de reagendamento de prazo", "advogado": "VINICIUS PAPA SOARES", "data": "2026-06-29", "min": 10}, {"cliente": "TPC - TPC TOLEDO, PAOLIELLO, DE PAULA, CAMPOS, CUNHA E CORDEIRO ADVOGADOS", "tipo": "Consultoria - Outros", "descricao": "Conferência de pendências em contratos para cadastramento de pastas e alinhamento com Renato, considerando suas férias", "advogado": "VINICIUS PAPA SOARES", "data": "2026-06-29", "min": 35}, {"cliente": "TPC - TPC TOLEDO, PAOLIELLO, DE PAULA, CAMPOS, CUNHA E CORDEIRO ADVOGADOS", "tipo": "Ausência", "descricao": "Jogo do Brasil", "advogado": "VINICIUS PAPA SOARES", "data": "2026-06-29", "min": 120}, {"cliente": "TPC - TPC TOLEDO, PAOLIELLO, DE PAULA, CAMPOS, CUNHA E CORDEIRO ADVOGADOS", "tipo": "Consultoria - Outros", "descricao": "Revisão avaliações com Renato e envio para RH", "advogado": "VINICIUS PAPA SOARES", "data": "2026-06-29", "min": 15}, {"cliente": "TPC - TPC TOLEDO, PAOLIELLO, DE PAULA, CAMPOS, CUNHA E CORDEIRO ADVOGADOS", "tipo": "Cadastrar dados e Agendar prazos", "descricao": "Solicitação cadastro novo caso - Matheus Mendonça Resende", "advogado": "VINICIUS PAPA SOARES", "data": "2026-06-29", "min": 5}, {"cliente": "EMIVE FRANCHISING GESTÃO DE ATIVOS S/A", "tipo": "Consulta/Parecer", "descricao": "Análise de documentação e envio de parecer criminal sobre demanda de subfranqueado - assinaturas eletrônicas", "advogado": "VINICIUS PAPA SOARES", "data": "2026-06-29", "min": 45}, {"cliente": "STERILIZARE - SERVICOS DE ESTERILIZACAO LTDA", "tipo": "JECRIM Apelação - Criminal", "descricao": "Início da elaboração das razões de apelação", "advogado": "VINICIUS PAPA SOARES", "data": "2026-06-29", "min": 50}, {"cliente": "STERILIZARE - SERVICOS DE ESTERILIZACAO LTDA", "tipo": "Emitir Guia de Custas", "descricao": "Emissão guia de custas e alinhamento com Renato", "advogado": "VINICIUS PAPA SOARES", "data": "2026-06-29", "min": 15}, {"cliente": "TPC - TPC TOLEDO, PAOLIELLO, DE PAULA, CAMPOS, CUNHA E CORDEIRO ADVOGADOS", "tipo": "Cadastrar dados e Agendar prazos", "descricao": "organização da documentação; envio de solicitação para cadastro da pasta, lançamento dos prazos  - Caso Same", "advogado": "VINICIUS PAPA SOARES", "data": "2026-06-30", "min": 20}, {"cliente": "CASA MARAMBAIA HOTEL E RESTAURANTE LTDA", "tipo": "Revisão de Minuta", "descricao": "Revisão de Inicial, organização dos documentos, distribuição e envio de atualização para cadastro/controladoria", "advogado": "VINICIUS PAPA SOARES", "data": "2026-06-30", "min": 50}, {"cliente": "TPC - TPC TOLEDO, PAOLIELLO, DE PAULA, CAMPOS, CUNHA E CORDEIRO ADVOGADOS", "tipo": "Reunião", "descricao": "Reunião de equipe", "advogado": "VINICIUS PAPA SOARES", "data": "2026-06-30", "min": 85}, {"cliente": "TPC - TPC TOLEDO, PAOLIELLO, DE PAULA, CAMPOS, CUNHA E CORDEIRO ADVOGADOS", "tipo": "Consultoria - Outros", "descricao": "Revisão Base após Redistribuição das pastas", "advogado": "VINICIUS PAPA SOARES", "data": "2026-06-30", "min": 50}, {"cliente": "TPC - TPC TOLEDO, PAOLIELLO, DE PAULA, CAMPOS, CUNHA E CORDEIRO ADVOGADOS", "tipo": "Consultoria - Outros", "descricao": "Lançamento horas", "advogado": "VINICIUS PAPA SOARES", "data": "2026-06-30", "min": 35}, {"cliente": "PHILIPE MARTINS TEIXEIRA AMARAL", "tipo": "Completar cadastro", "descricao": "envio de solicitação para criação da pasta junto à controladoria", "advogado": "VINICIUS PAPA SOARES", "data": "2026-06-30", "min": 15}, {"cliente": "PHILIPE MARTINS TEIXEIRA AMARAL", "tipo": "Revisão de Minuta", "descricao": "Análise petição Philipe Teixeira Martins", "advogado": "VINICIUS PAPA SOARES", "data": "2026-06-30", "min": 85}, {"cliente": "PHILIPE MARTINS TEIXEIRA AMARAL", "tipo": "Consultoria - Análise de documentos", "descricao": "Organização da documentação encaminhada pelo Renato; Elaboração do instrumento e distribuição da inicial no MPMG", "advogado": "VINICIUS PAPA SOARES", "data": "2026-06-30", "min": 65}, {"cliente": "ANA PAULA PEREIRA", "tipo": "Análise de movimentação processual", "descricao": "autorização reagendamento de prazo", "advogado": "VINICIUS PAPA SOARES", "data": "2026-06-30", "min": 5}, {"cliente": "MATHEUS VIEIRA DE ALMEIDA", "tipo": "PARECER", "descricao": "Revisão \"parecer\" elaborado a pedido do Renato", "advogado": "VINICIUS PAPA SOARES", "data": "2026-06-30", "min": 20}, {"cliente": "SANDRO MAGNO BARBOSA LEAL", "tipo": "Análise de movimentação processual", "descricao": "autorização reagendamento de prazo", "advogado": "VINICIUS PAPA SOARES", "data": "2026-06-30", "min": 5}];
+const PERIODO_DEFAULT = "Junho/2026";
+
+/* ---- parâmetros de negócio (ajustáveis) ---- */
+const CFG = {
+  internoPatterns: [/tpc\s*toledo/i, /^tpc\s*-\s*tpc/i],  // cliente = escritório (não faturável)
+  curtoMin: 10,          // < 10 min = lançamento de granularidade fina
+  muitoCurtoMin: 5,      // <= 5 min = muito curto
+  descMinChars: 15,      // descrição abaixo disto = incompleta
+  cargaAltaMin: 600,     // > 10h/dia = carga suspeita
+  cargaBaixaMin: 240,    // < 4h em dia útil trabalhado = subaproveitamento
+  internoAltoPct: 40,    // > 40% interno = alerta de rentabilidade
+  descricoesGenericas: [ // descrições genéricas demais (isoladas)
+    'analise','análise','reuniao','reunião','contato','leitura','estudo','pesquisa',
+    'diligencia','diligência','andamento','processo','peticao','petição','despacho',
+    'email','e-mail','ligacao','ligação','ok','minuta','audiencia','audiência',
+    'movimentacao','movimentação','prazo','revisao','revisão','manifestacao','manifestação'
+  ]
+};
+
+/* ---- estado ---- */
+let RECORDS = RECORDS_DEFAULT.slice();
+let PERIODO = PERIODO_DEFAULT;
+let ANALISE = null;
+let atual = '__equipe__';
+let charts = {};
+let clientChartMode = 'horas';   // horas | tarefas
+const tableState = {};           // por-view estado das tabelas
+
+/* ============================================================
+   1. HELPERS
+   ============================================================ */
+const norm = s => (s||'').toString().trim();
+const semAcento = s => norm(s).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'');
+const isInterno = cli => CFG.internoPatterns.some(rx => rx.test(cli||''));
+function fmtH(min){ // decimal horas
+  return (min/60).toLocaleString('pt-BR',{maximumFractionDigits:1})+'h';
+}
+function fmtHM(min){ // 118h 05
+  const h=Math.floor(min/60), m=Math.round(min%60);
+  return h+'h'+(m<10?'0'+m:m);
+}
+function fmtPct(x){ return (x||0).toLocaleString('pt-BR',{maximumFractionDigits:1})+'%'; }
+function primeiroNome(nome){
+  const p=norm(nome).split(/\s+/);
+  return p.slice(0,2).join(' ');
+}
+function diaSemana(iso){
+  const d=new Date(iso+'T12:00:00');
+  return ['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'][d.getDay()];
+}
+function isoWeekKey(iso){
+  const d=new Date(iso+'T12:00:00');
+  const t=new Date(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate()));
+  const day=(t.getUTCDay()+6)%7; t.setUTCDate(t.getUTCDate()-day+3);
+  const firstThu=new Date(Date.UTC(t.getUTCFullYear(),0,4));
+  const week=1+Math.round(((t-firstThu)/86400000-3+((firstThu.getUTCDay()+6)%7))/7);
+  return t.getUTCFullYear()+'-S'+String(week).padStart(2,'0');
+}
+
+/* ============================================================
+   2. PARSER DE PLANILHAS (SheetJS) — corrige a coluna G
+   ============================================================ */
+function excelSerialToISO(serial){
+  // Excel epoch = 1899-12-30
+  const d = new Date(Date.UTC(1899,11,30) + Math.round(serial)*86400000);
+  return d.toISOString().slice(0,10);
+}
+function durMinFromCell(v){
+  // v pode ser: número serial (1.0104 = 00:15), Date, ou string "01/01/1900 00:15:00" / "00:15"
+  if(v==null||v==='') return 0;
+  if(typeof v==='number'){
+    const frac = v - Math.floor(v);        // parte fracionária = fração do dia = duração <24h
+    return Math.round(frac*24*60);
+  }
+  if(v instanceof Date){
+    return v.getHours()*60 + v.getMinutes() + Math.round(v.getSeconds()/60);
+  }
+  const s=v.toString().trim();
+  const m=s.match(/(\d{1,2}):(\d{2})(?::(\d{2}))?\s*$/); // último HH:MM(:SS)
+  if(m) return (+m[1])*60 + (+m[2]) + Math.round((+(m[3]||0))/60);
+  return 0;
+}
+function headerIndex(headers){
+  const H = headers.map(h=>semAcento(h));
+  const find = keys => { for(let i=0;i<H.length;i++){ if(keys.some(k=>H[i].includes(k))) return i; } return -1; };
+  return {
+    cliente: find(['cliente']),
+    tipo:    find(['tipo de servico','tipo servico','tipo']),
+    desc:    find(['descricao']),
+    adv:     find(['advogado','responsavel','profissional']),
+    data:    find(['data']),
+    horas:   find(['horas cobraveis','horas','tempo','duracao'])
+  };
+}
+function parseSheet(rowsAoA, fallbackNome){
+  // acha a linha de cabeçalho
+  let hIdx=-1;
+  for(let i=0;i<Math.min(rowsAoA.length,8);i++){
+    const line=rowsAoA[i].map(semAcento).join('|');
+    if(line.includes('cliente') && (line.includes('advogado')||line.includes('tipo'))){ hIdx=i; break; }
+  }
+  if(hIdx<0) hIdx=0;
+  const col = headerIndex(rowsAoA[hIdx]);
+  const out=[];
+  for(let i=hIdx+1;i<rowsAoA.length;i++){
+    const r=rowsAoA[i];
+    const cliente=norm(r[col.cliente]);
+    let adv=col.adv>=0?norm(r[col.adv]):'';
+    if(!adv) adv = fallbackNome||'';
+    // pula rodapé "Total:" e linhas vazias
+    if(!cliente) continue;
+    if(/^total/i.test(cliente)) continue;
+    let dataISO=null;
+    const rawData=r[col.data];
+    if(typeof rawData==='number') dataISO=excelSerialToISO(rawData);
+    else if(rawData instanceof Date) dataISO=rawData.toISOString().slice(0,10);
+    else if(rawData){
+      const m=rawData.toString().match(/(\d{2})\/(\d{2})\/(\d{4})/);
+      if(m) dataISO=`${m[3]}-${m[2]}-${m[1]}`;
+    }
+    out.push({
+      cliente,
+      tipo: col.tipo>=0?norm(r[col.tipo]):'',
+      descricao: col.desc>=0?norm(r[col.desc]):'',
+      advogado: adv||'(sem advogado)',
+      data: dataISO,
+      min: durMinFromCell(r[col.horas])
+    });
+  }
+  return out;
+}
+function readFiles(files){
+  const jobs=[...files].map(file=>new Promise((res,rej)=>{
+    const fr=new FileReader();
+    fr.onload=e=>{
+      try{
+        const wb=XLSX.read(e.target.result,{type:'array',cellDates:false});
+        let recs=[];
+        wb.SheetNames.forEach(sn=>{
+          const aoa=XLSX.utils.sheet_to_json(wb.Sheets[sn],{header:1,raw:true,defval:''});
+          const nomeArq=file.name.replace(/\.(xlsx|xls)$/i,'').replace(/^.*?_/, '');
+          recs=recs.concat(parseSheet(aoa, nomeArq));
+        });
+        res(recs);
+      }catch(err){ rej(err); }
+    };
+    fr.onerror=rej;
+    fr.readAsArrayBuffer(file);
+  }));
+  return Promise.all(jobs).then(arrs=>arrs.flat());
+}
+
+/* ============================================================
+   3. MOTOR DE ANÁLISE
+   ============================================================ */
+function descProblema(desc){
+  const d=norm(desc);
+  if(!d) return 'Sem descrição';
+  if(d.length < CFG.descMinChars) return 'Descrição muito curta ('+d.length+' caract.)';
+  const palavras=d.split(/\s+/).filter(Boolean);
+  const base=semAcento(d).replace(/[^a-z0-9\s]/g,'').trim();
+  if(palavras.length<=1) return 'Apenas uma palavra';
+  if(CFG.descricoesGenericas.includes(base)) return 'Descrição genérica';
+  return null;
+}
+function agg(records){
+  const porCliente={}, porTipo={}, porTipoMin={}, porClienteMin={};
+  const dias={}, diaSem={}, semanas={}, porDiaAdv={};
+  let totalMin=0, internoMin=0, internoTasks=0;
+  const flags=[]; // registros problemáticos
+  // duplicidade
+  const dupMap={};
+  records.forEach(r=>{
+    const k=[semAcento(r.advogado),semAcento(r.cliente),semAcento(r.tipo),r.data].join('¦');
+    (dupMap[k]=dupMap[k]||[]).push(r);
+  });
+  records.forEach(r=>{
+    totalMin+=r.min;
+    const interno=isInterno(r.cliente);
+    if(interno){ internoMin+=r.min; internoTasks++; }
+    porCliente[r.cliente]=(porCliente[r.cliente]||0)+1;
+    porClienteMin[r.cliente]=(porClienteMin[r.cliente]||0)+r.min;
+    if(r.tipo){ porTipo[r.tipo]=(porTipo[r.tipo]||0)+1; porTipoMin[r.tipo]=(porTipoMin[r.tipo]||0)+r.min; }
+    if(r.data){
+      dias[r.data]=true;
+      const ds=diaSemana(r.data); diaSem[ds]=(diaSem[ds]||0)+1;
+      const wk=isoWeekKey(r.data);
+      semanas[wk]=semanas[wk]||{tarefas:0,min:0,curtas:0};
+      semanas[wk].tarefas++; semanas[wk].min+=r.min;
+      if(r.min>0 && r.min<CFG.curtoMin) semanas[wk].curtas++;
+      const pk=r.advogado+'¦'+r.data;
+      porDiaAdv[pk]=porDiaAdv[pk]||{adv:r.advogado,data:r.data,min:0,tasks:0};
+      porDiaAdv[pk].min+=r.min; porDiaAdv[pk].tasks++;
+    }
+  });
+  // classificar flags por registro
+  const nTasks=records.length;
+  let nCurta=0, nMuitoCurta=0, nSemDur=0, nSemTipo=0, nDescRuim=0, nDup=0;
+  const dupSet=new Set();
+  Object.values(dupMap).forEach(g=>{ if(g.length>1) g.forEach(r=>dupSet.add(r)); });
+  records.forEach(r=>{
+    const probs=[];
+    if(r.min===0){ nSemDur++; probs.push({t:'Sem duração',sev:'crit'}); }
+    else if(r.min<=CFG.muitoCurtoMin){ nMuitoCurta++; probs.push({t:'Muito curto (≤5min)',sev:'warn'}); }
+    else if(r.min<CFG.curtoMin){ nCurta++; probs.push({t:'Curto (<10min)',sev:'info'}); }
+    if(!r.tipo){ nSemTipo++; probs.push({t:'Sem tipo de serviço',sev:'crit'}); }
+    const dp=descProblema(r.descricao);
+    if(dp){ nDescRuim++; probs.push({t:dp,sev:'warn'}); }
+    if(dupSet.has(r)){ nDup++; probs.push({t:'Possível duplicidade',sev:'info'}); }
+    if(probs.length) flags.push({rec:r, probs});
+  });
+  // cargas diárias anômalas
+  const cargasAltas=Object.values(porDiaAdv).filter(x=>x.min>CFG.cargaAltaMin)
+     .sort((a,b)=>b.min-a.min);
+  const externoMin=totalMin-internoMin;
+  const sortEntries=o=>Object.entries(o).sort((a,b)=>b[1]-a[1]);
+  return {
+    nTasks, totalMin, internoMin, externoMin,
+    pctInterno: totalMin?internoMin/totalMin*100:0,
+    pctExterno: totalMin?externoMin/totalMin*100:0,
+    diasTrab: Object.keys(dias).length,
+    porClienteCount: sortEntries(porCliente),
+    porClienteMin: sortEntries(porClienteMin),
+    porTipoCount: sortEntries(porTipo),
+    porTipoMin: sortEntries(porTipoMin),
+    diaSem, semanas,
+    flags,
+    diag:{
+      nCurta,nMuitoCurta,nSemDur,nSemTipo,nDescRuim,
+      nDup: dupSet.size,
+      pctCurta: nTasks? (nCurta+nMuitoCurta)/nTasks*100 : 0,
+      pctDescRuim: nTasks? nDescRuim/nTasks*100 : 0,
+      pctDup: nTasks? dupSet.size/nTasks*100 : 0,
+      cargasAltas
+    },
+    tasksDia: Object.keys(dias).length? nTasks/Object.keys(dias).length : 0
+  };
+}
+function analyzeAll(records){
+  const porAdv={};
+  records.forEach(r=>{ (porAdv[r.advogado]=porAdv[r.advogado]||[]).push(r); });
+  const advs=Object.keys(porAdv).sort();
+  const result={ '__equipe__': agg(records) };
+  result['__equipe__'].label='Equipe (consolidado)';
+  result['__equipe__'].records=records;
+  advs.forEach(a=>{
+    result[a]=agg(porAdv[a]);
+    result[a].label=a;
+    result[a].records=porAdv[a];
+  });
+  // médias da equipe (entre advogados) p/ comparação
+  const med={tasksDia:0,pctCurta:0,pctInterno:0,pctDup:0,pctDescRuim:0};
+  advs.forEach(a=>{ med.tasksDia+=result[a].tasksDia; med.pctCurta+=result[a].diag.pctCurta;
+    med.pctInterno+=result[a].pctInterno; med.pctDup+=result[a].diag.pctDup; med.pctDescRuim+=result[a].diag.pctDescRuim; });
+  const n=advs.length||1;
+  Object.keys(med).forEach(k=>med[k]/=n);
+  result.__medias__=med;
+  result.__advs__=advs;
+  return result;
+}
+
+/* ============================================================
+   4. INSIGHTS (diagnóstico textual por advogado)
+   ============================================================ */
+function gerarInsights(key, s, med){
+  if(key==='__equipe__') return null;
+  const L=[];
+  if(s.pctInterno > CFG.internoAltoPct)
+    L.push({sev:'warn',b:'Rentabilidade',t:`<b>${fmtPct(s.pctInterno)}</b> do tempo é interno (escritório, não faturável) — acima do limite de ${CFG.internoAltoPct}%. São <b>${fmtH(s.internoMin)}</b> que não geram receita direta.`});
+  if(s.diag.pctCurta > med.pctCurta && s.diag.pctCurta>15)
+    L.push({sev:'info',b:'Granularidade',t:`<b>${fmtPct(s.diag.pctCurta)}</b> dos lançamentos têm menos de ${CFG.curtoMin} min (média da equipe: ${fmtPct(med.pctCurta)}). Fragmentar apontamentos dificulta a cobrança e pode subestimar o esforço real.`});
+  if(s.diag.pctDup > med.pctDup && s.diag.nDup>0)
+    L.push({sev:'info',b:'Duplicidade',t:`<b>${s.diag.nDup}</b> lançamentos (${fmtPct(s.diag.pctDup)}) repetem cliente + tipo + data no mesmo dia — candidatos a duplicidade ou a consolidação em um único apontamento.`});
+  if(s.diag.nSemDur>0)
+    L.push({sev:'crit',b:'Sem duração',t:`<b>${s.diag.nSemDur}</b> lançamento(s) com <b>00:00</b> de horas — tempo não contabilizado, prejuízo direto de faturamento.`});
+  if(s.diag.pctDescRuim>25)
+    L.push({sev:'warn',b:'Descrição',t:`<b>${fmtPct(s.diag.pctDescRuim)}</b> das descrições estão incompletas ou genéricas — risco de glosa pelo cliente e perda de rastreabilidade do trabalho.`});
+  if(s.diag.cargasAltas.length>0){
+    const c=s.diag.cargasAltas[0];
+    L.push({sev:'info',b:'Carga diária',t:`Pico de <b>${fmtHM(c.min)}</b> em ${c.data.split('-').reverse().join('/')} (${c.tasks} tarefas). Dias muito carregados podem indicar apontamento retroativo em bloco.`});
+  }
+  return L;
+}
+
+/* ============================================================
+   5. RENDER
+   ============================================================ */
+function el(html){ const t=document.createElement('template'); t.innerHTML=html.trim(); return t.content.firstChild; }
+
+function buildTabs(){
+  const nav=document.getElementById('tabs');
+  const nomes={'__equipe__':'Equipe'};
+  ANALISE.__advs__.forEach(a=>nomes[a]=primeiroNome(a));
+  const ordem=['__equipe__',...ANALISE.__advs__];
+  nav.innerHTML='';
+  ordem.forEach(k=>{
+    const t=el(`<div class="tab ${k===atual?'active':''}">${nomes[k]}</div>`);
+    t.onclick=()=>{ atual=k; render(); window.scrollTo({top:0}); };
+    nav.appendChild(t);
+  });
+}
+
+function kpiRow(s){
+  const med=ANALISE.__medias__;
+  const flagInt=s.pctInterno>CFG.internoAltoPct;
+  const flagCurta=s.diag.pctCurta>med.pctCurta;
+  const kpis=[
+    {c:'', label:'Horas apontadas', value:fmtHM(s.totalMin), sub:`<b>${s.diasTrab}</b> dias · ${fmtH(s.diasTrab?s.totalMin/s.diasTrab:0)}/dia`},
+    {c:'', label:'Tarefas registradas', value:s.nTasks, sub:`<b>${s.tasksDia.toLocaleString('pt-BR',{maximumFractionDigits:1})}</b> tarefas/dia`},
+    {c:flagInt?'flag':'good', label:'Horas faturáveis', value:fmtPct(s.pctExterno), sub:`<b>${fmtH(s.internoMin)}</b> internas (não faturáveis)`},
+    {c:flagCurta?'flag':'', label:'Lançamentos < 10 min', value:fmtPct(s.diag.pctCurta), sub:`média equipe: ${fmtPct(med.pctCurta)}`},
+    {c:(s.diag.nSemDur||s.diag.nSemTipo)?'bad':(s.diag.nDescRuim?'flag':''), label:'Alertas de lançamento', value:s.flags.length, sub:`<b>${s.diag.nDescRuim}</b> descr. · <b>${s.diag.nDup}</b> dup. · <b>${s.diag.nSemDur+s.diag.nSemTipo}</b> crít.`}
+  ];
+  return `<div class="kpis">`+kpis.map(k=>`
+    <div class="kpi ${k.c}">
+      <div class="label">${k.label}</div>
+      <div class="value">${k.value}</div>
+      <div class="sub">${k.sub}</div>
+    </div>`).join('')+`</div>`;
+}
+
+function insightsBlock(key,s){
+  const L=gerarInsights(key,s,ANALISE.__medias__);
+  if(key==='__equipe__')
+    return `<div class="insights"><div class="insight-empty">Selecione um advogado nas abas acima para ver o diagnóstico individual — rentabilidade, granularidade, duplicidade e qualidade das descrições. Abaixo, o comparativo da equipe.</div></div>`;
+  if(!L || !L.length)
+    return `<div class="insights"><div class="insight-empty"><b>Sem desvios relevantes.</b> Os indicadores de ${primeiroNome(s.label)} estão dentro dos parâmetros da equipe neste período.</div></div>`;
+  const badge={crit:'badge b-crit',warn:'badge b-warn',info:'badge b-info'};
+  return `<div class="insights">`+L.map(i=>`
+    <div class="insight-card sev-${i.sev}"><span class="${badge[i.sev]}">${i.b}</span>${i.t}</div>`).join('')+`</div>`;
+}
+
+function topList(entries, fmt, unit){
+  const max=entries.length?entries[0][1]:1;
+  return `<div class="tablewrap"><table><tbody>`+entries.slice(0,8).map((e,i)=>`
+    <tr>
+      <td style="width:26px"><span class="rank-tag">${i+1}</span></td>
+      <td>${e[0].length>52?e[0].slice(0,52)+'…':e[0]}${isInterno(e[0])?' <span class="pill pill-int">interno</span>':''}</td>
+      <td class="num">${fmt(e[1])}<span class="bar-inline" style="width:${Math.max(4,e[1]/max*70)}px"></span></td>
+    </tr>`).join('')+`</tbody></table></div>`;
+}
+
+function sectionTitle(tag,txt,hint){
+  return `<div class="section-title"><span class="tag">${tag}</span>${txt}${hint?` <span class="hint">— ${hint}</span>`:''}</div>`;
+}
+
+function comparativoEquipe(){
+  const advs=ANALISE.__advs__;
+  const rows=advs.map(a=>{
+    const s=ANALISE[a];
+    return {a,s};
+  }).sort((x,y)=>y.s.totalMin-x.s.totalMin);
+  return `
+  ${sectionTitle('⚖','Comparativo da equipe','ranking de esforço, rentabilidade e qualidade')}
+  <div class="tablewrap"><table>
+    <thead><tr>
+      <th>Advogado</th><th class="num">Horas</th><th class="num">Tarefas</th>
+      <th class="num">Faturável</th><th class="num">Interno</th>
+      <th class="num">&lt;10min</th><th class="num">Duplic.</th><th class="num">Descr. incompl.</th><th class="num">Alertas</th>
+    </tr></thead>
+    <tbody>${rows.map(({a,s})=>`
+      <tr>
+        <td><b>${primeiroNome(a)}</b><div class="muted" style="font-size:11px">${a}</div></td>
+        <td class="num">${fmtHM(s.totalMin)}</td>
+        <td class="num">${s.nTasks}</td>
+        <td class="num"><span class="pill ${s.pctExterno>=60?'pill-info':'pill-warn'}">${fmtPct(s.pctExterno)}</span></td>
+        <td class="num ${s.pctInterno>CFG.internoAltoPct?'':''}">${fmtPct(s.pctInterno)}</td>
+        <td class="num">${fmtPct(s.diag.pctCurta)}</td>
+        <td class="num">${s.diag.nDup}</td>
+        <td class="num">${s.diag.nDescRuim}</td>
+        <td class="num">${s.flags.length}</td>
+      </tr>`).join('')}</tbody>
+  </table></div>
+  <div class="legend-note">Faturável = tempo dedicado a clientes externos. Interno = tempo no próprio escritório (TPC), não gera receita direta. Quanto maior o faturável, maior a rentabilidade da área.</div>`;
+}
+
+function diagTable(s, viewKey){
+  const st=tableState[viewKey]=tableState[viewKey]||{filtro:'',busca:''};
+  const rows=s.flags.map(f=>{
+    const sevOrder={crit:0,warn:1,info:2};
+    const sev=f.probs.reduce((a,p)=>sevOrder[p.sev]<sevOrder[a]?p.sev:a,'info');
+    return {f,sev};
+  }).sort((a,b)=>({crit:0,warn:1,info:2})[a.sev]-({crit:0,warn:1,info:2})[b.sev]);
+  const pill={crit:'pill-crit',warn:'pill-warn',info:'pill-info'};
+  const body=rows.map(({f})=>{
+    const r=f.rec;
+    return {
+      html:`<tr>
+        <td>${r.data?r.data.split('-').reverse().join('/'):'<span class="muted">—</span>'}</td>
+        <td>${r.cliente}${isInterno(r.cliente)?' <span class="pill pill-int">interno</span>':''}</td>
+        <td>${r.tipo||'<span class="pill pill-crit">sem tipo</span>'}</td>
+        <td>${r.descricao||'<span class="muted">(vazio)</span>'}</td>
+        <td class="num">${r.min?fmtHM(r.min):'<span class="pill pill-crit">00:00</span>'}</td>
+        <td>${f.probs.map(p=>`<span class="pill ${pill[p.sev]}">${p.t}</span>`).join(' ')}</td>
+      </tr>`,
+      probs:f.probs.map(p=>p.t).join(' '),
+      txt:semAcento(r.cliente+' '+r.tipo+' '+r.descricao)
+    };
+  });
+  return {rows:body};
+}
+
+function render(){
+  const s=ANALISE[atual];
+  const app=document.getElementById('app');
+  buildTabs();
+  document.getElementById('periodoLabel').textContent =
+    `${PERIODO} · ${ANALISE.__advs__.length} advogado(s) · ${ANALISE['__equipe__'].nTasks} lançamentos · ${fmtHM(ANALISE['__equipe__'].totalMin)} apontadas`;
+
+  const clienteMaisTasks=s.porClienteCount.filter(e=>!isInterno(e[0]))[0]||s.porClienteCount[0]||['—',0];
+  const clienteMaisMin=s.porClienteMin.filter(e=>!isInterno(e[0]))[0]||s.porClienteMin[0]||['—',0];
+  const atividadeMais=s.porTipoCount[0]||['—',0];
+  const atividadeMaisMin=s.porTipoMin[0]||['—',0];
+
+  let html='';
+  html+=kpiRow(s);
+  html+=insightsBlock(atual,s);
+
+  if(atual==='__equipe__') html+=comparativoEquipe();
+
+  // Panorama
+  html+=sectionTitle('▦','Panorama geral', PERIODO);
+  html+=`<div class="grid g3">
+    <div class="panel"><h3>Evolução semanal (horas)</h3><canvas id="cSemanal"></canvas></div>
+    <div class="panel"><h3>Distribuição por dia da semana</h3><canvas id="cDia"></canvas></div>
+    <div class="panel"><h3>Faturável × Interno</h3><canvas id="cInterno"></canvas>
+      <div class="legend-note" style="text-align:center">${fmtH(s.externoMin)} para clientes · ${fmtH(s.internoMin)} interno TPC</div></div>
+  </div>`;
+
+  // (a) cliente mais atendido + (d) principais clientes
+  html+=sectionTitle('a','Cliente mais atendido','+ principais clientes por tempo dedicado (item d)');
+  html+=`<div class="hl">
+    <div class="hl-card"><div class="hl-k">Mais atendido — por nº de tarefas</div>
+      <div class="hl-v">${clienteMaisTasks[0]}</div>
+      <div class="hl-s"><b>${clienteMaisTasks[1]}</b> lançamentos no período</div></div>
+    <div class="hl-card"><div class="hl-k">Maior tempo dedicado — por horas</div>
+      <div class="hl-v">${clienteMaisMin[0]}</div>
+      <div class="hl-s"><b>${fmtHM(clienteMaisMin[1])}</b> apontadas</div></div>
+  </div>`;
+  html+=`<div class="grid" style="margin-top:14px">
+    <div class="panel canvas-tall"><h3>Top clientes
+      <span class="toggle"><button id="tgHoras" class="on">Horas</button><button id="tgTarefas">Tarefas</button></span></h3>
+      <canvas id="cClientes"></canvas></div>
+    <div class="panel">${topList(s.porClienteMin,fmtHM)}</div>
+  </div>`;
+
+  // (b) atividade mais realizada
+  html+=sectionTitle('b','Atividade mais realizada','tipo de serviço mais frequente');
+  html+=`<div class="hl">
+    <div class="hl-card"><div class="hl-k">Atividade mais frequente</div>
+      <div class="hl-v">${atividadeMais[0]}</div>
+      <div class="hl-s"><b>${atividadeMais[1]}</b> lançamentos</div></div>
+    <div class="hl-card"><div class="hl-k">Atividade que mais consumiu horas</div>
+      <div class="hl-v">${atividadeMaisMin[0]}</div>
+      <div class="hl-s"><b>${fmtHM(atividadeMaisMin[1])}</b> dedicadas</div></div>
+  </div>`;
+  html+=`<div class="grid" style="margin-top:14px">
+    <div class="panel canvas-tall"><h3>Tipos de serviço — nº de lançamentos</h3><canvas id="cTiposCount"></canvas></div>
+    <div class="panel canvas-tall"><h3>Tipos de serviço — horas dedicadas (item c)</h3><canvas id="cTiposMin"></canvas></div>
+  </div>`;
+
+  // (e) diagnósticos + (f) descrições
+  html+=sectionTitle('e','Diagnóstico de falhas no lançamento','clique em uma categoria para filtrar a tabela');
+  html+=diagCards(s);
+  const dt=diagTable(s,atual);
+  html+=`<div style="margin-top:14px">
+    <div class="table-tools">
+      <select id="fltProb"><option value="">Todos os alertas (${dt.rows.length})</option>
+        <option value="Sem duração">Sem duração (00:00)</option>
+        <option value="curto">Lançamentos curtos</option>
+        <option value="Sem tipo">Sem tipo de serviço</option>
+        <option value="Descrição">Descrição incompleta/genérica</option>
+        <option value="Sem descrição">Sem descrição</option>
+        <option value="duplicidade">Possível duplicidade</option>
+      </select>
+      <input id="buscaDiag" placeholder="Buscar cliente, tipo ou descrição…">
+      <span class="count" id="cntDiag"></span>
+    </div>
+    <div class="tablewrap"><table>
+      <thead><tr><th>Data</th><th>Cliente</th><th>Tipo</th><th>Descrição</th><th class="num">Horas</th><th>Alertas</th></tr></thead>
+      <tbody id="tbodyDiag"></tbody>
+    </table></div>
+  </div>`;
+
+  // (f) campos sem descrição completa — tabela dedicada
+  html+=sectionTitle('f','Campos sem descrição completa','lançamentos que precisam de detalhamento antes de faturar');
+  html+=descTable(s);
+
+  // detalhe completo
+  html+=sectionTitle('▤','Base completa de lançamentos','todos os apontamentos — pesquisável');
+  html+=fullTable(s,atual);
+
+  app.innerHTML=html;
+
+  // gráficos isolados: se o Chart.js (CDN) falhar, as tabelas ainda funcionam
+  try{
+    if(typeof Chart==='undefined') throw new Error('Chart.js indisponível');
+    buildCharts(s);
+  }catch(err){
+    console.warn('Gráficos não carregados:',err.message);
+    document.querySelectorAll('canvas').forEach(cv=>{
+      cv.outerHTML='<div class="muted" style="padding:26px;text-align:center;font-size:12px">Gráfico indisponível (sem conexão para carregar a biblioteca de gráficos). As tabelas abaixo continuam válidas.</div>';
+    });
+  }
+  wireDiagTable(s,atual,dt);
+  wireFullTable(s,atual);
+}
+
+function diagCards(s){
+  const d=s.diag;
+  const cards=[
+    {n:d.nSemDur, l:'Sem duração (00:00)', c:'bad', f:'Sem duração'},
+    {n:d.nMuitoCurta+d.nCurta, l:'Lançamentos < 10 min', c:'flag', f:'curto'},
+    {n:d.nSemTipo, l:'Sem tipo de serviço', c:'bad', f:'Sem tipo'},
+    {n:d.nDescRuim, l:'Descrições incompletas', c:'flag', f:'Descrição'},
+    {n:d.nDup, l:'Possível duplicidade', c:'flag', f:'duplicidade'},
+    {n:s.diag.cargasAltas.length, l:'Dias com carga > 10h', c:'', f:''},
+  ];
+  return `<div class="kpis" style="grid-template-columns:repeat(6,1fr)">`+cards.map(c=>`
+    <div class="kpi ${c.n>0?c.c:''}" ${c.f?`data-filtro="${c.f}" style="cursor:pointer"`:''}>
+      <div class="label">${c.l}</div>
+      <div class="value">${c.n}</div>
+      <div class="sub">${c.n>0 && c.f?'clique p/ filtrar':' '}</div>
+    </div>`).join('')+`</div>`;
+}
+
+function descTable(s){
+  const rows=s.records.map(r=>({r,p:descProblema(r.descricao)})).filter(x=>x.p);
+  if(!rows.length) return `<div class="empty-state">✔ Todas as descrições deste recorte estão completas.</div>`;
+  const sev=p=>p==='Sem descrição'?'pill-crit':(p==='Apenas uma palavra'?'pill-warn':'pill-warn');
+  return `<div class="legend-note" style="margin-bottom:8px"><b>${rows.length}</b> lançamento(s) com descrição incompleta — some <b>${fmtHM(rows.reduce((a,x)=>a+x.r.min,0))}</b> em horas que podem ser questionadas pelo cliente.</div>
+  <div class="tablewrap"><table>
+    <thead><tr><th>Data</th><th>Cliente</th><th>Tipo</th><th>Descrição atual</th><th class="num">Horas</th><th>Problema</th></tr></thead>
+    <tbody>${rows.map(({r,p})=>`<tr>
+      <td>${r.data?r.data.split('-').reverse().join('/'):'—'}</td>
+      <td>${r.cliente}</td>
+      <td>${r.tipo||'<span class="pill pill-crit">sem tipo</span>'}</td>
+      <td>${r.descricao?`"${r.descricao}"`:'<span class="muted">(vazio)</span>'}</td>
+      <td class="num">${r.min?fmtHM(r.min):'00:00'}</td>
+      <td><span class="pill ${sev(p)}">${p}</span></td>
+    </tr>`).join('')}</tbody>
+  </table></div>`;
+}
+
+function fullTable(s,key){
+  return `<div class="table-tools">
+      <input id="buscaFull" placeholder="Buscar em ${s.records.length} lançamentos…">
+      <select id="fltCliente"><option value="">Todos os clientes</option>${
+        [...new Set(s.records.map(r=>r.cliente))].sort().map(c=>`<option>${c}</option>`).join('')}</select>
+      <span class="count" id="cntFull"></span>
+    </div>
+    <div class="tablewrap" style="max-height:520px;overflow-y:auto">
+      <table><thead><tr>${key==='__equipe__'?'<th>Advogado</th>':''}<th>Data</th><th>Cliente</th><th>Tipo</th><th>Descrição</th><th class="num">Horas</th></tr></thead>
+      <tbody id="tbodyFull"></tbody></table>
+    </div>`;
+}
+
+/* ---- interações de tabela ---- */
+function wireDiagTable(s,key,dt){
+  const tbody=document.getElementById('tbodyDiag');
+  const fSel=document.getElementById('fltProb');
+  const busca=document.getElementById('buscaDiag');
+  const cnt=document.getElementById('cntDiag');
+  function paint(){
+    const fv=fSel.value.toLowerCase(), bv=semAcento(busca.value);
+    const vis=dt.rows.filter(r=>{
+      const okF=!fv || r.probs.toLowerCase().includes(fv) ||
+        (fv==='curto' && /curto/i.test(r.probs)) ||
+        (fv==='duplicidade' && /duplic/i.test(r.probs));
+      const okB=!bv || r.txt.includes(bv);
+      return okF&&okB;
+    });
+    tbody.innerHTML=vis.length?vis.map(r=>r.html).join(''):`<tr><td colspan="6" style="text-align:center;color:#9A9A9A;padding:22px">Nenhum lançamento com esse filtro.</td></tr>`;
+    cnt.textContent=`${vis.length} de ${dt.rows.length}`;
+  }
+  fSel.onchange=paint; busca.oninput=paint;
+  document.querySelectorAll('[data-filtro]').forEach(c=>{
+    c.onclick=()=>{ fSel.value=c.dataset.filtro; paint(); document.getElementById('tbodyDiag').scrollIntoView({block:'center'}); };
+  });
+  paint();
+}
+function wireFullTable(s,key){
+  const tbody=document.getElementById('tbodyFull');
+  const busca=document.getElementById('buscaFull');
+  const fCli=document.getElementById('fltCliente');
+  const cnt=document.getElementById('cntFull');
+  const data=s.records.map(r=>({r,txt:semAcento(r.advogado+' '+r.cliente+' '+r.tipo+' '+r.descricao)}))
+    .sort((a,b)=>(a.r.data||'').localeCompare(b.r.data||''));
+  function paint(){
+    const bv=semAcento(busca.value), cv=fCli.value;
+    const vis=data.filter(d=>(!bv||d.txt.includes(bv))&&(!cv||d.r.cliente===cv));
+    tbody.innerHTML=vis.slice(0,600).map(({r})=>`<tr>
+      ${key==='__equipe__'?`<td>${primeiroNome(r.advogado)}</td>`:''}
+      <td>${r.data?r.data.split('-').reverse().join('/'):'—'}</td>
+      <td>${r.cliente}${isInterno(r.cliente)?' <span class="pill pill-int">int</span>':''}</td>
+      <td>${r.tipo||'<span class="muted">—</span>'}</td>
+      <td>${r.descricao||'<span class="muted">(vazio)</span>'}</td>
+      <td class="num">${r.min?fmtHM(r.min):'<span class="pill pill-crit">00:00</span>'}</td>
+    </tr>`).join('');
+    cnt.textContent=`${vis.length} de ${data.length}`+(vis.length>600?' (mostrando 600)':'');
+  }
+  busca.oninput=paint; fCli.onchange=paint;
+  paint();
+}
+
+/* ---- charts ---- */
+const CORES={amarelo:'#E8E347',grafite:'#2B2B2B',preto:'#0F0F10',cinza:'#B8B8B8',cinza2:'#8A8A8A'};
+function destroyCharts(){ Object.values(charts).forEach(c=>c.destroy()); charts={}; }
+function buildCharts(s){
+  destroyCharts();
+  const gridC='#F0F0F0';
+  // semanal
+  const wks=Object.keys(s.semanas).sort();
+  charts.semanal=new Chart(document.getElementById('cSemanal'),{
+    type:'line',
+    data:{labels:wks.map(w=>'Sem '+w.split('S')[1]),
+      datasets:[{label:'Horas',data:wks.map(w=>+(s.semanas[w].min/60).toFixed(1)),
+        borderColor:CORES.grafite,backgroundColor:CORES.amarelo,pointBackgroundColor:CORES.amarelo,
+        pointRadius:5,borderWidth:2.5,tension:.25,fill:false}]},
+    options:{plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>c.parsed.y+'h'}}},
+      scales:{y:{beginAtZero:true,grid:{color:gridC}},x:{grid:{display:false}}}}
+  });
+  // dia semana
+  const dias=['Segunda','Terça','Quarta','Quinta','Sexta','Sábado','Domingo'];
+  charts.dia=new Chart(document.getElementById('cDia'),{
+    type:'bar',
+    data:{labels:dias,datasets:[{data:dias.map(d=>s.diaSem[d]||0),
+      backgroundColor:dias.map(d=>d==='Sexta'?CORES.amarelo:CORES.grafite),borderRadius:3}]},
+    options:{plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>c.parsed.y+' tarefas'}}},
+      scales:{y:{beginAtZero:true,grid:{color:gridC}},x:{grid:{display:false}}}}
+  });
+  // interno doughnut
+  charts.interno=new Chart(document.getElementById('cInterno'),{
+    type:'doughnut',
+    data:{labels:['Clientes (faturável)','Interno TPC'],
+      datasets:[{data:[+(s.externoMin/60).toFixed(1),+(s.internoMin/60).toFixed(1)],
+        backgroundColor:[CORES.grafite,CORES.amarelo],borderWidth:2,borderColor:'#fff'}]},
+    options:{cutout:'62%',plugins:{legend:{position:'bottom',labels:{boxWidth:12,font:{size:11}}},
+      tooltip:{callbacks:{label:c=>c.label+': '+c.parsed+'h'}}}}
+  });
+  // clientes (toggle)
+  drawClientes(s);
+  document.getElementById('tgHoras').onclick=()=>{clientChartMode='horas';toggleBtns();drawClientes(s);};
+  document.getElementById('tgTarefas').onclick=()=>{clientChartMode='tarefas';toggleBtns();drawClientes(s);};
+  // tipos count
+  const tc=s.porTipoCount.slice(0,10);
+  charts.tiposC=new Chart(document.getElementById('cTiposCount'),{
+    type:'bar',
+    data:{labels:tc.map(t=>t[0]),datasets:[{data:tc.map(t=>t[1]),backgroundColor:CORES.grafite,borderRadius:3}]},
+    options:{indexAxis:'y',plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>c.parsed.x+' lançamentos'}}},
+      scales:{x:{beginAtZero:true,grid:{color:gridC}},y:{grid:{display:false},ticks:{font:{size:10.5}}}}}
+  });
+  // tipos min
+  const tm=s.porTipoMin.slice(0,10);
+  charts.tiposM=new Chart(document.getElementById('cTiposMin'),{
+    type:'bar',
+    data:{labels:tm.map(t=>t[0]),datasets:[{data:tm.map(t=>+(t[1]/60).toFixed(1)),backgroundColor:CORES.amarelo,borderRadius:3}]},
+    options:{indexAxis:'y',plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>c.parsed.x+'h'}}},
+      scales:{x:{beginAtZero:true,grid:{color:gridC}},y:{grid:{display:false},ticks:{font:{size:10.5}}}}}
+  });
+}
+function toggleBtns(){
+  document.getElementById('tgHoras').classList.toggle('on',clientChartMode==='horas');
+  document.getElementById('tgTarefas').classList.toggle('on',clientChartMode==='tarefas');
+}
+function drawClientes(s){
+  if(charts.clientes) charts.clientes.destroy();
+  const src=clientChartMode==='horas'?s.porClienteMin:s.porClienteCount;
+  const top=src.slice(0,10);
+  charts.clientes=new Chart(document.getElementById('cClientes'),{
+    type:'bar',
+    data:{labels:top.map(c=>c[0].length>34?c[0].slice(0,34)+'…':c[0]),
+      datasets:[{data:top.map(c=>clientChartMode==='horas'?+(c[1]/60).toFixed(1):c[1]),
+        backgroundColor:top.map(c=>isInterno(c[0])?CORES.amarelo:CORES.grafite),borderRadius:3}]},
+    options:{indexAxis:'y',plugins:{legend:{display:false},
+      tooltip:{callbacks:{label:c=>clientChartMode==='horas'?c.parsed.x+'h':c.parsed.x+' tarefas'}}},
+      scales:{x:{beginAtZero:true,grid:{color:'#F0F0F0'}},y:{grid:{display:false},ticks:{font:{size:10}}}}}
+  });
+}
+
+/* ============================================================
+   6. FOOTER / METODOLOGIA
+   ============================================================ */
+function renderFooter(){
+  document.getElementById('metodologia').innerHTML=`
+    <b>Como ler este painel.</b> Os itens <b>a</b> a <b>f</b> respondem diretamente à gestão da área:
+    (a) cliente mais atendido por nº de tarefas e por horas; (b) atividade mais frequente; (c) tipos de serviço que mais consumiram horas de cada advogado;
+    (d) principais clientes por tempo dedicado; (e) diagnóstico de falhas de lançamento; (f) descrições incompletas.<br>
+    <b>Parâmetros:</b> lançamento curto &lt; ${CFG.curtoMin} min · muito curto ≤ ${CFG.muitoCurtoMin} min · descrição incompleta &lt; ${CFG.descMinChars} caracteres, uma só palavra ou termo genérico ·
+    possível duplicidade = mesmo advogado + cliente + tipo + data · tempo interno = cliente "TPC" (escritório, não faturável) · carga alta &gt; 10h/dia.
+    A coluna de horas do ADVWin vem no formato <i>01/01/1900&nbsp;00:15:00</i>; o painel converte automaticamente para a duração real (00:15 = 15 min).<br>
+    <b>Uso mensal:</b> arraste as novas planilhas na área "Anexar planilhas" no topo — todo o painel é recalculado no seu navegador, sem enviar dados para nenhum servidor.
+    <span id="fonteInfo"></span>`;
+}
+
+/* ============================================================
+   7. BOOT + UPLOAD
+   ============================================================ */
+function boot(recs, periodo, fonte){
+  RECORDS=recs; PERIODO=periodo;
+  if(!recs.length){ document.getElementById('app').innerHTML=`<div class="empty-state">Nenhum lançamento encontrado nas planilhas. Confira se são exportações do ADVWin com as colunas Cliente, Tipo de Serviço, Descrição, Advogado, Data e Horas.</div>`; return; }
+  ANALISE=analyzeAll(recs);
+  atual='__equipe__';
+  render();
+  renderFooter();
+  if(fonte) document.getElementById('fonteInfo').innerHTML=` · <b>Fonte:</b> ${fonte}`;
+}
+
+const drop=document.getElementById('drop');
+const fileInput=document.getElementById('fileInput');
+['dragover','dragenter'].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.add('drag');}));
+['dragleave','drop'].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.remove('drag');}));
+drop.addEventListener('drop',e=>handleFiles(e.dataTransfer.files));
+fileInput.addEventListener('change',e=>handleFiles(e.target.files));
+function handleFiles(files){
+  if(!files||!files.length) return;
+  if(typeof XLSX==='undefined'){ alert('A biblioteca de leitura de planilhas ainda não carregou. Verifique sua conexão e tente novamente em alguns segundos.'); return; }
+  const nomes=[...files].map(f=>f.name).join(', ');
+  readFiles(files).then(recs=>{
+    // detecta período pelas datas
+    const ds=recs.map(r=>r.data).filter(Boolean).sort();
+    let per='Período carregado';
+    if(ds.length){
+      const meses=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+      const a=ds[0], b=ds[ds.length-1];
+      per = a.slice(0,7)===b.slice(0,7)
+        ? `${meses[+a.slice(5,7)-1]}/${a.slice(0,4)}`
+        : `${a.split('-').reverse().join('/')} a ${b.split('-').reverse().join('/')}`;
+    }
+    boot(recs, per, nomes);
+    window.scrollTo({top:0,behavior:'smooth'});
+  }).catch(err=>{
+    alert('Não consegui ler o arquivo: '+err.message+'\n\nConfira se é um .xlsx exportado do ADVWin.');
+    console.error(err);
+  });
+}
+
+/* inicia com dados de Junho embutidos */
+boot(RECORDS_DEFAULT, PERIODO_DEFAULT, 'Junho/2026 — Rodrigo + Vinícius (dados embutidos)');
+</script>
+
+</body>
+</html>
