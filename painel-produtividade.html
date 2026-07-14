@@ -280,6 +280,33 @@ const CFG = {
     ['Consultivo',            /consultoria|parecer|consulta|notifica|procuracao|procuração|pesquisa|estudo|contrato/i],
     ['Reuniões/Alinhamento',  /reuniao|reunião|call|alinhamento/i],
     ['Gestão/Administrativo', /cadastr|ficha tempo|relatorio|relatório|ausencia|ausência|apresentac|apresentaç|\bbi\b|resposta de e-?mail|contato|envio|organizac|organizaç|orientac|orientaç|e-?mail|guia|custas/i]
+  ],
+  // subtipo real da peça/petição — lido da DESCRIÇÃO (observações) + tipo; 1ª regra que casar vence.
+  // Aplicado sobre o texto sem acento/minúsculo de (descrição + " " + tipo de serviço).
+  subtipoPeca: [
+    ['Alegações Finais',                /alegacoes finais|alegacao final|memoriais/],
+    ['Resposta à Acusação',             /resposta a acusacao|defesa previa|defesa preliminar/],
+    ['Contrarrazões',                   /contrarraz|contra-?razoes|contra razoes/],
+    ['Razões de Apelação',              /razoes de apela|apelacao|apelar/],
+    ['Embargos de Declaração',          /embargos de declara|\bembargos\b|elaboracao de ed\b|protocolo de ed\b|revisao.*\bed\b|\bed\b/],
+    ['Recurso em Sentido Estrito (RESE)',/\brese\b|sentido estrito/],
+    ['Recurso Esp./ARESP',              /\baresp\b|\bresp\b|recurso especial|agravo em recurso/],
+    ['Agravo',                          /agravo/],
+    ['Habeas Corpus',                   /habeas|\bhc\b/],
+    ['Exceção de Suspeição',            /excecao de suspei|suspeicao|excecao/],
+    ['Notícia-Crime',                   /noticia-?crime|notitia criminis/],
+    ['Petição Inicial',                 /\binicial\b|distribuicao de peticao/],
+    ['Notificação/Contranotificação',   /notifica|contranotifica|resposta a demanda|resposta.*oficio|minuta.*oficio/],
+    ['Parecer',                         /parecer/],
+    ['Cautelar (sigilo/arresto)',       /quebra de sigilo|arresto|sequestro|cautelar|busca e apreensao/],
+    ['Extinção de Punibilidade',        /extincao da punib|punibilidade/],
+    ['Habilitação/Procuração',          /habilitacao|procuracao|habilitar advogado|substabelec/],
+    ['Pedido de acesso/vista',          /acesso ao inqu|acesso do inqu|acesso e reagend|vista dos autos|\bacesso\b/],
+    ['Pedido de saída p/ consulta',     /saida pra consulta|saida para consulta/],
+    ['Assistente de Acusação',          /assistente de acusa/],
+    ['Descadastramento/Isenção',        /descadastr|isenc/],
+    ['Manifestação (genérica)',         /manifesta/],
+    ['Juntada/Protocolo',               /juntada|protocolo|redistribui|distribui|comprovante/]
   ]
 };
 
@@ -304,6 +331,12 @@ function classifyNatureza(tipo){
   const t=tipo||'';
   for(const [nome,rx] of CFG.naturaPatterns){ if(rx.test(t)) return nome; }
   return 'Outros';
+}
+// identifica o subtipo real da peça a partir da descrição (observações) + tipo
+function classifySubtipoPeca(tipo, desc){
+  const t=semAcento((desc||'')+' '+(tipo||''));
+  for(const [nome,rx] of CFG.subtipoPeca){ if(rx.test(t)) return nome; }
+  return 'Não especificado';
 }
 function fmtRS(v){ return 'R$ '+(v||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}); }
 function fmtH(min){ // decimal horas
@@ -467,8 +500,8 @@ function agg(records){
     // natureza da atividade
     const nat=classifyNatureza(r.tipo);
     natureza[nat]=natureza[nat]||{min:0,count:0}; natureza[nat].min+=r.min; natureza[nat].count++;
-    // peças/petições
-    if(isPeca(r.tipo)) pecas.push(r);
+    // peças/petições (+ subtipo identificado pela descrição)
+    if(isPeca(r.tipo)) pecas.push({...r, subtipo: classifySubtipoPeca(r.tipo, r.descricao)});
     if(r.data){
       dias[r.data]=true;
       const ds=diaSemana(r.data); diaSem[ds]=(diaSem[ds]||0)+1;
@@ -514,11 +547,17 @@ function agg(records){
   const pecaGrupos=Object.values(pecaGrpMap).map(g=>({...g,dias:g.datas.size})).sort((a,b)=>b.min-a.min);
   // peças por advogado (contagem + tempo)  e por tipo de peça
   const pecasPorAdv={}, pecasPorTipo={}, pecasPorTipoMin={};
+  const subtipo={};   // subtipo identificado -> {count,min,tipos:{}}
   pecas.forEach(p=>{
     (pecasPorAdv[p.advogado]=pecasPorAdv[p.advogado]||{lanc:0,min:0})&&0;
     pecasPorAdv[p.advogado].lanc++; pecasPorAdv[p.advogado].min+=p.min;
     if(p.tipo){ pecasPorTipo[p.tipo]=(pecasPorTipo[p.tipo]||0)+1; pecasPorTipoMin[p.tipo]=(pecasPorTipoMin[p.tipo]||0)+p.min; }
+    const st=subtipo[p.subtipo]=subtipo[p.subtipo]||{count:0,min:0,tipos:{}};
+    st.count++; st.min+=p.min; if(p.tipo) st.tipos[p.tipo]=(st.tipos[p.tipo]||0)+1;
   });
+  const subtipoArr=Object.entries(subtipo).map(([k,v])=>({nome:k,count:v.count,min:v.min,tipos:v.tipos}))
+     .sort((a,b)=> b.count-a.count || b.min-a.min);
+  const nSubNaoEspec=(subtipo['Não especificado']||{count:0}).count;
   // natureza ordenada
   const natArr=Object.entries(natureza).map(([k,v])=>({nome:k,min:v.min,count:v.count}))
      .sort((a,b)=>b.min-a.min);
@@ -539,6 +578,7 @@ function agg(records){
     descArr, pecas, pecaGrupos, pecasPorAdv,
     pecasPorTipo: sortEntries(pecasPorTipo),
     pecasPorTipoMin: sortEntries(pecasPorTipoMin),
+    subtipoArr, nSubNaoEspec,
     natArr, adminMin,
     carteira:{
       nClientesExt: extClientes.length,
@@ -886,6 +926,58 @@ function pecasSection(s){
   return html;
 }
 
+/* Relatório: tipo de petição/minuta identificado a partir da descrição */
+function subtipoPecaSection(s){
+  const title=sectionTitle('◈','Tipo de petição/minuta identificado','lê a descrição de cada peça e revela o que foi realmente elaborado');
+  if(!s.pecas || !s.pecas.length) return '';
+  const arr=s.subtipoArr;
+  const top=arr.filter(x=>x.nome!=='Não especificado')[0]||arr[0];
+  const topMin=[...arr].sort((a,b)=>b.min-a.min).filter(x=>x.nome!=='Não especificado')[0]||arr[0];
+  const totalPecas=s.pecas.length;
+  const totalMinP=s.pecas.reduce((a,p)=>a+p.min,0);
+  const idOrder={}; arr.forEach((x,i)=>idOrder[x.nome]=i);
+  const pill=st=> st==='Não especificado' ? 'pill-crit' : 'pill-info';
+  let html=title;
+  html+=`<div class="legend-note" style="margin:0 0 12px">Cada um dos <b>${totalPecas} lançamentos</b> de peça/minuta foi classificado pelo conteúdo da descrição. Foram identificados <b>${arr.filter(x=>x.nome!=='Não especificado').length} tipos distintos</b> de petição.${s.nSubNaoEspec?` <b style="color:#B02020">${s.nSubNaoEspec}</b> lançamento(s) têm descrição vaga demais para identificar a peça — reveja e peça detalhamento (destacados em vermelho na tabela).`:' Todas as peças puderam ser identificadas pela descrição.'}</div>`;
+  html+=`<div class="hl">
+    <div class="hl-card"><div class="hl-k">Peça mais elaborada (identificada)</div>
+      <div class="hl-v">${top.nome}</div>
+      <div class="hl-s"><b>${top.count}</b> lançamentos · ${fmtHM(top.min)}</div></div>
+    <div class="hl-card"><div class="hl-k">Peça que mais consumiu tempo</div>
+      <div class="hl-v">${topMin.nome}</div>
+      <div class="hl-s"><b>${fmtHM(topMin.min)}</b> em ${topMin.count} lançamento(s)</div></div>
+  </div>`;
+  // gráfico + tabela-resumo
+  html+=`<div class="grid" style="margin-top:14px">
+    <div class="panel canvas-tall"><h3>Tipos de petição identificados — nº de lançamentos</h3><canvas id="cSubtipo"></canvas></div>
+    <div class="panel"><h3>Resumo por tipo de petição</h3>
+      <div class="tablewrap" style="border:none;max-height:340px;overflow-y:auto"><table>
+        <thead><tr><th>Tipo de petição/minuta</th><th class="num">Qtd</th><th class="num">Horas</th><th class="num">Médio</th></tr></thead>
+        <tbody>${arr.map(x=>`<tr>
+          <td>${x.nome==='Não especificado'?'<span class="pill pill-crit">Não especificado</span>':x.nome}</td>
+          <td class="num">${x.count}</td><td class="num">${fmtHM(x.min)}</td><td class="num">${fmtHM(x.min/x.count)}</td></tr>`).join('')}</tbody>
+      </table></div></div>
+  </div>`;
+  // relatório detalhado: cada peça com seu subtipo identificado
+  const dados=[...s.pecas].sort((a,b)=> (idOrder[a.subtipo]-idOrder[b.subtipo]) || (b.min-a.min));
+  html+=`<div class="panel" style="margin-top:14px"><h3>Relatório detalhado — o que foi elaborado em cada tarefa</h3>
+    <div class="tablewrap" style="max-height:520px;overflow-y:auto"><table>
+    <thead><tr>${atual==='__equipe__'?'<th>Advogado</th>':''}<th>Data</th><th>Cliente</th><th>Tipo (ADVWin)</th><th>Petição identificada</th><th>Descrição (observações)</th><th class="num">Tempo</th></tr></thead>
+    <tbody>${dados.map(p=>`<tr>
+      ${atual==='__equipe__'?`<td>${primeiroNome(p.advogado)}</td>`:''}
+      <td>${p.data?p.data.split('-').reverse().join('/'):'—'}</td>
+      <td>${p.cliente}${isInterno(p.cliente)?' <span class="pill pill-int">int</span>':''}</td>
+      <td class="muted">${p.tipo}</td>
+      <td><span class="pill ${pill(p.subtipo)}">${p.subtipo}</span></td>
+      <td>${p.descricao?p.descricao:'<span class="muted">(vazio)</span>'}</td>
+      <td class="num">${p.min?fmtHM(p.min):'<span class="pill pill-crit">00:00</span>'}</td>
+    </tr>`).join('')}</tbody>
+    </table></div>
+    <div class="legend-note">Coluna "Petição identificada" = leitura automática da descrição. Onde aparece <span class="pill pill-crit">Não especificado</span>, a observação não diz qual peça foi feita — oriente o advogado a descrever (ex.: "Elaboração de contestação" em vez de "Elaboração de petição").</div>
+  </div>`;
+  return html;
+}
+
 function render(){
   const s=ANALISE[atual];
   const app=document.getElementById('app');
@@ -952,6 +1044,7 @@ function render(){
   // Descrições recorrentes + Peças/petições (adicionais)
   html+=descricoesSection(s);
   html+=pecasSection(s);
+  html+=subtipoPecaSection(s);
 
   // (e) diagnósticos + (f) descrições
   html+=sectionTitle('e','Diagnóstico de falhas no lançamento','clique em uma categoria para filtrar a tabela');
@@ -1186,6 +1279,17 @@ function buildCharts(s){
         scales:{x:{beginAtZero:true,grid:{color:gridC},ticks:{precision:0}},y:{grid:{display:false},ticks:{font:{size:10.5}}}}}
     });
   }
+  // subtipos de petição identificados pela descrição
+  if(document.getElementById('cSubtipo') && s.subtipoArr && s.subtipoArr.length){
+    const st=s.subtipoArr.slice(0,14);
+    charts.subtipo=new Chart(document.getElementById('cSubtipo'),{
+      type:'bar',
+      data:{labels:st.map(x=>x.nome),datasets:[{data:st.map(x=>x.count),
+        backgroundColor:st.map(x=>x.nome==='Não especificado'?CORES.amarelo:CORES.grafite),borderRadius:3}]},
+      options:{indexAxis:'y',plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>c.parsed.x+' lançamentos'}}},
+        scales:{x:{beginAtZero:true,grid:{color:gridC},ticks:{precision:0}},y:{grid:{display:false},ticks:{font:{size:10}}}}}
+    });
+  }
 }
 function toggleBtns(){
   document.getElementById('tgHoras').classList.toggle('on',clientChartMode==='horas');
@@ -1217,6 +1321,7 @@ function renderFooter(){
     <b>Análises complementares de gestão:</b> rentabilidade &amp; carteira (faturamento estimado a partir do valor/hora e risco de concentração de clientes); natureza da atividade (mix contencioso × consultivo × captação × gestão);
     descrições de tarefas mais recorrentes; e elaboração de peças e petições — quantas cada advogado produziu, por tipo, e o tempo gasto em cada peça (somando lançamentos da mesma peça ao longo dos dias).
     Peça/petição = tipo de serviço de elaboração ou revisão de peça processual (minuta, manifestação, alegações, embargos, agravo, recurso, parecer etc.).<br>
+    <b>Tipo de petição/minuta identificado:</b> como os tipos do ADVWin ("Elaboração de Minuta", "Revisão de Minuta", "Elaborar Petição" etc.) são genéricos, o painel lê a <b>descrição (observações)</b> de cada peça e identifica automaticamente a petição elaborada — alegações finais, resposta à acusação, embargos de declaração, contrarrazões, agravo, habeas corpus, exceção de suspeição, petição inicial, parecer, entre outros. Quando a descrição não permite identificar, o lançamento é marcado como <i>"Não especificado"</i> para que se peça o detalhamento ao advogado.<br>
     <b>Parâmetros:</b> lançamento curto &lt; ${CFG.curtoMin} min · muito curto ≤ ${CFG.muitoCurtoMin} min · descrição incompleta &lt; ${CFG.descMinChars} caracteres, uma só palavra ou termo genérico ·
     possível duplicidade = mesmo advogado + cliente + tipo + data · tempo interno = cliente "TPC" (escritório, não faturável) · carga alta &gt; 10h/dia.
     A coluna de horas do ADVWin vem no formato <i>01/01/1900&nbsp;00:15:00</i>; o painel converte automaticamente para a duração real (00:15 = 15 min).<br>
