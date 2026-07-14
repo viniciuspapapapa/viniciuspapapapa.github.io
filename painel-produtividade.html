@@ -200,18 +200,62 @@
   @media print{
     @page{margin:11mm;size:A4 portrait;}
     html,body{background:#fff!important;}
-    header, nav, main, footer, .pdf-actions, #pdfOverlay{display:none!important;}
-    #printArea{display:block!important;}
     *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;}
+    thead th{position:static!important;}
+    /* modo padrão: imprime o relatório completo (#printArea) */
+    body:not(.crit-print) header, body:not(.crit-print) nav, body:not(.crit-print) main,
+    body:not(.crit-print) footer, body:not(.crit-print) .pdf-actions, body:not(.crit-print) #pdfOverlay,
+    body:not(.crit-print) #criticoModal{display:none!important;}
+    body:not(.crit-print) #printArea{display:block!important;}
     .pdf-view{page-break-before:always;}
     .pdf-view:first-child{page-break-before:avoid;}
-    .panel,.kpi,.tablewrap,.hl-card,.insight-card,.pdf-head{break-inside:avoid;}
+    .panel,.kpi,.tablewrap,.hl-card,.insight-card,.pdf-head,.crit-lawyer,.crit-sec{break-inside:avoid;}
     .section-title{break-after:avoid;}
     #printArea .table-tools,#printArea .toggle,#printArea .rate-bar{display:none!important;}
     #printArea .tablewrap{max-height:none!important;overflow:visible!important;}
     #printArea .grid.g3{grid-template-columns:1fr 1fr 1fr;}
-    thead th{position:static!important;}
+    /* modo crítico: imprime só o relatório crítico */
+    body.crit-print header, body.crit-print nav, body.crit-print main, body.crit-print footer,
+    body.crit-print .pdf-actions, body.crit-print #pdfOverlay, body.crit-print #printArea{display:none!important;}
+    body.crit-print #criticoModal{position:static!important;display:block!important;background:#fff!important;overflow:visible!important;padding:0!important;}
+    body.crit-print #criticoModal .crit-inner{max-height:none!important;box-shadow:none!important;border:none!important;}
+    body.crit-print .crit-toolbar{display:none!important;}
+    body.crit-print .crit-lawyer{page-break-before:always;}
+    body.crit-print .crit-lawyer:first-child{page-break-before:avoid;}
   }
+  /* ---- relatório crítico (modal) ---- */
+  .btn-critico{background:var(--amarelo);color:var(--preto);margin-left:12px;}
+  .btn-critico:hover{background:var(--amarelo-suave);}
+  #criticoModal{display:none;position:fixed;inset:0;background:rgba(15,15,16,.72);z-index:9998;padding:26px;overflow:auto;}
+  #criticoModal .crit-inner{max-width:1000px;margin:0 auto;background:var(--claro);border-radius:10px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.4);}
+  .crit-toolbar{position:sticky;top:0;background:var(--preto);color:#fff;padding:16px 24px;display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;z-index:2;}
+  .crit-toolbar .crit-title{font-size:16px;font-weight:700;}
+  .crit-toolbar .crit-title span{color:var(--amarelo);}
+  .crit-toolbar .crit-actions{display:flex;gap:8px;}
+  .crit-toolbar button{font:inherit;font-size:13px;font-weight:700;border:none;border-radius:6px;padding:9px 16px;cursor:pointer;}
+  .crit-toolbar .b-print{background:var(--amarelo);color:var(--preto);}
+  .crit-toolbar .b-close{background:#3A3A3A;color:#fff;}
+  .crit-body{padding:22px 24px 30px;}
+  .crit-intro{background:var(--branco);border-left:4px solid var(--amarelo);padding:14px 18px;font-size:13px;line-height:1.55;margin-bottom:20px;color:var(--texto-escuro);}
+  .crit-lawyer{background:var(--branco);border:1px solid var(--linha);border-radius:8px;overflow:hidden;margin-bottom:22px;}
+  .crit-head{background:linear-gradient(135deg,var(--preto),#232324);color:#fff;padding:16px 22px;border-left:5px solid var(--amarelo);}
+  .crit-head .t{font-size:19px;font-weight:700;}
+  .crit-head .s{font-size:12.5px;color:#B8B8B8;margin-top:4px;}
+  .crit-head .s b{color:var(--amarelo);}
+  .crit-resumo{padding:16px 22px 4px;font-size:13.5px;line-height:1.6;color:var(--texto-escuro);}
+  .crit-cols{display:grid;grid-template-columns:1fr 1fr;gap:0;}
+  .crit-sec{padding:14px 22px 18px;}
+  .crit-sec h4{font-size:12px;text-transform:uppercase;letter-spacing:.7px;font-weight:800;margin-bottom:10px;display:flex;align-items:center;gap:7px;}
+  .crit-sec ul{list-style:none;display:flex;flex-direction:column;gap:8px;}
+  .crit-sec li{font-size:13px;line-height:1.5;padding-left:16px;position:relative;color:var(--texto-escuro);}
+  .crit-sec li::before{content:"";position:absolute;left:0;top:7px;width:6px;height:6px;border-radius:50%;}
+  .crit-sec li b{color:var(--preto);}
+  .sec-manter{border-top:1px solid #EFEFEF;} .sec-manter h4{color:var(--verde-esc);} .sec-manter li::before{background:var(--verde);}
+  .sec-melhorar{border-top:1px solid #EFEFEF;border-left:1px solid #EFEFEF;} .sec-melhorar h4{color:#B4531B;} .sec-melhorar li::before{background:var(--laranja);}
+  .sec-sugestao{border-top:1px solid #EFEFEF;} .sec-sugestao h4{color:var(--azul);} .sec-sugestao li::before{background:var(--azul);}
+  .sec-rent{border-top:1px solid #EFEFEF;background:#FCFBEE;} .sec-rent h4{color:#7A7600;} .sec-rent li::before{background:var(--amarelo);}
+  .crit-empty{font-size:12.5px;color:#9A9A9A;font-style:italic;}
+  @media(max-width:760px){ .crit-cols{grid-template-columns:1fr;} .sec-melhorar{border-left:none;} }
 </style>
 </head>
 <body>
@@ -239,11 +283,13 @@
 
 <div class="pdf-actions" id="pdfActions" style="display:none">
   <button class="btn-pdf" onclick="gerarPDF()"><span class="ic">⤓</span> Gerar relatório completo em PDF</button>
-  <span class="hint">Gera um PDF com o consolidado da equipe e a análise individual de cada advogado. Na janela de impressão, escolha "Salvar como PDF".</span>
+  <button class="btn-pdf btn-critico" onclick="gerarCritico()"><span class="ic">⚑</span> Gerar relatório crítico de gestão</button>
+  <span class="hint">PDF: espelho do painel (equipe + cada advogado). Relatório crítico: parecer individualizado por advogado — o que manter, o que melhorar e alavancas de rentabilidade.</span>
 </div>
 
 <div id="pdfOverlay"><div class="spin"></div><div>Montando o relatório… preparando gráficos e tabelas de cada advogado.</div></div>
 <div id="printArea"></div>
+<div id="criticoModal"></div>
 
 <script>
 /* ============================================================
@@ -1444,6 +1490,178 @@ async function gerarPDF(){
     ov.style.display='none';
   }
   window.onafterprint=()=>{ area.innerHTML=''; window.onafterprint=null; };
+  window.print();
+}
+
+/* ============================================================
+   9. RELATÓRIO CRÍTICO DE GESTÃO (individualizado por advogado)
+   ============================================================ */
+function analiseCritica(key){
+  const s=ANALISE[key];
+  const med=ANALISE.__medias__;
+  const nome=primeiroNome(s.label);
+  const F=[], M=[], S=[], R=[];              // manter, melhorar, sugestões, rentabilidade
+  const minDia = s.diasTrab? s.totalMin/s.diasTrab : 0;   // minutos/dia (para fmtH)
+  const horasDia = minDia/60;                              // horas/dia (para comparações)
+  const rs = min => RATE? ` (~<b>${fmtRS(min/60*RATE)}</b>/mês)` : '';
+  const admPct = s.totalMin? s.adminMin/s.totalMin*100 : 0;
+
+  // --- horas faturáveis / tempo interno ---
+  if(s.pctExterno>=70)
+    F.push(`<b>Alto índice de horas faturáveis:</b> ${fmtPct(s.pctExterno)} do tempo em clientes (${fmtH(s.externoMin)}). Excelente aproveitamento comercial — manter o padrão.`);
+  if(s.pctInterno>CFG.internoAltoPct){
+    const excedente=Math.max(0, s.internoMin - s.totalMin*(CFG.internoAltoPct/100));
+    M.push(`<b>Tempo interno acima da meta:</b> ${fmtPct(s.pctInterno)} do tempo (${fmtH(s.internoMin)}) é interno/não faturável, acima do teto de ${CFG.internoAltoPct}%.`);
+    R.push(`Trazer o tempo interno de ${fmtPct(s.pctInterno)} para ${CFG.internoAltoPct}% converteria ~<b>${fmtH(excedente)}</b>/mês em horas faturáveis${rs(excedente)}.`);
+  } else if(s.pctExterno>=60 && s.pctExterno<70){
+    F.push(`<b>Proporção faturável saudável:</b> ${fmtPct(s.pctExterno)} do tempo em clientes.`);
+  }
+
+  // --- tempo administrativo ---
+  if(admPct>20){
+    M.push(`<b>Carga administrativa elevada:</b> ${fmtPct(admPct)} do tempo (${fmtH(s.adminMin)}) em apoio (cadastros, ficha de tempo, relatórios, e-mails internos).`);
+    S.push(`Delegar tarefas administrativas a apoio/estagiário, liberando ${nome} para a atividade-fim${rs(s.adminMin*0.6)}.`);
+  } else if(admPct>0 && admPct<8){
+    F.push(`<b>Baixa sobrecarga administrativa</b> (${fmtPct(admPct)}): foco preservado na atividade jurídica.`);
+  }
+
+  // --- granularidade ---
+  if(s.diag.pctCurta>Math.max(med.pctCurta,20)){
+    M.push(`<b>Fragmentação de apontamentos:</b> ${fmtPct(s.diag.pctCurta)} dos lançamentos têm menos de ${CFG.curtoMin} min (média da equipe ${fmtPct(med.pctCurta)}). Micro-lançamentos dificultam a leitura da fatura e podem subvalorizar o esforço.`);
+    S.push(`Agrupar micro-tarefas do mesmo processo/dia em um lançamento único com descrição consolidada.`);
+  } else if(s.diag.pctCurta<10){
+    F.push(`<b>Boa granularidade de lançamentos</b> (${fmtPct(s.diag.pctCurta)} abaixo de ${CFG.curtoMin} min).`);
+  }
+
+  // --- duplicidade ---
+  if(s.diag.nDup>0 && s.diag.pctDup>med.pctDup)
+    M.push(`<b>Possível duplicidade/fragmentação:</b> ${s.diag.nDup} lançamentos (${fmtPct(s.diag.pctDup)}) repetem cliente + tipo + data no mesmo dia. Revisar para evitar dupla contagem ou consolidar.`);
+
+  // --- lançamentos com falha crítica ---
+  if(s.diag.nSemDur>0){
+    M.push(`<b>Horas não contabilizadas:</b> ${s.diag.nSemDur} lançamento(s) com 00:00 — trabalho feito e não faturado.`);
+    R.push(`Preencher a duração dos ${s.diag.nSemDur} lançamento(s) zerado(s) recupera faturamento direto que hoje se perde.`);
+  }
+  if(s.diag.nSemTipo>0)
+    M.push(`<b>${s.diag.nSemTipo} lançamento(s) sem tipo de serviço</b> — prejudica classificação e relatórios; padronizar o preenchimento.`);
+
+  // --- descrições ---
+  if(s.diag.pctDescRuim>25){
+    M.push(`<b>Qualidade das descrições:</b> ${fmtPct(s.diag.pctDescRuim)} estão incompletas ou genéricas — risco de glosa pelo cliente.`);
+    S.push(`Padronizar a descrição no formato "verbo + objeto + processo/cliente" (ex.: "Elaboração de contestação — Proc. X / Cliente Y") e revisar no fechamento mensal.`);
+  } else if(s.diag.pctDescRuim<12){
+    F.push(`<b>Descrições consistentes</b> (${fmtPct(s.diag.pctDescRuim)} incompletas): boa rastreabilidade do trabalho.`);
+  }
+  if(s.nSubNaoEspec>0)
+    M.push(`<b>${s.nSubNaoEspec} peça(s) sem identificação do tipo</b> pela descrição — impede saber qual petição foi elaborada; pedir detalhamento na observação.`);
+
+  // --- carga diária ---
+  if(s.diag.cargasAltas.length>0){
+    const d=s.diag.cargasAltas[0];
+    M.push(`<b>Picos de carga diária:</b> ${s.diag.cargasAltas.length} dia(s) acima de 10h (pico de ${fmtHM(d.min)} em ${d.data.split('-').reverse().join('/')}), possível apontamento retroativo em bloco. Lançar no próprio dia aumenta a fidelidade.`);
+  }
+  if(horasDia<6 && s.diasTrab>=5)
+    M.push(`<b>Média diária baixa:</b> ${fmtH(minDia)}/dia em ${s.diasTrab} dias — verificar subaproveitamento ou horas não lançadas.`);
+  else if(horasDia>=6 && horasDia<=9)
+    F.push(`<b>Volume diário saudável:</b> ${fmtH(minDia)}/dia em ${s.diasTrab} dias trabalhados.`);
+  else if(horasDia>10)
+    M.push(`<b>Sobrecarga aparente:</b> ${fmtH(minDia)}/dia — atenção à sustentabilidade e à possibilidade de apontamento em bloco.`);
+
+  // --- concentração de carteira ---
+  if(s.carteira.topClientePct>50){
+    M.push(`<b>Concentração de carteira:</b> ${fmtPct(s.carteira.topClientePct)} das horas faturáveis em um único cliente (${s.carteira.topCliente}). Alta dependência — risco de receita.`);
+    R.push(`Diversificar a carteira: ${fmtPct(s.carteira.top3Pct)} das horas faturáveis estão em apenas 3 clientes. Reduzir a dependência protege a receita da área.`);
+  } else if(s.carteira.nClientesExt>=8 && s.carteira.topClientePct<35){
+    F.push(`<b>Carteira diversificada:</b> ${s.carteira.nClientesExt} clientes faturáveis, sem dependência excessiva (maior = ${fmtPct(s.carteira.topClientePct)}).`);
+  }
+
+  // --- captação / crescimento ---
+  const capt=(s.natArr.find(n=>n.nome==='Captação/Prospecção')||{min:0}).min;
+  if(capt===0)
+    S.push(`Nenhum tempo em captação/prospecção no período — reservar uma fração da agenda para desenvolvimento de novos clientes sustenta o crescimento da área.`);
+  else
+    F.push(`<b>Atuação em captação:</b> ${fmtH(capt)} em prospecção — investimento no crescimento da carteira.`);
+
+  // --- peças / eficiência técnica ---
+  if(s.pecas && s.pecas.length){
+    const totMinPeca=s.pecas.reduce((a,p)=>a+p.min,0);
+    F.push(`<b>Produção técnica:</b> ${s.pecas.length} lançamentos de elaboração/revisão de peças (${fmtH(totMinPeca)}) — núcleo da entrega jurídica.`);
+    const topPeca=(s.subtipoArr||[]).filter(x=>x.nome!=='Não especificado')[0];
+    if(topPeca){
+      const medMin=topPeca.min/topPeca.count;
+      S.push(`Peça mais recorrente: <b>${topPeca.nome}</b> (${topPeca.count}× · média ${fmtHM(medMin)}). Criar modelos/checklists para as peças frequentes reduz o tempo de elaboração e padroniza a qualidade${medMin>=60?rs(topPeca.count*medMin*0.2):''}.`);
+    }
+  }
+
+  // --- perfil de atuação (natureza) ---
+  if(s.natArr.length){
+    const perfil=s.natArr[0];
+    F.push(`<b>Perfil de atuação:</b> predomínio <b>${perfil.nome.toLowerCase()}</b> (${fmtPct(s.totalMin?perfil.min/s.totalMin*100:0)} do tempo) — útil para direcionar alocação de casos e treinamento.`);
+  }
+
+  // fallbacks para não deixar bloco vazio
+  if(!F.length) F.push(`Sem destaques positivos marcantes neste período — foco nas melhorias ao lado.`);
+  if(!M.length) M.push(`Nenhum desvio relevante identificado. Indicadores dentro dos parâmetros da equipe.`);
+  if(!S.length) S.push(`Manter a rotina atual de apontamento; sem ajustes estruturais necessários neste período.`);
+  if(!R.length) R.push(`Rentabilidade equilibrada: ${fmtPct(s.pctExterno)} de horas faturáveis${RATE?` (~<b>${fmtRS(s.externoMin/60*RATE)}</b> no período)`:''}. Preserve o índice e o mix de clientes.`);
+
+  const nMel=s.diag.nSemDur + (s.pctInterno>CFG.internoAltoPct?1:0) + (admPct>20?1:0) + (s.diag.pctDescRuim>25?1:0);
+  const verdict = nMel===0 ? 'Indicadores majoritariamente saudáveis; foco em manter o padrão.'
+    : nMel<=2 ? 'Bom desempenho geral, com ajustes pontuais que ampliam a rentabilidade.'
+    : 'Há oportunidades relevantes de eficiência e rentabilidade, detalhadas abaixo.';
+  const resumo=`Em ${PERIODO}, ${nome} apontou <b>${fmtHM(s.totalMin)}</b> em <b>${s.nTasks}</b> tarefas ao longo de <b>${s.diasTrab}</b> dias (${fmtH(minDia)}/dia), com <b>${fmtPct(s.pctExterno)}</b> de horas faturáveis${RATE?` — faturamento estimado de <b>${fmtRS(s.externoMin/60*RATE)}</b>`:''}. ${verdict}`;
+
+  return {nome, label:s.label, resumo, F, M, S, R};
+}
+
+function critLista(arr){ return `<ul>${arr.map(t=>`<li>${t}</li>`).join('')}</ul>`; }
+
+function gerarCritico(){
+  if(!ANALISE){ return; }
+  const modal=document.getElementById('criticoModal');
+  const advs=ANALISE.__advs__;
+  const eq=ANALISE['__equipe__'];
+  const intro=`Parecer de gestão gerado a partir das horas apontadas em <b>${PERIODO}</b>. A equipe registrou <b>${fmtHM(eq.totalMin)}</b> em ${eq.nTasks} tarefas, com <b>${fmtPct(eq.pctExterno)}</b> de horas faturáveis${RATE?` (faturamento estimado <b>${fmtRS(eq.externoMin/60*RATE)}</b>)`:' — defina o valor/hora na seção "Rentabilidade & carteira" para ver o impacto em R$'}. A seguir, a análise crítica <b>individualizada</b> de cada advogado: o que manter, o que melhorar, sugestões e alavancas de rentabilidade.`;
+  const blocos=advs.map(a=>{
+    const c=analiseCritica(a);
+    return `<div class="crit-lawyer">
+      <div class="crit-head"><div class="t">${c.nome}</div><div class="s">${c.label}</div></div>
+      <p class="crit-resumo">${c.resumo}</p>
+      <div class="crit-cols">
+        <div class="crit-sec sec-manter"><h4>✓ Pontos a manter</h4>${critLista(c.F)}</div>
+        <div class="crit-sec sec-melhorar"><h4>▲ Pontos a melhorar</h4>${critLista(c.M)}</div>
+      </div>
+      <div class="crit-sec sec-sugestao"><h4>➜ Sugestões de melhoria</h4>${critLista(c.S)}</div>
+      <div class="crit-sec sec-rent"><h4>$ Alavancas de rentabilidade</h4>${critLista(c.R)}</div>
+    </div>`;
+  }).join('');
+  modal.innerHTML=`<div class="crit-inner">
+    <div class="crit-toolbar">
+      <div class="crit-title">Relatório Crítico de Gestão <span>— TPC Advogados · ${PERIODO}</span></div>
+      <div class="crit-actions">
+        <button class="b-print" onclick="imprimirCritico()">⤓ Salvar em PDF</button>
+        <button class="b-close" onclick="fecharCritico()">✕ Fechar</button>
+      </div>
+    </div>
+    <div class="crit-body">
+      <div class="crit-intro">${intro}</div>
+      ${blocos}
+      <div class="crit-intro" style="border-left-color:#B8B8B8;margin-top:6px;font-size:12px;color:#8A8A8A">
+        Parecer gerado automaticamente a partir dos indicadores de apontamento (não substitui a avaliação qualitativa do gestor). Metas de referência: tempo interno &lt; ${CFG.internoAltoPct}%, lançamentos curtos &lt; ${CFG.curtoMin} min, descrições completas. Gerado em ${new Date().toLocaleString('pt-BR')}.
+      </div>
+    </div>
+  </div>`;
+  modal.style.display='block';
+  modal.scrollTop=0;
+  document.body.style.overflow='hidden';
+}
+function fecharCritico(){
+  document.getElementById('criticoModal').style.display='none';
+  document.body.style.overflow='';
+}
+function imprimirCritico(){
+  document.body.classList.add('crit-print');
+  window.onafterprint=()=>{ document.body.classList.remove('crit-print'); window.onafterprint=null; };
   window.print();
 }
 
