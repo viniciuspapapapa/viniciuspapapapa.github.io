@@ -6,167 +6,163 @@
 <title>Transcrição de Áudio/Vídeo — Vinicius</title>
 <style>
 :root {
-  --bg:       #0f1117;
-  --surface:  #1a1d27;
-  --surface2: #22263a;
-  --border:   #2e3248;
-  --accent:   #7c6af7;
-  --accent2:  #5b50c8;
-  --green:    #34d399;
-  --red:      #f87171;
-  --yellow:   #fbbf24;
-  --purple:   #a78bfa;
-  --text:     #e2e8f0;
-  --muted:    #94a3b8;
-  --radius:   12px;
-  --radius-sm:8px;
+  --bg:#0f1117; --surface:#1a1d27; --surface2:#22263a; --border:#2e3248;
+  --accent:#7c6af7; --accent2:#5b50c8; --green:#34d399; --red:#f87171;
+  --yellow:#fbbf24; --purple:#a78bfa; --text:#e2e8f0; --muted:#94a3b8;
+  --radius:12px; --radius-sm:8px;
 }
-* { box-sizing: border-box; margin: 0; padding: 0; }
-body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; min-height: 100vh; }
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;min-height:100vh}
 
-nav { background: var(--surface); border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 100; }
-.nav-inner { max-width: 860px; margin: 0 auto; display: flex; align-items: center; padding: 0 20px; gap: 10px; }
-.nav-title { font-weight: 700; font-size: 15px; color: var(--accent); padding: 15px 0; }
-.nav-sub { font-size: 12px; color: var(--muted); }
+nav{background:var(--surface);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100}
+.nav-inner{max-width:900px;margin:0 auto;display:flex;align-items:center;padding:0 20px;gap:10px}
+.nav-title{font-weight:700;font-size:15px;color:var(--accent);padding:15px 0}
+.nav-sub{font-size:12px;color:var(--muted)}
 
-main { max-width: 860px; margin: 0 auto; padding: 28px 20px 60px; display: flex; flex-direction: column; gap: 18px; }
+main{max-width:900px;margin:0 auto;padding:24px 20px 60px;display:flex;flex-direction:column;gap:16px}
 
-.card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px 22px; }
-.card-title { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .07em; color: var(--muted); margin-bottom: 14px; }
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px 22px}
+.card-title{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin-bottom:14px}
+
+/* collapsible card */
+.card-header{display:flex;align-items:center;gap:8px;cursor:pointer;user-select:none}
+.card-header .card-title{margin-bottom:0;flex:1}
+.chevron{font-size:11px;color:var(--muted);transition:transform .2s}
+.card-body{display:none;margin-top:14px}
+.card.open .card-body{display:block}
+.card.open .chevron{transform:rotate(180deg)}
 
 /* Model selector */
-.model-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 10px; }
-.model-opt { position: relative; cursor: pointer; }
-.model-opt input { position: absolute; opacity: 0; width: 0; height: 0; }
-.model-box { border: 1.5px solid var(--border); border-radius: var(--radius-sm); padding: 12px 14px; transition: border-color .15s, background .15s; cursor: pointer; }
-.model-opt input:checked + .model-box { border-color: var(--accent); background: rgba(124,106,247,.08); }
-.model-box:hover { border-color: var(--accent2); }
-.model-name { font-size: 13px; font-weight: 600; margin-bottom: 3px; }
-.model-desc { font-size: 11px; color: var(--muted); line-height: 1.4; }
-.model-badge { display: inline-block; font-size: 9px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; padding: 2px 6px; border-radius: 4px; margin-bottom: 6px; }
-.badge-fast { background: rgba(52,211,153,.15); color: var(--green); }
-.badge-best { background: rgba(124,106,247,.2); color: var(--accent); }
-.badge-bal  { background: rgba(251,191,36,.15); color: var(--yellow); }
+.model-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.model-opt{position:relative;cursor:pointer}
+.model-opt input{position:absolute;opacity:0;width:0;height:0}
+.model-box{border:1.5px solid var(--border);border-radius:var(--radius-sm);padding:12px 14px;transition:border-color .15s,background .15s;cursor:pointer}
+.model-opt input:checked+.model-box{border-color:var(--accent);background:rgba(124,106,247,.08)}
+.model-box:hover{border-color:var(--accent2)}
+.model-name{font-size:13px;font-weight:600;margin-bottom:3px}
+.model-desc{font-size:11px;color:var(--muted);line-height:1.4}
+.model-badge{display:inline-block;font-size:9px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;padding:2px 6px;border-radius:4px;margin-bottom:6px}
+.badge-fast{background:rgba(52,211,153,.15);color:var(--green)}
+.badge-best{background:rgba(124,106,247,.2);color:var(--accent)}
+.badge-bal{background:rgba(251,191,36,.15);color:var(--yellow)}
 
-/* Diarization */
-.diar-row { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
-.toggle-wrap { display: flex; align-items: center; gap: 8px; cursor: pointer; user-select: none; }
-.toggle-wrap input[type=checkbox] { display: none; }
-.toggle { width: 36px; height: 20px; background: var(--border); border-radius: 10px; position: relative; transition: background .2s; flex-shrink: 0; }
-.toggle::after { content: ''; position: absolute; width: 14px; height: 14px; background: #fff; border-radius: 50%; top: 3px; left: 3px; transition: left .2s; }
-.toggle-wrap input:checked + .toggle { background: var(--accent); }
-.toggle-wrap input:checked + .toggle::after { left: 19px; }
-.toggle-label { font-size: 13px; font-weight: 500; }
-.nspeakers-wrap { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--muted); }
-.nspeakers-wrap input[type=number] {
-  width: 56px; background: var(--surface2); border: 1px solid var(--border);
-  border-radius: var(--radius-sm); color: var(--text); font-size: 13px;
-  padding: 5px 8px; text-align: center;
-}
-.nspeakers-wrap input:focus { outline: none; border-color: var(--accent); }
-.diar-hint { font-size: 11px; color: var(--muted); margin-top: 8px; }
+/* toggle */
+.toggle-wrap{display:flex;align-items:center;gap:8px;cursor:pointer;user-select:none}
+.toggle-wrap input[type=checkbox]{display:none}
+.toggle{width:36px;height:20px;background:var(--border);border-radius:10px;position:relative;transition:background .2s;flex-shrink:0}
+.toggle::after{content:'';position:absolute;width:14px;height:14px;background:#fff;border-radius:50%;top:3px;left:3px;transition:left .2s}
+.toggle-wrap input:checked+.toggle{background:var(--accent)}
+.toggle-wrap input:checked+.toggle::after{left:19px}
+.toggle-label{font-size:13px;font-weight:500}
+.diar-hint{font-size:11px;color:var(--muted);margin-top:8px;line-height:1.5}
+.nspeakers-wrap{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted);margin-top:10px}
+.nspeakers-wrap input[type=number]{width:56px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text);font-size:13px;padding:5px 8px;text-align:center}
+.nspeakers-wrap input:focus{outline:none;border-color:var(--accent)}
+.tess-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:10px}
+.tess-row input[type=text]{flex:1;min-width:220px;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text);font-size:12px;padding:6px 10px}
+.tess-row input:focus{outline:none;border-color:var(--accent)}
 
 /* Drop zone */
-.drop-zone { border: 2px dashed var(--border); border-radius: var(--radius); padding: 40px 24px; text-align: center; cursor: pointer; transition: border-color .2s, background .2s; }
-.drop-zone.drag-over { border-color: var(--accent); background: rgba(124,106,247,.06); }
-.drop-zone.has-file { border-color: var(--green); border-style: solid; }
-.drop-icon { font-size: 36px; margin-bottom: 10px; }
-.drop-title { font-size: 15px; font-weight: 600; margin-bottom: 6px; }
-.drop-hint { font-size: 12px; color: var(--muted); }
-.drop-formats { font-size: 11px; color: var(--border); margin-top: 10px; }
-.file-info { display: none; align-items: center; gap: 12px; text-align: left; }
-.file-info.visible { display: flex; }
-.file-icon { font-size: 28px; flex-shrink: 0; }
-.file-name { font-size: 14px; font-weight: 600; word-break: break-all; }
-.file-size { font-size: 12px; color: var(--muted); margin-top: 2px; }
-.file-change { font-size: 11px; color: var(--accent); margin-top: 4px; cursor: pointer; text-decoration: underline; }
-#fileInput { display: none; }
+.drop-zone{border:2px dashed var(--border);border-radius:var(--radius);padding:30px 24px;text-align:center;cursor:pointer;transition:border-color .2s,background .2s}
+.drop-zone.drag-over{border-color:var(--accent);background:rgba(124,106,247,.06)}
+.drop-zone.has-files{border-color:var(--green);border-style:solid}
+.drop-icon{font-size:32px;margin-bottom:8px}
+.drop-title{font-size:15px;font-weight:600;margin-bottom:5px}
+.drop-hint{font-size:12px;color:var(--muted)}
+.drop-formats{font-size:11px;color:var(--border);margin-top:8px}
+#fileInput{display:none}
+
+/* File queue */
+.queue-list{display:flex;flex-direction:column;gap:6px;margin-top:12px}
+.queue-item{display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm)}
+.q-icon{font-size:18px;flex-shrink:0}
+.q-info{flex:1;min-width:0}
+.q-name{font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.q-size{font-size:11px;color:var(--muted);margin-top:1px}
+.q-status{flex-shrink:0}
+.status-badge{display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:700;padding:3px 9px;border-radius:20px;text-transform:uppercase;letter-spacing:.04em;white-space:nowrap}
+.s-waiting{background:rgba(148,163,184,.1);color:var(--muted)}
+.s-queued{background:rgba(251,191,36,.12);color:var(--yellow)}
+.s-processing{background:rgba(124,106,247,.15);color:var(--accent)}
+.s-done{background:rgba(52,211,153,.12);color:var(--green)}
+.s-error{background:rgba(248,113,113,.12);color:var(--red)}
+.q-remove{background:none;border:none;color:var(--muted);cursor:pointer;font-size:15px;padding:2px 4px;border-radius:4px;transition:color .15s}
+.q-remove:hover{color:var(--red)}
+
+/* Spinner inline */
+.spin{display:inline-block;width:10px;height:10px;border:2px solid currentColor;border-top-color:transparent;border-radius:50%;animation:spin .6s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
 
 /* Buttons */
-.btn { display: inline-flex; align-items: center; gap: 7px; padding: 10px 20px; border-radius: var(--radius-sm); font-size: 13px; font-weight: 600; cursor: pointer; border: none; transition: opacity .15s, transform .1s; }
-.btn:active { transform: scale(.97); }
-.btn:disabled { opacity: .4; cursor: not-allowed; transform: none; }
-.btn-primary { background: var(--accent); color: #fff; }
-.btn-primary:hover:not(:disabled) { background: var(--accent2); }
-.btn-secondary { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
-.btn-secondary:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
-.btn-sm { padding: 7px 14px; font-size: 12px; }
-.action-bar { display: flex; gap: 10px; align-items: center; }
+.btn{display:inline-flex;align-items:center;gap:7px;padding:10px 20px;border-radius:var(--radius-sm);font-size:13px;font-weight:600;cursor:pointer;border:none;transition:opacity .15s,transform .1s}
+.btn:active{transform:scale(.97)}
+.btn:disabled{opacity:.4;cursor:not-allowed;transform:none}
+.btn-primary{background:var(--accent);color:#fff}
+.btn-primary:hover:not(:disabled){background:var(--accent2)}
+.btn-secondary{background:var(--surface2);color:var(--text);border:1px solid var(--border)}
+.btn-secondary:hover:not(:disabled){border-color:var(--accent);color:var(--accent)}
+.btn-danger{background:rgba(248,113,113,.1);color:var(--red);border:1px solid rgba(248,113,113,.25)}
+.btn-danger:hover:not(:disabled){background:rgba(248,113,113,.2)}
+.btn-sm{padding:6px 13px;font-size:12px}
+.action-bar{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
 
-/* Progress */
-.progress-card { display: none; }
-.progress-card.visible { display: block; }
-.status-line { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; }
-.spinner { width: 18px; height: 18px; border-radius: 50%; border: 2px solid var(--border); border-top-color: var(--accent); animation: spin .7s linear infinite; flex-shrink: 0; }
-@keyframes spin { to { transform: rotate(360deg); } }
-.status-text { font-size: 14px; font-weight: 500; }
-.seg-count { font-size: 12px; color: var(--muted); margin-top: 2px; }
-.stream-preview { background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 14px 16px; max-height: 220px; overflow-y: auto; font-size: 13px; line-height: 1.65; color: var(--muted); }
-.stream-preview p { margin: 0; padding: 2px 0; }
-.stream-preview p.last { color: var(--text); }
+/* Result cards */
+.result-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-top:0}
+.result-header{display:flex;align-items:center;gap:10px;padding:14px 18px;cursor:pointer;user-select:none}
+.result-title{flex:1;font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.result-body{padding:0 18px 16px;display:none}
+.result-card.open .result-body{display:block}
 
-/* Speaker panel */
-.speaker-panel { display: none; }
-.speaker-panel.visible { display: block; }
-.speaker-list { display: flex; flex-direction: column; gap: 8px; }
-.sp-row { display: flex; align-items: center; gap: 10px; padding: 10px 12px; background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-sm); }
-.sp-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
-.sp-id { font-size: 11px; color: var(--muted); font-family: monospace; min-width: 70px; }
-.sp-name { font-size: 13px; font-weight: 600; flex: 1; }
-.sp-edit { display: flex; gap: 6px; align-items: center; }
-.sp-input { background: var(--surface2); border: 1px solid var(--border); border-radius: 6px; color: var(--text); font-size: 12px; padding: 4px 8px; width: 170px; }
-.sp-input:focus { outline: none; border-color: var(--accent); }
-.sp-presets { display: flex; gap: 4px; flex-wrap: wrap; }
-.sp-preset { font-size: 10px; padding: 2px 7px; border-radius: 4px; background: var(--surface2); border: 1px solid var(--border); color: var(--muted); cursor: pointer; transition: all .12s; }
-.sp-preset:hover { border-color: var(--accent); color: var(--accent); }
-.sp-hint { font-size: 11px; color: var(--muted); margin-top: 10px; }
+.tab-row{display:flex;gap:4px;margin-bottom:12px}
+.tab-btn{padding:5px 12px;border-radius:6px;font-size:12px;font-weight:500;background:none;border:1px solid var(--border);color:var(--muted);cursor:pointer;transition:all .15s}
+.tab-btn.active{background:var(--surface2);border-color:var(--accent);color:var(--accent)}
 
-/* Results */
-.results-card { display: none; }
-.results-card.visible { display: block; }
-.results-header { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; flex-wrap: wrap; }
-.results-title { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .07em; color: var(--muted); flex: 1; min-width: 80px; }
-.tab-row { display: flex; gap: 4px; }
-.tab-btn { padding: 5px 12px; border-radius: 6px; font-size: 12px; font-weight: 500; background: none; border: 1px solid var(--border); color: var(--muted); cursor: pointer; transition: all .15s; }
-.tab-btn.active { background: var(--surface2); border-color: var(--accent); color: var(--accent); }
-.tab-btn:hover:not(.active) { border-color: var(--muted); color: var(--text); }
+.text-output{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);padding:14px 16px;font-size:13px;line-height:1.75;color:var(--text);max-height:320px;overflow-y:auto;white-space:pre-wrap;word-break:break-word;display:none}
+.text-output.visible{display:block}
+.timestamps-output{display:none;max-height:320px;overflow-y:auto}
+.timestamps-output.visible{display:block}
+.ts-seg{display:flex;gap:10px;align-items:flex-start;padding:7px 0;border-bottom:1px solid var(--border)}
+.ts-seg:last-child{border-bottom:none}
+.ts-left{display:flex;flex-direction:column;align-items:flex-end;gap:3px;flex-shrink:0;width:130px}
+.ts-time{font-size:10px;color:var(--muted);font-family:monospace}
+.ts-spk{font-size:10px;font-weight:700;padding:2px 6px;border-radius:4px;white-space:nowrap;max-width:130px;overflow:hidden;text-overflow:ellipsis}
+.ts-text{font-size:13px;line-height:1.6;color:var(--text);flex:1}
 
-.meta-row { display: flex; gap: 20px; margin-bottom: 14px; flex-wrap: wrap; }
-.meta-item { font-size: 12px; color: var(--muted); }
-.meta-item strong { color: var(--text); }
+.meta-row{display:flex;gap:16px;flex-wrap:wrap;margin-bottom:12px}
+.meta-item{font-size:11px;color:var(--muted)}
+.meta-item strong{color:var(--text)}
+.export-bar{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
 
-.text-output { background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 16px 18px; font-size: 14px; line-height: 1.75; color: var(--text); min-height: 120px; max-height: 420px; overflow-y: auto; white-space: pre-wrap; word-break: break-word; display: none; }
-.text-output.visible { display: block; }
+/* stream preview inside result card */
+.stream-box{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px 14px;max-height:160px;overflow-y:auto;font-size:12px;line-height:1.6;color:var(--muted)}
+.stream-box p{margin:0;padding:1px 0}
+.stream-box p.last{color:var(--text)}
 
-.timestamps-output { display: none; max-height: 420px; overflow-y: auto; }
-.timestamps-output.visible { display: block; }
+/* speaker panel */
+.sp-panel{margin-top:12px}
+.sp-list{display:flex;flex-direction:column;gap:6px}
+.sp-row{display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm)}
+.sp-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
+.sp-id{font-size:10px;color:var(--muted);font-family:monospace;min-width:65px}
+.sp-name{font-size:12px;font-weight:600;flex:1}
+.sp-input{background:var(--surface2);border:1px solid var(--border);border-radius:5px;color:var(--text);font-size:11px;padding:3px 7px;width:150px}
+.sp-input:focus{outline:none;border-color:var(--accent)}
+.sp-presets{display:flex;gap:3px;flex-wrap:wrap}
+.sp-preset{font-size:9px;padding:2px 6px;border-radius:4px;background:var(--surface2);border:1px solid var(--border);color:var(--muted);cursor:pointer;transition:all .12s}
+.sp-preset:hover{border-color:var(--accent);color:var(--accent)}
 
-.ts-segment { display: flex; gap: 12px; align-items: flex-start; padding: 9px 0; border-bottom: 1px solid var(--border); }
-.ts-segment:last-child { border-bottom: none; }
-.ts-left { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; flex-shrink: 0; width: 130px; }
-.ts-time { font-size: 11px; color: var(--muted); font-family: monospace; }
-.ts-speaker-badge { font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 4px; white-space: nowrap; max-width: 130px; overflow: hidden; text-overflow: ellipsis; }
-.ts-text { font-size: 13px; line-height: 1.65; color: var(--text); flex: 1; }
+/* toast */
+.toast{position:fixed;bottom:20px;right:20px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 16px;font-size:13px;z-index:999;transform:translateY(50px);opacity:0;transition:all .25s;pointer-events:none}
+.toast.show{transform:translateY(0);opacity:1}
 
-.export-bar { display: flex; gap: 8px; margin-top: 14px; flex-wrap: wrap; }
+::-webkit-scrollbar{width:5px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
 
-/* Error */
-.error-banner { display: none; background: rgba(248,113,113,.1); border: 1px solid rgba(248,113,113,.3); border-radius: var(--radius-sm); padding: 12px 16px; font-size: 13px; color: var(--red); gap: 8px; align-items: flex-start; }
-.error-banner.visible { display: flex; }
-
-/* Toast */
-.toast { position: fixed; bottom: 24px; right: 24px; background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 10px 16px; font-size: 13px; color: var(--text); z-index: 999; transform: translateY(60px); opacity: 0; transition: all .25s; pointer-events: none; }
-.toast.show { transform: translateY(0); opacity: 1; }
-
-::-webkit-scrollbar { width: 5px; }
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
-
-@media (max-width: 600px) { .model-grid { grid-template-columns: repeat(2,1fr); } }
+@media(max-width:600px){.model-grid{grid-template-columns:repeat(2,1fr)}}
 </style>
 </head>
 <body>
-
 <nav>
   <div class="nav-inner">
     <span class="nav-title">Transcrição de Áudio/Vídeo</span>
@@ -176,617 +172,552 @@ main { max-width: 860px; margin: 0 auto; padding: 28px 20px 60px; display: flex;
 
 <main>
 
-  <!-- Model -->
-  <div class="card">
+<!-- Model -->
+<div class="card open" id="cardModel">
+  <div class="card-header" onclick="toggleCard('cardModel')">
     <div class="card-title">Modelo de Transcrição</div>
+    <span class="chevron">▾</span>
+  </div>
+  <div class="card-body">
     <div class="model-grid">
-      <label class="model-opt">
-        <input type="radio" name="model" value="tiny">
-        <div class="model-box"><div class="model-badge badge-fast">Rápido</div><div class="model-name">Tiny</div><div class="model-desc">Muito rápido, precisão básica. ~40 MB</div></div>
-      </label>
-      <label class="model-opt">
-        <input type="radio" name="model" value="small">
-        <div class="model-box"><div class="model-badge badge-fast">Rápido</div><div class="model-name">Small</div><div class="model-desc">Bom equilíbrio de velocidade. ~240 MB</div></div>
-      </label>
-      <label class="model-opt">
-        <input type="radio" name="model" value="medium">
-        <div class="model-box"><div class="model-badge badge-bal">Equilibrado</div><div class="model-name">Medium</div><div class="model-desc">Alta precisão, velocidade razoável. ~760 MB</div></div>
-      </label>
-      <label class="model-opt">
-        <input type="radio" name="model" value="large-v3" checked>
-        <div class="model-box"><div class="model-badge badge-best">Melhor</div><div class="model-name">Large-v3</div><div class="model-desc">Máxima precisão para português. ~1.5 GB</div></div>
-      </label>
+      <label class="model-opt"><input type="radio" name="model" value="tiny">
+        <div class="model-box"><div class="model-badge badge-fast">Rápido</div><div class="model-name">Tiny</div><div class="model-desc">Muito rápido, precisão básica. ~40 MB</div></div></label>
+      <label class="model-opt"><input type="radio" name="model" value="small">
+        <div class="model-box"><div class="model-badge badge-fast">Rápido</div><div class="model-name">Small</div><div class="model-desc">Bom equilíbrio velocidade/precisão. ~240 MB</div></div></label>
+      <label class="model-opt"><input type="radio" name="model" value="medium">
+        <div class="model-box"><div class="model-badge badge-bal">Equilibrado</div><div class="model-name">Medium</div><div class="model-desc">Alta precisão, velocidade razoável. ~760 MB</div></div></label>
+      <label class="model-opt"><input type="radio" name="model" value="large-v3" checked>
+        <div class="model-box"><div class="model-badge badge-best">Melhor</div><div class="model-name">Large-v3</div><div class="model-desc">Máxima precisão para português. ~1.5 GB</div></div></label>
     </div>
   </div>
+</div>
 
-  <!-- Diarization + OCR -->
-  <div class="card">
+<!-- Speaker ID -->
+<div class="card" id="cardSpeakers">
+  <div class="card-header" onclick="toggleCard('cardSpeakers')">
     <div class="card-title">Identificação de Falantes</div>
-    <div class="diar-row">
-      <label class="toggle-wrap">
-        <input type="checkbox" id="diarizeToggle">
-        <div class="toggle"></div>
-        <span class="toggle-label">Separar vozes por falante</span>
-      </label>
-      <div class="nspeakers-wrap" id="nspeakersWrap" style="display:none">
-        <span>Número de falantes:</span>
-        <input type="number" id="nSpeakers" value="4" min="2" max="10">
-      </div>
+    <span class="chevron">▾</span>
+  </div>
+  <div class="card-body">
+    <label class="toggle-wrap">
+      <input type="checkbox" id="diarizeToggle">
+      <div class="toggle"></div>
+      <span class="toggle-label">Separar vozes por falante</span>
+    </label>
+    <div id="nspeakersWrap" style="display:none" class="nspeakers-wrap">
+      <span>Número de falantes:</span>
+      <input type="number" id="nSpeakers" value="4" min="2" max="10">
     </div>
-    <div class="diar-hint">
-      Separa as falas por características de voz e identifica nomes pelo contexto da audiência (ex: quando o juiz pede que a testemunha se identifique).
-    </div>
+    <div class="diar-hint">Separa as falas por voz e identifica nomes pelo contexto da audiência.</div>
 
-    <div style="margin-top:14px;border-top:1px solid var(--border);padding-top:14px">
+    <div style="margin-top:14px;border-top:1px solid var(--border);padding-top:12px">
       <label class="toggle-wrap">
         <input type="checkbox" id="ocrToggle">
         <div class="toggle"></div>
         <span class="toggle-label">Ler nomes do vídeo (tarjas de identificação)</span>
       </label>
-      <div class="diar-hint" style="margin-top:8px">
-        Analisa os frames do vídeo para capturar os nomes exibidos na tela (ex: "Dr. João Silva — Advogado").<br>
-        Requer <a href="https://github.com/UB-Mannheim/tesseract/wiki" target="_blank" style="color:var(--accent)">Tesseract OCR</a> instalado no computador.
+      <div class="diar-hint" style="margin-top:6px">
+        Lê os nomes exibidos na tela do vídeo. Requer <a href="https://github.com/UB-Mannheim/tesseract/wiki" target="_blank" style="color:var(--accent)">Tesseract OCR</a> instalado.
       </div>
-      <div style="margin-top:10px;display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+      <div class="tess-row">
         <span style="font-size:12px;color:var(--muted);white-space:nowrap">Caminho do tesseract.exe:</span>
-        <input id="tesseractPath" type="text" placeholder="Ex: C:\Program Files\Tesseract-OCR\tesseract.exe"
-          style="flex:1;min-width:260px;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text);font-size:12px;padding:6px 10px;">
+        <input id="tesseractPath" type="text" placeholder="Ex: C:\Program Files\Tesseract-OCR\tesseract.exe">
         <button class="btn btn-secondary btn-sm" onclick="saveTesseractPath()">Salvar</button>
       </div>
       <div id="tesseractStatus" style="font-size:11px;color:var(--muted);margin-top:4px"></div>
     </div>
   </div>
+</div>
 
-  <!-- Upload -->
-  <div class="card">
-    <div class="card-title">Arquivo de Áudio ou Vídeo</div>
-    <div class="drop-zone" id="dropZone">
-      <input type="file" id="fileInput" accept=".mp3,.mp4,.wav,.m4a,.mkv,.avi,.mov,.webm,.flac,.ogg,.wma,.wmv,.mpeg,.mpga">
-      <div id="dropPlaceholder">
-        <div class="drop-icon">🎵</div>
-        <div class="drop-title">Arraste o arquivo aqui</div>
-        <div class="drop-hint">ou clique para selecionar</div>
-        <div class="drop-formats">MP3 · MP4 · WAV · M4A · MKV · AVI · MOV · WEBM · FLAC · OGG · WMV</div>
-      </div>
-      <div class="file-info" id="fileInfo">
-        <div class="file-icon" id="fileTypeIcon">🎬</div>
-        <div>
-          <div class="file-name" id="fileName"></div>
-          <div class="file-size" id="fileSize"></div>
-          <div class="file-change" id="fileChange">Trocar arquivo</div>
-        </div>
-      </div>
+<!-- Files -->
+<div class="card">
+  <div class="card-title">Arquivos para Transcrição</div>
+  <div class="drop-zone" id="dropZone">
+    <input type="file" id="fileInput" multiple accept=".mp3,.mp4,.wav,.m4a,.mkv,.avi,.mov,.webm,.flac,.ogg,.wma,.wmv,.mpeg,.mpga">
+    <div id="dropPlaceholder">
+      <div class="drop-icon">🎵</div>
+      <div class="drop-title">Arraste os arquivos aqui</div>
+      <div class="drop-hint">ou clique para selecionar — múltiplos arquivos permitidos</div>
+      <div class="drop-formats">MP3 · MP4 · WAV · M4A · MKV · AVI · MOV · WEBM · FLAC · OGG · WMV</div>
     </div>
   </div>
+  <div class="queue-list" id="queueList"></div>
+</div>
 
-  <div class="error-banner" id="errorBanner"><span>⚠</span><span id="errorMsg"></span></div>
+<!-- Action bar -->
+<div class="action-bar">
+  <button class="btn btn-primary" id="btnStart" disabled onclick="startQueue()">▶ Transcrever todos</button>
+  <button class="btn btn-secondary" id="btnStop" style="display:none" onclick="stopQueue()">⏹ Parar</button>
+  <button class="btn btn-secondary btn-sm" onclick="clearDone()" id="btnClearDone" style="display:none">Limpar concluídos</button>
+  <button class="btn btn-danger btn-sm" onclick="clearAll()" id="btnClearAll" style="display:none">Remover todos</button>
+</div>
 
-  <div class="action-bar">
-    <button class="btn btn-primary" id="btnTranscrever" disabled><span>▶</span> Transcrever</button>
-    <button class="btn btn-secondary" id="btnCancelar" style="display:none">Cancelar</button>
-  </div>
-
-  <!-- Progress -->
-  <div class="card progress-card" id="progressCard">
-    <div class="status-line">
-      <div class="spinner"></div>
-      <div>
-        <div class="status-text" id="statusText">Iniciando...</div>
-        <div class="seg-count" id="segCount"></div>
-      </div>
-    </div>
-    <div class="stream-preview" id="streamPreview"></div>
-  </div>
-
-  <!-- Speaker panel -->
-  <div class="card speaker-panel" id="speakerPanel">
-    <div class="card-title">Falantes identificados — clique para renomear</div>
-    <div class="speaker-list" id="speakerList"></div>
-    <div class="sp-hint">Sugestões: Juiz · Advogado de Defesa · Advogado de Acusação · Ministério Público · Testemunha · Réu · Escrivão</div>
-  </div>
-
-  <!-- Results -->
-  <div class="card results-card" id="resultsCard">
-    <div class="results-header">
-      <div class="results-title">Transcrição</div>
-      <div class="tab-row">
-        <button class="tab-btn active" id="tabTexto" onclick="showTab('texto')">Texto</button>
-        <button class="tab-btn" id="tabTimestamps" onclick="showTab('timestamps')">Com timestamps</button>
-      </div>
-    </div>
-    <div class="meta-row" id="metaRow"></div>
-    <div class="text-output visible" id="textOutput"></div>
-    <div class="timestamps-output" id="timestampsOutput"></div>
-    <div class="export-bar">
-      <button class="btn btn-secondary btn-sm" onclick="copyText()">📋 Copiar texto</button>
-      <button class="btn btn-secondary btn-sm" onclick="exportTxt()">⬇ Exportar TXT</button>
-      <button class="btn btn-secondary btn-sm" onclick="exportSrt()">⬇ Exportar SRT</button>
-    </div>
-  </div>
+<!-- Results area -->
+<div id="resultsArea"></div>
 
 </main>
 
 <div class="toast" id="toast"></div>
 
 <script>
-/* ── State ─────────────────────────────────────────── */
-let selectedFile = null;
-let allSegments  = [];
-let fullText     = '';
-let abortCtrl    = null;
-let isProcessing = false;
-let speakerMap   = {};   // { 'ORADOR_1': 'Juiz', ... }
-
-const SPEAKER_COLORS = [
-  '#7c6af7','#34d399','#fbbf24','#f87171',
-  '#60a5fa','#fb923c','#e879f9','#2dd4bf',
-];
-const AUDIO_EXTS = new Set(['.mp3','.wav','.m4a','.flac','.ogg','.wma','.mpga']);
+/* ── Constants ─────────────────────────────────────── */
+const SPEAKER_COLORS = ['#7c6af7','#34d399','#fbbf24','#f87171','#60a5fa','#fb923c','#e879f9','#2dd4bf'];
+const PRESETS = ['Juiz','Advogado de Defesa','Advogado de Acusação','Ministério Público','Testemunha','Réu','Escrivão'];
 const VIDEO_EXTS = new Set(['.mp4','.mkv','.avi','.mov','.webm','.wmv','.mpeg']);
 
+/* ── Queue state ───────────────────────────────────── */
+let queue = [];  // { id, file, status, segments, text, speakerMap, error }
+let nextId = 0;
+let running = false;
+let abortCtrl = null;
+
 /* ── Helpers ───────────────────────────────────────── */
-function formatSize(b) {
-  return b < 1048576 ? (b/1024).toFixed(1)+' KB' : (b/1048576).toFixed(1)+' MB';
-}
-function fmtTime(s) {
-  const h=Math.floor(s/3600), m=Math.floor((s%3600)/60), ss=Math.floor(s%60);
-  return h>0 ? `${h}:${pad(m)}:${pad(ss)}` : `${pad(m)}:${pad(ss)}`;
-}
-function srtTime(s) {
-  const h=Math.floor(s/3600), m=Math.floor((s%3600)/60), ss=Math.floor(s%60), ms=Math.round((s%1)*1000);
-  return `${pad(h)}:${pad(m)}:${pad(ss)},${pad(ms,3)}`;
-}
-function pad(n,w=2){ return String(n).padStart(w,'0'); }
-function escHtml(s){ return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function pad(n,w=2){return String(n).padStart(w,'0')}
+function fmtSz(b){return b<1048576?(b/1024).toFixed(1)+' KB':(b/1048576).toFixed(1)+' MB'}
+function fmtT(s){const h=Math.floor(s/3600),m=Math.floor((s%3600)/60),ss=Math.floor(s%60);return h>0?`${h}:${pad(m)}:${pad(ss)}`:`${pad(m)}:${pad(ss)}`}
+function srtT(s){const h=Math.floor(s/3600),m=Math.floor((s%3600)/60),ss=Math.floor(s%60),ms=Math.round((s%1)*1000);return`${pad(h)}:${pad(m)}:${pad(ss)},${pad(ms,3)}`}
+function esc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+function baseName(fn){return fn.replace(/\.[^/.]+$/,'')}
+function ext(fn){return('.'+fn.split('.').pop()).toLowerCase()}
+function spColor(id){const n=parseInt((id||'').replace(/\D/g,''))-1;return SPEAKER_COLORS[(isNaN(n)?0:n)%SPEAKER_COLORS.length]}
 
-function getSpeakerColor(id) {
-  const n = parseInt((id||'').replace(/\D/g,'')) - 1;
-  return SPEAKER_COLORS[(isNaN(n)?0:n) % SPEAKER_COLORS.length];
-}
-function getSpeakerLabel(id) {
-  return speakerMap[id] || id || '';
-}
+function showToast(msg,ms=2500){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),ms)}
 
-/* ── Toast ─────────────────────────────────────────── */
-function showToast(msg, duration=2500) {
-  const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), duration);
-}
+/* ── Card collapse ─────────────────────────────────── */
+function toggleCard(id){document.getElementById(id).classList.toggle('open')}
 
-/* ── File handling ─────────────────────────────────── */
-const dropZone       = document.getElementById('dropZone');
-const fileInput      = document.getElementById('fileInput');
-const dropPlaceholder= document.getElementById('dropPlaceholder');
-const fileInfo       = document.getElementById('fileInfo');
-const fileName       = document.getElementById('fileName');
-const fileSize       = document.getElementById('fileSize');
-const fileTypeIcon   = document.getElementById('fileTypeIcon');
-const fileChange     = document.getElementById('fileChange');
-
-function setFile(file) {
-  selectedFile = file;
-  const ext = '.'+file.name.split('.').pop().toLowerCase();
-  fileTypeIcon.textContent = VIDEO_EXTS.has(ext) ? '🎬' : '🎵';
-  fileName.textContent = file.name;
-  fileSize.textContent = formatSize(file.size);
-  dropPlaceholder.style.display = 'none';
-  fileInfo.classList.add('visible');
-  dropZone.classList.add('has-file');
-  dropZone.classList.remove('drag-over');
-  document.getElementById('btnTranscrever').disabled = false;
-  hideError();
-}
-
-fileChange.addEventListener('click', e => { e.stopPropagation(); fileInput.click(); });
-dropZone.addEventListener('click', () => { if (!isProcessing) fileInput.click(); });
-fileInput.addEventListener('change', () => { if (fileInput.files[0]) setFile(fileInput.files[0]); });
-dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
-dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
-dropZone.addEventListener('drop', e => { e.preventDefault(); if(e.dataTransfer.files[0]) setFile(e.dataTransfer.files[0]); });
-
-/* ── Config (Tesseract path) ───────────────────────── */
-async function loadConfig() {
-  try {
-    const r = await fetch('/config');
-    const cfg = await r.json();
-    if (cfg.tesseract_path) {
-      document.getElementById('tesseractPath').value = cfg.tesseract_path;
-      document.getElementById('tesseractStatus').textContent = '✓ Caminho salvo';
-      document.getElementById('tesseractStatus').style.color = 'var(--green)';
+/* ── Config ────────────────────────────────────────── */
+async function loadConfig(){
+  try{
+    const r=await fetch('/config');const cfg=await r.json();
+    if(cfg.tesseract_path){
+      document.getElementById('tesseractPath').value=cfg.tesseract_path;
+      document.getElementById('tesseractStatus').textContent='✓ Caminho salvo';
+      document.getElementById('tesseractStatus').style.color='var(--green)';
     }
-  } catch(_) {}
+  }catch(_){}
 }
-
-async function saveTesseractPath() {
-  const path = document.getElementById('tesseractPath').value.trim();
-  if (!path) return;
-  try {
-    await fetch('/config', {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({tesseract_path: path}),
-    });
-    document.getElementById('tesseractStatus').textContent = '✓ Salvo! Será usado na próxima transcrição.';
-    document.getElementById('tesseractStatus').style.color = 'var(--green)';
-  } catch(_) {
-    document.getElementById('tesseractStatus').textContent = 'Erro ao salvar';
-    document.getElementById('tesseractStatus').style.color = 'var(--red)';
-  }
+async function saveTesseractPath(){
+  const path=document.getElementById('tesseractPath').value.trim();
+  if(!path)return;
+  try{
+    await fetch('/config',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({tesseract_path:path})});
+    document.getElementById('tesseractStatus').textContent='✓ Salvo!';
+    document.getElementById('tesseractStatus').style.color='var(--green)';
+  }catch(_){document.getElementById('tesseractStatus').textContent='Erro ao salvar';document.getElementById('tesseractStatus').style.color='var(--red)'}
 }
-
 loadConfig();
 
-/* ── Diarization / OCR toggles ─────────────────────── */
-const diarizeToggle = document.getElementById('diarizeToggle');
-const nspeakersWrap = document.getElementById('nspeakersWrap');
-const ocrToggle     = document.getElementById('ocrToggle');
-diarizeToggle.addEventListener('change', () => {
-  nspeakersWrap.style.display = diarizeToggle.checked ? 'flex' : 'none';
-  if (!diarizeToggle.checked) ocrToggle.checked = false;
+/* ── Toggles ───────────────────────────────────────── */
+document.getElementById('diarizeToggle').addEventListener('change',e=>{
+  document.getElementById('nspeakersWrap').style.display=e.target.checked?'flex':'none';
+  if(!e.target.checked)document.getElementById('ocrToggle').checked=false;
 });
-ocrToggle.addEventListener('change', () => {
-  if (ocrToggle.checked && !diarizeToggle.checked) {
-    diarizeToggle.checked = true;
-    nspeakersWrap.style.display = 'flex';
+document.getElementById('ocrToggle').addEventListener('change',e=>{
+  if(e.target.checked&&!document.getElementById('diarizeToggle').checked){
+    document.getElementById('diarizeToggle').checked=true;
+    document.getElementById('nspeakersWrap').style.display='flex';
   }
 });
 
-/* ── Error / processing state ──────────────────────── */
-function showError(msg) {
-  document.getElementById('errorMsg').textContent = msg;
-  document.getElementById('errorBanner').classList.add('visible');
-}
-function hideError() {
-  document.getElementById('errorBanner').classList.remove('visible');
-}
-function setProcessing(val) {
-  isProcessing = val;
-  document.getElementById('btnTranscrever').style.display = val ? 'none' : 'inline-flex';
-  document.getElementById('btnCancelar').style.display = val ? 'inline-flex' : 'none';
-}
+/* ── File drop ─────────────────────────────────────── */
+const dropZone=document.getElementById('dropZone');
+const fileInput=document.getElementById('fileInput');
+dropZone.addEventListener('click',()=>{if(!running)fileInput.click()});
+fileInput.addEventListener('change',()=>{if(fileInput.files.length)addFiles(Array.from(fileInput.files));fileInput.value=''});
+dropZone.addEventListener('dragover',e=>{e.preventDefault();dropZone.classList.add('drag-over')});
+dropZone.addEventListener('dragleave',()=>dropZone.classList.remove('drag-over'));
+dropZone.addEventListener('drop',e=>{e.preventDefault();dropZone.classList.remove('drag-over');if(e.dataTransfer.files.length)addFiles(Array.from(e.dataTransfer.files))});
 
-/* ── Tabs ──────────────────────────────────────────── */
-function showTab(tab) {
-  const isText = tab === 'texto';
-  document.getElementById('tabTexto').classList.toggle('active', isText);
-  document.getElementById('tabTimestamps').classList.toggle('active', !isText);
-  document.getElementById('textOutput').classList.toggle('visible', isText);
-  document.getElementById('timestampsOutput').classList.toggle('visible', !isText);
+function addFiles(files){
+  files.forEach(f=>{
+    // avoid duplicates by name+size
+    if(queue.some(q=>q.file.name===f.name&&q.file.size===f.size))return;
+    queue.push({id:nextId++,file:f,status:'waiting',segments:[],text:'',speakerMap:{},error:null});
+  });
+  renderQueue();
+  updateButtons();
 }
 
-/* ── Transcription ─────────────────────────────────── */
-document.getElementById('btnCancelar').addEventListener('click', () => {
-  if (abortCtrl) abortCtrl.abort();
-});
+function removeFile(id){
+  queue=queue.filter(q=>q.id!==id);
+  renderQueue();
+  updateButtons();
+  document.getElementById('result-'+id)?.remove();
+}
 
-document.getElementById('btnTranscrever').addEventListener('click', async () => {
-  if (!selectedFile) return;
-  hideError();
+function clearDone(){
+  queue.filter(q=>q.status==='done'||q.status==='error').forEach(q=>{
+    document.getElementById('result-'+q.id)?.remove();
+  });
+  queue=queue.filter(q=>q.status!=='done'&&q.status!=='error');
+  renderQueue();updateButtons();
+}
 
-  const modelSize   = document.querySelector('input[name="model"]:checked').value;
-  const diarize     = diarizeToggle.checked;
-  const nSpeakers   = parseInt(document.getElementById('nSpeakers').value) || 4;
+function clearAll(){
+  if(running)return;
+  queue.forEach(q=>document.getElementById('result-'+q.id)?.remove());
+  queue=[];renderQueue();updateButtons();
+}
 
-  const ocrVideo  = ocrToggle.checked;
+/* ── Queue rendering ───────────────────────────────── */
+function renderQueue(){
+  const list=document.getElementById('queueList');
+  list.innerHTML='';
+  const placeholder=document.getElementById('dropPlaceholder');
+  placeholder.style.display=queue.length?'none':'block';
+  dropZone.classList.toggle('has-files',queue.length>0);
 
-  const formData = new FormData();
-  formData.append('file', selectedFile);
-  formData.append('model', modelSize);
-  formData.append('diarize', diarize ? 'true' : 'false');
-  formData.append('n_speakers', nSpeakers);
-  formData.append('ocr_video', ocrVideo ? 'true' : 'false');
+  queue.forEach(item=>{
+    const isVideo=VIDEO_EXTS.has(ext(item.file.name));
+    const icon=isVideo?'🎬':'🎵';
+    const badge=statusBadge(item.status);
+    const canRemove=item.status!=='processing';
+    const div=document.createElement('div');
+    div.className='queue-item';
+    div.id='qi-'+item.id;
+    div.innerHTML=`
+      <div class="q-icon">${icon}</div>
+      <div class="q-info">
+        <div class="q-name" title="${esc(item.file.name)}">${esc(item.file.name)}</div>
+        <div class="q-size">${fmtSz(item.file.size)}</div>
+      </div>
+      <div class="q-status">${badge}</div>
+      ${canRemove?`<button class="q-remove" onclick="removeFile(${item.id})" title="Remover">✕</button>`:''}
+    `;
+    list.appendChild(div);
+  });
+}
 
-  allSegments = [];
-  fullText = '';
-  speakerMap = {};
-  document.getElementById('streamPreview').innerHTML = '';
-  document.getElementById('segCount').textContent = '';
-  document.getElementById('textOutput').textContent = '';
-  document.getElementById('timestampsOutput').innerHTML = '';
-  document.getElementById('metaRow').innerHTML = '';
-  document.getElementById('speakerPanel').classList.remove('visible');
-  document.getElementById('speakerList').innerHTML = '';
+function statusBadge(status,label){
+  const map={
+    waiting:['s-waiting','Aguardando'],
+    queued:['s-queued','Na fila'],
+    processing:['s-processing',`<span class="spin"></span> Transcrevendo`],
+    done:['s-done','✓ Concluído'],
+    error:['s-error','✕ Erro'],
+  };
+  const [cls,txt]=map[status]||['s-waiting','—'];
+  return `<span class="status-badge ${cls}">${label||txt}</span>`;
+}
 
-  document.getElementById('progressCard').classList.add('visible');
-  document.getElementById('resultsCard').classList.remove('visible');
-  setProcessing(true);
+function updateQueueItem(id){
+  const item=queue.find(q=>q.id===id);
+  if(!item)return;
+  const el=document.getElementById('qi-'+id);
+  if(!el)return;
+  const qs=el.querySelector('.q-status');
+  if(qs)qs.innerHTML=statusBadge(item.status);
+  const qr=el.querySelector('.q-remove');
+  const canRemove=item.status!=='processing';
+  if(canRemove&&!qr){
+    const btn=document.createElement('button');
+    btn.className='q-remove';btn.title='Remover';btn.textContent='✕';
+    btn.onclick=()=>removeFile(id);el.appendChild(btn);
+  }else if(!canRemove&&qr){qr.remove()}
+}
 
-  abortCtrl = new AbortController();
+function updateButtons(){
+  const hasPending=queue.some(q=>q.status==='waiting'||q.status==='queued');
+  const hasDoneOrError=queue.some(q=>q.status==='done'||q.status==='error');
+  document.getElementById('btnStart').disabled=!hasPending||running;
+  document.getElementById('btnStop').style.display=running?'inline-flex':'none';
+  document.getElementById('btnClearDone').style.display=hasDoneOrError?'inline-flex':'none';
+  document.getElementById('btnClearAll').style.display=queue.length&&!running?'inline-flex':'none';
+}
 
-  try {
-    const resp = await fetch('/transcribe', {
-      method: 'POST', body: formData, signal: abortCtrl.signal,
-    });
-    if (!resp.ok) {
-      const err = await resp.json().catch(() => ({error:'Erro desconhecido'}));
-      throw new Error(err.error || 'Erro no servidor');
-    }
+/* ── Queue processing ──────────────────────────────── */
+async function startQueue(){
+  if(running)return;
+  running=true;
+  updateButtons();
+  // Mark all waiting as queued
+  queue.filter(q=>q.status==='waiting').forEach(q=>{q.status='queued';updateQueueItem(q.id)});
 
-    const reader = resp.body.getReader();
-    const dec = new TextDecoder();
-    let buf = '';
-    while (true) {
-      const {done, value} = await reader.read();
-      if (done) break;
-      buf += dec.decode(value, {stream:true});
-      const lines = buf.split('\n');
-      buf = lines.pop();
-      for (const line of lines) {
-        if (line.startsWith('data: ')) {
-          try { handleEvent(JSON.parse(line.slice(6))); } catch(_) {}
-        }
+  for(const item of queue){
+    if(item.status!=='queued')continue;
+    await transcribeItem(item);
+    if(!running)break;
+  }
+  running=false;
+  updateButtons();
+}
+
+function stopQueue(){
+  running=false;
+  if(abortCtrl)abortCtrl.abort();
+  queue.filter(q=>q.status==='queued').forEach(q=>{q.status='waiting';updateQueueItem(q.id)});
+  updateButtons();
+}
+
+async function transcribeItem(item){
+  item.status='processing';
+  item.segments=[];item.text='';item.speakerMap={};item.error=null;
+  updateQueueItem(item.id);
+  ensureResultCard(item);
+  setResultStatus(item,'processing');
+
+  const diarize=document.getElementById('diarizeToggle').checked;
+  const ocrVideo=document.getElementById('ocrToggle').checked;
+  const nSpeakers=parseInt(document.getElementById('nSpeakers').value)||4;
+  const modelSize=document.querySelector('input[name="model"]:checked').value;
+
+  const form=new FormData();
+  form.append('file',item.file);
+  form.append('model',modelSize);
+  form.append('diarize',diarize?'true':'false');
+  form.append('n_speakers',nSpeakers);
+  form.append('ocr_video',ocrVideo&&VIDEO_EXTS.has(ext(item.file.name))?'true':'false');
+
+  abortCtrl=new AbortController();
+  try{
+    const resp=await fetch('/transcribe',{method:'POST',body:form,signal:abortCtrl.signal});
+    if(!resp.ok){const e=await resp.json().catch(()=>({error:'Erro'}));throw new Error(e.error||'Erro')}
+    const reader=resp.body.getReader();const dec=new TextDecoder();let buf='';
+    while(true){
+      const{done,value}=await reader.read();
+      if(done)break;
+      buf+=dec.decode(value,{stream:true});
+      const lines=buf.split('\n');buf=lines.pop();
+      for(const line of lines){
+        if(line.startsWith('data: ')){try{handleEvent(item,JSON.parse(line.slice(6)))}catch(_){}}
       }
     }
-  } catch(err) {
-    document.getElementById('progressCard').classList.remove('visible');
-    if (err.name !== 'AbortError') showError(err.message || String(err));
-  } finally {
-    setProcessing(false);
-    abortCtrl = null;
-  }
-});
-
-function handleEvent(data) {
-  const statusText = document.getElementById('statusText');
-  const segCount   = document.getElementById('segCount');
-  const preview    = document.getElementById('streamPreview');
-
-  if (data.error) {
-    document.getElementById('progressCard').classList.remove('visible');
-    showError(data.error);
-    return;
-  }
-  if (data.status === 'carregando_modelo') {
-    statusText.textContent = `Carregando modelo "${data.model}"…`;
-    statusText.style.color = 'var(--yellow)';
-    return;
-  }
-  if (data.status === 'transcrevendo') {
-    statusText.textContent = 'Transcrevendo…';
-    statusText.style.color = 'var(--accent)';
-    return;
-  }
-  if (data.status === 'ocr_lendo') {
-    statusText.textContent = 'Lendo nomes do vídeo (OCR)…';
-    statusText.style.color = 'var(--yellow)';
-    return;
-  }
-  if (data.status === 'ocr_ok') {
-    segCount.textContent = `OCR: ${data.count} sobreposições de texto detectadas`;
-    return;
-  }
-  if (data.status === 'ocr_erro') {
-    segCount.textContent = '';
-    showError('OCR: ' + data.msg);
-    return;
-  }
-  if (data.status === 'diar_aviso') {
-    segCount.textContent = 'Aviso: ' + data.msg;
-    return;
-  }
-  if (data.status === 'identificando_falantes') {
-    statusText.textContent = 'Identificando falantes…';
-    statusText.style.color = 'var(--green)';
-    return;
-  }
-  if (data.segment) {
-    allSegments.push(data.segment);
-    segCount.textContent = `${allSegments.length} segmento${allSegments.length>1?'s':''} encontrado${allSegments.length>1?'s':''}`;
-    const prev = preview.querySelector('.last');
-    if (prev) prev.classList.remove('last');
-    const p = document.createElement('p');
-    p.textContent = data.segment.text;
-    p.classList.add('last');
-    preview.appendChild(p);
-    preview.scrollTop = preview.scrollHeight;
-    return;
-  }
-  if (data.speakers_ready) {
-    // Update segments with speaker info and apply auto-detected names
-    allSegments = data.segments;
-    const autoNames = data.speaker_names || {};
-    for (const [sp, name] of Object.entries(autoNames)) {
-      speakerMap[sp] = name;
+    if(item.status==='processing'){item.status='done';updateQueueItem(item.id);setResultStatus(item,'done')}
+  }catch(err){
+    if(err.name==='AbortError'){
+      item.status='waiting';
+    }else{
+      item.status='error';item.error=err.message||String(err);
     }
+    updateQueueItem(item.id);setResultStatus(item,item.status);
+  }finally{abortCtrl=null}
+}
+
+function handleEvent(item,data){
+  const statusEl=document.getElementById('rs-'+item.id);
+  const previewEl=document.getElementById('rp-'+item.id);
+
+  if(data.error){item.status='error';item.error=data.error;return}
+  if(data.status==='carregando_modelo'){if(statusEl)statusEl.textContent=`Carregando modelo "${data.model}"…`;return}
+  if(data.status==='transcrevendo'){if(statusEl)statusEl.textContent='Transcrevendo…';return}
+  if(data.status==='identificando_falantes'){if(statusEl)statusEl.textContent='Identificando falantes…';return}
+  if(data.status==='ocr_lendo'){if(statusEl)statusEl.textContent='Lendo nomes do vídeo (OCR)…';return}
+  if(data.status==='ocr_erro'){if(statusEl)statusEl.textContent='OCR: '+data.msg;return}
+  if(data.segment){
+    item.segments.push(data.segment);
+    if(previewEl){
+      const prev=previewEl.querySelector('.last');if(prev)prev.classList.remove('last');
+      const p=document.createElement('p');p.textContent=data.segment.text;p.classList.add('last');
+      previewEl.appendChild(p);previewEl.scrollTop=previewEl.scrollHeight;
+    }
+    if(statusEl)statusEl.textContent=`Transcrevendo… ${item.segments.length} segmento${item.segments.length>1?'s':''}`;
     return;
   }
-  if (data.done) {
-    fullText = data.text;
-    allSegments = data.segments;
-    document.getElementById('progressCard').classList.remove('visible');
-    showResults(data);
+  if(data.speakers_ready){
+    item.segments=data.segments;
+    const names=data.speaker_names||{};
+    for(const[sp,name]of Object.entries(names))item.speakerMap[sp]=name;
+    return;
+  }
+  if(data.done){
+    item.text=data.text;item.segments=data.segments;item.duration=data.duration;
+    item.status='done';updateQueueItem(item.id);
+    buildResultContent(item);
     return;
   }
 }
 
-/* ── Speaker panel ─────────────────────────────────── */
-const PRESETS = ['Juiz','Advogado de Defesa','Advogado de Acusação','Ministério Público','Testemunha','Réu','Escrivão'];
-
-function buildSpeakerPanel() {
-  const ids = [...new Set(allSegments.map(s => s.speaker).filter(Boolean))].sort();
-  if (ids.length < 2) return;
-
-  const list = document.getElementById('speakerList');
-  list.innerHTML = '';
-
-  for (const id of ids) {
-    const color = getSpeakerColor(id);
-    const row = document.createElement('div');
-    row.className = 'sp-row';
-    row.dataset.speakerId = id;
-
-    row.innerHTML = `
-      <div class="sp-dot" style="background:${color}"></div>
-      <div class="sp-id">${id}</div>
-      <div class="sp-name" data-spname="${id}">${escHtml(getSpeakerLabel(id))}</div>
-      <div class="sp-edit">
-        <input class="sp-input" type="text" placeholder="Renomear…" value="${escHtml(getSpeakerLabel(id))}" data-spinput="${id}">
-        <div class="sp-presets">
-          ${PRESETS.map(p=>`<span class="sp-preset" data-preset="${escHtml(p)}" data-spid="${id}">${escHtml(p)}</span>`).join('')}
-        </div>
+/* ── Result cards ──────────────────────────────────── */
+function ensureResultCard(item){
+  if(document.getElementById('result-'+item.id))return;
+  const area=document.getElementById('resultsArea');
+  const card=document.createElement('div');
+  card.className='result-card';card.id='result-'+item.id;
+  card.innerHTML=`
+    <div class="result-header" onclick="toggleResult(${item.id})">
+      <span style="font-size:16px">${VIDEO_EXTS.has(ext(item.file.name))?'🎬':'🎵'}</span>
+      <span class="result-title" title="${esc(item.file.name)}">${esc(baseName(item.file.name))}</span>
+      <span id="rb-${item.id}"></span>
+      <span class="chevron" id="rc-${item.id}">▾</span>
+    </div>
+    <div class="result-body" id="rbody-${item.id}">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+        <span class="spin" id="rspinner-${item.id}"></span>
+        <span id="rs-${item.id}" style="font-size:13px;color:var(--muted)">Iniciando…</span>
       </div>
-    `;
-    list.appendChild(row);
-
-    // Live rename on input
-    row.querySelector(`[data-spinput="${id}"]`).addEventListener('input', e => {
-      renameSpeaker(id, e.target.value.trim() || id);
-    });
-    // Preset buttons
-    row.querySelectorAll('.sp-preset').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const name = btn.dataset.preset;
-        row.querySelector(`[data-spinput="${id}"]`).value = name;
-        renameSpeaker(id, name);
-      });
-    });
-  }
-
-  document.getElementById('speakerPanel').classList.add('visible');
-}
-
-function renameSpeaker(id, newName) {
-  speakerMap[id] = newName;
-  // Update name display in speaker panel
-  document.querySelectorAll(`[data-spname="${id}"]`).forEach(el => {
-    el.textContent = newName;
-  });
-  // Rebuild timestamps view to reflect new names
-  if (document.getElementById('timestampsOutput').classList.contains('visible')) {
-    buildTimestamps();
-  }
-  // Rebuild plain text
-  buildPlainText();
-}
-
-/* ── Results ───────────────────────────────────────── */
-function showResults(data) {
-  const hasSpeakers = allSegments.some(s => s.speaker);
-
-  // Meta
-  document.getElementById('metaRow').innerHTML = `
-    <span class="meta-item"><strong>${allSegments.length}</strong> segmentos</span>
-    <span class="meta-item">Duração: <strong>${fmtTime(data.duration)}</strong></span>
-    <span class="meta-item">Palavras: <strong>${fullText.split(/\s+/).filter(Boolean).length}</strong></span>
-    ${hasSpeakers ? `<span class="meta-item">Falantes: <strong>${new Set(allSegments.map(s=>s.speaker).filter(Boolean)).size}</strong></span>` : ''}
+      <div class="stream-box" id="rp-${item.id}"></div>
+    </div>
   `;
-
-  buildPlainText();
-  buildTimestamps();
-
-  if (hasSpeakers) buildSpeakerPanel();
-
-  showTab('texto');
-  document.getElementById('resultsCard').classList.add('visible');
-  document.getElementById('resultsCard').scrollIntoView({behavior:'smooth', block:'start'});
+  area.appendChild(card);
+  // auto-open
+  card.classList.add('open');
 }
 
-function buildPlainText() {
-  const hasSpeakers = allSegments.some(s => s.speaker);
-  if (!hasSpeakers) {
-    document.getElementById('textOutput').textContent = fullText;
-    return;
-  }
-  // Group consecutive segments by same speaker
-  const lines = [];
-  let cur = null;
-  for (const seg of allSegments) {
-    const label = getSpeakerLabel(seg.speaker) || seg.speaker || '';
-    if (label !== cur) {
-      if (cur !== null) lines.push('');
-      lines.push(label + ':');
-      cur = label;
-    }
+function toggleResult(id){
+  const card=document.getElementById('result-'+id);
+  const chevron=document.getElementById('rc-'+id);
+  if(!card)return;
+  card.classList.toggle('open');
+  if(chevron)chevron.style.transform=card.classList.contains('open')?'rotate(180deg)':'';
+}
+
+function setResultStatus(item,status){
+  const rb=document.getElementById('rb-'+item.id);
+  if(rb)rb.innerHTML=statusBadge(status);
+}
+
+function buildResultContent(item){
+  const body=document.getElementById('rbody-'+item.id);
+  if(!body)return;
+  const spinner=document.getElementById('rspinner-'+item.id);
+  if(spinner)spinner.remove();
+
+  const hasSpeakers=item.segments.some(s=>s.speaker);
+  const spIds=[...new Set(item.segments.map(s=>s.speaker).filter(Boolean))].sort();
+
+  body.innerHTML=`
+    <div class="meta-row">
+      <span class="meta-item"><strong>${item.segments.length}</strong> segmentos</span>
+      <span class="meta-item">Duração: <strong>${fmtT(item.duration||0)}</strong></span>
+      <span class="meta-item">Palavras: <strong>${(item.text||'').split(/\s+/).filter(Boolean).length}</strong></span>
+      ${hasSpeakers?`<span class="meta-item">Falantes: <strong>${spIds.length}</strong></span>`:''}
+    </div>
+    ${hasSpeakers?buildSpeakerPanel(item):''}
+    <div class="tab-row">
+      <button class="tab-btn active" onclick="switchTab(${item.id},'texto',this)">Texto</button>
+      <button class="tab-btn" onclick="switchTab(${item.id},'ts',this)">Com timestamps</button>
+    </div>
+    <div class="text-output visible" id="to-${item.id}"></div>
+    <div class="timestamps-output" id="tso-${item.id}"></div>
+    <div class="export-bar">
+      <button class="btn btn-secondary btn-sm" onclick="copyResult(${item.id})">📋 Copiar</button>
+      <button class="btn btn-secondary btn-sm" onclick="exportTxt(${item.id})">⬇ TXT</button>
+      <button class="btn btn-secondary btn-sm" onclick="exportSrt(${item.id})">⬇ SRT</button>
+    </div>
+  `;
+  refreshText(item);
+  refreshTs(item);
+}
+
+function buildSpeakerPanel(item){
+  const spIds=[...new Set(item.segments.map(s=>s.speaker).filter(Boolean))].sort();
+  const rows=spIds.map(id=>{
+    const color=spColor(id);
+    const name=item.speakerMap[id]||id;
+    return `<div class="sp-row" id="spr-${item.id}-${id}">
+      <div class="sp-dot" style="background:${color}"></div>
+      <div class="sp-id">${esc(id)}</div>
+      <div class="sp-name" id="spn-${item.id}-${id}">${esc(name)}</div>
+      <input class="sp-input" value="${esc(name)}" oninput="renameSp(${item.id},'${id}',this.value)">
+      <div class="sp-presets">${PRESETS.map(p=>`<span class="sp-preset" onclick="setSp(${item.id},'${id}','${esc(p)}')">${esc(p)}</span>`).join('')}</div>
+    </div>`;
+  }).join('');
+  return `<div class="sp-panel"><div class="card-title" style="margin-bottom:8px">Falantes — clique para renomear</div><div class="sp-list">${rows}</div></div>`;
+}
+
+function renameSp(itemId,spId,name){
+  const item=queue.find(q=>q.id===itemId);if(!item)return;
+  item.speakerMap[spId]=name||spId;
+  const el=document.getElementById(`spn-${itemId}-${spId}`);
+  if(el)el.textContent=name||spId;
+  refreshText(item);refreshTs(item);
+}
+function setSp(itemId,spId,name){
+  const item=queue.find(q=>q.id===itemId);if(!item)return;
+  item.speakerMap[spId]=name;
+  const el=document.getElementById(`spn-${itemId}-${spId}`);
+  if(el)el.textContent=name;
+  const inp=document.querySelector(`#spr-${itemId}-${spId} .sp-input`);
+  if(inp)inp.value=name;
+  refreshText(item);refreshTs(item);
+}
+
+function switchTab(id,tab,btn){
+  const to=document.getElementById('to-'+id);
+  const tso=document.getElementById('tso-'+id);
+  const allBtns=btn.closest('.tab-row').querySelectorAll('.tab-btn');
+  allBtns.forEach(b=>b.classList.remove('active'));btn.classList.add('active');
+  to.classList.toggle('visible',tab==='texto');
+  tso.classList.toggle('visible',tab==='ts');
+}
+
+function spLabel(item,id){return item.speakerMap[id]||id||''}
+
+function refreshText(item){
+  const el=document.getElementById('to-'+item.id);if(!el)return;
+  const hasSp=item.segments.some(s=>s.speaker);
+  if(!hasSp){el.textContent=item.text;return}
+  const lines=[];let cur=null;
+  for(const seg of item.segments){
+    const lbl=spLabel(item,seg.speaker);
+    if(lbl!==cur){if(cur!==null)lines.push('');lines.push(lbl+':');cur=lbl}
     lines.push(seg.text);
   }
-  document.getElementById('textOutput').textContent = lines.join('\n');
+  el.textContent=lines.join('\n');
 }
 
-function buildTimestamps() {
-  const container = document.getElementById('timestampsOutput');
-  container.innerHTML = '';
-  for (const seg of allSegments) {
-    const div = document.createElement('div');
-    div.className = 'ts-segment';
-    const speakerHtml = seg.speaker ? (() => {
-      const label = getSpeakerLabel(seg.speaker);
-      const color = getSpeakerColor(seg.speaker);
-      return `<span class="ts-speaker-badge" style="background:${color}22;color:${color};border:1px solid ${color}44">${escHtml(label)}</span>`;
-    })() : '';
-    div.innerHTML = `
-      <div class="ts-left">
-        <span class="ts-time">${fmtTime(seg.start)} → ${fmtTime(seg.end)}</span>
-        ${speakerHtml}
-      </div>
-      <span class="ts-text">${escHtml(seg.text)}</span>
-    `;
-    container.appendChild(div);
+function refreshTs(item){
+  const el=document.getElementById('tso-'+item.id);if(!el)return;
+  el.innerHTML='';
+  for(const seg of item.segments){
+    const row=document.createElement('div');row.className='ts-seg';
+    const spHtml=seg.speaker?(()=>{
+      const lbl=spLabel(item,seg.speaker);const color=spColor(seg.speaker);
+      return `<span class="ts-spk" style="background:${color}22;color:${color};border:1px solid ${color}44">${esc(lbl)}</span>`;
+    })():'';
+    row.innerHTML=`<div class="ts-left"><span class="ts-time">${fmtT(seg.start)} → ${fmtT(seg.end)}</span>${spHtml}</div><span class="ts-text">${esc(seg.text)}</span>`;
+    el.appendChild(row);
   }
 }
 
 /* ── Export ────────────────────────────────────────── */
-function copyText() {
-  const text = document.getElementById('textOutput').textContent;
-  navigator.clipboard.writeText(text).then(() => showToast('✓ Texto copiado!'));
-}
+function getItem(id){return queue.find(q=>q.id===id)}
 
-function buildTxtContent() {
-  const hasSpeakers = allSegments.some(s => s.speaker);
-  if (!hasSpeakers) return fullText;
-  const lines = [];
-  let cur = null;
-  for (const seg of allSegments) {
-    const label = getSpeakerLabel(seg.speaker) || seg.speaker || '';
-    if (label !== cur) { if (cur !== null) lines.push(''); cur = label; }
-    lines.push(`${label}: ${seg.text}`);
+function buildTxt(item){
+  const hasSp=item.segments.some(s=>s.speaker);
+  if(!hasSp)return item.text;
+  const lines=[];let cur=null;
+  for(const seg of item.segments){
+    const lbl=spLabel(item,seg.speaker);
+    if(lbl!==cur){if(cur!==null)lines.push('');cur=lbl}
+    lines.push(`${lbl}: ${seg.text}`);
   }
   return lines.join('\n');
 }
 
-function buildSrtContent() {
-  return allSegments.map((seg, i) => {
-    const label = seg.speaker ? `[${getSpeakerLabel(seg.speaker)}] ` : '';
-    return `${i+1}\n${srtTime(seg.start)} --> ${srtTime(seg.end)}\n${label}${seg.text}\n`;
+function buildSrt(item){
+  return item.segments.map((seg,i)=>{
+    const prefix=seg.speaker?`[${spLabel(item,seg.speaker)}] `:'';
+    return `${i+1}\n${srtT(seg.start)} --> ${srtT(seg.end)}\n${prefix}${seg.text}\n`;
   }).join('\n');
 }
 
-async function exportTxt() {
-  const content = buildTxtContent();
-  await saveFile(content, 'transcricao.txt');
+function copyResult(id){
+  const item=getItem(id);if(!item)return;
+  navigator.clipboard.writeText(buildTxt(item)).then(()=>showToast('✓ Texto copiado!'));
+}
+async function exportTxt(id){
+  const item=getItem(id);if(!item)return;
+  await saveFile(buildTxt(item),baseName(item.file.name)+'.txt');
+}
+async function exportSrt(id){
+  const item=getItem(id);if(!item)return;
+  await saveFile(buildSrt(item),baseName(item.file.name)+'.srt');
 }
 
-async function exportSrt() {
-  const content = buildSrtContent();
-  await saveFile(content, 'transcricao.srt');
-}
-
-async function saveFile(content, filename) {
-  // Try PyWebView native file-save dialog first
-  if (typeof window.pywebview !== 'undefined' && window.pywebview.api) {
-    try {
-      const result = await window.pywebview.api.save_file(content, filename);
-      if (result && result.ok) {
-        showToast(`✓ Salvo: ${result.path.split(/[/\\]/).pop()}`);
-        return;
-      }
-    } catch(_) {}
+async function saveFile(content,filename){
+  if(typeof window.pywebview!=='undefined'&&window.pywebview.api){
+    try{
+      const r=await window.pywebview.api.save_file(content,filename);
+      if(r&&r.ok){showToast('✓ Salvo: '+r.path.split(/[/\\]/).pop());return}
+    }catch(_){}
   }
-  // Browser fallback (also works if pywebview is not available)
-  browserDownload(content, filename);
-}
-
-function browserDownload(content, filename) {
-  const blob = new Blob(['﻿' + content], {type: 'text/plain;charset=utf-8'});
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = filename;
-  a.style.display = 'none';
-  document.body.appendChild(a);
-  a.click();
-  setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url); }, 1000);
+  const blob=new Blob(['﻿'+content],{type:'text/plain;charset=utf-8'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');a.href=url;a.download=filename;a.style.display='none';
+  document.body.appendChild(a);a.click();
+  setTimeout(()=>{document.body.removeChild(a);URL.revokeObjectURL(url)},1000);
   showToast('⬇ Download iniciado');
 }
 </script>
