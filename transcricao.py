@@ -56,6 +56,8 @@ transcription_lock = threading.Semaphore(1)  # one transcription at a time
 SUPPORTED_EXTENSIONS = {
     '.mp3', '.mp4', '.wav', '.m4a', '.mkv', '.avi', '.mov',
     '.webm', '.flac', '.ogg', '.wma', '.wmv', '.mpeg', '.mpga',
+    '.opus', '.aac', '.aiff', '.aif', '.amr', '.3gp', '.3gpp',
+    '.mka', '.mts', '.m2ts', '.ts', '.vob', '.f4v', '.rm', '.rmvb',
 }
 VIDEO_EXTENSIONS = {'.mp4', '.mkv', '.avi', '.mov', '.webm', '.wmv', '.mpeg'}
 
