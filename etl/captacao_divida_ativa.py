@@ -259,7 +259,7 @@ def coletar_zips(input_dir: str) -> list[str]:
 # Agregação por CNPJ
 # ---------------------------------------------------------------------------
 def processar(input_dir: str, valor_relevante: float, somente_regioes: bool,
-              excluir_extintas: bool):
+              excluir_extintas: bool, valor_max: float = 0.0):
     """Lê todos os CSV/ZIP, filtra e agrega por CNPJ. Retorna lista de empresas."""
     csvs = coletar_csvs(input_dir)
     zips = coletar_zips(input_dir)
@@ -340,6 +340,8 @@ def processar(input_dir: str, valor_relevante: float, somente_regioes: bool,
     for e in agg.values():
         if e["divida_total"] < valor_relevante:
             continue
+        if valor_max and e["divida_total"] > valor_max:
+            continue
         e["situacoes"] = sorted(e["situacoes"])
         e["receitas"] = sorted(e["receitas"])
         dia = e.pop("data_inscricao_mais_antiga")
@@ -349,8 +351,9 @@ def processar(input_dir: str, valor_relevante: float, somente_regioes: bool,
         empresas.append(e)
 
     empresas.sort(key=lambda x: x["divida_total"], reverse=True)
-    print(f"[i] {len(empresas):,} empresa(s) com dívida >= "
-          f"R$ {valor_relevante:,.2f}.")
+    faixa = (f"R$ {valor_relevante:,.2f} a R$ {valor_max:,.2f}" if valor_max
+             else f">= R$ {valor_relevante:,.2f}")
+    print(f"[i] {len(empresas):,} empresa(s) com dívida {faixa}.")
     return empresas
 
 
@@ -701,7 +704,10 @@ def main():
     pp = sub.add_parser("processar", help="processa CSVs já baixados da PGFN")
     pp.add_argument("--input-dir", required=True)
     pp.add_argument("--saida", default="saida")
-    pp.add_argument("--valor-relevante", type=float, default=VALOR_RELEVANTE_PADRAO)
+    pp.add_argument("--valor-relevante", type=float, default=VALOR_RELEVANTE_PADRAO,
+                    help="dívida mínima somada por empresa (R$)")
+    pp.add_argument("--valor-max", type=float, default=0.0,
+                    help="dívida máxima por empresa (R$); 0 = sem teto (faixa fechada)")
     pp.add_argument("--todas-regioes", action="store_true",
                     help="não restringir a BH/Zona da Mata (mantém todo MG)")
     pp.add_argument("--incluir-extintas", action="store_true",
@@ -752,7 +758,8 @@ def main():
         empresas = processar(args.input_dir, args.valor_relevante,
                              somente_regioes=not args.todas_regioes
                                              and not via_municipio,
-                             excluir_extintas=not args.incluir_extintas)
+                             excluir_extintas=not args.incluir_extintas,
+                             valor_max=args.valor_max)
         if args.enriquecer > 0:
             enriquecer(empresas, args.enriquecer, args.fonte_cnpj)
         if via_municipio and not args.todas_regioes:

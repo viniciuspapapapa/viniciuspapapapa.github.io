@@ -357,17 +357,23 @@ function sorted(list){
 function scoreCls(s){ return s>=70?"sc-hi":s>=45?"sc-md":"sc-lo"; }
 function regCls(r){ return r.includes("Belo")?"bh":r.includes("Zona")?"zm":""; }
 
+const LIMITE_LINHAS = 400;
 function render(){
   renderKpis();
   const list = sorted(filtered());
-  $("#resCount").textContent = list.length ? `${fmtNum(list.length)} de ${fmtNum(DATA.length)}` : "";
+  const trunc = list.length > LIMITE_LINHAS;
+  const vis = trunc ? list.slice(0, LIMITE_LINHAS) : list;
+  $("#resCount").textContent = list.length
+    ? (trunc ? `mostrando ${LIMITE_LINHAS} de ${fmtNum(list.length)} (refine os filtros ou exporte tudo)`
+             : `${fmtNum(list.length)} de ${fmtNum(DATA.length)}`)
+    : "";
   const tb = $("#rows"); tb.innerHTML="";
   document.querySelectorAll("thead th").forEach(th=>{
     th.classList.toggle("active", th.dataset.sort===sortKey);
     const a=th.querySelector(".arr"); if(a) a.textContent = sortDir<0?"▼":"▲";
   });
   $("#empty").style.display = list.length? "none":"block";
-  for(const e of list){
+  for(const e of vis){
     const c = crmOf(e.cnpj);
     const tr = document.createElement("tr");
     tr.innerHTML = `

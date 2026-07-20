@@ -51,6 +51,7 @@ def save_config(data):
 flask_app = Flask(__name__)
 model_cache = {}
 model_lock = threading.Lock()
+transcription_lock = threading.Semaphore(1)  # one transcription at a time
 
 SUPPORTED_EXTENSIONS = {
     '.mp3', '.mp4', '.wav', '.m4a', '.mkv', '.avi', '.mov',
@@ -483,6 +484,7 @@ def transcribe():
             model = get_model(model_size)
 
             yield f'data: {json.dumps({"status": "transcrevendo"})}\n\n'
+            transcription_lock.acquire()
             segments_gen, info = model.transcribe(
                 temp_path,
                 language='pt',
@@ -527,6 +529,10 @@ def transcribe():
         except Exception as exc:
             yield f'data: {json.dumps({"error": str(exc)})}\n\n'
         finally:
+            try:
+                transcription_lock.release()
+            except RuntimeError:
+                pass
             try:
                 os.unlink(temp_path)
             except OSError:
