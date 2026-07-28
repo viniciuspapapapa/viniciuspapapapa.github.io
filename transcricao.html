@@ -470,10 +470,11 @@ async function transcribeItem(item){
   form.append('ocr_video',ocrVideo&&VIDEO_EXTS.has(ext(item.file.name))?'true':'false');
 
   abortCtrl=new AbortController();
+  let reader=null;
   try{
     const resp=await fetch('/transcribe',{method:'POST',body:form,signal:abortCtrl.signal});
     if(!resp.ok){const e=await resp.json().catch(()=>({error:'Erro'}));throw new Error(e.error||'Erro')}
-    const reader=resp.body.getReader();const dec=new TextDecoder();let buf='';
+    reader=resp.body.getReader();const dec=new TextDecoder();let buf='';
     while(true){
       const{done,value}=await reader.read();
       if(done)break;
@@ -482,7 +483,10 @@ async function transcribeItem(item){
       for(const line of lines){
         if(line.startsWith('data: ')){try{handleEvent(item,JSON.parse(line.slice(6)))}catch(_){}}
       }
+      if(item.status==='done'||item.status==='error')break;
     }
+    // process any remaining buffer
+    if(buf.startsWith('data: ')){try{handleEvent(item,JSON.parse(buf.slice(6)))}catch(_){}}
     if(item.status==='processing'){item.status='done';updateQueueItem(item.id);setResultStatus(item,'done')}
   }catch(err){
     if(err.name==='AbortError'){
@@ -491,7 +495,10 @@ async function transcribeItem(item){
       item.status='error';item.error=err.message||String(err);
     }
     updateQueueItem(item.id);setResultStatus(item,item.status);
-  }finally{abortCtrl=null}
+  }finally{
+    if(reader){try{reader.cancel()}catch(_){}}
+    abortCtrl=null
+  }
 }
 
 function handleEvent(item,data){
