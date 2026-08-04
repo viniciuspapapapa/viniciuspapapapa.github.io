@@ -9,136 +9,57 @@
   @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=DM+Mono:wght@300;400;500&family=Jost:wght@300;400;500;600&display=swap');
 
   :root {
-    --bg: #0e0e0f;
-    --surface: #161618;
-    --surface2: #1e1e21;
-    --border: #2a2a2e;
-    --border-light: #35353a;
-    --gold: #c9a84c;
-    --gold-dim: #8a6d2f;
-    --gold-subtle: rgba(201,168,76,0.08);
-    --text: #e8e6e0;
-    --text-dim: #8a8880;
-    --text-muted: #55544f;
-    --red: #c0392b;
-    --green: #27ae60;
-    --blue: #2980b9;
-    --amber: #e67e22;
+    --bg: #0e0e0f; --surface: #161618; --surface2: #1e1e21;
+    --border: #2a2a2e; --border-light: #35353a;
+    --gold: #c9a84c; --gold-dim: #8a6d2f; --gold-subtle: rgba(201,168,76,0.08);
+    --text: #e8e6e0; --text-dim: #8a8880; --text-muted: #55544f;
+    --red: #c0392b; --green: #27ae60; --blue: #2980b9; --amber: #e67e22;
     --radius: 4px;
   }
-
   * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: 'Jost', sans-serif; font-weight: 300; min-height: 100vh; line-height: 1.6; }
 
-  body {
-    background: var(--bg);
-    color: var(--text);
-    font-family: 'Jost', sans-serif;
-    font-weight: 300;
-    min-height: 100vh;
-    line-height: 1.6;
-  }
-
-  /* HEADER */
-  header {
-    border-bottom: 1px solid var(--border);
-    padding: 20px 40px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    background: var(--surface);
-    position: sticky; top: 0; z-index: 50;
-  }
+  header { border-bottom: 1px solid var(--border); padding: 20px 40px; display: flex; align-items: center; justify-content: space-between; background: var(--surface); position: sticky; top: 0; z-index: 50; }
   .logo-block { display: flex; align-items: center; gap: 16px; }
-  .logo-mark {
-    width: 36px; height: 36px;
-    border: 1px solid var(--gold);
-    display: flex; align-items: center; justify-content: center;
-    font-family: 'Cormorant Garamond', serif;
-    font-size: 16px; font-weight: 600;
-    color: var(--gold); letter-spacing: 1px;
-  }
-  .logo-text {
-    font-family: 'Cormorant Garamond', serif;
-    font-size: 13px; font-weight: 400;
-    color: var(--text-dim); letter-spacing: 2px; text-transform: uppercase;
-  }
-  .app-title {
-    font-family: 'Cormorant Garamond', serif;
-    font-size: 18px; font-weight: 300; font-style: italic;
-    color: var(--text-dim); letter-spacing: 0.5px;
-  }
+  .logo-mark { width: 36px; height: 36px; border: 1px solid var(--gold); display: flex; align-items: center; justify-content: center; font-family: 'Cormorant Garamond', serif; font-size: 16px; font-weight: 600; color: var(--gold); letter-spacing: 1px; }
+  .logo-text { font-family: 'Cormorant Garamond', serif; font-size: 13px; font-weight: 400; color: var(--text-dim); letter-spacing: 2px; text-transform: uppercase; }
+  .app-title { font-family: 'Cormorant Garamond', serif; font-size: 18px; font-weight: 300; font-style: italic; color: var(--text-dim); letter-spacing: 0.5px; }
 
   main { max-width: 1080px; margin: 0 auto; padding: 40px 40px 120px; }
 
-  .section-title {
-    font-family: 'Cormorant Garamond', serif;
-    font-size: 11px; font-weight: 500; letter-spacing: 3px; text-transform: uppercase;
-    color: var(--gold); margin-bottom: 22px; display: flex; align-items: center; gap: 12px;
-  }
+  .section-title { font-family: 'Cormorant Garamond', serif; font-size: 11px; font-weight: 500; letter-spacing: 3px; text-transform: uppercase; color: var(--gold); margin-bottom: 22px; display: flex; align-items: center; gap: 12px; }
   .section-title::after { content: ''; flex: 1; height: 1px; background: var(--border); }
-  .section-title .num {
-    width: 22px; height: 22px; border: 1px solid var(--gold-dim); border-radius: 50%;
-    display: inline-flex; align-items: center; justify-content: center;
-    font-family: 'DM Mono', monospace; font-size: 10px; color: var(--gold);
-  }
+  .section-title .num { width: 22px; height: 22px; border: 1px solid var(--gold-dim); border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-family: 'DM Mono', monospace; font-size: 10px; color: var(--gold); }
 
-  .intro {
-    margin-bottom: 44px; padding: 26px 30px;
-    border: 1px solid var(--border); background: var(--surface); border-left: 3px solid var(--gold);
-  }
-  .intro p {
-    font-family: 'Cormorant Garamond', serif; font-size: 17px; font-weight: 300;
-    color: var(--text); line-height: 1.7;
-  }
+  .intro { margin-bottom: 44px; padding: 26px 30px; border: 1px solid var(--border); background: var(--surface); border-left: 3px solid var(--gold); }
+  .intro p { font-family: 'Cormorant Garamond', serif; font-size: 17px; font-weight: 300; color: var(--text); line-height: 1.7; }
   .intro p + p { margin-top: 12px; }
   .intro .muted { font-size: 14px; color: var(--text-dim); font-family: 'Jost', sans-serif; }
 
   .block { margin-bottom: 44px; }
-
-  /* CARDS / FORM */
   .card { border: 1px solid var(--border); background: var(--surface); padding: 26px 28px; margin-bottom: 16px; }
-  .card.soft { background: var(--surface2); }
 
-  label.fld { display: block; margin-bottom: 16px; }
-  label.fld:last-child { margin-bottom: 0; }
-  .fld .cap {
-    display: block; font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase;
-    color: var(--text-dim); margin-bottom: 6px; font-weight: 400;
-  }
-  input[type=text], input[type=date], input[type=email], textarea, select {
-    width: 100%; background: var(--bg); border: 1px solid var(--border-light);
-    color: var(--text); padding: 10px 12px; font-family: 'Jost', sans-serif; font-size: 14px;
-    border-radius: var(--radius); font-weight: 300;
-  }
-  textarea { resize: vertical; min-height: 72px; line-height: 1.6; }
-  input:focus, textarea:focus, select:focus { outline: none; border-color: var(--gold-dim); }
-  input::placeholder, textarea::placeholder { color: var(--text-muted); }
-
-  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-  .grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
-  @media (max-width: 720px) { .grid2, .grid3 { grid-template-columns: 1fr; } }
-
-  /* UPLOAD */
-  .drop {
-    border: 1px dashed var(--border-light); background: var(--surface2);
-    padding: 30px; text-align: center; border-radius: var(--radius); cursor: pointer;
-    transition: border-color .2s, background .2s;
-  }
+  .drop { border: 1px dashed var(--border-light); background: var(--surface2); padding: 30px; text-align: center; border-radius: var(--radius); cursor: pointer; transition: border-color .2s, background .2s; }
   .drop:hover, .drop.over { border-color: var(--gold-dim); background: var(--gold-subtle); }
   .drop .big { font-family: 'Cormorant Garamond', serif; font-size: 18px; color: var(--text); }
   .drop .small { font-size: 12px; color: var(--text-dim); margin-top: 6px; }
-  .filechip {
-    display: inline-flex; align-items: center; gap: 8px; margin-top: 12px;
-    background: var(--bg); border: 1px solid var(--border-light); padding: 6px 12px;
-    border-radius: 20px; font-size: 12px; color: var(--text-dim); font-family: 'DM Mono', monospace;
-  }
 
-  /* BUTTONS */
-  .btn {
-    background: transparent; border: 1px solid var(--gold-dim); color: var(--gold);
-    padding: 11px 22px; font-family: 'Jost', sans-serif; font-size: 13px; letter-spacing: 1px;
-    text-transform: uppercase; cursor: pointer; border-radius: var(--radius); transition: all .2s;
-  }
+  .filelist { margin-top: 14px; display: flex; flex-direction: column; gap: 8px; }
+  .filerow { display: flex; align-items: center; gap: 12px; background: var(--bg); border: 1px solid var(--border-light); padding: 10px 12px; border-radius: var(--radius); }
+  .filerow .fname { font-family: 'DM Mono', monospace; font-size: 12px; color: var(--text); flex-shrink: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 320px; }
+  .filerow .meta { font-size: 11px; color: var(--text-muted); }
+  .filerow select { background: var(--surface2); border: 1px solid var(--border-light); color: var(--text); padding: 6px 10px; font-family: 'Jost', sans-serif; font-size: 12px; border-radius: var(--radius); margin-left: auto; max-width: 300px; }
+  .filerow .rm { background: transparent; border: none; color: var(--text-muted); cursor: pointer; font-size: 16px; padding: 0 4px; }
+  .filerow .rm:hover { color: var(--red); }
+  .filerow .flag { font-size: 10px; letter-spacing: .5px; text-transform: uppercase; padding: 2px 7px; border-radius: 10px; }
+  .flag-txt { color: var(--green); border: 1px solid rgba(39,174,96,.4); }
+  .flag-img { color: var(--amber); border: 1px solid rgba(230,126,34,.4); }
+
+  .seg { display: inline-flex; border: 1px solid var(--border-light); border-radius: var(--radius); overflow: hidden; }
+  .seg button { background: transparent; border: none; color: var(--text-dim); padding: 10px 20px; font-family: 'Jost', sans-serif; font-size: 13px; cursor: pointer; letter-spacing: .5px; }
+  .seg button.active { background: var(--gold); color: #111; font-weight: 500; }
+
+  .btn { background: transparent; border: 1px solid var(--gold-dim); color: var(--gold); padding: 11px 22px; font-family: 'Jost', sans-serif; font-size: 13px; letter-spacing: 1px; text-transform: uppercase; cursor: pointer; border-radius: var(--radius); transition: all .2s; }
   .btn:hover { background: var(--gold-subtle); border-color: var(--gold); }
   .btn.primary { background: var(--gold); color: #111; border-color: var(--gold); font-weight: 500; }
   .btn.primary:hover { background: #d9b95c; }
@@ -147,51 +68,23 @@
   .btn:disabled { opacity: .4; cursor: not-allowed; }
   .btnrow { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
 
-  /* SCENARIO TOGGLE */
-  .seg { display: inline-flex; border: 1px solid var(--border-light); border-radius: var(--radius); overflow: hidden; }
-  .seg button {
-    background: transparent; border: none; color: var(--text-dim); padding: 10px 20px;
-    font-family: 'Jost', sans-serif; font-size: 13px; cursor: pointer; letter-spacing: .5px;
-  }
-  .seg button.active { background: var(--gold); color: #111; font-weight: 500; }
-
-  /* CATALOG ITEMS */
-  .cat-item {
-    border: 1px solid var(--border); background: var(--surface2); border-radius: var(--radius);
-    padding: 14px 16px; margin-bottom: 10px;
-  }
-  .cat-item.on { border-color: var(--gold-dim); }
-  .cat-head { display: flex; align-items: flex-start; gap: 12px; }
-  .cat-head input[type=checkbox] { margin-top: 4px; width: 16px; height: 16px; accent-color: var(--gold); flex-shrink: 0; }
-  .cat-label { flex: 1; }
-  .cat-label .t { font-size: 14px; color: var(--text); }
-  .cat-label .c { font-size: 10px; letter-spacing: 1px; text-transform: uppercase; color: var(--text-muted); margin-top: 2px; }
-  .cat-badge { font-size: 9px; letter-spacing: 1px; text-transform: uppercase; padding: 2px 8px; border-radius: 10px; white-space: nowrap; }
-  .badge-qesh { color: var(--green); border: 1px solid rgba(39,174,96,.4); }
-  .badge-op { color: var(--amber); border: 1px solid rgba(230,126,34,.4); }
-  .badge-jud { color: var(--red); border: 1px solid rgba(192,57,43,.4); }
-  .cat-detail { margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border); display: none; }
-  .cat-item.on .cat-detail { display: block; }
-  .cat-detail .row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
-  .cat-detail select { max-width: 260px; }
-  .cat-detail input { max-width: 200px; }
-
   .hint { font-size: 12px; color: var(--text-dim); margin-top: 8px; font-style: italic; }
 
-  /* ANALYSIS RESULT */
-  .analysis { border: 1px solid var(--gold-dim); background: var(--gold-subtle); padding: 18px 20px; border-radius: var(--radius); margin-top: 16px; }
-  .analysis h4 { font-family: 'Cormorant Garamond', serif; font-size: 15px; color: var(--gold); font-weight: 500; margin-bottom: 10px; letter-spacing: 1px; }
-  .analysis ul { list-style: none; }
-  .analysis li { font-size: 13px; color: var(--text); padding: 3px 0; padding-left: 16px; position: relative; }
-  .analysis li::before { content: '›'; position: absolute; left: 0; color: var(--gold); }
+  .diag { border: 1px solid var(--border); background: var(--surface); border-radius: var(--radius); padding: 22px 24px; }
+  .diag-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+  @media (max-width: 720px){ .diag-cols { grid-template-columns: 1fr; } }
+  .diag h4 { font-family: 'Cormorant Garamond', serif; font-size: 15px; font-weight: 500; letter-spacing: 1px; margin-bottom: 10px; }
+  .diag h4.ok { color: var(--green); } .diag h4.no { color: var(--amber); }
+  .diag ul { list-style: none; }
+  .diag li { font-size: 13px; padding: 3px 0 3px 16px; position: relative; color: var(--text); }
+  .diag li::before { content: '›'; position: absolute; left: 0; color: var(--gold); }
+  .diag .empty { color: var(--text-muted); font-style: italic; font-size: 13px; }
+  .diag .chips { margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--border); font-size: 12px; color: var(--text-dim); }
+  .diag .chips b { color: var(--text); font-weight: 500; }
+  .diag .cen { margin-bottom: 16px; font-size: 13px; }
 
-  /* PREVIEW */
   #preview-wrap { display: none; margin-top: 24px; }
-  .preview-doc {
-    background: #fdfcf9; color: #1a1a1a; padding: 48px 56px; border-radius: var(--radius);
-    font-family: 'Segoe UI', 'Jost', sans-serif; font-size: 14px; line-height: 1.7; text-align: justify;
-    max-height: 640px; overflow-y: auto; border: 1px solid var(--border-light);
-  }
+  .preview-doc { background: #fdfcf9; color: #1a1a1a; padding: 48px 56px; border-radius: var(--radius); font-family: 'Segoe UI', 'Jost', sans-serif; font-size: 14px; line-height: 1.7; text-align: justify; max-height: 640px; overflow-y: auto; border: 1px solid var(--border-light); }
   .preview-doc h2 { font-size: 13px; font-weight: 700; text-transform: uppercase; margin: 22px 0 10px; text-align: left; }
   .preview-doc h1 { font-size: 14px; font-weight: 700; text-align: left; margin-bottom: 14px; line-height: 1.4; }
   .preview-doc p { margin-bottom: 11px; }
@@ -204,27 +97,16 @@
   .preview-doc .doclist { margin: 4px 0 14px 0; padding-left: 0; list-style: none; }
   .preview-doc .doclist li { margin-bottom: 5px; }
   .preview-doc .assinatura { margin-top: 30px; }
-  .preview-doc .center { text-align: center; }
-  .preview-doc .right { text-align: right; }
 
-  .pending-note {
-    background: var(--surface2); border: 1px solid var(--amber); border-left: 3px solid var(--amber);
-    padding: 14px 18px; border-radius: var(--radius); margin-top: 16px; font-size: 13px; color: var(--text);
-  }
+  .pending-note { background: var(--surface2); border: 1px solid var(--amber); border-left: 3px solid var(--amber); padding: 14px 18px; border-radius: var(--radius); margin-top: 16px; font-size: 13px; color: var(--text); }
   .pending-note strong { color: var(--amber); }
 
   #loading-bar { position: fixed; top: 0; left: 0; height: 2px; width: 0; background: var(--gold); transition: width .3s; z-index: 100; }
   #loading-bar.active { width: 90%; }
-
   .errbox { display: none; background: rgba(192,57,43,.12); border: 1px solid var(--red); color: #e8b0a8; padding: 12px 16px; border-radius: var(--radius); margin-bottom: 16px; font-size: 13px; }
   .errbox.show { display: block; }
-
   .foot { text-align: center; color: var(--text-muted); font-size: 11px; letter-spacing: 1px; margin-top: 60px; }
-
-  .toolbar-sticky {
-    position: sticky; bottom: 0; background: linear-gradient(transparent, var(--bg) 30%);
-    padding: 24px 0 0; margin-top: 8px;
-  }
+  .toolbar-sticky { position: sticky; bottom: 0; background: linear-gradient(transparent, var(--bg) 30%); padding: 24px 0 0; margin-top: 8px; }
 </style>
 </head>
 <body>
@@ -241,158 +123,57 @@
 <main>
   <div class="intro">
     <p>Gerador da <strong>resposta a ofícios de autoridades públicas</strong> dirigidos à QESH Instituição de Pagamento Ltda.</p>
-    <p class="muted">A ferramenta analisa os quesitos do ofício, identifica o cenário (policial ou judicial) e, a partir dos dados e documentos que a QESH efetivamente detém no caso concreto, monta a peça de resposta seguindo o modelo institucional e as regras de redação do escritório. Os campos que dependem de subsídio do cliente e ainda não preenchidos permanecem <mark style="background:#fff59d;color:#111;padding:0 2px;">destacados em amarelo</mark> na peça gerada.</p>
+    <p class="muted">A peça é montada <strong>a partir dos documentos que você anexa</strong> — nada é preenchido à mão. Anexe os ofícios recebidos e os documentos disponibilizados pelo cliente. O programa lê o conteúdo, identifica o cenário e os quesitos, e monta a resposta considerando apenas o que existe: <strong>o que não for anexado é tratado como inexistente</strong>, e os tópicos e o rol de documentos são excluídos ou reformulados conforme o caso concreto. O que não puder ser lido dos documentos permanece <mark style="background:#fff59d;color:#111;padding:0 2px;">destacado em amarelo</mark> para conferência.</p>
   </div>
 
   <div class="errbox" id="err"></div>
 
-  <!-- STEP 1 — OFÍCIO -->
+  <!-- 1 — OFÍCIOS -->
   <div class="block">
-    <div class="section-title"><span class="num">1</span> O ofício recebido</div>
+    <div class="section-title"><span class="num">1</span> Ofícios recebidos</div>
     <div class="card">
-      <div class="drop" id="drop">
-        <div class="big">Solte o PDF do ofício aqui ou clique para selecionar</div>
-        <div class="small">O texto é lido no seu navegador (nada é enviado a servidores). Você também pode colar o teor abaixo.</div>
-        <input type="file" id="file" accept="application/pdf" hidden>
+      <div class="drop" id="drop-of">
+        <div class="big">Solte aqui os ofícios (PDF) ou clique para selecionar</div>
+        <div class="small">Pode anexar mais de um. A leitura é feita no seu navegador, sem envio a servidores.</div>
+        <input type="file" id="file-of" accept="application/pdf" multiple hidden>
       </div>
-      <div id="filechips"></div>
-      <label class="fld" style="margin-top:16px;">
-        <span class="cap">Teor do ofício (colado ou extraído do PDF) — editável</span>
-        <textarea id="oficio-texto" rows="7" placeholder="Cole aqui o inteiro teor do ofício, ou carregue o PDF acima para extração automática."></textarea>
-      </label>
-      <div class="btnrow" style="margin-top:14px;">
-        <button class="btn primary" id="btn-analisar">Analisar ofício</button>
-        <span class="hint" style="margin:0;">A análise sugere o cenário e marca os quesitos abaixo. Tudo é revisável.</span>
-      </div>
-      <div id="analysis-out"></div>
+      <div class="filelist" id="list-of"></div>
     </div>
   </div>
 
-  <!-- STEP 2 — CENÁRIO -->
+  <!-- 2 — DOCUMENTOS DO CLIENTE -->
   <div class="block">
-    <div class="section-title"><span class="num">2</span> Cenário da requisição</div>
+    <div class="section-title"><span class="num">2</span> Documentos disponibilizados pelo cliente</div>
     <div class="card">
-      <label class="fld"><span class="cap">Natureza da requisição</span></label>
-      <div class="seg" id="seg-cenario">
-        <button data-c="policial" class="active">Requisição policial / administrativa</button>
-        <button data-c="judicial">Ordem judicial de quebra</button>
+      <div class="drop" id="drop-doc">
+        <div class="big">Solte aqui os documentos (PDF ou imagem) ou clique para selecionar</div>
+        <div class="small">Pode anexar mais de um. Cada documento é classificado automaticamente; ajuste o tipo se necessário. O que não for anexado será tratado como inexistente.</div>
+        <input type="file" id="file-doc" accept="application/pdf,image/*" multiple hidden>
       </div>
-      <p class="hint">No cenário policial mantém-se o tópico VIII (reserva de jurisdição). Havendo ordem judicial de quebra, esse tópico é suprimido e o extrato integral e os logs são fornecidos nos termos deferidos.</p>
+      <div class="filelist" id="list-doc"></div>
     </div>
   </div>
 
-  <!-- STEP 3 — ENDEREÇAMENTO -->
+  <!-- 3 — DIAGNÓSTICO -->
   <div class="block">
-    <div class="section-title"><span class="num">3</span> Endereçamento e epígrafe</div>
-    <div class="card">
-      <div class="grid2">
-        <label class="fld"><span class="cap">Autoridade destinatária</span>
-          <select id="f-autoridade">
-            <option value="policial">Ilustríssimo(a) Senhor(a) Delegado(a) de Polícia</option>
-            <option value="judicial">Excelentíssimo(a) Senhor(a) Juiz(a) de Direito</option>
-          </select>
-        </label>
-        <label class="fld"><span class="cap">Unidade (delegacia / vara / comarca)</span>
-          <input type="text" id="f-unidade" placeholder="Ex.: 12ª Delegacia de Polícia — Copacabana/RJ"></label>
-        <label class="fld"><span class="cap">Ofício nº (número/ano)</span>
-          <input type="text" id="f-oficio-num" placeholder="Ex.: 068535-1012/2026"></label>
-        <label class="fld"><span class="cap">Procedimento / IP / BO nº</span>
-          <input type="text" id="f-procedimento" placeholder="Ex.: Inquérito Policial nº ..."></label>
-        <label class="fld"><span class="cap">Data de recebimento</span>
-          <input type="date" id="f-recebimento"></label>
-        <label class="fld"><span class="cap">Prazo assinalado</span>
-          <input type="text" id="f-prazo" placeholder="Ex.: 3 dias úteis"></label>
+    <div class="section-title"><span class="num">3</span> Diagnóstico automático</div>
+    <div class="diag" id="diag">
+      <div class="cen" id="diag-cen"><span class="empty">Anexe os documentos e clique em “Analisar documentos”.</span></div>
+      <div class="btnrow" style="margin-bottom:18px;">
+        <button class="btn" id="btn-analisar">Analisar documentos</button>
+        <div class="seg" id="seg-cenario" style="display:none;">
+          <button data-c="policial" class="active">Requisição policial</button>
+          <button data-c="judicial">Ordem judicial</button>
+        </div>
       </div>
+      <div class="diag-cols">
+        <div><h4 class="ok">Serão fornecidos / afirmados</h4><ul id="diag-ok"><li class="empty">—</li></ul></div>
+        <div><h4 class="no">Inexistentes / redirecionados / a complementar</h4><ul id="diag-no"><li class="empty">—</li></ul></div>
+      </div>
+      <div class="chips" id="diag-chips" style="display:none;"></div>
     </div>
   </div>
 
-  <!-- STEP 4 — CONTA E TITULAR -->
-  <div class="block">
-    <div class="section-title"><span class="num">4</span> Conta e titular</div>
-    <div class="card">
-      <div class="grid2">
-        <label class="fld"><span class="cap">Titular nominal (nome completo)</span><input type="text" id="f-titular"></label>
-        <label class="fld"><span class="cap">CPF/CNPJ do titular</span><input type="text" id="f-cpf"></label>
-        <label class="fld"><span class="cap">Conta de pagamento nº</span><input type="text" id="f-conta"></label>
-        <label class="fld"><span class="cap">Agência</span><input type="text" id="f-agencia"></label>
-        <label class="fld"><span class="cap">Data de abertura da conta</span><input type="date" id="f-abertura"></label>
-        <label class="fld"><span class="cap">Situação atual da conta</span>
-          <select id="f-situacao">
-            <option value="">— selecionar —</option>
-            <option>ativa</option><option>bloqueada</option><option>encerrada</option>
-          </select></label>
-        <label class="fld"><span class="cap">Endereço informado no cadastro</span><input type="text" id="f-endereco"></label>
-        <label class="fld"><span class="cap">Telefone / e-mail informados</span><input type="text" id="f-contato" placeholder="telefone / e-mail"></label>
-        <label class="fld"><span class="cap">Chaves Pix vinculadas (chave e datas de criação/exclusão)</span><input type="text" id="f-pix" placeholder="Ex.: e-mail x@y.com (criada 01/02/25, excluída 03/03/25)"></label>
-      </div>
-    </div>
-  </div>
-
-  <!-- STEP 5 — QUESITOS / SUBSÍDIOS -->
-  <div class="block">
-    <div class="section-title"><span class="num">5</span> Quesitos do ofício e subsídios disponíveis</div>
-    <div class="card">
-      <p class="hint" style="margin-top:0;margin-bottom:16px;">Marque o que o ofício requisita. Para cada item, informe se a QESH <strong>fornece</strong>, se o dado está sob guarda do <strong>Operador</strong>, ou se depende de <strong>ordem judicial</strong>. O número do documento (Doc.) é atribuído automaticamente no rol.</p>
-      <div id="catalogo"></div>
-    </div>
-  </div>
-
-  <!-- STEP 6 — BLOCOS CONDICIONAIS -->
-  <div class="block">
-    <div class="section-title"><span class="num">6</span> Providências e blocos condicionais</div>
-    <div class="card">
-      <div class="grid2">
-        <label class="fld"><span class="cap">Data e hora do bloqueio da conta</span><input type="text" id="f-bloqueio-dh" placeholder="Ex.: 12/03/2026 às 14:37:20"></label>
-        <label class="fld"><span class="cap">Motivo do bloqueio</span><input type="text" id="f-bloqueio-motivo" placeholder="Ex.: alerta do monitoramento antifraude"></label>
-        <label class="fld"><span class="cap">Situação/saldo bloqueado</span><input type="text" id="f-bloqueio-saldo" placeholder="Ex.: permanece bloqueada, saldo de R$ ..."></label>
-        <label class="fld"><span class="cap">Comunicação ao Operador</span>
-          <select id="f-com-operador">
-            <option value="sim">Sim — Operador foi oficiado (2 dias úteis)</option>
-            <option value="nao">Não mencionar comunicação ao Operador</option>
-          </select></label>
-      </div>
-      <hr style="border:none;border-top:1px solid var(--border);margin:20px 0;">
-      <div class="grid2">
-        <label class="fld"><span class="cap">Há registro de MED?</span>
-          <select id="f-med">
-            <option value="nao">Não — suprimir bloco de MED</option>
-            <option value="sim">Sim — incluir bloco de MED</option>
-          </select></label>
-        <label class="fld"><span class="cap">Detalhes do MED (contestante, valor, data, resultado)</span><input type="text" id="f-med-detalhe" placeholder="Preencher se houver MED"></label>
-        <label class="fld"><span class="cap">Comunicação ao COAF confirmada pela compliance?</span>
-          <select id="f-coaf">
-            <option value="nao">Não / não confirmado — suprimir bloco COAF</option>
-            <option value="sim">Sim — incluir bloco COAF (com protocolos)</option>
-          </select></label>
-      </div>
-      <p class="hint">O bloco do COAF só deve ser incluído mediante confirmação expressa da área de compliance, dado o dever de sigilo do art. 11, §2º, da Lei 9.613/1998.</p>
-    </div>
-  </div>
-
-  <!-- STEP 7 — OPERADOR E ASSINATURAS -->
-  <div class="block">
-    <div class="section-title"><span class="num">7</span> Operador, banco liquidante e assinaturas</div>
-    <div class="card">
-      <div class="grid2">
-        <label class="fld"><span class="cap">Razão social do Operador</span><input type="text" id="f-op-razao"></label>
-        <label class="fld"><span class="cap">CNPJ do Operador</span><input type="text" id="f-op-cnpj"></label>
-        <label class="fld"><span class="cap">Endereço do Operador</span><input type="text" id="f-op-endereco"></label>
-        <label class="fld"><span class="cap">E-mail do Operador para requisições</span><input type="email" id="f-op-email"></label>
-        <label class="fld"><span class="cap">Representante legal do Operador (nome e CPF)</span><input type="text" id="f-op-rep"></label>
-        <label class="fld"><span class="cap">Banco liquidante (quando requisitado)</span><input type="text" id="f-liquidante"></label>
-      </div>
-      <hr style="border:none;border-top:1px solid var(--border);margin:20px 0;">
-      <div class="grid3">
-        <label class="fld"><span class="cap">Cidade</span><input type="text" id="f-cidade" placeholder="Ex.: Nova Lima"></label>
-        <label class="fld"><span class="cap">Data da peça</span><input type="date" id="f-data-peca"></label>
-        <label class="fld"><span class="cap">Advogado(a) corresponsável (nome)</span><input type="text" id="f-adv2" placeholder="Nome"></label>
-        <label class="fld"><span class="cap">OAB do(a) corresponsável</span><input type="text" id="f-adv2-oab" placeholder="OAB/__ nº ______"></label>
-      </div>
-      <p class="hint">A peça já vai subscrita por Renato Dilly Campos (OAB/MG 166.263). Os campos acima acrescentam o(a) corresponsável.</p>
-    </div>
-  </div>
-
-  <!-- GENERATE -->
   <div class="toolbar-sticky">
     <div class="btnrow">
       <button class="btn primary" id="btn-gerar">Gerar peça</button>
@@ -412,279 +193,279 @@
 
 <script>
 const PDF_OK = (typeof pdfjsLib !== 'undefined');
-if (PDF_OK) {
-  pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-}
+if (PDF_OK) { pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js'; }
 
-/* ─────────────────────────  CATÁLOGO DE SUBSÍDIOS  ───────────────────────── */
-// holder: 'qesh' | 'operador' | 'ambos' | 'liquidante'
-// jud: exige ordem judicial
-// destino padrão no <select> por item
-const CATALOGO = [
-  { id:'cadastro', cat:'Cadastro/KYC', label:'Dados cadastrais do correntista', holder:'ambos', def:'fornece',
-    kw:['dados cadastrais','cadastro','qualifica','filiação','endereço do titular','dados do titular','dados da conta'] },
-  { id:'docid', cat:'Cadastro/KYC', label:'Documentos de identificação do onboarding (selfie, RG/CNH)', holder:'operador', def:'operador',
-    kw:['selfie','prova de vida','rg','cnh','documento de identidade','cópia de documentos','onboarding','ficha de assinatura'] },
-  { id:'validacao', cat:'Cadastro/KYC', label:'Evidências das etapas de validação e prova de vida', holder:'operador', def:'operador',
-    kw:['validação','prova de vida','biometria','facial','liveness'] },
-  { id:'termos', cat:'Cadastro/KYC', label:'Termos de uso, política de privacidade e consentimento', holder:'operador', def:'operador',
-    kw:['termos de uso','política de privacidade','consentimento','aceite dos termos'] },
-  { id:'pix', cat:'Cadastro/KYC', label:'Histórico de titularidade da conta e das chaves Pix', holder:'qesh', def:'fornece',
-    kw:['chave pix','chaves pix','histórico de chaves','titularidade da conta'] },
-  { id:'transacoes', cat:'Transações', label:'Relatório de transações da conta', holder:'ambos', def:'fornece',
-    kw:['transaç','movimenta','relatório de transaç','extrato do período'] },
-  { id:'webhook', cat:'Transações', label:'Logs de webhook/API por transação', holder:'qesh', def:'fornece',
-    kw:['webhook','api','log de transação','identificador da transação'] },
-  { id:'beneficiarios', cat:'Beneficiários', label:'Identificação dos beneficiários (triangulação)', holder:'ambos', def:'fornece',
-    kw:['beneficiário','beneficiarios','triangula','destino dos valores','conta beneficiária'] },
-  { id:'extrato', cat:'Beneficiários', label:'Extrato bancário integral', holder:'ambos', jud:true, def:'judicial',
-    kw:['extrato integral','extrato bancário','extrato completo','movimentação financeira integral'] },
-  { id:'ip', cat:'Técnicos', label:'Registros de conexão e logs de acesso (IP, porta lógica, geolocalização)', holder:'operador', def:'operador',
-    kw:['ip','porta lógica','geolocaliza','registro de conexão','log de acesso','endereço ip'] },
-  { id:'device', cat:'Técnicos', label:'ID de device e vínculos de dispositivo', holder:'operador', def:'operador',
-    kw:['device','dispositivo','id de device','reuso','vínculo de dispositivo'] },
-  { id:'autenticacao', cat:'Técnicos', label:'Logs de autenticação', holder:'operador', def:'operador',
-    kw:['autenticação','log de autenticação','login'] },
-  { id:'med', cat:'MED/Pix', label:'Dados do MED (contestante, valor, datas, repatriação)', holder:'ambos', def:'fornece',
-    kw:['med','mecanismo especial de devolução','devolução','contestação','repatria'] },
-  { id:'grafo', cat:'MED/Pix', label:'Grafo do MED 2.0 (camadas)', holder:'ambos', def:'fornece',
-    kw:['grafo','med 2.0','camadas','grafo do med'] },
-  { id:'bloqueio', cat:'MED/Pix', label:'Registros de bloqueio/desativação de conta e chave Pix', holder:'qesh', def:'fornece',
-    kw:['bloqueio','desativação','bloqueio de conta','bloqueio de chave'] },
-  { id:'compliance', cat:'Compliance', label:'Evidências da atividade de compliance (PLD/KYC)', holder:'qesh', def:'fornece',
-    kw:['compliance','pld','kyc','prevenção à lavagem','atividade de compliance','know your'] },
-  { id:'coaf', cat:'Compliance', label:'Comprovantes de comunicação ao COAF (SISCOAF)', holder:'qesh', def:'fornece',
-    kw:['coaf','siscoaf','comunicação ao coaf'] },
+/* ─────────────────────────  CATÁLOGOS  ───────────────────────── */
+// Categorias de documento do cliente. holder indica de quem é a guarda natural do dado.
+const DOC_CATS = [
+  { id:'procuracao',  label:'Procuração e atos constitutivos da QESH', kwFile:['procura','social','estatuto','constitutivo'], kw:['procuração','outorga','poderes','contrato social','atos constitutivos','instrumento de mandato'] },
+  { id:'cadastro',    label:'Dados cadastrais e chaves Pix da conta', kwFile:['cadastr','ficha','titular'], kw:['dados cadastrais','ficha cadastral','chave pix','titular da conta','cadastro do cliente','conta de pagamento'] },
+  { id:'transacoes',  label:'Relatório de transações / extrato do período', kwFile:['extrato','transac','relatorio','movimenta','lancamento'], kw:['extrato','transações','movimentação','lançamentos','relatório de transações','histórico de transações'] },
+  { id:'bloqueio',    label:'Registro de bloqueio da conta e das chaves Pix', kwFile:['bloqueio','bloqueada','suspensao'], kw:['bloqueio da conta','conta bloqueada','desativação','suspensão da conta','bloqueio de saldo'] },
+  { id:'med',         label:'Registros de MED (Mecanismo Especial de Devolução)', kwFile:['med','devolucao','contestacao'], kw:['mecanismo especial de devolução','devolução','contestação','repatriação','med pix'] },
+  { id:'contrato',    label:'Contrato de Prestação de Serviços com o Operador e anexos', kwFile:['contrato','operador','anexo'], kw:['prestação de serviços','operador','cláusula','anexo iii','white label','banking as a service'] },
+  { id:'comOperador', label:'Comunicação encaminhada ao Operador', kwFile:['comunicacao','notifica','operador','oficio_op'], kw:['comunicação ao operador','notificação ao operador','solicitamos os documentos','prazo de dois dias'] },
+  { id:'pld',         label:'Política de PLD/FT e evidências de compliance', kwFile:['pld','compliance','kyc','politica','monitoramento'], kw:['prevenção à lavagem','pld/ft','kyc','política de compliance','monitoramento de operações','know your'] },
+  { id:'coaf',        label:'Comprovantes de comunicação ao COAF (SISCOAF)', kwFile:['coaf','siscoaf'], kw:['coaf','siscoaf','comunicação ao coaf','protocolo de comunicação'] },
+  { id:'operadorQualif', label:'Qualificação do Operador (razão social, CNPJ, endereço)', kwFile:['qualifica','operador','cartao_cnpj','cnpj'], kw:['razão social','cartão cnpj','representante legal','qualificação do operador'] },
+  { id:'outro',       label:'Outro documento pertinente ao caso', kwFile:[], kw:[] },
+];
+const CAT_LABEL = Object.fromEntries(DOC_CATS.map(c=>[c.id,c.label]));
+// Ordem canônica no rol de documentos
+const ROL_ORDER = ['procuracao','cadastro','transacoes','bloqueio','med','contrato','comOperador','pld','coaf','operadorQualif','outro'];
+
+// Catálogo de quesitos (o que o ofício costuma pedir) → categoria de documento que o supre e guarda.
+// holder: 'qesh' (a QESH detém, depende de doc anexado) | 'operador' (sempre redirecionar) | 'liquidante'
+const QUESITOS = [
+  { id:'cadastro', label:'Dados cadastrais do correntista', holder:'qesh', doc:'cadastro', kw:['dados cadastrais','cadastro','qualifica','filiação','endereço do titular','dados do titular'] },
+  { id:'docid', label:'Documentos de identificação do onboarding (selfie, RG/CNH)', holder:'operador', kw:['selfie','prova de vida','rg','cnh','documento de identidade','cópia de documentos','onboarding','ficha de assinatura'] },
+  { id:'validacao', label:'Evidências de validação e prova de vida', holder:'operador', kw:['validação','prova de vida','biometria','facial','liveness'] },
+  { id:'termos', label:'Termos de uso, política de privacidade e consentimento', holder:'operador', kw:['termos de uso','política de privacidade','consentimento','aceite dos termos'] },
+  { id:'pix', label:'Histórico de titularidade e das chaves Pix', holder:'qesh', doc:'cadastro', kw:['chave pix','chaves pix','histórico de chaves','titularidade da conta'] },
+  { id:'transacoes', label:'Relatório de transações da conta', holder:'qesh', doc:'transacoes', kw:['transaç','movimenta','relatório de transaç','extrato do período'] },
+  { id:'webhook', label:'Logs de webhook/API por transação', holder:'qesh', doc:'transacoes', kw:['webhook','log de transação','identificador da transação'] },
+  { id:'beneficiarios', label:'Identificação dos beneficiários (triangulação)', holder:'qesh', doc:'transacoes', kw:['beneficiário','beneficiarios','triangula','destino dos valores','conta beneficiária'] },
+  { id:'extrato', label:'Extrato bancário integral', holder:'qesh', doc:'transacoes', jud:true, kw:['extrato integral','extrato bancário','extrato completo','movimentação financeira integral'] },
+  { id:'ip', label:'Registros de conexão e logs de acesso (IP, porta lógica, geolocalização)', holder:'operador', kw:['ip','porta lógica','geolocaliza','registro de conexão','log de acesso','endereço ip'] },
+  { id:'device', label:'ID de device e vínculos de dispositivo', holder:'operador', kw:['device','dispositivo','id de device','reuso','vínculo de dispositivo'] },
+  { id:'autenticacao', label:'Logs de autenticação', holder:'operador', kw:['autenticação','log de autenticação'] },
+  { id:'med', label:'Dados do MED', holder:'qesh', doc:'med', kw:['med','mecanismo especial de devolução','devolução','contestação','repatria'] },
+  { id:'grafo', label:'Grafo do MED 2.0 (camadas)', holder:'qesh', doc:'med', kw:['grafo','med 2.0','camadas'] },
+  { id:'bloqueio', label:'Registros de bloqueio/desativação de conta e chave Pix', holder:'qesh', doc:'bloqueio', kw:['bloqueio','desativação','bloqueio de conta'] },
+  { id:'compliance', label:'Evidências da atividade de compliance (PLD/KYC)', holder:'qesh', doc:'pld', kw:['compliance','pld','kyc','prevenção à lavagem','atividade de compliance','know your'] },
+  { id:'coaf', label:'Comprovantes de comunicação ao COAF', holder:'qesh', doc:'coaf', kw:['coaf','siscoaf','comunicação ao coaf'] },
 ];
 
-const CENARIO = { atual: 'policial' };
+/* ─────────────────────────  ESTADO  ───────────────────────── */
+const state = { oficios: [], documentos: [], cenarioOverride: null, analisado: false };
+let uidc = 0;
 
-/* ─────────────────────────  RENDERIZAÇÃO DO CATÁLOGO  ───────────────────────── */
-function badgeFor(item){
-  if(item.jud) return '<span class="cat-badge badge-jud">Ordem judicial</span>';
-  if(item.holder==='operador') return '<span class="cat-badge badge-op">Operador</span>';
-  if(item.holder==='qesh') return '<span class="cat-badge badge-qesh">QESH</span>';
-  return '<span class="cat-badge badge-qesh">QESH / Operador</span>';
-}
-function renderCatalogo(){
-  const box = document.getElementById('catalogo');
-  box.innerHTML = CATALOGO.map(it => `
-    <div class="cat-item" id="ci-${it.id}">
-      <div class="cat-head">
-        <input type="checkbox" id="chk-${it.id}" onchange="toggleItem('${it.id}')">
-        <label class="cat-label" for="chk-${it.id}">
-          <div class="t">${it.label}</div>
-          <div class="c">${it.cat}</div>
-        </label>
-        ${badgeFor(it)}
-      </div>
-      <div class="cat-detail">
-        <div class="row">
-          <select id="dest-${it.id}">
-            <option value="fornece">QESH fornece (junta documento)</option>
-            <option value="operador">Sob guarda do Operador (redirecionar)</option>
-            <option value="judicial">Depende de ordem judicial</option>
-          </select>
-          <input type="text" id="obs-${it.id}" placeholder="Observação / referência do documento (opcional)">
-        </div>
-      </div>
-    </div>`).join('');
-  // default destino
-  CATALOGO.forEach(it => { document.getElementById('dest-'+it.id).value = it.def || 'fornece'; });
-}
-function toggleItem(id){
-  const on = document.getElementById('chk-'+id).checked;
-  document.getElementById('ci-'+id).classList.toggle('on', on);
-}
+/* ─────────────────────────  UTILITÁRIOS  ───────────────────────── */
+function normalizar(s){ return (s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,''); }
+function escapeHtml(s){ return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function setLoading(on){ document.getElementById('loading-bar').classList.toggle('active', on); }
+function mostrarErro(m){ const e=document.getElementById('err'); e.textContent=m; e.classList.add('show'); e.scrollIntoView({behavior:'smooth',block:'center'}); }
+function esconderErro(){ document.getElementById('err').classList.remove('show'); }
 
-/* ─────────────────────────  UPLOAD / LEITURA DO PDF  ───────────────────────── */
-const drop = document.getElementById('drop');
-const fileInput = document.getElementById('file');
-drop.addEventListener('click', ()=> fileInput.click());
-['dragenter','dragover'].forEach(e=> drop.addEventListener(e, ev=>{ev.preventDefault(); drop.classList.add('over');}));
-['dragleave','drop'].forEach(e=> drop.addEventListener(e, ev=>{ev.preventDefault(); drop.classList.remove('over');}));
-drop.addEventListener('drop', ev=>{ const f=ev.dataTransfer.files[0]; if(f) lerPDF(f); });
-fileInput.addEventListener('change', ev=>{ const f=ev.target.files[0]; if(f) lerPDF(f); });
-
-async function lerPDF(file){
-  esconderErro();
-  if(!PDF_OK){ mostrarErro('O leitor de PDF não pôde ser carregado (sem conexão com o CDN). Cole o teor do ofício no campo de texto abaixo.'); return; }
-  if(file.type !== 'application/pdf'){ mostrarErro('Selecione um arquivo PDF. Para outros formatos, cole o teor no campo de texto.'); return; }
-  setLoading(true);
+async function extrairTextoPDF(file){
+  if(!PDF_OK) return '';
   try {
     const buf = await file.arrayBuffer();
     const pdf = await pdfjsLib.getDocument({ data: buf }).promise;
-    let txt = '';
-    for(let i=1;i<=pdf.numPages;i++){
-      const page = await pdf.getPage(i);
-      const c = await page.getTextContent();
-      txt += c.items.map(x=>x.str).join(' ') + '\n';
-    }
-    document.getElementById('oficio-texto').value = txt.trim();
-    document.getElementById('filechips').innerHTML = `<span class="filechip">📄 ${file.name} · ${pdf.numPages} pág.</span>`;
-  } catch(e){
-    mostrarErro('Não foi possível ler o PDF (' + e.message + '). Cole o teor manualmente.');
-  } finally { setLoading(false); }
+    let txt='';
+    for(let i=1;i<=pdf.numPages;i++){ const pg=await pdf.getPage(i); const c=await pg.getTextContent(); txt += c.items.map(x=>x.str).join(' ')+'\n'; }
+    return txt.trim();
+  } catch(e){ return ''; }
 }
 
-/* ─────────────────────────  ANÁLISE DO OFÍCIO  ───────────────────────── */
-function normalizar(s){ return (s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,''); }
+/* ─────────────────────────  UPLOAD: OFÍCIOS  ───────────────────────── */
+setupDrop('drop-of','file-of', receberOficios);
+setupDrop('drop-doc','file-doc', receberDocumentos);
 
-document.getElementById('btn-analisar').addEventListener('click', analisarOficio);
+function setupDrop(dropId, inputId, handler){
+  const d = document.getElementById(dropId), inp = document.getElementById(inputId);
+  d.addEventListener('click', ()=> inp.click());
+  ['dragenter','dragover'].forEach(e=> d.addEventListener(e, ev=>{ev.preventDefault(); d.classList.add('over');}));
+  ['dragleave','drop'].forEach(e=> d.addEventListener(e, ev=>{ev.preventDefault(); d.classList.remove('over');}));
+  d.addEventListener('drop', ev=>{ handler([...ev.dataTransfer.files]); });
+  inp.addEventListener('change', ev=>{ handler([...ev.target.files]); ev.target.value=''; });
+}
 
-function analisarOficio(){
-  const raw = document.getElementById('oficio-texto').value;
-  if(!raw.trim()){ mostrarErro('Cole o teor do ofício ou carregue o PDF antes de analisar.'); return; }
+async function receberOficios(files){
   esconderErro();
-  const t = normalizar(raw);
+  const pdfs = files.filter(f=> f.type==='application/pdf');
+  if(!pdfs.length){ mostrarErro('Anexe os ofícios em PDF.'); return; }
+  if(!PDF_OK){ mostrarErro('O leitor de PDF não pôde ser carregado (sem conexão com o CDN). Tente novamente com conexão.'); return; }
+  setLoading(true);
+  for(const f of pdfs){
+    const text = await extrairTextoPDF(f);
+    state.oficios.push({ id:++uidc, name:f.name, text, hasText: text.length>40 });
+  }
+  setLoading(false);
+  renderOficios();
+}
+function renderOficios(){
+  const box = document.getElementById('list-of');
+  box.innerHTML = state.oficios.map(o=>`
+    <div class="filerow">
+      <span class="fname" title="${escapeHtml(o.name)}">📄 ${escapeHtml(o.name)}</span>
+      <span class="flag ${o.hasText?'flag-txt':'flag-img'}">${o.hasText?'texto lido':'sem camada de texto'}</span>
+      <button class="rm" title="Remover" onclick="remover('oficios',${o.id})">✕</button>
+    </div>`).join('');
+}
 
-  // 1) cenário
-  const judKW = ['ordem judicial','quebra de sigilo','defiro','determino','autos','processo n','vara','juiz','excelentissim','mandado','decisao'];
-  const polKW = ['delegacia','delegado','inquerito','boletim de ocorrencia','autoridade policial','requisit'];
-  let judScore=0, polScore=0;
-  judKW.forEach(k=>{ if(t.includes(k)) judScore++; });
-  polKW.forEach(k=>{ if(t.includes(k)) polScore++; });
-  const cenario = judScore > polScore ? 'judicial' : 'policial';
-  setCenario(cenario);
-  // reflete no endereçamento
-  document.getElementById('f-autoridade').value = cenario;
+async function receberDocumentos(files){
+  esconderErro();
+  const ok = files.filter(f=> f.type==='application/pdf' || f.type.startsWith('image/'));
+  if(!ok.length){ mostrarErro('Anexe documentos em PDF ou imagem.'); return; }
+  setLoading(true);
+  for(const f of ok){
+    const isPdf = f.type==='application/pdf';
+    const text = isPdf ? await extrairTextoPDF(f) : '';
+    const hasText = text.length>40;
+    const cat = classificar(f.name, text);
+    state.documentos.push({ id:++uidc, name:f.name, text, hasText, isImage:!isPdf, cat });
+  }
+  setLoading(false);
+  renderDocumentos();
+}
+function classificar(nome, texto){
+  const nf = normalizar(nome), nt = normalizar(texto);
+  let best='outro', score=0;
+  DOC_CATS.forEach(c=>{
+    if(c.id==='outro') return;
+    let s=0;
+    c.kwFile.forEach(k=>{ if(nf.includes(k)) s+=3; });
+    c.kw.forEach(k=>{ if(nt.includes(normalizar(k))) s+=1; });
+    if(s>score){ score=s; best=c.id; }
+  });
+  return best;
+}
+function renderDocumentos(){
+  const box = document.getElementById('list-doc');
+  box.innerHTML = state.documentos.map(dc=>`
+    <div class="filerow">
+      <span class="fname" title="${escapeHtml(dc.name)}">${dc.isImage?'🖼️':'📄'} ${escapeHtml(dc.name)}</span>
+      <span class="flag ${(!dc.isImage&&dc.hasText)?'flag-txt':'flag-img'}">${dc.isImage?'imagem (só presença)':(dc.hasText?'texto lido':'sem camada de texto')}</span>
+      <select onchange="mudarCat(${dc.id}, this.value)">
+        ${DOC_CATS.map(c=>`<option value="${c.id}" ${c.id===dc.cat?'selected':''}>${c.label}</option>`).join('')}
+      </select>
+      <button class="rm" title="Remover" onclick="remover('documentos',${dc.id})">✕</button>
+    </div>`).join('');
+}
+function mudarCat(id, cat){ const d=state.documentos.find(x=>x.id===id); if(d) d.cat=cat; if(state.analisado) analisar(); }
+function remover(tipo, id){ state[tipo]=state[tipo].filter(x=>x.id!==id); (tipo==='oficios'?renderOficios:renderDocumentos)(); if(state.analisado) analisar(); }
 
-  // 2) quesitos
-  const detectados = [];
-  CATALOGO.forEach(it=>{
-    const hit = it.kw.some(k => t.includes(normalizar(k)));
-    if(hit){
-      document.getElementById('chk-'+it.id).checked = true;
-      toggleItem(it.id);
-      // se cenário judicial, extrato/logs deixam de exigir reserva
-      if(cenario==='judicial' && it.jud){ document.getElementById('dest-'+it.id).value='fornece'; }
-      detectados.push(it);
-    }
+/* ─────────────────────────  ANÁLISE / DIAGNÓSTICO  ───────────────────────── */
+document.getElementById('btn-analisar').addEventListener('click', analisar);
+document.querySelectorAll('#seg-cenario button').forEach(b=> b.addEventListener('click', ()=>{ state.cenarioOverride=b.dataset.c; analisar(); }));
+
+function textoOficios(){ return state.oficios.map(o=>o.text).join('\n'); }
+
+function detectarCenario(){
+  if(state.cenarioOverride) return state.cenarioOverride;
+  const t = normalizar(textoOficios());
+  const jud=['ordem judicial','quebra de sigilo','defiro','determino',' autos','processo n','vara','ju[íi]zo','juiz','excelentissim','mandado','decisao'];
+  const pol=['delegacia','delegado','inquerito','boletim de ocorrencia','autoridade policial','requisit'];
+  let j=0,p=0; jud.forEach(k=>{ if(t.includes(normalizar(k))) j++; }); pol.forEach(k=>{ if(t.includes(normalizar(k))) p++; });
+  return j>p ? 'judicial' : 'policial';
+}
+function quesitosDetectados(){
+  const t = normalizar(textoOficios());
+  return QUESITOS.filter(q=> q.kw.some(k=> t.includes(normalizar(k))));
+}
+function catsPresentes(){ return new Set(state.documentos.map(d=>d.cat).filter(c=>c!=='outro')); }
+
+function analisar(){
+  esconderErro();
+  if(!state.oficios.length && !state.documentos.length){ mostrarErro('Anexe ao menos um ofício ou documento antes de analisar.'); return; }
+  state.analisado = true;
+  const cen = detectarCenario();
+  const ques = quesitosDetectados();
+  const cats = catsPresentes();
+
+  // cenário UI
+  document.getElementById('seg-cenario').style.display='inline-flex';
+  document.querySelectorAll('#seg-cenario button').forEach(b=> b.classList.toggle('active', b.dataset.c===cen));
+  const semTexto = [...state.oficios, ...state.documentos].filter(x=>!x.hasText && !x.isImage).length;
+  document.getElementById('diag-cen').innerHTML =
+    `<b style="color:var(--gold)">Cenário:</b> ${cen==='judicial'?'ordem judicial de quebra (tópico VIII de reserva de jurisdição será suprimido)':'requisição policial/administrativa (tópico VIII mantido)'} &nbsp;·&nbsp; `+
+    `<b style="color:var(--gold)">Ofícios:</b> ${state.oficios.length} &nbsp;·&nbsp; <b style="color:var(--gold)">Documentos:</b> ${state.documentos.length} &nbsp;·&nbsp; <b style="color:var(--gold)">Quesitos identificados:</b> ${ques.length}`+
+    (semTexto?` &nbsp;·&nbsp; <span style="color:var(--amber)">${semTexto} PDF(s) sem camada de texto</span>`:'');
+
+  // listas ok / no
+  const ok=[], no=[];
+  // documentos que serão juntados
+  ordenarDocs().forEach((d,i)=> ok.push(`Doc. ${String(i+1).padStart(2,'0')} — ${CAT_LABEL[d.cat]}${d.isImage?' (imagem)':''}`));
+  // quesitos → cobertura
+  ques.forEach(q=>{
+    if(q.holder==='operador'){ no.push(`${q.label} — não integra o acervo da QESH; será redirecionado ao Operador (tópico VI).`); return; }
+    if(q.jud && cen!=='judicial'){ no.push(`${q.label} — submetido à reserva de jurisdição; depende de ordem judicial (tópico VIII).`); return; }
+    if(q.doc && cats.has(q.doc)) ok.push(`${q.label} — coberto pelo documento anexado.`);
+    else no.push(`${q.label} — sem documento anexado; será tratado como não juntado nesta oportunidade / a complementar.`);
   });
 
-  // 3) art. 330 / prazo
-  const temDesobediencia = t.includes('330') || t.includes('desobedi');
-  const temPrazo = /(\d+)\s*dias?\s*(uteis|úteis|corridos)?/.exec(t);
+  document.getElementById('diag-ok').innerHTML = ok.length? ok.map(x=>`<li>${escapeHtml(x)}</li>`).join('') : '<li class="empty">Nenhum documento/quesito coberto ainda.</li>';
+  document.getElementById('diag-no').innerHTML = no.length? no.map(x=>`<li>${escapeHtml(x)}</li>`).join('') : '<li class="empty">Nada pendente entre os quesitos detectados.</li>';
 
-  // 4) captura número do ofício se identificável
-  const mOf = raw.match(/of[íi]cio\s*n?[.º°]*\s*([\w./-]+)/i);
-  if(mOf && !document.getElementById('f-oficio-num').value) document.getElementById('f-oficio-num').value = mOf[1];
-
-  // saída
-  const out = document.getElementById('analysis-out');
-  const cenTxt = cenario==='judicial'
-    ? 'Ordem judicial (tópico VIII de reserva de jurisdição será suprimido)'
-    : 'Requisição policial/administrativa (tópico VIII mantido)';
-  let li = detectados.length
-    ? detectados.map(d=>`<li>${d.label} <span style="color:var(--text-muted)">— ${destinoLabelPadrao(d, cenario)}</span></li>`).join('')
-    : '<li>Nenhum quesito reconhecido automaticamente. Marque manualmente no passo 5.</li>';
-  out.innerHTML = `
-    <div class="analysis">
-      <h4>Resultado da análise</h4>
-      <ul>
-        <li><strong>Cenário:</strong> ${cenTxt}</li>
-        <li><strong>Quesitos identificados:</strong> ${detectados.length}</li>
-        ${li}
-        ${temDesobediencia?'<li>Menção ao art. 330 do CP detectada — tópico IX reforçado.</li>':''}
-        ${temPrazo?`<li>Prazo detectado no texto: <strong>${temPrazo[0]}</strong>.</li>`:''}
-      </ul>
-    </div>`;
-  if(temPrazo && !document.getElementById('f-prazo').value) document.getElementById('f-prazo').value = temPrazo[0];
+  // chips de dados extraídos
+  const dados = extrairDadosOficio();
+  const chips=[];
+  if(dados.oficioNum) chips.push(`Ofício nº <b>${escapeHtml(dados.oficioNum)}</b>`);
+  if(dados.titular) chips.push(`Titular <b>${escapeHtml(dados.titular)}</b>`);
+  if(dados.cpf) chips.push(`CPF <b>${escapeHtml(dados.cpf)}</b>`);
+  if(dados.cnpj) chips.push(`CNPJ <b>${escapeHtml(dados.cnpj)}</b>`);
+  if(dados.conta) chips.push(`Conta <b>${escapeHtml(dados.conta)}</b>`);
+  if(dados.prazo) chips.push(`Prazo <b>${escapeHtml(dados.prazo)}</b>`);
+  const chipBox = document.getElementById('diag-chips');
+  chipBox.style.display='block';
+  chipBox.innerHTML = 'Dados lidos automaticamente dos ofícios: ' + (chips.length? chips.join(' &nbsp;·&nbsp; ') : '<i>nada extraível automaticamente — os campos ficarão destacados para conferência.</i>');
 }
 
-function destinoLabelPadrao(item, cenario){
-  if(item.jud && cenario!=='judicial') return 'depende de ordem judicial';
-  if(item.holder==='operador') return 'sob guarda do Operador';
-  return 'sob guarda da QESH';
-}
-
-/* ─────────────────────────  CENÁRIO TOGGLE  ───────────────────────── */
-document.querySelectorAll('#seg-cenario button').forEach(b=>{
-  b.addEventListener('click', ()=> setCenario(b.dataset.c));
-});
-function setCenario(c){
-  CENARIO.atual = c;
-  document.querySelectorAll('#seg-cenario button').forEach(b=> b.classList.toggle('active', b.dataset.c===c));
-}
-
-/* ─────────────────────────  COLETA DE DADOS  ───────────────────────── */
-function val(id){ return (document.getElementById(id).value || '').trim(); }
-function fmtData(id){
-  const v = val(id); if(!v) return '';
-  const [y,m,d] = v.split('-'); if(!y||!m||!d) return v;
-  return `${d}/${m}/${y}`;
-}
-
-function coletar(){
-  const itens = CATALOGO.filter(it=> document.getElementById('chk-'+it.id).checked)
-    .map(it=> ({ ...it, destino: val('dest-'+it.id), obs: val('obs-'+it.id) }));
-  return {
-    cenario: CENARIO.atual,
-    autoridade: val('f-autoridade'),
-    unidade: val('f-unidade'),
-    oficioNum: val('f-oficio-num'),
-    procedimento: val('f-procedimento'),
-    recebimento: fmtData('f-recebimento'),
-    prazo: val('f-prazo'),
-    titular: val('f-titular'), cpf: val('f-cpf'),
-    conta: val('f-conta'), agencia: val('f-agencia'),
-    abertura: fmtData('f-abertura'), situacao: val('f-situacao'),
-    endereco: val('f-endereco'), contato: val('f-contato'), pix: val('f-pix'),
-    bloqueioDH: val('f-bloqueio-dh'), bloqueioMotivo: val('f-bloqueio-motivo'), bloqueioSaldo: val('f-bloqueio-saldo'),
-    comOperador: val('f-com-operador'),
-    med: val('f-med'), medDetalhe: val('f-med-detalhe'),
-    coaf: val('f-coaf'),
-    opRazao: val('f-op-razao'), opCnpj: val('f-op-cnpj'), opEndereco: val('f-op-endereco'),
-    opEmail: val('f-op-email'), opRep: val('f-op-rep'), liquidante: val('f-liquidante'),
-    cidade: val('f-cidade'), dataPeca: fmtData('f-data-peca'),
-    adv2: val('f-adv2'), adv2oab: val('f-adv2-oab'),
-    itens
-  };
+function extrairDadosOficio(){
+  const t = textoOficios();
+  const cpf  = (t.match(/\d{3}\.\d{3}\.\d{3}-\d{2}/)||[])[0]||'';
+  const cnpj = (t.match(/\d{2}\.\d{3}\.\d{3}\/\d{4}-\d{2}/)||[])[0]||'';
+  let m, conta='', agencia='', titular='', unidade='';
+  m = t.match(/conta(?:\s+de\s+pagamento)?\s*(?:n[º°o.\s:]*)?\s*([\d][\d.\-]{2,})/i); if(m) conta=m[1];
+  m = t.match(/ag[êe]ncia\s*(?:n[º°o.\s:]*)?\s*([\d][\d.\-]{0,})/i); if(m) agencia=m[1];
+  m = t.match(/titular(?:idade)?(?:\s+nominal)?(?:\s+(?:de|do|da))?\s*[:\-]?\s*([A-ZÀ-Ú][A-Za-zÀ-ú' ]{4,60}?)(?=,|\.|\s+inscrit|\s+CPF|\s+portador|\s+brasileir|$)/); if(m) titular=m[1].trim();
+  const oficioNum = (t.match(/\bof(?:[íi]cio)?\.?\s*n?[º°o.]*\s*([\d][\w./-]*)/i)||[])[1]||'';
+  const prazo = (t.match(/(\d+)\s*dias?\s*(?:[úu]teis|corridos)?/i)||[])[0]||'';
+  m = t.match(/((?:\d{1,3}[ªaºo.]*\s*)?(?:Delegacia|Vara|Juizado|Ju[íi]zo|Comarca|Seccional)[^.\n]{0,90})/i);
+  if(m) unidade = m[1].replace(/\s+/g,' ').trim();
+  else { for(const ln of t.split('\n').map(s=>s.trim()).filter(Boolean)){ if(/(delegacia|vara|comarca|juizado|ju[íi]zo|pol[íi]cia)/i.test(ln) && ln.length<120){ unidade=ln; break; } } }
+  return { cpf, cnpj, conta, agencia, titular, unidade, oficioNum, prazo };
 }
 
 /* ─────────────────────────  MONTAGEM DA PEÇA  ───────────────────────── */
-let pendentes = [];
-// campo preenchido → texto; vazio → placeholder destacado (registra pendência)
-function C(value, placeholder){
-  if(value && value.trim()) return escapeHtml(value.trim());
-  pendentes.push(placeholder);
-  return `<mark>[${escapeHtml(placeholder)}]</mark>`;
-}
-function escapeHtml(s){ return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
-
-let contadorPar = 0;
+let pendentes = [], contadorPar = 0;
+function C(value, note){ if(value && String(value).trim()) return escapeHtml(String(value).trim()); pendentes.push(note); return `<mark>[${escapeHtml(note)}]</mark>`; }
 function P(html){ contadorPar++; return `<p><span class="np">${contadorPar}.</span> ${html}</p>`; }
-function PL(html){ return `<p>${html}</p>`; } // sem número
 
-function montarPeca(d){
-  pendentes = [];
-  contadorPar = 0;
-  const H = [];
-  const banco = d.liquidante ? escapeHtml(d.liquidante) : `<mark>[indicar o banco liquidante, quando requisitado]</mark>`;
+function ordenarDocs(){
+  return [...state.documentos].map((d,idx)=>({d,idx}))
+    .sort((a,b)=>{ const ra=ROL_ORDER.indexOf(a.d.cat), rb=ROL_ORDER.indexOf(b.d.cat); return ra!==rb ? ra-rb : a.idx-b.idx; })
+    .map(x=>x.d);
+}
+function montarContexto(){
+  const cen = detectarCenario();
+  const dados = extrairDadosOficio();
+  const docsOrd = ordenarDocs();
+  const numByCat = {}; // primeira ocorrência de cada categoria → nº do doc
+  docsOrd.forEach((d,i)=>{ const n=i+1; if(numByCat[d.cat]==null) numByCat[d.cat]=n; });
+  const has = (cat)=> numByCat[cat]!=null;
+  const ref = (cat)=> has(cat) ? `Doc. ${String(numByCat[cat]).padStart(2,'0')}` : null;
+  return { cen, dados, docsOrd, has, ref, ques: quesitosDetectados(), cats: catsPresentes() };
+}
 
-  // classificação dos itens
-  const fornecidos = d.itens.filter(i=> i.destino==='fornece');
-  const doOperador = d.itens.filter(i=> i.destino==='operador');
-  const judiciais  = d.itens.filter(i=> i.destino==='judicial');
-  const temExtratoJud = judiciais.some(i=>i.id==='extrato') || (d.cenario==='policial' && d.itens.some(i=>i.id==='extrato'));
+function montarPeca(){
+  pendentes=[]; contadorPar=0;
+  const ctx = montarContexto();
+  const { cen, dados, has, ref } = ctx;
+  const H=[];
+  const hoje = new Date();
+  const dataPeca = `${hoje.getDate()} de ${MESES[hoje.getMonth()]} de ${hoje.getFullYear()}`;
 
   /* ENDEREÇAMENTO */
-  const autorTxt = d.autoridade==='judicial'
-    ? 'EXCELENTÍSSIMO(A) SENHOR(A) JUIZ(A) DE DIREITO'
-    : 'ILUSTRÍSSIMO(A) SENHOR(A) DELEGADO(A) DE POLÍCIA';
-  const unidadeTxt = d.unidade ? escapeHtml(d.unidade.toUpperCase()) : (pendentes.push('DELEGACIA / VARA / COMARCA / UNIDADE EXPEDIENTE'), '<mark>[DELEGACIA / VARA / COMARCA / UNIDADE EXPEDIENTE]</mark>');
+  const autorTxt = cen==='judicial' ? 'EXCELENTÍSSIMO(A) SENHOR(A) JUIZ(A) DE DIREITO' : 'ILUSTRÍSSIMO(A) SENHOR(A) DELEGADO(A) DE POLÍCIA';
+  const unidade = dados.unidade ? escapeHtml(dados.unidade.toUpperCase()) : (pendentes.push('DELEGACIA / VARA / COMARCA / UNIDADE EXPEDIENTE'), '<mark>[DELEGACIA / VARA / COMARCA / UNIDADE EXPEDIENTE]</mark>');
   H.push(`<div class="ender">
-    <h1>${autorTxt} DA ${unidadeTxt}</h1>
-    <p><strong>Ofício nº</strong> ${C(d.oficioNum,'número/ano')}<br>
-    <strong>Procedimento / Inquérito Policial / Boletim de Ocorrência nº</strong> ${C(d.procedimento,'número')}<br>
-    <strong>Data de recebimento:</strong> ${C(d.recebimento,'dd/mm/aaaa')} &nbsp;|&nbsp; <strong>Prazo assinalado:</strong> ${C(d.prazo,'prazo')}</p>
+    <h1>${autorTxt} DA ${unidade}</h1>
+    <p><strong>Ofício nº</strong> ${C(dados.oficioNum,'número/ano do ofício — verificar')}<br>
+    <strong>Data de recebimento:</strong> ${C('','data de recebimento no juridico@qesh.ai — verificar')} &nbsp;|&nbsp; <strong>Prazo assinalado:</strong> ${C(dados.prazo,'prazo — verificar')}</p>
     <p style="margin-top:14px;"><strong>QESH INSTITUIÇÃO DE PAGAMENTO LTDA.</strong>, pessoa jurídica de direito privado inscrita no CNPJ sob o nº 31.818.873/0001-30, com sede na Alameda do Ingá, nº 16, 1º andar, Vale do Sereno, Nova Lima/MG, CEP 34.006-042, instituição de pagamento integrada ao Sistema de Pagamentos Brasileiro, vem, respeitosamente, por seus procuradores que esta subscrevem, em atenção ao ofício em epígrafe, apresentar a presente <strong>RESPOSTA</strong>, prestando os esclarecimentos e fornecendo os documentos e informações que se encontram sob sua guarda, nos termos a seguir expostos.</p>
   </div>`);
 
   /* I — SÍNTESE */
   H.push(`<h2>I. Da síntese da requisição e da tempestividade da resposta</h2>`);
-  const quesitosResumo = resumirQuesitos(d.itens);
-  H.push(P(`Por meio do ofício em epígrafe, recebido no canal jurídico institucional da requerida (juridico@qesh.ai) em ${C(d.recebimento,'data de recebimento')}, a autoridade requisitou ${quesitosResumo}, relativamente à conta de pagamento nº ${C(d.conta,'número da conta')}, agência ${C(d.agencia,'agência')}, de titularidade nominal de ${C(d.titular,'nome do titular')}, inscrito(a) no CPF/CNPJ sob o nº ${C(d.cpf,'número')}.`));
+  const contaTxt = dados.conta ? `nº ${escapeHtml(dados.conta)}` : `<mark>[número da conta — verificar no ofício]</mark>`;
+  if(!dados.conta) pendentes.push('número da conta — verificar no ofício');
+  const titularTxt = dados.titular ? escapeHtml(dados.titular) : `<mark>[titular — verificar no ofício]</mark>`;
+  if(!dados.titular) pendentes.push('titular — verificar no ofício');
+  const cpfTxt = dados.cpf || dados.cnpj ? escapeHtml(dados.cpf||dados.cnpj) : `<mark>[CPF/CNPJ — verificar no ofício]</mark>`;
+  if(!(dados.cpf||dados.cnpj)) pendentes.push('CPF/CNPJ — verificar no ofício');
+  H.push(P(`Por meio do ofício em epígrafe, recebido no canal jurídico institucional da requerida (juridico@qesh.ai), a autoridade requisitou ${resumirQuesitos(ctx.ques)}, relativamente à conta de pagamento ${contaTxt}${dados.agencia?', agência '+escapeHtml(dados.agencia):''}, de titularidade nominal de ${titularTxt}, inscrito(a) no CPF/CNPJ sob o nº ${cpfTxt}.`));
   H.push(P(`A QESH, consciente do dever de colaboração com a persecução penal e com a atividade de fiscalização estatal, responde à requisição dentro do prazo assinalado, fornecendo de forma integral as informações que efetivamente detém e esclarecendo, de maneira fundamentada, as razões técnicas, contratuais e legais pelas quais determinados dados requisitados não integram o seu acervo informacional, com a indicação precisa do agente que os detém e a quem a requisição pode ser prontamente redirecionada.`));
   H.push(P(`Registra-se, portanto, que a presente manifestação é tempestiva e exaustiva no limite do que se encontra sob a guarda da instituição, razão pela qual se requer, desde logo, o seu recebimento e a respectiva juntada aos autos do procedimento em referência.`));
 
@@ -692,52 +473,58 @@ function montarPeca(d){
   H.push(`<h2>II. Da atividade desenvolvida pela QESH e da arquitetura da operação</h2>`);
   H.push(P(`A QESH é instituição de pagamento cuja atividade consiste no fornecimento de infraestrutura tecnológica para serviços de pagamento, no modelo internacionalmente conhecido como <em>Banking as a Service</em>, disponibilizando plataforma <em>white label</em> e integração ao Sistema de Pagamentos Brasileiro a empresas contratantes que, sob nome, marca e identidade visual próprios, ofertam produtos financeiros ao público final.`));
   H.push(P(`Essas empresas contratantes são designadas, na terminologia negocial adotada nos instrumentos firmados pela requerida, como Operadores. É o Operador quem detém a relação jurídica direta com o usuário final, quem prospecta e capta a clientela, quem coleta ou intermedeia a coleta dos documentos e informações necessários ao credenciamento e quem responde pelo atendimento e pela gestão do relacionamento com esse usuário ao longo de toda a vida da conta.`));
-  H.push(P(`A cadeia negocial, assim, organiza-se em três níveis sucessivos. O usuário final contrata com o Operador e a este entrega seus documentos e dados pessoais. O Operador submete o pedido de credenciamento à QESH, que fornece a plataforma, executa a abertura da conta de pagamento e viabiliza a liquidação das transações no Sistema de Pagamentos Brasileiro, por intermédio da instituição liquidante ${banco}. A QESH, portanto, situa-se na camada de infraestrutura, sem contato direto com o usuário final.`));
-  H.push(P(`Essa repartição não decorre de mera conveniência operacional, mas de previsão contratual expressa. O instrumento firmado com o Operador responsável pela conta objeto do ofício, que ora se apresenta, atribui a este, entre outras obrigações, prospectar potenciais usuários e obter ou intermediar a coleta das informações e documentos necessários ao credenciamento (cláusula 2.8, alíneas "a" e "b"), assumir integral responsabilidade pela adoção dos procedimentos de prevenção a ilícitos e por eventuais fraudes praticadas pelos usuários na abertura das contas e na realização das transações (cláusula 2.8.1), bem como prestar diretamente todo o suporte e atendimento ao usuário (cláusula 2.13).`));
-  H.push(P(`O mesmo instrumento estabelece, ainda, que o Operador é o titular de todo e qualquer direito relacionado aos usuários por ele indicados, incluindo os respectivos dados pessoais, os quais constituem segredo de negócio do próprio Operador (cláusulas 7.5 e 7.5.1), de modo que a base cadastral e documental permanece sob domínio e guarda daquele agente, e não da requerida.`));
+  H.push(P(`A cadeia negocial, assim, organiza-se em três níveis sucessivos. O usuário final contrata com o Operador e a este entrega seus documentos e dados pessoais. O Operador submete o pedido de credenciamento à QESH, que fornece a plataforma, executa a abertura da conta de pagamento e viabiliza a liquidação das transações no Sistema de Pagamentos Brasileiro. A QESH, portanto, situa-se na camada de infraestrutura, sem contato direto com o usuário final.`));
+  if(has('contrato')){
+    H.push(P(`Essa repartição não decorre de mera conveniência operacional, mas de previsão contratual expressa. O instrumento firmado com o Operador responsável pela conta objeto do ofício, que ora se apresenta (${ref('contrato')}), atribui a este, entre outras obrigações, prospectar potenciais usuários e obter ou intermediar a coleta das informações e documentos necessários ao credenciamento (cláusula 2.8, alíneas "a" e "b"), assumir integral responsabilidade pela adoção dos procedimentos de prevenção a ilícitos e por eventuais fraudes praticadas pelos usuários na abertura das contas e na realização das transações (cláusula 2.8.1), bem como prestar diretamente todo o suporte e atendimento ao usuário (cláusula 2.13).`));
+    H.push(P(`O mesmo instrumento estabelece, ainda, que o Operador é o titular de todo e qualquer direito relacionado aos usuários por ele indicados, incluindo os respectivos dados pessoais, os quais constituem segredo de negócio do próprio Operador (cláusulas 7.5 e 7.5.1), de modo que a base cadastral e documental permanece sob domínio e guarda daquele agente, e não da requerida.`));
+  } else {
+    H.push(P(`Essa repartição não decorre de mera conveniência operacional, mas de previsão contratual expressa. O instrumento firmado com o Operador responsável pela conta objeto do ofício atribui a este, entre outras obrigações, prospectar potenciais usuários e obter ou intermediar a coleta das informações e documentos necessários ao credenciamento, assumir integral responsabilidade pela adoção dos procedimentos de prevenção a ilícitos e por eventuais fraudes praticadas pelos usuários, bem como prestar diretamente todo o suporte e atendimento ao usuário, sendo o Operador o titular de todo e qualquer direito relacionado aos usuários por ele indicados, incluindo os respectivos dados pessoais, que constituem segredo de negócio daquele agente.`));
+  }
   H.push(P(`Do exposto neste tópico extrai-se conclusão relevante para a compreensão dos limites da presente resposta: a QESH não abre contas por iniciativa própria, não capta clientes, não recebe do usuário final os documentos de identificação e não opera a interface por meio da qual o usuário acessa o produto, razão pela qual não detém parcela significativa das informações usualmente requisitadas em apurações desta natureza.`));
 
   /* III — TRATAMENTO DE DADOS */
   H.push(`<h2>III. Da repartição legal e contratual das responsabilidades pelo tratamento dos dados</h2>`);
   H.push(P(`A arquitetura descrita encontra correspondência exata na disciplina da Lei nº 13.709/2018. Nos termos do artigo 5º, incisos VI e VII, é controlador aquele a quem competem as decisões referentes ao tratamento dos dados pessoais, e operador aquele que realiza o tratamento em nome do controlador. Quem decide sobre a coleta, a finalidade e a forma de tratamento dos dados dos usuários é o Operador, que os obtém diretamente do titular, cabendo à QESH tratá-los na estrita medida da prestação do serviço contratado.`));
   H.push(P(`Impõe-se, aqui, esclarecimento terminológico indispensável à correta leitura desta manifestação, a fim de evitar equívoco de nomenclatura. O parceiro comercial designado contratualmente como Operador corresponde, na terminologia da Lei Geral de Proteção de Dados, à figura do controlador, ao passo que a QESH ocupa a posição de operadora de dados na acepção legal. A coincidência vocabular não altera a substância: a decisão sobre o tratamento, a coleta documental e a guarda dos elementos de identificação competem ao contratante, e não à requerida.`));
-  H.push(P(`Nessa exata linha, o Anexo de Proteção de Dados Pessoais integrante do contrato firmado com o Operador dispõe expressamente que a contratante será considerada controladora, inclusive dos dados pessoais dos usuários por ela fornecidos, obtidos ou utilizados, sendo inteiramente responsável por tais dados e tratamentos, enquanto a QESH será considerada operadora, atuando conforme as instruções recebidas.`));
+  H.push(P(`Nessa exata linha, o Anexo de Proteção de Dados Pessoais integrante do contrato firmado com o Operador dispõe expressamente que a contratante será considerada controladora, inclusive dos dados pessoais dos usuários por ela fornecidos, obtidos ou utilizados, sendo inteiramente responsável por tais dados e tratamentos, enquanto a QESH será considerada operadora, atuando conforme as instruções recebidas${has('contrato')?' ('+ref('contrato')+', Anexo III, itens 4 e 5)':''}.`));
   H.push(P(`A consequência jurídica é direta. A guarda dos documentos de <em>onboarding</em>, dos registros de aceite de termos, dos registros de conexão e dos identificadores de dispositivo incumbe ao controlador, que os coleta em seu próprio ambiente tecnológico. A QESH não pode disponibilizar aquilo que não coleta, não recebe e não armazena, e a impossibilidade material aqui afirmada é, antes de tudo, uma decorrência da posição que a requerida ocupa na cadeia.`));
-  H.push(P(`Assim, requer-se que as informações não fornecidas na presente resposta, por não integrarem o acervo da requerida, sejam requisitadas diretamente ao Operador adiante qualificado, cuja identificação completa é apresentada no tópico VI desta manifestação, providência que confere efetividade à diligência determinada.`));
+  H.push(P(`Assim, requer-se que as informações não fornecidas na presente resposta, por não integrarem o acervo da requerida, sejam requisitadas diretamente ao Operador adiante qualificado, cuja identificação é apresentada no tópico VI desta manifestação, providência que confere efetividade à diligência determinada.`));
 
   /* IV — INFORMAÇÕES FORNECIDAS */
   H.push(`<h2>IV. Das informações que se encontram sob a guarda da QESH e que ora se fornecem</h2>`);
-  H.push(P(`Delimitado o campo de atuação da requerida, passa-se ao atendimento efetivo da requisição. A QESH detém e ora fornece os dados cadastrais que lhe foram transmitidos pelo Operador no ato do credenciamento, o histórico das chaves Pix vinculadas à conta, o relatório das transações processadas em seu ambiente e os registros das providências restritivas por ela adotadas, conforme quadro abaixo:`));
-  H.push(`<table>
-    <tr><th>Titular nominal</th><td>${C(d.titular,'nome completo')}</td></tr>
-    <tr><th>CPF/CNPJ</th><td>${C(d.cpf,'número')}</td></tr>
-    <tr><th>Conta de pagamento / agência</th><td>${C(d.conta,'número da conta')} / ${C(d.agencia,'agência')}</td></tr>
-    <tr><th>Data de abertura da conta</th><td>${C(d.abertura,'dd/mm/aaaa')}</td></tr>
-    <tr><th>Endereço informado no cadastro</th><td>${C(d.endereco,'endereço completo')}</td></tr>
-    <tr><th>Telefone e e-mail informados</th><td>${C(d.contato,'telefone / e-mail')}</td></tr>
-    <tr><th>Chaves Pix vinculadas (criação e exclusão)</th><td>${C(d.pix,'chave(s) e respectivas datas')}</td></tr>
-    <tr><th>Situação atual da conta</th><td>${C(d.situacao,'ativa / bloqueada / encerrada')}</td></tr>
-    <tr><th>Data e hora do bloqueio</th><td>${C(d.bloqueioDH,'dd/mm/aaaa às hh:mm:ss')}</td></tr>
-    <tr><th>Operador responsável pela conta</th><td>${d.opRazao?escapeHtml(d.opRazao)+(d.opCnpj?' — CNPJ '+escapeHtml(d.opCnpj):''):'<mark>[razão social e CNPJ]</mark>'}</td></tr>
-  </table>`);
-  const cartaCircular = d.cenario==='judicial'
-    ? ', em observância ao layout da Carta Circular BACEN nº 3.454/2010,'
-    : '';
-  H.push(P(`Acompanha a presente resposta o relatório das transações processadas na conta no período indicado no ofício, com discriminação de data, horário, valor, natureza da operação e respectivo identificador, apresentado de forma detalhada e organizada${cartaCircular} de modo a permitir a identificação precisa das contas beneficiárias, dos valores e das datas.`));
-  if(d.med==='sim'){
-    H.push(P(`No que diz respeito ao Mecanismo Especial de Devolução instituído no âmbito do arranjo Pix, informa-se que a conta em referência registra solicitações de devolução, ${C(d.medDetalhe,'detalhar contestante, valor contestado, data e resultado (devolução total, parcial ou insuficiência de saldo)')}, conforme comprovantes anexos.`));
+  const temIVdocs = has('cadastro')||has('transacoes')||has('bloqueio')||has('med');
+  if(temIVdocs){
+    H.push(P(`Delimitado o campo de atuação da requerida, passa-se ao atendimento efetivo da requisição, fornecendo-se, no limite do que se encontra sob a guarda da QESH e do que ora se documenta, os elementos a seguir discriminados.`));
+  } else {
+    H.push(P(`Delimitado o campo de atuação da requerida, cumpre esclarecer que, quanto às informações sob a guarda da QESH relativas à conta investigada, a instituição se compromete a apresentá-las em complementação a esta resposta, tão logo concluída a respectiva extração e validação técnica, ressalvando-se que os elementos de <em>onboarding</em> e os registros técnicos permanecem sob a guarda do Operador, adiante qualificado.`));
   }
-  H.push(P(`Fornecem-se, assim, todos os elementos que a requerida efetivamente possui a respeito da conta investigada, prestando-se desde já para complementá-los caso subsista dúvida pontual quanto ao conteúdo ora apresentado.`));
+  if(has('cadastro')){
+    H.push(P(`A QESH detém e ora fornece os dados cadastrais que lhe foram transmitidos pelo Operador no ato do credenciamento, bem como o histórico das chaves Pix vinculadas à conta, conforme documento anexo (${ref('cadastro')}), do qual constam o titular nominal, a inscrição no CPF/CNPJ, o número da conta de pagamento e da agência, a data de abertura, o endereço e os contatos informados, as chaves Pix vinculadas com as respectivas datas de criação e exclusão e a situação atual da conta.`));
+  }
+  if(has('transacoes')){
+    const cc = cen==='judicial' ? ', em observância ao layout da Carta Circular BACEN nº 3.454/2010,' : '';
+    H.push(P(`Acompanha a presente resposta o relatório das transações processadas na conta no período indicado no ofício (${ref('transacoes')}), com discriminação de data, horário, valor, natureza da operação e respectivo identificador, apresentado de forma detalhada e organizada${cc} de modo a permitir a identificação precisa das contas beneficiárias, dos valores e das datas.`));
+  }
+  if(has('med')){
+    H.push(P(`No que diz respeito ao Mecanismo Especial de Devolução instituído no âmbito do arranjo Pix, a conta em referência registra solicitações de devolução, cujos registros, com a indicação do contestante, do valor contestado, das datas e do resultado da devolução, seguem anexos (${ref('med')}).`));
+  }
+  if(temIVdocs){
+    H.push(P(`Fornecem-se, assim, os elementos que a requerida efetivamente possui e documenta a respeito da conta investigada, prestando-se desde já para complementá-los caso subsista dúvida pontual quanto ao conteúdo ora apresentado.`));
+  }
 
   /* V — PROVIDÊNCIAS ANTIFRAUDE */
   H.push(`<h2>V. Das providências antifraude adotadas pela QESH</h2>`);
   H.push(P(`Cumpre destacar que a QESH não se limita a fornecer os dados requisitados, mas atua ativamente na contenção dos ilícitos identificados em seu ambiente. Verificada a suspeita de fraude, a instituição promove, por decisão própria e independentemente de provocação, a suspensão da conta de pagamento e o bloqueio do saldo nela existente, faculdade expressamente prevista no instrumento contratual firmado com o Operador (cláusula 4.2).`));
-  H.push(P(`No caso concreto, a conta objeto do ofício foi bloqueada em ${C(d.bloqueioDH,'dd/mm/aaaa às hh:mm:ss')}, em razão de ${C(d.bloqueioMotivo,'motivo: comunicação de fraude, alerta do monitoramento antifraude, solicitação de MED, requisição de autoridade etc.')}, tendo permanecido ${C(d.bloqueioSaldo,'situação atual e eventual saldo bloqueado')}, conforme comprovante que ora se junta.`));
-  if(d.comOperador!=='nao'){
-    H.push(P(`Paralelamente, a requerida oficiou o Operador responsável, requisitando-lhe os documentos e registros que se encontram sob a sua guarda exclusiva, valendo-se da obrigação contratual que impõe àquele agente o dever de disponibilizar informações e documentos no prazo de dois dias úteis contados da solicitação, de modo que eventual demora ou omissão na obtenção desses elementos não pode ser imputada à requerida.`));
+  if(has('bloqueio')){
+    H.push(P(`No caso concreto, a conta objeto do ofício foi objeto de bloqueio pela requerida, conforme comprovante que ora se junta (${ref('bloqueio')}), do qual constam a data, o horário, o motivo e a situação do saldo bloqueado.`));
   }
-  if(d.coaf==='sim'){
-    H.push(P(`Identificadas situações de atipicidade nas operações analisadas, a QESH promoveu as comunicações devidas ao Conselho de Controle de Atividades Financeiras, na forma da Lei nº 9.613/1998 e da Circular BCB nº 3.978/2020, cujos protocolos são apresentados sob reserva de sigilo.`));
+  if(has('comOperador')){
+    H.push(P(`Paralelamente, a requerida oficiou o Operador responsável, requisitando-lhe os documentos e registros que se encontram sob a sua guarda exclusiva, valendo-se da obrigação contratual que impõe àquele agente o dever de disponibilizar informações e documentos no prazo de dois dias úteis contados da solicitação (${ref('comOperador')}), de modo que eventual demora ou omissão na obtenção desses elementos não pode ser imputada à requerida.`));
+  } else {
+    H.push(P(`A requerida permanece à disposição para, no prazo contratual de dois dias úteis a que está obrigado o Operador, intermediar a obtenção dos documentos e registros que se encontram sob a guarda exclusiva daquele agente, de modo que eventual demora ou omissão na obtenção desses elementos não pode ser imputada à instituição.`));
+  }
+  if(has('coaf')){
+    H.push(P(`Identificadas situações de atipicidade nas operações analisadas, a QESH promoveu as comunicações devidas ao Conselho de Controle de Atividades Financeiras, na forma da Lei nº 9.613/1998 e da Circular BCB nº 3.978/2020, cujos protocolos são apresentados sob reserva de sigilo (${ref('coaf')}).`));
   }
   H.push(P(`As providências descritas evidenciam postura diligente e proativa da instituição, incompatível com qualquer juízo de omissão ou de conivência, e requer-se que assim sejam consignadas no procedimento investigatório.`));
 
@@ -745,174 +532,134 @@ function montarPeca(d){
   H.push(`<h2>VI. Das informações que não integram o acervo da QESH e da qualificação do Operador</h2>`);
   H.push(P(`Determinadas informações usualmente requisitadas não são coletadas nem armazenadas pela requerida, precisamente porque produzidas no ambiente tecnológico do Operador, no momento em que este se relaciona com o usuário final. É o caso da fotografia de rosto colhida na prova de vida, das cópias dos documentos de identificação apresentados na abertura, da ficha de assinatura, do registro de aceite dos termos de uso e da política de privacidade, dos registros de conexão e endereços IP com porta lógica, da geolocalização dos acessos, dos identificadores de dispositivo e dos respectivos vínculos com outros usuários, bem como dos logs de autenticação da conta.`));
   H.push(P(`Todos esses elementos são gerados e custodiados pelo Operador, que os coleta diretamente do titular por meio de sua própria plataforma, recebendo a QESH apenas o resultado do processo de credenciamento e o conjunto mínimo de dados necessário à abertura e à operação da conta de pagamento. Não se trata, portanto, de recusa ao cumprimento da requisição, mas de impossibilidade material de fornecer aquilo que jamais esteve sob a guarda da instituição.`));
-  H.push(P(`Para que a diligência determinada alcance plena efetividade, apresenta-se, desde logo, a qualificação completa do Operador responsável pela conta investigada, a quem as informações remanescentes devem ser requisitadas:`));
+  H.push(P(`Para que a diligência determinada alcance plena efetividade, indica-se o Operador responsável pela conta investigada, a quem as informações remanescentes devem ser requisitadas, cuja qualificação ${has('operadorQualif')||has('contrato') ? 'consta do documento anexo ('+ref(has('operadorQualif')?'operadorQualif':'contrato')+') e é a seguir resumida' : 'deverá ser complementada conforme os assentamentos da requerida'}:`));
   H.push(`<table>
-    <tr><th>Razão social</th><td>${C(d.opRazao,'razão social do Operador')}</td></tr>
-    <tr><th>CNPJ</th><td>${C(d.opCnpj,'número')}</td></tr>
-    <tr><th>Endereço</th><td>${C(d.opEndereco,'endereço completo')}</td></tr>
-    <tr><th>E-mail para requisições</th><td>${C(d.opEmail,'e-mail')}</td></tr>
-    <tr><th>Representante legal</th><td>${C(d.opRep,'nome e CPF')}</td></tr>
+    <tr><th>Razão social</th><td>${C('','razão social do Operador — consta do contrato/qualificação anexos')}</td></tr>
+    <tr><th>CNPJ</th><td>${C('','CNPJ do Operador')}</td></tr>
+    <tr><th>Endereço</th><td>${C('','endereço do Operador')}</td></tr>
+    <tr><th>E-mail para requisições</th><td>${C('','e-mail do Operador')}</td></tr>
+    <tr><th>Representante legal</th><td>${C('','representante legal do Operador')}</td></tr>
   </table>`);
-  H.push(P(`Requer-se, por conseguinte, que as informações não fornecidas nesta oportunidade sejam requisitadas diretamente ao Operador acima qualificado, consignando-se que a QESH permanece à disposição para viabilizar a intermediação da comunicação, se assim entender pertinente a autoridade.`));
+  H.push(P(`Requer-se, por conseguinte, que as informações não fornecidas nesta oportunidade sejam requisitadas diretamente ao Operador acima indicado, consignando-se que a QESH permanece à disposição para viabilizar a intermediação da comunicação, se assim entender pertinente a autoridade.`));
 
   /* VII — COMPLIANCE */
   H.push(`<h2>VII. Da estrutura de prevenção à lavagem de dinheiro, conheça seu cliente e compliance</h2>`);
   H.push(P(`Considerando que diversos ofícios e decisões requisitam a demonstração da atividade de <em>compliance</em>, cumpre esclarecer que a QESH, na condição de instituição de pagamento, submete-se integralmente ao regime de prevenção à lavagem de dinheiro e ao financiamento do terrorismo previsto na Lei nº 9.613/1998 e na Circular BCB nº 3.978/2020, além da disciplina da Lei nº 12.865/2014 e da regulamentação do arranjo Pix editada pelo Banco Central do Brasil.`));
-  H.push(P(`Em observância a esse arcabouço, a instituição mantém política formalizada de prevenção à lavagem de dinheiro e ao financiamento do terrorismo, com avaliação interna de risco, procedimentos de identificação e qualificação de clientes e parceiros, monitoramento automatizado de operações com parametrização de alertas por perfil e por volume, análise de operações atípicas, comunicação ao Conselho de Controle de Atividades Financeiras quando presentes os elementos legais, programa de treinamento e estrutura de governança dedicada ao tema, cujos documentos comprobatórios acompanham a presente resposta.`));
+  if(has('pld')){
+    H.push(P(`Em observância a esse arcabouço, a instituição mantém política formalizada de prevenção à lavagem de dinheiro e ao financiamento do terrorismo, com avaliação interna de risco, procedimentos de identificação e qualificação de clientes e parceiros, monitoramento automatizado de operações com parametrização de alertas por perfil e por volume, análise de operações atípicas, comunicação ao Conselho de Controle de Atividades Financeiras quando presentes os elementos legais, programa de treinamento e estrutura de governança dedicada ao tema, cujos documentos comprobatórios acompanham a presente resposta (${ref('pld')}).`));
+  } else {
+    H.push(P(`Em observância a esse arcabouço, a instituição mantém política formalizada de prevenção à lavagem de dinheiro e ao financiamento do terrorismo, com avaliação interna de risco, procedimentos de identificação e qualificação de clientes e parceiros, monitoramento automatizado de operações com parametrização de alertas por perfil e por volume, análise de operações atípicas, comunicação ao Conselho de Controle de Atividades Financeiras quando presentes os elementos legais, programa de treinamento e estrutura de governança dedicada ao tema, colocando-se à disposição para apresentar a documentação comprobatória respectiva caso requisitada.`));
+  }
   H.push(P(`Além dos controles próprios, a requerida impõe contratualmente ao Operador a observância das mesmas exigências, obrigando-o a conhecer e aceitar a política de prevenção à lavagem de dinheiro e o procedimento de <em>know your client</em> (cláusula 2.1.2), a observar e cumprir a política de compliance, anticorrupção e de PLD/FT da instituição (cláusula 4.4, alínea "e") e a responder integralmente pelas fraudes praticadas quando não observadas as orientações e políticas por ela instituídas (cláusulas 2.8.1 e 5.8), reservando-se a QESH o direito de auditar, a qualquer tempo, o cumprimento desses procedimentos.`));
   H.push(P(`Verifica-se, pois, que a atuação da requerida observa integralmente os padrões legais e regulatórios de prevenção a ilícitos financeiros, sendo a eventual conduta fraudulenta de terceiros, praticada mediante o abuso da infraestrutura disponibilizada, insuscetível de ser atribuída à instituição que fornece a tecnologia e que, ao identificar a irregularidade, adota tempestivamente as medidas restritivas cabíveis.`));
 
   /* VIII — RESERVA DE JURISDIÇÃO (condicional) */
-  let numTopico = 8;
-  if(d.cenario==='policial'){
+  if(cen==='policial'){
     H.push(`<h2>VIII. Da observância da reserva de jurisdição quanto a dados protegidos por sigilo</h2>`);
     H.push(P(`A requerida atende, sem qualquer reserva, às requisições de dados cadastrais que informem a qualificação pessoal, a filiação e o endereço do investigado, na forma do artigo 15 da Lei nº 12.850/2013, bem como comunica às autoridades competentes a prática de ilícitos e as operações que envolvam recursos de origem criminosa, nos termos do artigo 1º, parágrafo 3º, inciso IV, da Lei Complementar nº 105/2001.`));
     H.push(P(`Determinadas informações, contudo, extrapolam esse âmbito e submetem-se à reserva de jurisdição, notadamente o extrato integral da movimentação financeira e os registros de acesso e de conexão em sua plenitude, protegidos, respectivamente, pela Lei Complementar nº 105/2001 e pelo artigo 22 da Lei nº 12.965/2014, à luz do artigo 5º, incisos X e XII, da Constituição da República.`));
-    H.push(P(`Não se trata, uma vez mais, de resistência à colaboração, mas de observância do próprio regime legal que disciplina a atividade da requerida, cuja inobservância a exporia a responsabilização perante o titular dos dados e perante os órgãos reguladores. Sobrevindo ordem judicial que autorize o acesso a tais elementos, a instituição a cumprirá de imediato e nos exatos termos deferidos, tal como já o faz nas hipóteses em que assim determinado.`));
-  } else {
-    numTopico = 7; // sem VIII, o de art. 330 vira VIII
+    H.push(P(`Não se trata, uma vez mais, de resistência à colaboração, mas de observância do próprio regime legal que disciplina a atividade da requerida, cuja inobservância a exporia a responsabilização perante o titular dos dados e perante os órgãos reguladores. Sobrevindo ordem judicial que autorize o acesso a tais elementos, a instituição a cumprirá de imediato e nos exatos termos deferidos.`));
   }
 
-  /* IX — ART. 330 */
-  const tituloDesob = d.cenario==='policial' ? 'IX.' : 'VIII.';
-  H.push(`<h2>${tituloDesob} Da inexistência de descumprimento de ordem legal</h2>`);
+  /* IX/VIII — ART. 330 */
+  const tDes = cen==='policial' ? 'IX.' : 'VIII.';
+  H.push(`<h2>${tDes} Da inexistência de descumprimento de ordem legal</h2>`);
   H.push(P(`Por fim, e considerando a advertência quanto à eventual configuração do delito previsto no artigo 330 do Código Penal, presente em requisições desta natureza, cumpre consignar que a requerida atendeu integralmente à ordem no limite do que lhe é material e juridicamente possível, prestando informação completa quanto ao que detém, esclarecendo de forma fundamentada o que não detém e indicando com precisão o terceiro que possui os elementos remanescentes.`));
-  H.push(P(`A tipicidade da desobediência pressupõe recusa injustificada ao cumprimento de ordem legal possível de ser atendida, o que evidentemente não se verifica quando o destinatário demonstra, documentalmente, que a informação requisitada não integra o seu acervo, tanto mais quando adota providências ativas para viabilizar a obtenção do dado junto a quem o detém, como aqui ocorreu.`));
+  H.push(P(`A tipicidade da desobediência pressupõe recusa injustificada ao cumprimento de ordem legal possível de ser atendida, o que evidentemente não se verifica quando o destinatário demonstra que a informação requisitada não integra o seu acervo, tanto mais quando adota providências ativas para viabilizar a obtenção do dado junto a quem o detém, como aqui ocorreu.`));
   H.push(P(`Requer-se, assim, que se consigne o integral e tempestivo atendimento da requisição pela requerida, afastando-se qualquer juízo de inércia ou de descumprimento.`));
 
-  /* X — DOCUMENTOS */
-  const tituloDoc = d.cenario==='policial' ? 'X.' : 'IX.';
-  H.push(`<h2>${tituloDoc} Dos documentos que acompanham a presente resposta</h2>`);
-  const rol = montarRol(d, fornecidos);
-  H.push(P(`Acompanham esta manifestação, para os fins de instrução do procedimento, os seguintes documentos:`));
-  H.push(`<ul class="doclist">${rol.map(r=>`<li><strong>${r}</strong></li>`).join('')}</ul>`);
+  /* X/IX — DOCUMENTOS */
+  const tDoc = cen==='policial' ? 'X.' : 'IX.';
+  H.push(`<h2>${tDoc} Dos documentos que acompanham a presente resposta</h2>`);
+  if(ctx.docsOrd.length){
+    H.push(P(`Acompanham esta manifestação, para os fins de instrução do procedimento, os seguintes documentos:`));
+    H.push(`<ul class="doclist">${ctx.docsOrd.map((d,i)=>`<li><strong>Doc. ${String(i+1).padStart(2,'0')}.</strong> ${escapeHtml(CAT_LABEL[d.cat])}${d.cat==='outro'?' — '+escapeHtml(d.name):''}</li>`).join('')}</ul>`);
+  } else {
+    H.push(P(`A presente resposta é apresentada sem documentos anexos nesta oportunidade, comprometendo-se a requerida a juntar, em complementação, os elementos sob sua guarda tão logo concluída a respectiva extração e validação técnica.`));
+    pendentes.push('nenhum documento anexado — o rol está vazio');
+  }
 
-  /* XI — REQUERIMENTOS */
-  const tituloReq = d.cenario==='policial' ? 'XI.' : 'X.';
-  H.push(`<h2>${tituloReq} Dos requerimentos</h2>`);
-  H.push(P(`Ante o exposto, a QESH INSTITUIÇÃO DE PAGAMENTO LTDA. requer: (i) o recebimento e a juntada da presente resposta e dos documentos que a acompanham, consignando-se o seu integral e tempestivo atendimento; (ii) que as informações não fornecidas nesta oportunidade, por não integrarem o acervo informacional da requerida, sejam requisitadas diretamente ao Operador qualificado no tópico VI; (iii) que os dados pessoais e as informações protegidas ora fornecidos recebam tratamento sigiloso, restrito às finalidades da investigação; e (iv) que eventuais requisições futuras relativas a esta ou a outras contas sejam encaminhadas ao canal jurídico institucional juridico@qesh.ai, com prazo compatível com a extração e a validação técnica dos dados.`));
+  /* XI/X — REQUERIMENTOS */
+  const tReq = cen==='policial' ? 'XI.' : 'X.';
+  H.push(`<h2>${tReq} Dos requerimentos</h2>`);
+  H.push(P(`Ante o exposto, a QESH INSTITUIÇÃO DE PAGAMENTO LTDA. requer: (i) o recebimento e a juntada da presente resposta${ctx.docsOrd.length?' e dos documentos que a acompanham':''}, consignando-se o seu integral e tempestivo atendimento; (ii) que as informações não fornecidas nesta oportunidade, por não integrarem o acervo informacional da requerida, sejam requisitadas diretamente ao Operador indicado no tópico VI; (iii) que os dados pessoais e as informações protegidas ora fornecidos recebam tratamento sigiloso, restrito às finalidades da investigação; e (iv) que eventuais requisições futuras relativas a esta ou a outras contas sejam encaminhadas ao canal jurídico institucional juridico@qesh.ai, com prazo compatível com a extração e a validação técnica dos dados.`));
   H.push(P(`Nestes termos, permanecendo à inteira disposição para os esclarecimentos adicionais que se façam necessários, pede deferimento.`));
 
   /* FECHO */
-  H.push(`<p class="assinatura">${C(d.cidade,'Cidade')}, ${d.dataPeca?dataPorExtenso(d.dataPeca):'<mark>[dia]</mark> de <mark>[mês]</mark> de <mark>[ano]</mark>'}.</p>`);
+  H.push(`<p class="assinatura">Nova Lima, ${dataPeca}.</p>`);
   H.push(`<p class="assinatura">Renato Dilly Campos<br>OAB/MG 166.263</p>`);
-  H.push(`<p style="margin-top:20px;">${C(d.adv2,'Nome do(a) advogado(a) corresponsável')}<br>${C(d.adv2oab,'OAB/__ nº ______')}</p>`);
 
   return H.join('\n');
 }
 
 function resumirQuesitos(itens){
-  if(!itens.length) return '<mark>[descrever objetivamente os quesitos formulados: dados cadastrais, chaves Pix, extrato, IP, device, triangulação, evidências de compliance etc.]</mark>';
+  if(!itens.length) return '<mark>[os quesitos formulados — verificar no ofício]</mark>';
   const labels = itens.map(i=> /^[A-Z]{2,}/.test(i.label) ? i.label : i.label.charAt(0).toLowerCase()+i.label.slice(1));
   if(labels.length===1) return labels[0];
   return labels.slice(0,-1).join(', ') + ' e ' + labels.slice(-1);
 }
-
-function montarRol(d, fornecidos){
-  const rol = [];
-  let n = 0;
-  const add = (t)=>{ n++; rol.push(`Doc. ${String(n).padStart(2,'0')}. ${t}`); };
-  add('Procuração e atos constitutivos da Qesh Instituição de Pagamento Ltda.');
-  add('Quadro de dados cadastrais e de chaves Pix vinculadas à conta');
-  if(fornecidos.some(i=>['transacoes','webhook','beneficiarios','extrato'].includes(i.id)))
-    add('Relatório de transações / extrato do período requisitado');
-  if(d.bloqueioDH || fornecidos.some(i=>i.id==='bloqueio'))
-    add('Registro de bloqueio da conta e das chaves Pix');
-  if(d.med==='sim') add('Registros de MED');
-  add('Contrato de Prestação de Serviços firmado com o Operador e respectivos anexos');
-  if(d.comOperador!=='nao') add('Comunicação encaminhada ao Operador e respectiva resposta');
-  if(fornecidos.some(i=>i.id==='compliance') )
-    add('Política de PLD/FT e evidências da atividade de compliance');
-  if(d.coaf==='sim') add('Comprovantes de comunicação ao COAF (sob reserva de sigilo)');
-  add('Demais documentos pertinentes ao caso concreto');
-  return rol;
-}
-
 const MESES = ['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
-function dataPorExtenso(dmy){
-  const [d,m,y] = dmy.split('/');
-  if(!d||!m||!y) return dmy;
-  return `${parseInt(d,10)} de ${MESES[parseInt(m,10)-1]} de ${y}`;
-}
 
-/* ─────────────────────────  GERAR + PREVIEW + EXPORT  ───────────────────────── */
-let ultimaPeca = '';
-
+/* ─────────────────────────  GERAR + EXPORT  ───────────────────────── */
+let ultimaPeca='';
 document.getElementById('btn-gerar').addEventListener('click', ()=>{
   esconderErro();
-  const d = coletar();
-  ultimaPeca = montarPeca(d);
+  if(!state.oficios.length && !state.documentos.length){ mostrarErro('Anexe ao menos um ofício ou documento antes de gerar a peça.'); return; }
+  if(!state.analisado) analisar();
+  ultimaPeca = montarPeca();
   document.getElementById('preview').innerHTML = ultimaPeca;
-  document.getElementById('preview-wrap').style.display = 'block';
-  document.getElementById('btn-doc').disabled = false;
-  // pendências
+  document.getElementById('preview-wrap').style.display='block';
+  document.getElementById('btn-doc').disabled=false;
   const pen = document.getElementById('pending');
-  const unicos = [...new Set(pendentes)];
+  const unicos=[...new Set(pendentes)];
+  pen.style.display='block';
   if(unicos.length){
-    pen.style.display = 'block';
-    pen.innerHTML = `<strong>${unicos.length} campo(s) ainda pendente(s)</strong> — permanecem destacados em amarelo na peça e devem ser preenchidos antes do protocolo: ${unicos.map(escapeHtml).join('; ')}.`;
+    pen.innerHTML = `<strong>${unicos.length} ponto(s) a conferir</strong> — destacados em amarelo na peça, pois não puderam ser lidos dos documentos anexados: ${unicos.map(escapeHtml).join('; ')}. Tudo o que não foi anexado foi tratado como inexistente e a peça foi ajustada de acordo.`;
   } else {
-    pen.style.display = 'block';
-    pen.innerHTML = `<strong style="color:var(--green)">Todos os campos foram preenchidos.</strong> Confira a numeração das cláusulas no contrato específico do Operador antes do protocolo.`;
+    pen.innerHTML = `<strong style="color:var(--green)">Nenhum destaque pendente.</strong> Todos os dados foram lidos dos documentos anexados. Confira a numeração das cláusulas no contrato específico do Operador antes do protocolo.`;
   }
-  document.getElementById('preview-wrap').scrollIntoView({behavior:'smooth', block:'start'});
+  document.getElementById('preview-wrap').scrollIntoView({behavior:'smooth',block:'start'});
 });
 
-document.getElementById('btn-doc').addEventListener('click', exportarDoc);
-
-function exportarDoc(){
+document.getElementById('btn-doc').addEventListener('click', ()=>{
   if(!ultimaPeca){ mostrarErro('Gere a peça antes de exportar.'); return; }
-  const d = coletar();
-  const nomeArq = `Resposta_Oficio_QESH_${(d.oficioNum||'').replace(/[^\w-]/g,'') || 'caso'}_${new Date().toISOString().slice(0,10)}`;
-  const styleWord = `
-    <style>
-      @page WordSection1 { size: 21cm 29.7cm; margin: 3cm 2.5cm 2.5cm 3cm; }
-      div.WordSection1 { page: WordSection1; }
-      body { font-family: 'Segoe UI', sans-serif; font-size: 11pt; color: #000; line-height: 1.5; text-align: justify; }
-      h1 { font-size: 11pt; font-weight: bold; text-align: left; line-height: 1.4; margin: 0 0 12pt; }
-      h2 { font-size: 11pt; font-weight: bold; text-transform: uppercase; margin: 18pt 0 8pt; text-align: left; }
-      p { margin: 0 0 10pt; text-align: justify; }
-      .ender { margin-bottom: 16pt; }
-      table { border-collapse: collapse; width: 100%; margin: 6pt 0 12pt; font-size: 10.5pt; }
-      th, td { border: 0.75pt solid #444; padding: 4pt 7pt; text-align: left; vertical-align: top; }
-      th { background: #efece4; width: 42%; }
-      .doclist { list-style: none; margin: 4pt 0 12pt; padding: 0; }
-      .doclist li { margin-bottom: 4pt; }
-      .assinatura { margin-top: 24pt; }
-      mark { background: yellow; color: #000; }
-      .np { font-weight: normal; }
-    </style>`;
-  const html = `<!DOCTYPE html><html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word'>
-    <head><meta charset="UTF-8">${styleWord}</head>
-    <body><div class="WordSection1">${ultimaPeca}</div></body></html>`;
-  const blob = new Blob(['﻿', html], { type: 'application/msword' });
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = nomeArq + '.doc';
-  a.click();
-}
-
-/* ─────────────────────────  UTILITÁRIOS  ───────────────────────── */
-function setLoading(on){ document.getElementById('loading-bar').classList.toggle('active', on); }
-function mostrarErro(m){ const e=document.getElementById('err'); e.textContent=m; e.classList.add('show'); e.scrollIntoView({behavior:'smooth',block:'center'}); }
-function esconderErro(){ document.getElementById('err').classList.remove('show'); }
+  const dados = extrairDadosOficio();
+  const nome = `Resposta_Oficio_QESH_${(dados.oficioNum||'caso').replace(/[^\w-]/g,'')}_${new Date().toISOString().slice(0,10)}`;
+  const styleWord = `<style>
+    @page WordSection1 { size: 21cm 29.7cm; margin: 3cm 2.5cm 2.5cm 3cm; }
+    div.WordSection1 { page: WordSection1; }
+    body { font-family: 'Segoe UI', sans-serif; font-size: 11pt; color: #000; line-height: 1.5; text-align: justify; }
+    h1 { font-size: 11pt; font-weight: bold; text-align: left; line-height: 1.4; margin: 0 0 12pt; }
+    h2 { font-size: 11pt; font-weight: bold; text-transform: uppercase; margin: 18pt 0 8pt; text-align: left; }
+    p { margin: 0 0 10pt; text-align: justify; }
+    .ender { margin-bottom: 16pt; }
+    table { border-collapse: collapse; width: 100%; margin: 6pt 0 12pt; font-size: 10.5pt; }
+    th, td { border: 0.75pt solid #444; padding: 4pt 7pt; text-align: left; vertical-align: top; }
+    th { background: #efece4; width: 42%; }
+    .doclist { list-style: none; margin: 4pt 0 12pt; padding: 0; }
+    .doclist li { margin-bottom: 4pt; }
+    .assinatura { margin-top: 24pt; }
+    mark { background: yellow; color: #000; }
+    .np { font-weight: normal; }
+  </style>`;
+  const html = `<!DOCTYPE html><html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word'><head><meta charset="UTF-8">${styleWord}</head><body><div class="WordSection1">${ultimaPeca}</div></body></html>`;
+  const blob = new Blob(['﻿', html], { type:'application/msword' });
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = nome+'.doc'; a.click();
+});
 
 document.getElementById('btn-limpar').addEventListener('click', ()=>{
-  if(!confirm('Limpar todos os campos e recomeçar?')) return;
-  document.querySelectorAll('input, textarea').forEach(el=>{ if(el.type==='checkbox') el.checked=false; else el.value=''; });
-  document.querySelectorAll('select').forEach(s=> s.selectedIndex=0);
-  document.querySelectorAll('.cat-item').forEach(c=> c.classList.remove('on'));
-  document.getElementById('analysis-out').innerHTML='';
-  document.getElementById('filechips').innerHTML='';
+  if(!confirm('Limpar todos os documentos e recomeçar?')) return;
+  state.oficios=[]; state.documentos=[]; state.cenarioOverride=null; state.analisado=false;
+  renderOficios(); renderDocumentos();
+  document.getElementById('diag-cen').innerHTML='<span class="empty">Anexe os documentos e clique em “Analisar documentos”.</span>';
+  document.getElementById('diag-ok').innerHTML='<li class="empty">—</li>';
+  document.getElementById('diag-no').innerHTML='<li class="empty">—</li>';
+  document.getElementById('diag-chips').style.display='none';
+  document.getElementById('seg-cenario').style.display='none';
   document.getElementById('preview-wrap').style.display='none';
   document.getElementById('btn-doc').disabled=true;
-  renderCatalogo();
-  setCenario('policial');
   ultimaPeca='';
 });
-
-/* INIT */
-renderCatalogo();
 </script>
 </body>
 </html>
