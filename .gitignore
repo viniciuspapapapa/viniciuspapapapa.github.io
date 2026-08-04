@@ -6,3 +6,10 @@ empresas_divida_ativa.xlsx
 # Dados brutos da PGFN, se baixados na raiz
 pgfn_csv/
 *.zip
+
+# Artefatos de build do PyInstaller (executaveis gerados localmente)
+build/
+dist/
+*.spec
+*.exe
+__pycache__/
