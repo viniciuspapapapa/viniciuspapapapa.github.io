@@ -5,108 +5,96 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Gerador de Resposta a Ofícios · QESH · TPC Advogados</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js"></script>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=DM+Mono:wght@300;400;500&family=Jost:wght@300;400;500;600&display=swap');
-
   :root {
-    --bg: #0e0e0f; --surface: #161618; --surface2: #1e1e21;
-    --border: #2a2a2e; --border-light: #35353a;
-    --gold: #c9a84c; --gold-dim: #8a6d2f; --gold-subtle: rgba(201,168,76,0.08);
-    --text: #e8e6e0; --text-dim: #8a8880; --text-muted: #55544f;
-    --red: #c0392b; --green: #27ae60; --blue: #2980b9; --amber: #e67e22;
-    --radius: 4px;
+    --bg:#0e0e0f; --surface:#161618; --surface2:#1e1e21; --border:#2a2a2e; --border-light:#35353a;
+    --gold:#c9a84c; --gold-dim:#8a6d2f; --gold-subtle:rgba(201,168,76,0.08);
+    --text:#e8e6e0; --text-dim:#8a8880; --text-muted:#55544f;
+    --red:#c0392b; --green:#27ae60; --blue:#2980b9; --amber:#e67e22; --radius:4px;
   }
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { background: var(--bg); color: var(--text); font-family: 'Jost', sans-serif; font-weight: 300; min-height: 100vh; line-height: 1.6; }
-
-  header { border-bottom: 1px solid var(--border); padding: 20px 40px; display: flex; align-items: center; justify-content: space-between; background: var(--surface); position: sticky; top: 0; z-index: 50; }
-  .logo-block { display: flex; align-items: center; gap: 16px; }
-  .logo-mark { width: 36px; height: 36px; border: 1px solid var(--gold); display: flex; align-items: center; justify-content: center; font-family: 'Cormorant Garamond', serif; font-size: 16px; font-weight: 600; color: var(--gold); letter-spacing: 1px; }
-  .logo-text { font-family: 'Cormorant Garamond', serif; font-size: 13px; font-weight: 400; color: var(--text-dim); letter-spacing: 2px; text-transform: uppercase; }
-  .app-title { font-family: 'Cormorant Garamond', serif; font-size: 18px; font-weight: 300; font-style: italic; color: var(--text-dim); letter-spacing: 0.5px; }
-
-  main { max-width: 1080px; margin: 0 auto; padding: 40px 40px 120px; }
-
-  .section-title { font-family: 'Cormorant Garamond', serif; font-size: 11px; font-weight: 500; letter-spacing: 3px; text-transform: uppercase; color: var(--gold); margin-bottom: 22px; display: flex; align-items: center; gap: 12px; }
-  .section-title::after { content: ''; flex: 1; height: 1px; background: var(--border); }
-  .section-title .num { width: 22px; height: 22px; border: 1px solid var(--gold-dim); border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-family: 'DM Mono', monospace; font-size: 10px; color: var(--gold); }
-
-  .intro { margin-bottom: 44px; padding: 26px 30px; border: 1px solid var(--border); background: var(--surface); border-left: 3px solid var(--gold); }
-  .intro p { font-family: 'Cormorant Garamond', serif; font-size: 17px; font-weight: 300; color: var(--text); line-height: 1.7; }
-  .intro p + p { margin-top: 12px; }
-  .intro .muted { font-size: 14px; color: var(--text-dim); font-family: 'Jost', sans-serif; }
-
-  .block { margin-bottom: 44px; }
-  .card { border: 1px solid var(--border); background: var(--surface); padding: 26px 28px; margin-bottom: 16px; }
-
-  .drop { border: 1px dashed var(--border-light); background: var(--surface2); padding: 30px; text-align: center; border-radius: var(--radius); cursor: pointer; transition: border-color .2s, background .2s; }
-  .drop:hover, .drop.over { border-color: var(--gold-dim); background: var(--gold-subtle); }
-  .drop .big { font-family: 'Cormorant Garamond', serif; font-size: 18px; color: var(--text); }
-  .drop .small { font-size: 12px; color: var(--text-dim); margin-top: 6px; }
-
-  .filelist { margin-top: 14px; display: flex; flex-direction: column; gap: 8px; }
-  .filerow { display: flex; align-items: center; gap: 12px; background: var(--bg); border: 1px solid var(--border-light); padding: 10px 12px; border-radius: var(--radius); }
-  .filerow .fname { font-family: 'DM Mono', monospace; font-size: 12px; color: var(--text); flex-shrink: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 320px; }
-  .filerow .meta { font-size: 11px; color: var(--text-muted); }
-  .filerow select { background: var(--surface2); border: 1px solid var(--border-light); color: var(--text); padding: 6px 10px; font-family: 'Jost', sans-serif; font-size: 12px; border-radius: var(--radius); margin-left: auto; max-width: 300px; }
-  .filerow .rm { background: transparent; border: none; color: var(--text-muted); cursor: pointer; font-size: 16px; padding: 0 4px; }
-  .filerow .rm:hover { color: var(--red); }
-  .filerow .flag { font-size: 10px; letter-spacing: .5px; text-transform: uppercase; padding: 2px 7px; border-radius: 10px; }
-  .flag-txt { color: var(--green); border: 1px solid rgba(39,174,96,.4); }
-  .flag-img { color: var(--amber); border: 1px solid rgba(230,126,34,.4); }
-
-  .seg { display: inline-flex; border: 1px solid var(--border-light); border-radius: var(--radius); overflow: hidden; }
-  .seg button { background: transparent; border: none; color: var(--text-dim); padding: 10px 20px; font-family: 'Jost', sans-serif; font-size: 13px; cursor: pointer; letter-spacing: .5px; }
-  .seg button.active { background: var(--gold); color: #111; font-weight: 500; }
-
-  .btn { background: transparent; border: 1px solid var(--gold-dim); color: var(--gold); padding: 11px 22px; font-family: 'Jost', sans-serif; font-size: 13px; letter-spacing: 1px; text-transform: uppercase; cursor: pointer; border-radius: var(--radius); transition: all .2s; }
-  .btn:hover { background: var(--gold-subtle); border-color: var(--gold); }
-  .btn.primary { background: var(--gold); color: #111; border-color: var(--gold); font-weight: 500; }
-  .btn.primary:hover { background: #d9b95c; }
-  .btn.ghost { border-color: var(--border-light); color: var(--text-dim); }
-  .btn.ghost:hover { color: var(--text); border-color: var(--text-dim); background: transparent; }
-  .btn:disabled { opacity: .4; cursor: not-allowed; }
-  .btnrow { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
-
-  .hint { font-size: 12px; color: var(--text-dim); margin-top: 8px; font-style: italic; }
-
-  .diag { border: 1px solid var(--border); background: var(--surface); border-radius: var(--radius); padding: 22px 24px; }
-  .diag-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
-  @media (max-width: 720px){ .diag-cols { grid-template-columns: 1fr; } }
-  .diag h4 { font-family: 'Cormorant Garamond', serif; font-size: 15px; font-weight: 500; letter-spacing: 1px; margin-bottom: 10px; }
-  .diag h4.ok { color: var(--green); } .diag h4.no { color: var(--amber); }
-  .diag ul { list-style: none; }
-  .diag li { font-size: 13px; padding: 3px 0 3px 16px; position: relative; color: var(--text); }
-  .diag li::before { content: '›'; position: absolute; left: 0; color: var(--gold); }
-  .diag .empty { color: var(--text-muted); font-style: italic; font-size: 13px; }
-  .diag .chips { margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--border); font-size: 12px; color: var(--text-dim); }
-  .diag .chips b { color: var(--text); font-weight: 500; }
-  .diag .cen { margin-bottom: 16px; font-size: 13px; }
-
-  #preview-wrap { display: none; margin-top: 24px; }
-  .preview-doc { background: #fdfcf9; color: #1a1a1a; padding: 48px 56px; border-radius: var(--radius); font-family: 'Segoe UI', 'Jost', sans-serif; font-size: 14px; line-height: 1.7; text-align: justify; max-height: 640px; overflow-y: auto; border: 1px solid var(--border-light); }
-  .preview-doc h2 { font-size: 13px; font-weight: 700; text-transform: uppercase; margin: 22px 0 10px; text-align: left; }
-  .preview-doc h1 { font-size: 14px; font-weight: 700; text-align: left; margin-bottom: 14px; line-height: 1.4; }
-  .preview-doc p { margin-bottom: 11px; }
-  .preview-doc .ender { margin-bottom: 18px; }
-  .preview-doc .np { display: inline; }
-  .preview-doc mark { background: #fff59d; color: #1a1a1a; padding: 0 2px; }
-  .preview-doc table { border-collapse: collapse; width: 100%; margin: 8px 0 14px; font-size: 13px; }
-  .preview-doc th, .preview-doc td { border: 1px solid #bbb; padding: 6px 9px; text-align: left; vertical-align: top; }
-  .preview-doc th { background: #efece4; width: 42%; font-weight: 600; }
-  .preview-doc .doclist { margin: 4px 0 14px 0; padding-left: 0; list-style: none; }
-  .preview-doc .doclist li { margin-bottom: 5px; }
-  .preview-doc .assinatura { margin-top: 30px; }
-
-  .pending-note { background: var(--surface2); border: 1px solid var(--amber); border-left: 3px solid var(--amber); padding: 14px 18px; border-radius: var(--radius); margin-top: 16px; font-size: 13px; color: var(--text); }
-  .pending-note strong { color: var(--amber); }
-
-  #loading-bar { position: fixed; top: 0; left: 0; height: 2px; width: 0; background: var(--gold); transition: width .3s; z-index: 100; }
-  #loading-bar.active { width: 90%; }
-  .errbox { display: none; background: rgba(192,57,43,.12); border: 1px solid var(--red); color: #e8b0a8; padding: 12px 16px; border-radius: var(--radius); margin-bottom: 16px; font-size: 13px; }
-  .errbox.show { display: block; }
-  .foot { text-align: center; color: var(--text-muted); font-size: 11px; letter-spacing: 1px; margin-top: 60px; }
-  .toolbar-sticky { position: sticky; bottom: 0; background: linear-gradient(transparent, var(--bg) 30%); padding: 24px 0 0; margin-top: 8px; }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { background:var(--bg); color:var(--text); font-family:'Jost',sans-serif; font-weight:300; min-height:100vh; line-height:1.6; }
+  header { border-bottom:1px solid var(--border); padding:20px 40px; display:flex; align-items:center; justify-content:space-between; background:var(--surface); position:sticky; top:0; z-index:50; }
+  .logo-block { display:flex; align-items:center; gap:16px; }
+  .logo-mark { width:36px; height:36px; border:1px solid var(--gold); display:flex; align-items:center; justify-content:center; font-family:'Cormorant Garamond',serif; font-size:16px; font-weight:600; color:var(--gold); letter-spacing:1px; }
+  .logo-text { font-family:'Cormorant Garamond',serif; font-size:13px; font-weight:400; color:var(--text-dim); letter-spacing:2px; text-transform:uppercase; }
+  .app-title { font-family:'Cormorant Garamond',serif; font-size:18px; font-weight:300; font-style:italic; color:var(--text-dim); letter-spacing:0.5px; }
+  main { max-width:1080px; margin:0 auto; padding:40px 40px 120px; }
+  .section-title { font-family:'Cormorant Garamond',serif; font-size:11px; font-weight:500; letter-spacing:3px; text-transform:uppercase; color:var(--gold); margin-bottom:22px; display:flex; align-items:center; gap:12px; }
+  .section-title::after { content:''; flex:1; height:1px; background:var(--border); }
+  .section-title .num { width:22px; height:22px; border:1px solid var(--gold-dim); border-radius:50%; display:inline-flex; align-items:center; justify-content:center; font-family:'DM Mono',monospace; font-size:10px; color:var(--gold); }
+  .intro { margin-bottom:44px; padding:26px 30px; border:1px solid var(--border); background:var(--surface); border-left:3px solid var(--gold); }
+  .intro p { font-family:'Cormorant Garamond',serif; font-size:17px; font-weight:300; color:var(--text); line-height:1.7; }
+  .intro p + p { margin-top:12px; }
+  .intro .muted { font-size:14px; color:var(--text-dim); font-family:'Jost',sans-serif; }
+  .block { margin-bottom:44px; }
+  .card { border:1px solid var(--border); background:var(--surface); padding:26px 28px; margin-bottom:16px; }
+  .drop { border:1px dashed var(--border-light); background:var(--surface2); padding:30px; text-align:center; border-radius:var(--radius); cursor:pointer; transition:border-color .2s, background .2s; }
+  .drop:hover, .drop.over { border-color:var(--gold-dim); background:var(--gold-subtle); }
+  .drop .big { font-family:'Cormorant Garamond',serif; font-size:18px; color:var(--text); }
+  .drop .small { font-size:12px; color:var(--text-dim); margin-top:6px; }
+  .filelist { margin-top:14px; display:flex; flex-direction:column; gap:8px; }
+  .filerow { display:flex; align-items:center; gap:12px; background:var(--bg); border:1px solid var(--border-light); padding:10px 12px; border-radius:var(--radius); flex-wrap:wrap; }
+  .filerow .fname { font-family:'DM Mono',monospace; font-size:12px; color:var(--text); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:300px; }
+  .filerow .meta { font-size:11px; color:var(--text-muted); }
+  .filerow select { background:var(--surface2); border:1px solid var(--border-light); color:var(--text); padding:6px 10px; font-family:'Jost',sans-serif; font-size:12px; border-radius:var(--radius); margin-left:auto; max-width:300px; }
+  .filerow .rm { background:transparent; border:none; color:var(--text-muted); cursor:pointer; font-size:16px; padding:0 4px; }
+  .filerow .rm:hover { color:var(--red); }
+  .filerow .flag { font-size:10px; letter-spacing:.5px; text-transform:uppercase; padding:2px 7px; border-radius:10px; }
+  .flag-txt { color:var(--green); border:1px solid rgba(39,174,96,.4); }
+  .flag-ocr { color:var(--blue); border:1px solid rgba(41,128,185,.5); }
+  .flag-img { color:var(--amber); border:1px solid rgba(230,126,34,.4); }
+  .flag-wait { color:var(--text-dim); border:1px solid var(--border-light); }
+  .seg { display:inline-flex; border:1px solid var(--border-light); border-radius:var(--radius); overflow:hidden; }
+  .seg button { background:transparent; border:none; color:var(--text-dim); padding:10px 20px; font-family:'Jost',sans-serif; font-size:13px; cursor:pointer; letter-spacing:.5px; }
+  .seg button.active { background:var(--gold); color:#111; font-weight:500; }
+  .btn { background:transparent; border:1px solid var(--gold-dim); color:var(--gold); padding:11px 22px; font-family:'Jost',sans-serif; font-size:13px; letter-spacing:1px; text-transform:uppercase; cursor:pointer; border-radius:var(--radius); transition:all .2s; }
+  .btn:hover { background:var(--gold-subtle); border-color:var(--gold); }
+  .btn.primary { background:var(--gold); color:#111; border-color:var(--gold); font-weight:500; }
+  .btn.primary:hover { background:#d9b95c; }
+  .btn.ghost { border-color:var(--border-light); color:var(--text-dim); }
+  .btn.ghost:hover { color:var(--text); border-color:var(--text-dim); background:transparent; }
+  .btn:disabled { opacity:.4; cursor:not-allowed; }
+  .btnrow { display:flex; gap:12px; flex-wrap:wrap; align-items:center; }
+  .hint { font-size:12px; color:var(--text-dim); margin-top:8px; font-style:italic; }
+  .diag { border:1px solid var(--border); background:var(--surface); border-radius:var(--radius); padding:22px 24px; }
+  .diag-cols { display:grid; grid-template-columns:1fr 1fr; gap:24px; }
+  @media (max-width:720px){ .diag-cols { grid-template-columns:1fr; } }
+  .diag h4 { font-family:'Cormorant Garamond',serif; font-size:15px; font-weight:500; letter-spacing:1px; margin-bottom:10px; }
+  .diag h4.ok { color:var(--green); } .diag h4.no { color:var(--amber); }
+  .diag ul { list-style:none; }
+  .diag li { font-size:13px; padding:3px 0 3px 16px; position:relative; color:var(--text); }
+  .diag li::before { content:'›'; position:absolute; left:0; color:var(--gold); }
+  .diag .empty { color:var(--text-muted); font-style:italic; font-size:13px; }
+  .diag .chips { margin-top:14px; padding-top:14px; border-top:1px solid var(--border); font-size:12px; color:var(--text-dim); }
+  .diag .chips b { color:var(--text); font-weight:500; }
+  .diag .cen { margin-bottom:16px; font-size:13px; }
+  #preview-wrap { display:none; margin-top:24px; }
+  .edit-note { font-size:12px; color:var(--text-dim); margin-bottom:10px; font-style:italic; display:flex; align-items:center; gap:8px; }
+  .edit-note .dot { width:7px; height:7px; border-radius:50%; background:var(--green); display:inline-block; }
+  .preview-doc { background:#fdfcf9; color:#1a1a1a; padding:48px 56px; border-radius:var(--radius); font-family:'Segoe UI','Jost',sans-serif; font-size:14px; line-height:1.7; text-align:justify; max-height:660px; overflow-y:auto; border:1px solid var(--border-light); outline:none; }
+  .preview-doc:focus, .preview-doc:focus-visible { border-color:var(--gold-dim); }
+  .preview-doc h2 { font-size:13px; font-weight:700; text-transform:uppercase; margin:22px 0 10px; text-align:left; }
+  .preview-doc h1 { font-size:14px; font-weight:700; text-align:left; margin-bottom:14px; line-height:1.4; }
+  .preview-doc p { margin-bottom:11px; }
+  .preview-doc .np { display:inline; }
+  .preview-doc mark { background:#fff59d; color:#1a1a1a; padding:0 2px; }
+  .preview-doc table { border-collapse:collapse; width:100%; margin:8px 0 14px; font-size:13px; }
+  .preview-doc th, .preview-doc td { border:1px solid #bbb; padding:6px 9px; text-align:left; vertical-align:top; }
+  .preview-doc th { background:#efece4; width:42%; font-weight:600; }
+  .preview-doc .doclist { margin:4px 0 14px 0; padding-left:0; list-style:none; }
+  .preview-doc .doclist li { margin-bottom:5px; }
+  .preview-doc .assinatura { margin-top:30px; }
+  .pending-note { background:var(--surface2); border:1px solid var(--amber); border-left:3px solid var(--amber); padding:14px 18px; border-radius:var(--radius); margin-top:16px; font-size:13px; color:var(--text); }
+  .pending-note strong { color:var(--amber); }
+  #loading-bar { position:fixed; top:0; left:0; height:2px; width:0; background:var(--gold); transition:width .3s; z-index:100; }
+  #loading-bar.active { width:90%; }
+  .errbox { display:none; background:rgba(192,57,43,.12); border:1px solid var(--red); color:#e8b0a8; padding:12px 16px; border-radius:var(--radius); margin-bottom:16px; font-size:13px; }
+  .errbox.show { display:block; }
+  .foot { text-align:center; color:var(--text-muted); font-size:11px; letter-spacing:1px; margin-top:60px; }
+  .toolbar-sticky { position:sticky; bottom:0; background:linear-gradient(transparent, var(--bg) 30%); padding:24px 0 0; margin-top:8px; }
 </style>
 </head>
 <body>
@@ -123,7 +111,7 @@
 <main>
   <div class="intro">
     <p>Gerador da <strong>resposta a ofícios de autoridades públicas</strong> dirigidos à QESH Instituição de Pagamento Ltda.</p>
-    <p class="muted">A peça é montada <strong>a partir dos documentos que você anexa</strong> — nada é preenchido à mão. Anexe os ofícios recebidos e os documentos disponibilizados pelo cliente. O programa lê o conteúdo, identifica o cenário e os quesitos, e monta a resposta considerando apenas o que existe: <strong>o que não for anexado é tratado como inexistente</strong>, e os tópicos e o rol de documentos são excluídos ou reformulados conforme o caso concreto. O que não puder ser lido dos documentos permanece <mark style="background:#fff59d;color:#111;padding:0 2px;">destacado em amarelo</mark> para conferência.</p>
+    <p class="muted">A peça é montada <strong>a partir dos documentos que você anexa</strong> — nada é preenchido à mão. Anexe os ofícios recebidos e os documentos disponibilizados pelo cliente; o programa lê o conteúdo (inclusive por <strong>OCR</strong>, quando o arquivo for imagem ou PDF escaneado), <strong>extrai o que a autoridade solicitou e os dados dos documentos</strong>, e transcreve na resposta. O que não for anexado é tratado como inexistente, e os tópicos e o rol são excluídos ou reformulados. A peça gerada é <strong>editável</strong> e pode ser baixada em <strong>Word</strong> ou <strong>PDF</strong>.</p>
   </div>
 
   <div class="errbox" id="err"></div>
@@ -133,9 +121,9 @@
     <div class="section-title"><span class="num">1</span> Ofícios recebidos</div>
     <div class="card">
       <div class="drop" id="drop-of">
-        <div class="big">Solte aqui os ofícios (PDF) ou clique para selecionar</div>
-        <div class="small">Pode anexar mais de um. A leitura é feita no seu navegador, sem envio a servidores.</div>
-        <input type="file" id="file-of" accept="application/pdf" multiple hidden>
+        <div class="big">Solte aqui os ofícios (PDF ou imagem) ou clique para selecionar</div>
+        <div class="small">Pode anexar mais de um. PDFs escaneados e imagens são lidos por OCR. Tudo é processado no seu navegador.</div>
+        <input type="file" id="file-of" accept="application/pdf,image/*" multiple hidden>
       </div>
       <div class="filelist" id="list-of"></div>
     </div>
@@ -147,7 +135,7 @@
     <div class="card">
       <div class="drop" id="drop-doc">
         <div class="big">Solte aqui os documentos (PDF ou imagem) ou clique para selecionar</div>
-        <div class="small">Pode anexar mais de um. Cada documento é classificado automaticamente; ajuste o tipo se necessário. O que não for anexado será tratado como inexistente.</div>
+        <div class="small">Pode anexar mais de um. Cada documento é classificado e tem seus dados extraídos automaticamente; ajuste o tipo se necessário. O que não for anexado será tratado como inexistente.</div>
         <input type="file" id="file-doc" accept="application/pdf,image/*" multiple hidden>
       </div>
       <div class="filelist" id="list-doc"></div>
@@ -177,7 +165,8 @@
   <div class="toolbar-sticky">
     <div class="btnrow">
       <button class="btn primary" id="btn-gerar">Gerar peça</button>
-      <button class="btn" id="btn-doc" disabled>Baixar .doc (Word)</button>
+      <button class="btn" id="btn-word" disabled>Baixar Word (.doc)</button>
+      <button class="btn" id="btn-pdf" disabled>Baixar PDF</button>
       <button class="btn ghost" id="btn-limpar">Limpar tudo</button>
     </div>
   </div>
@@ -185,7 +174,8 @@
   <div id="preview-wrap">
     <div class="section-title" style="margin-top:32px;">Prévia da peça</div>
     <div id="pending" class="pending-note" style="display:none;"></div>
-    <div class="preview-doc" id="preview"></div>
+    <div class="edit-note"><span class="dot"></span> Texto editável — clique em qualquer parte da peça para ajustar antes de baixar. As alterações entram no Word e no PDF.</div>
+    <div class="preview-doc" id="preview" contenteditable="true" spellcheck="false"></div>
   </div>
 
   <div class="foot">TPC Advogados · Ferramenta interna · Gerada no cliente, sem envio de dados a servidores</div>
@@ -194,9 +184,9 @@
 <script>
 const PDF_OK = (typeof pdfjsLib !== 'undefined');
 if (PDF_OK) { pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js'; }
+const OCR_OK = (typeof Tesseract !== 'undefined');
 
 /* ─────────────────────────  CATÁLOGOS  ───────────────────────── */
-// Categorias de documento do cliente. holder indica de quem é a guarda natural do dado.
 const DOC_CATS = [
   { id:'procuracao',  label:'Procuração e atos constitutivos da QESH', kwFile:['procura','social','estatuto','constitutivo'], kw:['procuração','outorga','poderes','contrato social','atos constitutivos','instrumento de mandato'] },
   { id:'cadastro',    label:'Dados cadastrais e chaves Pix da conta', kwFile:['cadastr','ficha','titular'], kw:['dados cadastrais','ficha cadastral','chave pix','titular da conta','cadastro do cliente','conta de pagamento'] },
@@ -204,18 +194,15 @@ const DOC_CATS = [
   { id:'bloqueio',    label:'Registro de bloqueio da conta e das chaves Pix', kwFile:['bloqueio','bloqueada','suspensao'], kw:['bloqueio da conta','conta bloqueada','desativação','suspensão da conta','bloqueio de saldo'] },
   { id:'med',         label:'Registros de MED (Mecanismo Especial de Devolução)', kwFile:['med','devolucao','contestacao'], kw:['mecanismo especial de devolução','devolução','contestação','repatriação','med pix'] },
   { id:'contrato',    label:'Contrato de Prestação de Serviços com o Operador e anexos', kwFile:['contrato','operador','anexo'], kw:['prestação de serviços','operador','cláusula','anexo iii','white label','banking as a service'] },
-  { id:'comOperador', label:'Comunicação encaminhada ao Operador', kwFile:['comunicacao','notifica','operador','oficio_op'], kw:['comunicação ao operador','notificação ao operador','solicitamos os documentos','prazo de dois dias'] },
+  { id:'comOperador', label:'Comunicação encaminhada ao Operador', kwFile:['comunicacao','notifica','operador'], kw:['comunicação ao operador','notificação ao operador','solicitamos os documentos','prazo de dois dias'] },
   { id:'pld',         label:'Política de PLD/FT e evidências de compliance', kwFile:['pld','compliance','kyc','politica','monitoramento'], kw:['prevenção à lavagem','pld/ft','kyc','política de compliance','monitoramento de operações','know your'] },
   { id:'coaf',        label:'Comprovantes de comunicação ao COAF (SISCOAF)', kwFile:['coaf','siscoaf'], kw:['coaf','siscoaf','comunicação ao coaf','protocolo de comunicação'] },
-  { id:'operadorQualif', label:'Qualificação do Operador (razão social, CNPJ, endereço)', kwFile:['qualifica','operador','cartao_cnpj','cnpj'], kw:['razão social','cartão cnpj','representante legal','qualificação do operador'] },
+  { id:'operadorQualif', label:'Qualificação do Operador (razão social, CNPJ, endereço)', kwFile:['qualifica','operador','cnpj'], kw:['razão social','cartão cnpj','representante legal','qualificação do operador'] },
   { id:'outro',       label:'Outro documento pertinente ao caso', kwFile:[], kw:[] },
 ];
 const CAT_LABEL = Object.fromEntries(DOC_CATS.map(c=>[c.id,c.label]));
-// Ordem canônica no rol de documentos
 const ROL_ORDER = ['procuracao','cadastro','transacoes','bloqueio','med','contrato','comOperador','pld','coaf','operadorQualif','outro'];
 
-// Catálogo de quesitos (o que o ofício costuma pedir) → categoria de documento que o supre e guarda.
-// holder: 'qesh' (a QESH detém, depende de doc anexado) | 'operador' (sempre redirecionar) | 'liquidante'
 const QUESITOS = [
   { id:'cadastro', label:'Dados cadastrais do correntista', holder:'qesh', doc:'cadastro', kw:['dados cadastrais','cadastro','qualifica','filiação','endereço do titular','dados do titular'] },
   { id:'docid', label:'Documentos de identificação do onboarding (selfie, RG/CNH)', holder:'operador', kw:['selfie','prova de vida','rg','cnh','documento de identidade','cópia de documentos','onboarding','ficha de assinatura'] },
@@ -236,8 +223,7 @@ const QUESITOS = [
   { id:'coaf', label:'Comprovantes de comunicação ao COAF', holder:'qesh', doc:'coaf', kw:['coaf','siscoaf','comunicação ao coaf'] },
 ];
 
-/* ─────────────────────────  ESTADO  ───────────────────────── */
-const state = { oficios: [], documentos: [], cenarioOverride: null, analisado: false };
+const state = { oficios:[], documentos:[], cenarioOverride:null, analisado:false };
 let uidc = 0;
 
 /* ─────────────────────────  UTILITÁRIOS  ───────────────────────── */
@@ -251,45 +237,83 @@ async function extrairTextoPDF(file){
   if(!PDF_OK) return '';
   try {
     const buf = await file.arrayBuffer();
-    const pdf = await pdfjsLib.getDocument({ data: buf }).promise;
+    const pdf = await pdfjsLib.getDocument({ data:buf }).promise;
     let txt='';
     for(let i=1;i<=pdf.numPages;i++){ const pg=await pdf.getPage(i); const c=await pg.getTextContent(); txt += c.items.map(x=>x.str).join(' ')+'\n'; }
     return txt.trim();
   } catch(e){ return ''; }
 }
+async function ocrImagem(fileOrCanvas, onProg){
+  const { data } = await Tesseract.recognize(fileOrCanvas, 'por', { logger:m=>{ if(m.status==='recognizing text' && onProg) onProg(m.progress); } });
+  return (data && data.text) ? data.text : '';
+}
+async function ocrPDF(file, statusCb){
+  const buf = await file.arrayBuffer();
+  const pdf = await pdfjsLib.getDocument({ data:buf }).promise;
+  let out='';
+  for(let i=1;i<=pdf.numPages;i++){
+    const page = await pdf.getPage(i);
+    const vp = page.getViewport({ scale:2 });
+    const canvas = document.createElement('canvas');
+    canvas.width = vp.width; canvas.height = vp.height;
+    await page.render({ canvasContext:canvas.getContext('2d'), viewport:vp }).promise;
+    const t = await ocrImagem(canvas, pr=> statusCb && statusCb(`OCR pág. ${i}/${pdf.numPages} · ${Math.round(pr*100)}%`));
+    out += t + '\n';
+  }
+  return out.trim();
+}
 
-/* ─────────────────────────  UPLOAD: OFÍCIOS  ───────────────────────── */
+// obtém texto de um arquivo, com OCR de fallback; atualiza status via cb
+async function obterTexto(file, statusCb){
+  const isPdf = file.type==='application/pdf';
+  const isImg = file.type.startsWith('image/');
+  if(isPdf){
+    statusCb('lendo texto…');
+    let txt = await extrairTextoPDF(file);
+    if(txt && txt.replace(/\s/g,'').length > 60){ statusCb('texto lido'); return { text:txt, mode:'texto' }; }
+    if(OCR_OK && PDF_OK){ statusCb('sem texto — OCR…'); const o = await ocrPDF(file, statusCb); statusCb('OCR concluído'); return { text:o, mode:'ocr' }; }
+    statusCb('sem camada de texto'); return { text:txt||'', mode:'sem' };
+  }
+  if(isImg){
+    if(OCR_OK){ statusCb('OCR…'); const o = await ocrImagem(file, pr=> statusCb(`OCR · ${Math.round(pr*100)}%`)); statusCb('OCR concluído'); return { text:o, mode:'ocr' }; }
+    statusCb('imagem (OCR indisponível)'); return { text:'', mode:'imagem' };
+  }
+  statusCb('formato não suportado'); return { text:'', mode:'sem' };
+}
+
+/* ─────────────────────────  UPLOAD  ───────────────────────── */
 setupDrop('drop-of','file-of', receberOficios);
 setupDrop('drop-doc','file-doc', receberDocumentos);
-
 function setupDrop(dropId, inputId, handler){
-  const d = document.getElementById(dropId), inp = document.getElementById(inputId);
+  const d=document.getElementById(dropId), inp=document.getElementById(inputId);
   d.addEventListener('click', ()=> inp.click());
   ['dragenter','dragover'].forEach(e=> d.addEventListener(e, ev=>{ev.preventDefault(); d.classList.add('over');}));
   ['dragleave','drop'].forEach(e=> d.addEventListener(e, ev=>{ev.preventDefault(); d.classList.remove('over');}));
-  d.addEventListener('drop', ev=>{ handler([...ev.dataTransfer.files]); });
+  d.addEventListener('drop', ev=> handler([...ev.dataTransfer.files]));
   inp.addEventListener('change', ev=>{ handler([...ev.target.files]); ev.target.value=''; });
 }
+function statusFor(id){ const el=document.getElementById('st-'+id); return (txt)=>{ if(el) el.textContent = txt; }; }
+function flagClass(mode){ return mode==='texto'?'flag-txt':(mode==='ocr'?'flag-ocr':'flag-img'); }
+function flagLabel(mode){ return mode==='texto'?'texto lido':(mode==='ocr'?'OCR':(mode==='imagem'?'imagem':'sem texto')); }
 
 async function receberOficios(files){
   esconderErro();
-  const pdfs = files.filter(f=> f.type==='application/pdf');
-  if(!pdfs.length){ mostrarErro('Anexe os ofícios em PDF.'); return; }
-  if(!PDF_OK){ mostrarErro('O leitor de PDF não pôde ser carregado (sem conexão com o CDN). Tente novamente com conexão.'); return; }
+  const ok = files.filter(f=> f.type==='application/pdf' || f.type.startsWith('image/'));
+  if(!ok.length){ mostrarErro('Anexe os ofícios em PDF ou imagem.'); return; }
   setLoading(true);
-  for(const f of pdfs){
-    const text = await extrairTextoPDF(f);
-    state.oficios.push({ id:++uidc, name:f.name, text, hasText: text.length>40 });
+  for(const f of ok){
+    const o = { id:++uidc, name:f.name, text:'', mode:'wait' };
+    state.oficios.push(o); renderOficios();
+    const r = await obterTexto(f, statusFor(o.id));
+    o.text = r.text; o.mode = r.mode; renderOficios();
   }
   setLoading(false);
-  renderOficios();
 }
 function renderOficios(){
-  const box = document.getElementById('list-of');
-  box.innerHTML = state.oficios.map(o=>`
+  document.getElementById('list-of').innerHTML = state.oficios.map(o=>`
     <div class="filerow">
       <span class="fname" title="${escapeHtml(o.name)}">📄 ${escapeHtml(o.name)}</span>
-      <span class="flag ${o.hasText?'flag-txt':'flag-img'}">${o.hasText?'texto lido':'sem camada de texto'}</span>
+      <span class="flag ${o.mode==='wait'?'flag-wait':flagClass(o.mode)}" id="st-${o.id}">${o.mode==='wait'?'na fila…':flagLabel(o.mode)}</span>
       <button class="rm" title="Remover" onclick="remover('oficios',${o.id})">✕</button>
     </div>`).join('');
 }
@@ -300,156 +324,239 @@ async function receberDocumentos(files){
   if(!ok.length){ mostrarErro('Anexe documentos em PDF ou imagem.'); return; }
   setLoading(true);
   for(const f of ok){
-    const isPdf = f.type==='application/pdf';
-    const text = isPdf ? await extrairTextoPDF(f) : '';
-    const hasText = text.length>40;
-    const cat = classificar(f.name, text);
-    state.documentos.push({ id:++uidc, name:f.name, text, hasText, isImage:!isPdf, cat });
+    const dc = { id:++uidc, name:f.name, text:'', mode:'wait', cat:'outro', dados:{} };
+    state.documentos.push(dc); renderDocumentos();
+    const r = await obterTexto(f, statusFor(dc.id));
+    dc.text = r.text; dc.mode = r.mode;
+    dc.cat = classificar(f.name, dc.text);
+    dc.dados = extrairPorCategoria(dc.cat, dc.text);
+    renderDocumentos();
   }
   setLoading(false);
-  renderDocumentos();
 }
 function classificar(nome, texto){
-  const nf = normalizar(nome), nt = normalizar(texto);
+  const nf=normalizar(nome), nt=normalizar(texto);
   let best='outro', score=0;
-  DOC_CATS.forEach(c=>{
-    if(c.id==='outro') return;
-    let s=0;
-    c.kwFile.forEach(k=>{ if(nf.includes(k)) s+=3; });
-    c.kw.forEach(k=>{ if(nt.includes(normalizar(k))) s+=1; });
-    if(s>score){ score=s; best=c.id; }
-  });
+  DOC_CATS.forEach(c=>{ if(c.id==='outro') return; let s=0; c.kwFile.forEach(k=>{ if(nf.includes(k)) s+=3; }); c.kw.forEach(k=>{ if(nt.includes(normalizar(k))) s+=1; }); if(s>score){ score=s; best=c.id; } });
   return best;
 }
 function renderDocumentos(){
-  const box = document.getElementById('list-doc');
-  box.innerHTML = state.documentos.map(dc=>`
+  document.getElementById('list-doc').innerHTML = state.documentos.map(dc=>`
     <div class="filerow">
-      <span class="fname" title="${escapeHtml(dc.name)}">${dc.isImage?'🖼️':'📄'} ${escapeHtml(dc.name)}</span>
-      <span class="flag ${(!dc.isImage&&dc.hasText)?'flag-txt':'flag-img'}">${dc.isImage?'imagem (só presença)':(dc.hasText?'texto lido':'sem camada de texto')}</span>
+      <span class="fname" title="${escapeHtml(dc.name)}">${dc.mode==='imagem'||dc.mode==='ocr'?'🖼️':'📄'} ${escapeHtml(dc.name)}</span>
+      <span class="flag ${dc.mode==='wait'?'flag-wait':flagClass(dc.mode)}" id="st-${dc.id}">${dc.mode==='wait'?'na fila…':flagLabel(dc.mode)}</span>
       <select onchange="mudarCat(${dc.id}, this.value)">
         ${DOC_CATS.map(c=>`<option value="${c.id}" ${c.id===dc.cat?'selected':''}>${c.label}</option>`).join('')}
       </select>
       <button class="rm" title="Remover" onclick="remover('documentos',${dc.id})">✕</button>
     </div>`).join('');
 }
-function mudarCat(id, cat){ const d=state.documentos.find(x=>x.id===id); if(d) d.cat=cat; if(state.analisado) analisar(); }
+function mudarCat(id, cat){ const d=state.documentos.find(x=>x.id===id); if(d){ d.cat=cat; d.dados=extrairPorCategoria(cat, d.text); } if(state.analisado) analisar(); }
 function remover(tipo, id){ state[tipo]=state[tipo].filter(x=>x.id!==id); (tipo==='oficios'?renderOficios:renderDocumentos)(); if(state.analisado) analisar(); }
 
-/* ─────────────────────────  ANÁLISE / DIAGNÓSTICO  ───────────────────────── */
-document.getElementById('btn-analisar').addEventListener('click', analisar);
-document.querySelectorAll('#seg-cenario button').forEach(b=> b.addEventListener('click', ()=>{ state.cenarioOverride=b.dataset.c; analisar(); }));
+/* ─────────────────────────  EXTRAÇÃO DE DADOS  ───────────────────────── */
+const RE = {
+  cpf: /\d{3}\.\d{3}\.\d{3}-\d{2}/,
+  cnpj: /\d{2}\.\d{3}\.\d{3}\/\d{4}-\d{2}/,
+  data: /\b\d{1,2}\/\d{1,2}\/\d{2,4}\b/,
+  dataG: /\b\d{1,2}\/\d{1,2}\/\d{2,4}\b/g,
+  money: /R\$\s?\d{1,3}(?:\.\d{3})*,\d{2}/,
+  email: /[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}/i,
+  fone: /\(?\d{2}\)?\s?9?\d{4}[-\s]?\d{4}/,
+};
+function achar(t, re){ const m=t.match(re); return m? m[0] : ''; }
+// captura o valor após um rótulo (label:variantes) até fim de linha/;/,
+function aposRotulo(t, rotulos, extra){
+  for(const r of rotulos){
+    const re = new RegExp(r + '\\s*[:\\-–]?\\s*([^\\n;]{2,80}?)(?=\\s{2,}|;|\\n|\\.\\s|$' + (extra||'') + ')', 'i');
+    const m = t.match(re);
+    if(m && m[1] && m[1].trim().length>1) return m[1].trim().replace(/[\s.,;]+$/,'');
+  }
+  return '';
+}
+function nomeApos(t, rotulos){
+  for(const r of rotulos){
+    const re = new RegExp(r + "\\s*[:\\-–]?\\s*([A-ZÀ-Ú][A-Za-zÀ-ú' ]{4,60}?)(?=,|\\.|\\s+inscrit|\\s+CPF|\\s+CNPJ|\\s+portador|\\s+brasileir|\\n|$)", 'i');
+    const m = t.match(re);
+    if(m && m[1]) return m[1].trim();
+  }
+  return '';
+}
+function dataHora(t){
+  const m = t.match(/(\d{1,2}\/\d{1,2}\/\d{2,4})(?:\s*(?:,|às|as|-)?\s*(\d{1,2}[:h]\d{2}(?::\d{2})?))?/i);
+  if(!m) return '';
+  return m[2] ? `${m[1]} às ${m[2].replace('h',':')}` : m[1];
+}
 
+function extrairPorCategoria(cat, t){
+  if(!t) return {};
+  const d = {};
+  if(cat==='cadastro'){
+    d.titular = nomeApos(t, ['titular(?:idade)?(?:\\s+nominal)?','nome(?:\\s+completo)?','cliente','correntista']);
+    d.cpf = achar(t, RE.cpf); d.cnpj = achar(t, RE.cnpj);
+    d.conta = (t.match(/conta(?:\s+de\s+pagamento)?\s*(?:n[º°o.:]*)?\s*(\d[\d.\-]*\d)/i)||[])[1] || '';
+    d.agencia = (t.match(/ag[êe]ncia\s*(?:n[º°o.:]*)?\s*(\d[\d.\-]*\d|\d)/i)||[])[1] || '';
+    d.abertura = (t.match(/abertura[^\d]{0,20}(\d{1,2}\/\d{1,2}\/\d{2,4})/i)||[])[1] || '';
+    d.endereco = aposRotulo(t, ['endere[çc]o']);
+    const em = achar(t, RE.email), fo = achar(t, RE.fone);
+    d.contato = [fo, em].filter(Boolean).join(' / ');
+    d.pix = aposRotulo(t, ['chave\\s+pix','chave(?:\\(s\\))?']) || (em || '');
+    d.situacao = (t.match(/\b(ativa|bloqueada|encerrada|inativa|suspensa)\b/i)||[])[1] || '';
+  } else if(cat==='transacoes'){
+    const datas = (t.match(RE.dataG)||[]);
+    if(datas.length){ d.periodoIni = datas[0]; d.periodoFim = datas[datas.length-1]; }
+  } else if(cat==='bloqueio'){
+    d.dh = dataHora(t);
+    d.motivo = aposRotulo(t, ['motivo','em raz[ãa]o de','devido a','fundamento']);
+    d.saldo = (t.match(new RegExp('saldo[^\\n]{0,30}?('+RE.money.source+')','i'))||[])[1] || achar(t, RE.money);
+  } else if(cat==='med'){
+    d.contestante = nomeApos(t, ['contestante','reclamante','solicitante','usu[áa]rio pagador']);
+    d.valor = achar(t, RE.money);
+    d.data = achar(t, RE.data);
+    d.resultado = (t.match(/(devolu[çc][ãa]o total|devolu[çc][ãa]o parcial|insufici[êe]ncia de saldo|repatria[çc][ãa]o|n[ãa]o devolvid[oa])/i)||[])[1] || '';
+  } else if(cat==='contrato' || cat==='operadorQualif'){
+    d.razao = aposRotulo(t, ['raz[ãa]o social','operador','contratante','denomina[çc][ãa]o']);
+    d.cnpj = achar(t, RE.cnpj);
+    d.endereco = aposRotulo(t, ['endere[çc]o','sede']);
+    d.email = achar(t, RE.email);
+    d.rep = nomeApos(t, ['representante legal','representada por','s[óo]cio administrador','administrador']);
+  } else if(cat==='coaf'){
+    d.protocolo = aposRotulo(t, ['protocolo','n[º°o.]* do protocolo','comunica[çc][ãa]o n[º°o.]*']);
+  }
+  return d;
+}
+
+// agrega dados dos documentos por categoria (primeiro não-vazio vence)
+function agregarDados(){
+  const out = {};
+  DOC_CATS.forEach(c=> out[c.id]={});
+  state.documentos.forEach(dc=>{
+    const alvo = out[dc.cat] || (out[dc.cat]={});
+    Object.entries(dc.dados||{}).forEach(([k,v])=>{ if(v && !alvo[k]) alvo[k]=v; });
+  });
+  return out;
+}
+
+/* ─── extração do ofício ─── */
 function textoOficios(){ return state.oficios.map(o=>o.text).join('\n'); }
+function extrairDadosOficio(){
+  const t = textoOficios();
+  const cpf=achar(t,RE.cpf), cnpj=achar(t,RE.cnpj);
+  let m, conta='', agencia='', titular='', unidade='';
+  m=t.match(/conta(?:\s+de\s+pagamento)?\s*(?:n[º°o.\s:]*)?\s*(\d[\d.\-]*\d)/i); if(m) conta=m[1];
+  m=t.match(/ag[êe]ncia\s*(?:n[º°o.\s:]*)?\s*(\d[\d.\-]*\d|\d)/i); if(m) agencia=m[1];
+  titular = nomeApos(t, ['titular(?:idade)?(?:\\s+nominal)?(?:\\s+(?:de|do|da))?','de titularidade de']);
+  const oficioNum = (t.match(/\bof(?:[íi]cio)?\.?\s*n?[º°o.]*\s*([\d][\w./-]*)/i)||[])[1]||'';
+  const prazo = (t.match(/(\d+)\s*dias?\s*(?:[úu]teis|corridos)?/i)||[])[0]||'';
+  m = t.match(/((?:\d{1,3}[ªaºo.]*\s*)?(?:Delegacia|Vara|Juizado|Ju[íi]zo|Comarca|Seccional)[^.\n]{0,90})/i);
+  if(m) unidade=m[1].replace(/\s+/g,' ').trim();
+  return { cpf, cnpj, conta, agencia, titular, unidade, oficioNum, prazo };
+}
+// transcreve as solicitações literais do ofício (o que a autoridade pediu)
+function extrairSolicitacoes(){
+  const clean = textoOficios().replace(/\s+/g,' ').trim();
+  if(!clean) return [];
+  const g = clean.match(/(?:requisit\w*|solicit\w*|requer(?:-se|-lhe)?|determin\w*|oficie-se|que\s+(?:informe|encaminhe|apresente|forne[çc]a|preste|esclare[çc]a)\w*)\b([\s\S]{0,900})/i);
+  if(!g) return [];
+  const raw = g[1];
+  // enumeradores a) b) / 1. 2. / i) ii) — a lista pode vir depois de "no prazo"/"sob pena"
+  const enumSplit = /(?:^|[\s;:])(?:[a-z]|\d{1,2}|[ivx]{1,4})\s*[\).º°-]\s+/i;
+  let items;
+  if(enumSplit.test(raw)){
+    items = raw.split(enumSplit).slice(1); // descarta o texto antes do 1º enumerador
+  } else {
+    const seg = raw.split(/\b(?:sob pena|atenciosamente|cordialmente|nestes termos|por fim|certo de|no mais)\b/i)[0];
+    items = seg.split(/;|\.\s(?=[A-ZÀ-Ú])/);
+  }
+  // corta, em cada item, no primeiro marcador de fim (fim de frase, qualificação da conta, boilerplate)
+  const stop = /\.\s|\bsob pena\b|\bconta de pagamento\b|\bde titularidade\b|\binscrit|\batenciosamente\b|\bno prazo\b/i;
+  items = items.map(s=>{
+    s = s.replace(/^[\s,.\-–:)]+/,'');
+    const i = s.search(stop);
+    if(i>8) s = s.slice(0,i);
+    return s.replace(/[\s,;.]+$/,'').trim();
+  }).filter(s=> s.length>=6 && /[a-zà-ú]/i.test(s));
+  const seen=new Set(); items = items.filter(s=>{ const k=normalizar(s).slice(0,45); if(seen.has(k)) return false; seen.add(k); return true; });
+  return items.slice(0,12);
+}
 
 function detectarCenario(){
   if(state.cenarioOverride) return state.cenarioOverride;
-  const t = normalizar(textoOficios());
+  const t=normalizar(textoOficios());
   const jud=['ordem judicial','quebra de sigilo','defiro','determino',' autos','processo n','vara','ju[íi]zo','juiz','excelentissim','mandado','decisao'];
   const pol=['delegacia','delegado','inquerito','boletim de ocorrencia','autoridade policial','requisit'];
   let j=0,p=0; jud.forEach(k=>{ if(t.includes(normalizar(k))) j++; }); pol.forEach(k=>{ if(t.includes(normalizar(k))) p++; });
   return j>p ? 'judicial' : 'policial';
 }
-function quesitosDetectados(){
-  const t = normalizar(textoOficios());
-  return QUESITOS.filter(q=> q.kw.some(k=> t.includes(normalizar(k))));
-}
+function quesitosDetectados(){ const t=normalizar(textoOficios()); return QUESITOS.filter(q=> q.kw.some(k=> t.includes(normalizar(k)))); }
 function catsPresentes(){ return new Set(state.documentos.map(d=>d.cat).filter(c=>c!=='outro')); }
+
+/* ─────────────────────────  DIAGNÓSTICO  ───────────────────────── */
+document.getElementById('btn-analisar').addEventListener('click', analisar);
+document.querySelectorAll('#seg-cenario button').forEach(b=> b.addEventListener('click', ()=>{ state.cenarioOverride=b.dataset.c; analisar(); }));
 
 function analisar(){
   esconderErro();
   if(!state.oficios.length && !state.documentos.length){ mostrarErro('Anexe ao menos um ofício ou documento antes de analisar.'); return; }
   state.analisado = true;
-  const cen = detectarCenario();
-  const ques = quesitosDetectados();
-  const cats = catsPresentes();
-
-  // cenário UI
+  const cen=detectarCenario(), ques=quesitosDetectados(), cats=catsPresentes();
   document.getElementById('seg-cenario').style.display='inline-flex';
   document.querySelectorAll('#seg-cenario button').forEach(b=> b.classList.toggle('active', b.dataset.c===cen));
-  const semTexto = [...state.oficios, ...state.documentos].filter(x=>!x.hasText && !x.isImage).length;
+  const ocrCount=[...state.oficios,...state.documentos].filter(x=>x.mode==='ocr').length;
   document.getElementById('diag-cen').innerHTML =
-    `<b style="color:var(--gold)">Cenário:</b> ${cen==='judicial'?'ordem judicial de quebra (tópico VIII de reserva de jurisdição será suprimido)':'requisição policial/administrativa (tópico VIII mantido)'} &nbsp;·&nbsp; `+
-    `<b style="color:var(--gold)">Ofícios:</b> ${state.oficios.length} &nbsp;·&nbsp; <b style="color:var(--gold)">Documentos:</b> ${state.documentos.length} &nbsp;·&nbsp; <b style="color:var(--gold)">Quesitos identificados:</b> ${ques.length}`+
-    (semTexto?` &nbsp;·&nbsp; <span style="color:var(--amber)">${semTexto} PDF(s) sem camada de texto</span>`:'');
-
-  // listas ok / no
+    `<b style="color:var(--gold)">Cenário:</b> ${cen==='judicial'?'ordem judicial de quebra (tópico VIII suprimido)':'requisição policial/administrativa (tópico VIII mantido)'} &nbsp;·&nbsp; `+
+    `<b style="color:var(--gold)">Ofícios:</b> ${state.oficios.length} &nbsp;·&nbsp; <b style="color:var(--gold)">Documentos:</b> ${state.documentos.length} &nbsp;·&nbsp; <b style="color:var(--gold)">Quesitos:</b> ${ques.length}`+
+    (ocrCount?` &nbsp;·&nbsp; <span style="color:var(--blue)">${ocrCount} lido(s) por OCR</span>`:'');
   const ok=[], no=[];
-  // documentos que serão juntados
-  ordenarDocs().forEach((d,i)=> ok.push(`Doc. ${String(i+1).padStart(2,'0')} — ${CAT_LABEL[d.cat]}${d.isImage?' (imagem)':''}`));
-  // quesitos → cobertura
+  ordenarDocs().forEach((d,i)=> ok.push(`Doc. ${String(i+1).padStart(2,'0')} — ${CAT_LABEL[d.cat]}${d.mode==='ocr'?' (OCR)':''}`));
   ques.forEach(q=>{
-    if(q.holder==='operador'){ no.push(`${q.label} — não integra o acervo da QESH; será redirecionado ao Operador (tópico VI).`); return; }
-    if(q.jud && cen!=='judicial'){ no.push(`${q.label} — submetido à reserva de jurisdição; depende de ordem judicial (tópico VIII).`); return; }
-    if(q.doc && cats.has(q.doc)) ok.push(`${q.label} — coberto pelo documento anexado.`);
-    else no.push(`${q.label} — sem documento anexado; será tratado como não juntado nesta oportunidade / a complementar.`);
+    if(q.holder==='operador'){ no.push(`${q.label} — não integra o acervo da QESH; redirecionado ao Operador (tópico VI).`); return; }
+    if(q.jud && cen!=='judicial'){ no.push(`${q.label} — reserva de jurisdição; depende de ordem judicial (tópico VIII).`); return; }
+    if(q.doc && cats.has(q.doc)) ok.push(`${q.label} — coberto por documento anexado.`);
+    else no.push(`${q.label} — sem documento anexado; a complementar.`);
   });
-
-  document.getElementById('diag-ok').innerHTML = ok.length? ok.map(x=>`<li>${escapeHtml(x)}</li>`).join('') : '<li class="empty">Nenhum documento/quesito coberto ainda.</li>';
-  document.getElementById('diag-no').innerHTML = no.length? no.map(x=>`<li>${escapeHtml(x)}</li>`).join('') : '<li class="empty">Nada pendente entre os quesitos detectados.</li>';
-
-  // chips de dados extraídos
-  const dados = extrairDadosOficio();
-  const chips=[];
-  if(dados.oficioNum) chips.push(`Ofício nº <b>${escapeHtml(dados.oficioNum)}</b>`);
-  if(dados.titular) chips.push(`Titular <b>${escapeHtml(dados.titular)}</b>`);
-  if(dados.cpf) chips.push(`CPF <b>${escapeHtml(dados.cpf)}</b>`);
-  if(dados.cnpj) chips.push(`CNPJ <b>${escapeHtml(dados.cnpj)}</b>`);
-  if(dados.conta) chips.push(`Conta <b>${escapeHtml(dados.conta)}</b>`);
-  if(dados.prazo) chips.push(`Prazo <b>${escapeHtml(dados.prazo)}</b>`);
-  const chipBox = document.getElementById('diag-chips');
-  chipBox.style.display='block';
-  chipBox.innerHTML = 'Dados lidos automaticamente dos ofícios: ' + (chips.length? chips.join(' &nbsp;·&nbsp; ') : '<i>nada extraível automaticamente — os campos ficarão destacados para conferência.</i>');
-}
-
-function extrairDadosOficio(){
-  const t = textoOficios();
-  const cpf  = (t.match(/\d{3}\.\d{3}\.\d{3}-\d{2}/)||[])[0]||'';
-  const cnpj = (t.match(/\d{2}\.\d{3}\.\d{3}\/\d{4}-\d{2}/)||[])[0]||'';
-  let m, conta='', agencia='', titular='', unidade='';
-  m = t.match(/conta(?:\s+de\s+pagamento)?\s*(?:n[º°o.\s:]*)?\s*([\d][\d.\-]{2,})/i); if(m) conta=m[1];
-  m = t.match(/ag[êe]ncia\s*(?:n[º°o.\s:]*)?\s*([\d][\d.\-]{0,})/i); if(m) agencia=m[1];
-  m = t.match(/titular(?:idade)?(?:\s+nominal)?(?:\s+(?:de|do|da))?\s*[:\-]?\s*([A-ZÀ-Ú][A-Za-zÀ-ú' ]{4,60}?)(?=,|\.|\s+inscrit|\s+CPF|\s+portador|\s+brasileir|$)/); if(m) titular=m[1].trim();
-  const oficioNum = (t.match(/\bof(?:[íi]cio)?\.?\s*n?[º°o.]*\s*([\d][\w./-]*)/i)||[])[1]||'';
-  const prazo = (t.match(/(\d+)\s*dias?\s*(?:[úu]teis|corridos)?/i)||[])[0]||'';
-  m = t.match(/((?:\d{1,3}[ªaºo.]*\s*)?(?:Delegacia|Vara|Juizado|Ju[íi]zo|Comarca|Seccional)[^.\n]{0,90})/i);
-  if(m) unidade = m[1].replace(/\s+/g,' ').trim();
-  else { for(const ln of t.split('\n').map(s=>s.trim()).filter(Boolean)){ if(/(delegacia|vara|comarca|juizado|ju[íi]zo|pol[íi]cia)/i.test(ln) && ln.length<120){ unidade=ln; break; } } }
-  return { cpf, cnpj, conta, agencia, titular, unidade, oficioNum, prazo };
+  document.getElementById('diag-ok').innerHTML = ok.length? ok.map(x=>`<li>${escapeHtml(x)}</li>`).join('') : '<li class="empty">—</li>';
+  document.getElementById('diag-no').innerHTML = no.length? no.map(x=>`<li>${escapeHtml(x)}</li>`).join('') : '<li class="empty">Nada pendente.</li>';
+  const dd=extrairDadosOficio(), sol=extrairSolicitacoes(), chips=[];
+  if(dd.oficioNum) chips.push(`Ofício nº <b>${escapeHtml(dd.oficioNum)}</b>`);
+  if(dd.titular) chips.push(`Titular <b>${escapeHtml(dd.titular)}</b>`);
+  if(dd.cpf||dd.cnpj) chips.push(`Doc. <b>${escapeHtml(dd.cpf||dd.cnpj)}</b>`);
+  if(dd.conta) chips.push(`Conta <b>${escapeHtml(dd.conta)}</b>`);
+  if(dd.prazo) chips.push(`Prazo <b>${escapeHtml(dd.prazo)}</b>`);
+  if(sol.length) chips.push(`Solicitações transcritas: <b>${sol.length}</b>`);
+  const cb=document.getElementById('diag-chips'); cb.style.display='block';
+  cb.innerHTML = 'Lido automaticamente dos ofícios: ' + (chips.length? chips.join(' &nbsp;·&nbsp; ') : '<i>nada extraível automaticamente — os campos ficarão destacados.</i>');
 }
 
 /* ─────────────────────────  MONTAGEM DA PEÇA  ───────────────────────── */
-let pendentes = [], contadorPar = 0;
+let pendentes=[], contadorPar=0;
 function C(value, note){ if(value && String(value).trim()) return escapeHtml(String(value).trim()); pendentes.push(note); return `<mark>[${escapeHtml(note)}]</mark>`; }
 function P(html){ contadorPar++; return `<p><span class="np">${contadorPar}.</span> ${html}</p>`; }
-
 function ordenarDocs(){
   return [...state.documentos].map((d,idx)=>({d,idx}))
-    .sort((a,b)=>{ const ra=ROL_ORDER.indexOf(a.d.cat), rb=ROL_ORDER.indexOf(b.d.cat); return ra!==rb ? ra-rb : a.idx-b.idx; })
+    .sort((a,b)=>{ const ra=ROL_ORDER.indexOf(a.d.cat), rb=ROL_ORDER.indexOf(b.d.cat); return ra!==rb? ra-rb : a.idx-b.idx; })
     .map(x=>x.d);
 }
 function montarContexto(){
-  const cen = detectarCenario();
-  const dados = extrairDadosOficio();
-  const docsOrd = ordenarDocs();
-  const numByCat = {}; // primeira ocorrência de cada categoria → nº do doc
+  const cen=detectarCenario(), dados=extrairDadosOficio(), sol=extrairSolicitacoes();
+  const docsOrd=ordenarDocs(), numByCat={};
   docsOrd.forEach((d,i)=>{ const n=i+1; if(numByCat[d.cat]==null) numByCat[d.cat]=n; });
-  const has = (cat)=> numByCat[cat]!=null;
-  const ref = (cat)=> has(cat) ? `Doc. ${String(numByCat[cat]).padStart(2,'0')}` : null;
-  return { cen, dados, docsOrd, has, ref, ques: quesitosDetectados(), cats: catsPresentes() };
+  const has=(c)=> numByCat[c]!=null;
+  const ref=(c)=> has(c)? `Doc. ${String(numByCat[c]).padStart(2,'0')}` : null;
+  return { cen, dados, sol, docsOrd, has, ref, ag:agregarDados(), ques:quesitosDetectados() };
 }
+const MESES=['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
 
 function montarPeca(){
   pendentes=[]; contadorPar=0;
-  const ctx = montarContexto();
-  const { cen, dados, has, ref } = ctx;
+  const ctx=montarContexto();
+  const { cen, dados, sol, has, ref, ag } = ctx;
   const H=[];
-  const hoje = new Date();
-  const dataPeca = `${hoje.getDate()} de ${MESES[hoje.getMonth()]} de ${hoje.getFullYear()}`;
+  const hoje=new Date();
+  const dataPeca=`${hoje.getDate()} de ${MESES[hoje.getMonth()]} de ${hoje.getFullYear()}`;
 
-  /* ENDEREÇAMENTO */
-  const autorTxt = cen==='judicial' ? 'EXCELENTÍSSIMO(A) SENHOR(A) JUIZ(A) DE DIREITO' : 'ILUSTRÍSSIMO(A) SENHOR(A) DELEGADO(A) DE POLÍCIA';
-  const unidade = dados.unidade ? escapeHtml(dados.unidade.toUpperCase()) : (pendentes.push('DELEGACIA / VARA / COMARCA / UNIDADE EXPEDIENTE'), '<mark>[DELEGACIA / VARA / COMARCA / UNIDADE EXPEDIENTE]</mark>');
+  const autorTxt = cen==='judicial'? 'EXCELENTÍSSIMO(A) SENHOR(A) JUIZ(A) DE DIREITO' : 'ILUSTRÍSSIMO(A) SENHOR(A) DELEGADO(A) DE POLÍCIA';
+  const unidade = dados.unidade? escapeHtml(dados.unidade.toUpperCase()) : (pendentes.push('DELEGACIA / VARA / COMARCA / UNIDADE EXPEDIENTE'),'<mark>[DELEGACIA / VARA / COMARCA / UNIDADE EXPEDIENTE]</mark>');
   H.push(`<div class="ender">
     <h1>${autorTxt} DA ${unidade}</h1>
     <p><strong>Ofício nº</strong> ${C(dados.oficioNum,'número/ano do ofício — verificar')}<br>
@@ -457,15 +564,17 @@ function montarPeca(){
     <p style="margin-top:14px;"><strong>QESH INSTITUIÇÃO DE PAGAMENTO LTDA.</strong>, pessoa jurídica de direito privado inscrita no CNPJ sob o nº 31.818.873/0001-30, com sede na Alameda do Ingá, nº 16, 1º andar, Vale do Sereno, Nova Lima/MG, CEP 34.006-042, instituição de pagamento integrada ao Sistema de Pagamentos Brasileiro, vem, respeitosamente, por seus procuradores que esta subscrevem, em atenção ao ofício em epígrafe, apresentar a presente <strong>RESPOSTA</strong>, prestando os esclarecimentos e fornecendo os documentos e informações que se encontram sob sua guarda, nos termos a seguir expostos.</p>
   </div>`);
 
-  /* I — SÍNTESE */
+  /* I — SÍNTESE + TRANSCRIÇÃO DAS SOLICITAÇÕES */
   H.push(`<h2>I. Da síntese da requisição e da tempestividade da resposta</h2>`);
-  const contaTxt = dados.conta ? `nº ${escapeHtml(dados.conta)}` : `<mark>[número da conta — verificar no ofício]</mark>`;
-  if(!dados.conta) pendentes.push('número da conta — verificar no ofício');
-  const titularTxt = dados.titular ? escapeHtml(dados.titular) : `<mark>[titular — verificar no ofício]</mark>`;
-  if(!dados.titular) pendentes.push('titular — verificar no ofício');
-  const cpfTxt = dados.cpf || dados.cnpj ? escapeHtml(dados.cpf||dados.cnpj) : `<mark>[CPF/CNPJ — verificar no ofício]</mark>`;
-  if(!(dados.cpf||dados.cnpj)) pendentes.push('CPF/CNPJ — verificar no ofício');
-  H.push(P(`Por meio do ofício em epígrafe, recebido no canal jurídico institucional da requerida (juridico@qesh.ai), a autoridade requisitou ${resumirQuesitos(ctx.ques)}, relativamente à conta de pagamento ${contaTxt}${dados.agencia?', agência '+escapeHtml(dados.agencia):''}, de titularidade nominal de ${titularTxt}, inscrito(a) no CPF/CNPJ sob o nº ${cpfTxt}.`));
+  const contaTxt = dados.conta? `nº ${escapeHtml(dados.conta)}` : (pendentes.push('número da conta — verificar no ofício'),'<mark>[número da conta — verificar no ofício]</mark>');
+  const titularTxt = dados.titular? escapeHtml(dados.titular) : (pendentes.push('titular — verificar no ofício'),'<mark>[titular — verificar no ofício]</mark>');
+  const cpfTxt = (dados.cpf||dados.cnpj)? escapeHtml(dados.cpf||dados.cnpj) : (pendentes.push('CPF/CNPJ — verificar no ofício'),'<mark>[CPF/CNPJ — verificar no ofício]</mark>');
+  if(sol.length){
+    const itens = sol.map((s,i)=> `(${romano(i+1)}) ${escapeHtml(s)}`).join('; ');
+    H.push(P(`Por meio do ofício em epígrafe, recebido no canal jurídico institucional da requerida (juridico@qesh.ai), a autoridade requisitou, quanto à conta de pagamento ${contaTxt}${dados.agencia?', agência '+escapeHtml(dados.agencia):''}, de titularidade nominal de ${titularTxt}, inscrito(a) no CPF/CNPJ sob o nº ${cpfTxt}, o seguinte: ${itens}.`));
+  } else {
+    H.push(P(`Por meio do ofício em epígrafe, recebido no canal jurídico institucional da requerida (juridico@qesh.ai), a autoridade requisitou ${resumirQuesitos(ctx.ques)}, relativamente à conta de pagamento ${contaTxt}${dados.agencia?', agência '+escapeHtml(dados.agencia):''}, de titularidade nominal de ${titularTxt}, inscrito(a) no CPF/CNPJ sob o nº ${cpfTxt}.`));
+  }
   H.push(P(`A QESH, consciente do dever de colaboração com a persecução penal e com a atividade de fiscalização estatal, responde à requisição dentro do prazo assinalado, fornecendo de forma integral as informações que efetivamente detém e esclarecendo, de maneira fundamentada, as razões técnicas, contratuais e legais pelas quais determinados dados requisitados não integram o seu acervo informacional, com a indicação precisa do agente que os detém e a quem a requisição pode ser prontamente redirecionada.`));
   H.push(P(`Registra-se, portanto, que a presente manifestação é tempestiva e exaustiva no limite do que se encontra sob a guarda da instituição, razão pela qual se requer, desde logo, o seu recebimento e a respectiva juntada aos autos do procedimento em referência.`));
 
@@ -490,33 +599,53 @@ function montarPeca(){
   H.push(P(`A consequência jurídica é direta. A guarda dos documentos de <em>onboarding</em>, dos registros de aceite de termos, dos registros de conexão e dos identificadores de dispositivo incumbe ao controlador, que os coleta em seu próprio ambiente tecnológico. A QESH não pode disponibilizar aquilo que não coleta, não recebe e não armazena, e a impossibilidade material aqui afirmada é, antes de tudo, uma decorrência da posição que a requerida ocupa na cadeia.`));
   H.push(P(`Assim, requer-se que as informações não fornecidas na presente resposta, por não integrarem o acervo da requerida, sejam requisitadas diretamente ao Operador adiante qualificado, cuja identificação é apresentada no tópico VI desta manifestação, providência que confere efetividade à diligência determinada.`));
 
-  /* IV — INFORMAÇÕES FORNECIDAS */
+  /* IV — INFORMAÇÕES FORNECIDAS (com dados transcritos dos documentos) */
   H.push(`<h2>IV. Das informações que se encontram sob a guarda da QESH e que ora se fornecem</h2>`);
-  const temIVdocs = has('cadastro')||has('transacoes')||has('bloqueio')||has('med');
-  if(temIVdocs){
-    H.push(P(`Delimitado o campo de atuação da requerida, passa-se ao atendimento efetivo da requisição, fornecendo-se, no limite do que se encontra sob a guarda da QESH e do que ora se documenta, os elementos a seguir discriminados.`));
-  } else {
-    H.push(P(`Delimitado o campo de atuação da requerida, cumpre esclarecer que, quanto às informações sob a guarda da QESH relativas à conta investigada, a instituição se compromete a apresentá-las em complementação a esta resposta, tão logo concluída a respectiva extração e validação técnica, ressalvando-se que os elementos de <em>onboarding</em> e os registros técnicos permanecem sob a guarda do Operador, adiante qualificado.`));
-  }
+  const temIV = has('cadastro')||has('transacoes')||has('bloqueio')||has('med');
+  if(temIV) H.push(P(`Delimitado o campo de atuação da requerida, passa-se ao atendimento efetivo da requisição, fornecendo-se, no limite do que se encontra sob a guarda da QESH e do que ora se documenta, os elementos a seguir discriminados.`));
+  else H.push(P(`Delimitado o campo de atuação da requerida, cumpre esclarecer que, quanto às informações sob a guarda da QESH relativas à conta investigada, a instituição se compromete a apresentá-las em complementação a esta resposta, tão logo concluída a respectiva extração e validação técnica, ressalvando-se que os elementos de <em>onboarding</em> e os registros técnicos permanecem sob a guarda do Operador, adiante qualificado.`));
   if(has('cadastro')){
-    H.push(P(`A QESH detém e ora fornece os dados cadastrais que lhe foram transmitidos pelo Operador no ato do credenciamento, bem como o histórico das chaves Pix vinculadas à conta, conforme documento anexo (${ref('cadastro')}), do qual constam o titular nominal, a inscrição no CPF/CNPJ, o número da conta de pagamento e da agência, a data de abertura, o endereço e os contatos informados, as chaves Pix vinculadas com as respectivas datas de criação e exclusão e a situação atual da conta.`));
+    const c=ag.cadastro||{};
+    H.push(P(`A QESH detém e ora fornece os dados cadastrais que lhe foram transmitidos pelo Operador no ato do credenciamento, bem como o histórico das chaves Pix vinculadas à conta, conforme documento anexo (${ref('cadastro')}) e quadro abaixo:`));
+    H.push(`<table>
+      <tr><th>Titular nominal</th><td>${C(c.titular||dados.titular,'nome completo — verificar no documento')}</td></tr>
+      <tr><th>CPF/CNPJ</th><td>${C(c.cpf||c.cnpj||dados.cpf||dados.cnpj,'número — verificar no documento')}</td></tr>
+      <tr><th>Conta de pagamento / agência</th><td>${C(c.conta||dados.conta,'conta')} / ${C(c.agencia||dados.agencia,'agência')}</td></tr>
+      <tr><th>Data de abertura da conta</th><td>${C(c.abertura,'dd/mm/aaaa — verificar no documento')}</td></tr>
+      <tr><th>Endereço informado</th><td>${C(c.endereco,'endereço — verificar no documento')}</td></tr>
+      <tr><th>Telefone e e-mail informados</th><td>${C(c.contato,'telefone / e-mail — verificar no documento')}</td></tr>
+      <tr><th>Chaves Pix vinculadas</th><td>${C(c.pix,'chave(s) e datas — verificar no documento')}</td></tr>
+      <tr><th>Situação atual da conta</th><td>${C(c.situacao,'ativa / bloqueada / encerrada — verificar no documento')}</td></tr>
+    </table>`);
   }
   if(has('transacoes')){
-    const cc = cen==='judicial' ? ', em observância ao layout da Carta Circular BACEN nº 3.454/2010,' : '';
-    H.push(P(`Acompanha a presente resposta o relatório das transações processadas na conta no período indicado no ofício (${ref('transacoes')}), com discriminação de data, horário, valor, natureza da operação e respectivo identificador, apresentado de forma detalhada e organizada${cc} de modo a permitir a identificação precisa das contas beneficiárias, dos valores e das datas.`));
+    const tr=ag.transacoes||{};
+    const periodo = (tr.periodoIni&&tr.periodoFim)? `, referente ao período de ${escapeHtml(tr.periodoIni)} a ${escapeHtml(tr.periodoFim)},` : '';
+    const cc = cen==='judicial'? ' em observância ao layout da Carta Circular BACEN nº 3.454/2010,' : '';
+    H.push(P(`Acompanha a presente resposta o relatório das transações processadas na conta${periodo} indicado no ofício (${ref('transacoes')}), com discriminação de data, horário, valor, natureza da operação e respectivo identificador, apresentado de forma detalhada e organizada,${cc} de modo a permitir a identificação precisa das contas beneficiárias, dos valores e das datas.`));
   }
   if(has('med')){
-    H.push(P(`No que diz respeito ao Mecanismo Especial de Devolução instituído no âmbito do arranjo Pix, a conta em referência registra solicitações de devolução, cujos registros, com a indicação do contestante, do valor contestado, das datas e do resultado da devolução, seguem anexos (${ref('med')}).`));
+    const md=ag.med||{};
+    const det=[];
+    if(md.contestante) det.push(`contestante ${escapeHtml(md.contestante)}`);
+    if(md.valor) det.push(`valor contestado de ${escapeHtml(md.valor)}`);
+    if(md.data) det.push(`data de ${escapeHtml(md.data)}`);
+    if(md.resultado) det.push(`resultado de ${escapeHtml(md.resultado)}`);
+    const detTxt = det.length? ', com '+det.join(', ')+',' : ',';
+    H.push(P(`No que diz respeito ao Mecanismo Especial de Devolução instituído no âmbito do arranjo Pix, a conta em referência registra solicitações de devolução${detTxt} conforme registros anexos (${ref('med')}).`));
   }
-  if(temIVdocs){
-    H.push(P(`Fornecem-se, assim, os elementos que a requerida efetivamente possui e documenta a respeito da conta investigada, prestando-se desde já para complementá-los caso subsista dúvida pontual quanto ao conteúdo ora apresentado.`));
-  }
+  if(temIV) H.push(P(`Fornecem-se, assim, os elementos que a requerida efetivamente possui e documenta a respeito da conta investigada, prestando-se desde já para complementá-los caso subsista dúvida pontual quanto ao conteúdo ora apresentado.`));
 
   /* V — PROVIDÊNCIAS ANTIFRAUDE */
   H.push(`<h2>V. Das providências antifraude adotadas pela QESH</h2>`);
   H.push(P(`Cumpre destacar que a QESH não se limita a fornecer os dados requisitados, mas atua ativamente na contenção dos ilícitos identificados em seu ambiente. Verificada a suspeita de fraude, a instituição promove, por decisão própria e independentemente de provocação, a suspensão da conta de pagamento e o bloqueio do saldo nela existente, faculdade expressamente prevista no instrumento contratual firmado com o Operador (cláusula 4.2).`));
   if(has('bloqueio')){
-    H.push(P(`No caso concreto, a conta objeto do ofício foi objeto de bloqueio pela requerida, conforme comprovante que ora se junta (${ref('bloqueio')}), do qual constam a data, o horário, o motivo e a situação do saldo bloqueado.`));
+    const bl=ag.bloqueio||{};
+    const parts=[];
+    if(bl.dh) parts.push(`em ${escapeHtml(bl.dh)}`);
+    if(bl.motivo) parts.push(`em razão de ${escapeHtml(bl.motivo)}`);
+    const saldo = bl.saldo? ` tendo permanecido bloqueado o saldo de ${escapeHtml(bl.saldo)}` : '';
+    H.push(P(`No caso concreto, a conta objeto do ofício foi bloqueada${parts.length? ' '+parts.join(', ') : ''}, conforme comprovante que ora se junta (${ref('bloqueio')})${saldo}.`));
   }
   if(has('comOperador')){
     H.push(P(`Paralelamente, a requerida oficiou o Operador responsável, requisitando-lhe os documentos e registros que se encontram sob a sua guarda exclusiva, valendo-se da obrigação contratual que impõe àquele agente o dever de disponibilizar informações e documentos no prazo de dois dias úteis contados da solicitação (${ref('comOperador')}), de modo que eventual demora ou omissão na obtenção desses elementos não pode ser imputada à requerida.`));
@@ -524,21 +653,24 @@ function montarPeca(){
     H.push(P(`A requerida permanece à disposição para, no prazo contratual de dois dias úteis a que está obrigado o Operador, intermediar a obtenção dos documentos e registros que se encontram sob a guarda exclusiva daquele agente, de modo que eventual demora ou omissão na obtenção desses elementos não pode ser imputada à instituição.`));
   }
   if(has('coaf')){
-    H.push(P(`Identificadas situações de atipicidade nas operações analisadas, a QESH promoveu as comunicações devidas ao Conselho de Controle de Atividades Financeiras, na forma da Lei nº 9.613/1998 e da Circular BCB nº 3.978/2020, cujos protocolos são apresentados sob reserva de sigilo (${ref('coaf')}).`));
+    const co=ag.coaf||{};
+    H.push(P(`Identificadas situações de atipicidade nas operações analisadas, a QESH promoveu as comunicações devidas ao Conselho de Controle de Atividades Financeiras, na forma da Lei nº 9.613/1998 e da Circular BCB nº 3.978/2020${co.protocolo?', sob o protocolo '+escapeHtml(co.protocolo)+',':','} cujos comprovantes são apresentados sob reserva de sigilo (${ref('coaf')}).`));
   }
   H.push(P(`As providências descritas evidenciam postura diligente e proativa da instituição, incompatível com qualquer juízo de omissão ou de conivência, e requer-se que assim sejam consignadas no procedimento investigatório.`));
 
-  /* VI — NÃO INTEGRAM + OPERADOR */
+  /* VI — NÃO INTEGRAM + OPERADOR (com qualificação transcrita) */
   H.push(`<h2>VI. Das informações que não integram o acervo da QESH e da qualificação do Operador</h2>`);
   H.push(P(`Determinadas informações usualmente requisitadas não são coletadas nem armazenadas pela requerida, precisamente porque produzidas no ambiente tecnológico do Operador, no momento em que este se relaciona com o usuário final. É o caso da fotografia de rosto colhida na prova de vida, das cópias dos documentos de identificação apresentados na abertura, da ficha de assinatura, do registro de aceite dos termos de uso e da política de privacidade, dos registros de conexão e endereços IP com porta lógica, da geolocalização dos acessos, dos identificadores de dispositivo e dos respectivos vínculos com outros usuários, bem como dos logs de autenticação da conta.`));
   H.push(P(`Todos esses elementos são gerados e custodiados pelo Operador, que os coleta diretamente do titular por meio de sua própria plataforma, recebendo a QESH apenas o resultado do processo de credenciamento e o conjunto mínimo de dados necessário à abertura e à operação da conta de pagamento. Não se trata, portanto, de recusa ao cumprimento da requisição, mas de impossibilidade material de fornecer aquilo que jamais esteve sob a guarda da instituição.`));
-  H.push(P(`Para que a diligência determinada alcance plena efetividade, indica-se o Operador responsável pela conta investigada, a quem as informações remanescentes devem ser requisitadas, cuja qualificação ${has('operadorQualif')||has('contrato') ? 'consta do documento anexo ('+ref(has('operadorQualif')?'operadorQualif':'contrato')+') e é a seguir resumida' : 'deverá ser complementada conforme os assentamentos da requerida'}:`));
+  const op = (ag.operadorQualif && Object.keys(ag.operadorQualif).some(k=>ag.operadorQualif[k])) ? ag.operadorQualif : (ag.contrato||{});
+  const refOp = has('operadorQualif')? ref('operadorQualif') : (has('contrato')? ref('contrato') : null);
+  H.push(P(`Para que a diligência determinada alcance plena efetividade, indica-se o Operador responsável pela conta investigada, a quem as informações remanescentes devem ser requisitadas${refOp?', cuja qualificação consta do documento anexo ('+refOp+') e é a seguir resumida':''}:`));
   H.push(`<table>
-    <tr><th>Razão social</th><td>${C('','razão social do Operador — consta do contrato/qualificação anexos')}</td></tr>
-    <tr><th>CNPJ</th><td>${C('','CNPJ do Operador')}</td></tr>
-    <tr><th>Endereço</th><td>${C('','endereço do Operador')}</td></tr>
-    <tr><th>E-mail para requisições</th><td>${C('','e-mail do Operador')}</td></tr>
-    <tr><th>Representante legal</th><td>${C('','representante legal do Operador')}</td></tr>
+    <tr><th>Razão social</th><td>${C(op.razao,'razão social do Operador — verificar')}</td></tr>
+    <tr><th>CNPJ</th><td>${C(op.cnpj,'CNPJ do Operador — verificar')}</td></tr>
+    <tr><th>Endereço</th><td>${C(op.endereco,'endereço do Operador — verificar')}</td></tr>
+    <tr><th>E-mail para requisições</th><td>${C(op.email,'e-mail do Operador — verificar')}</td></tr>
+    <tr><th>Representante legal</th><td>${C(op.rep,'representante legal do Operador — verificar')}</td></tr>
   </table>`);
   H.push(P(`Requer-se, por conseguinte, que as informações não fornecidas nesta oportunidade sejam requisitadas diretamente ao Operador acima indicado, consignando-se que a QESH permanece à disposição para viabilizar a intermediação da comunicação, se assim entender pertinente a autoridade.`));
 
@@ -553,7 +685,7 @@ function montarPeca(){
   H.push(P(`Além dos controles próprios, a requerida impõe contratualmente ao Operador a observância das mesmas exigências, obrigando-o a conhecer e aceitar a política de prevenção à lavagem de dinheiro e o procedimento de <em>know your client</em> (cláusula 2.1.2), a observar e cumprir a política de compliance, anticorrupção e de PLD/FT da instituição (cláusula 4.4, alínea "e") e a responder integralmente pelas fraudes praticadas quando não observadas as orientações e políticas por ela instituídas (cláusulas 2.8.1 e 5.8), reservando-se a QESH o direito de auditar, a qualquer tempo, o cumprimento desses procedimentos.`));
   H.push(P(`Verifica-se, pois, que a atuação da requerida observa integralmente os padrões legais e regulatórios de prevenção a ilícitos financeiros, sendo a eventual conduta fraudulenta de terceiros, praticada mediante o abuso da infraestrutura disponibilizada, insuscetível de ser atribuída à instituição que fornece a tecnologia e que, ao identificar a irregularidade, adota tempestivamente as medidas restritivas cabíveis.`));
 
-  /* VIII — RESERVA DE JURISDIÇÃO (condicional) */
+  /* VIII — RESERVA (condicional) */
   if(cen==='policial'){
     H.push(`<h2>VIII. Da observância da reserva de jurisdição quanto a dados protegidos por sigilo</h2>`);
     H.push(P(`A requerida atende, sem qualquer reserva, às requisições de dados cadastrais que informem a qualificação pessoal, a filiação e o endereço do investigado, na forma do artigo 15 da Lei nº 12.850/2013, bem como comunica às autoridades competentes a prática de ilícitos e as operações que envolvam recursos de origem criminosa, nos termos do artigo 1º, parágrafo 3º, inciso IV, da Lei Complementar nº 105/2001.`));
@@ -562,14 +694,14 @@ function montarPeca(){
   }
 
   /* IX/VIII — ART. 330 */
-  const tDes = cen==='policial' ? 'IX.' : 'VIII.';
+  const tDes = cen==='policial'? 'IX.' : 'VIII.';
   H.push(`<h2>${tDes} Da inexistência de descumprimento de ordem legal</h2>`);
   H.push(P(`Por fim, e considerando a advertência quanto à eventual configuração do delito previsto no artigo 330 do Código Penal, presente em requisições desta natureza, cumpre consignar que a requerida atendeu integralmente à ordem no limite do que lhe é material e juridicamente possível, prestando informação completa quanto ao que detém, esclarecendo de forma fundamentada o que não detém e indicando com precisão o terceiro que possui os elementos remanescentes.`));
   H.push(P(`A tipicidade da desobediência pressupõe recusa injustificada ao cumprimento de ordem legal possível de ser atendida, o que evidentemente não se verifica quando o destinatário demonstra que a informação requisitada não integra o seu acervo, tanto mais quando adota providências ativas para viabilizar a obtenção do dado junto a quem o detém, como aqui ocorreu.`));
   H.push(P(`Requer-se, assim, que se consigne o integral e tempestivo atendimento da requisição pela requerida, afastando-se qualquer juízo de inércia ou de descumprimento.`));
 
   /* X/IX — DOCUMENTOS */
-  const tDoc = cen==='policial' ? 'X.' : 'IX.';
+  const tDoc = cen==='policial'? 'X.' : 'IX.';
   H.push(`<h2>${tDoc} Dos documentos que acompanham a presente resposta</h2>`);
   if(ctx.docsOrd.length){
     H.push(P(`Acompanham esta manifestação, para os fins de instrução do procedimento, os seguintes documentos:`));
@@ -580,71 +712,82 @@ function montarPeca(){
   }
 
   /* XI/X — REQUERIMENTOS */
-  const tReq = cen==='policial' ? 'XI.' : 'X.';
+  const tReq = cen==='policial'? 'XI.' : 'X.';
   H.push(`<h2>${tReq} Dos requerimentos</h2>`);
   H.push(P(`Ante o exposto, a QESH INSTITUIÇÃO DE PAGAMENTO LTDA. requer: (i) o recebimento e a juntada da presente resposta${ctx.docsOrd.length?' e dos documentos que a acompanham':''}, consignando-se o seu integral e tempestivo atendimento; (ii) que as informações não fornecidas nesta oportunidade, por não integrarem o acervo informacional da requerida, sejam requisitadas diretamente ao Operador indicado no tópico VI; (iii) que os dados pessoais e as informações protegidas ora fornecidos recebam tratamento sigiloso, restrito às finalidades da investigação; e (iv) que eventuais requisições futuras relativas a esta ou a outras contas sejam encaminhadas ao canal jurídico institucional juridico@qesh.ai, com prazo compatível com a extração e a validação técnica dos dados.`));
   H.push(P(`Nestes termos, permanecendo à inteira disposição para os esclarecimentos adicionais que se façam necessários, pede deferimento.`));
 
-  /* FECHO */
   H.push(`<p class="assinatura">Nova Lima, ${dataPeca}.</p>`);
   H.push(`<p class="assinatura">Renato Dilly Campos<br>OAB/MG 166.263</p>`);
-
   return H.join('\n');
 }
 
 function resumirQuesitos(itens){
   if(!itens.length) return '<mark>[os quesitos formulados — verificar no ofício]</mark>';
-  const labels = itens.map(i=> /^[A-Z]{2,}/.test(i.label) ? i.label : i.label.charAt(0).toLowerCase()+i.label.slice(1));
+  const labels = itens.map(i=> /^[A-Z]{2,}/.test(i.label)? i.label : i.label.charAt(0).toLowerCase()+i.label.slice(1));
   if(labels.length===1) return labels[0];
-  return labels.slice(0,-1).join(', ') + ' e ' + labels.slice(-1);
+  return labels.slice(0,-1).join(', ')+' e '+labels.slice(-1);
 }
-const MESES = ['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
+function romano(n){ return ['i','ii','iii','iv','v','vi','vii','viii','ix','x','xi','xii'][n-1] || String(n); }
 
 /* ─────────────────────────  GERAR + EXPORT  ───────────────────────── */
 let ultimaPeca='';
 document.getElementById('btn-gerar').addEventListener('click', ()=>{
   esconderErro();
   if(!state.oficios.length && !state.documentos.length){ mostrarErro('Anexe ao menos um ofício ou documento antes de gerar a peça.'); return; }
+  if(state.oficios.some(o=>o.mode==='wait') || state.documentos.some(d=>d.mode==='wait')){ mostrarErro('Aguarde a leitura/OCR dos arquivos concluir antes de gerar.'); return; }
   if(!state.analisado) analisar();
   ultimaPeca = montarPeca();
   document.getElementById('preview').innerHTML = ultimaPeca;
   document.getElementById('preview-wrap').style.display='block';
-  document.getElementById('btn-doc').disabled=false;
-  const pen = document.getElementById('pending');
-  const unicos=[...new Set(pendentes)];
+  document.getElementById('btn-word').disabled=false;
+  document.getElementById('btn-pdf').disabled=false;
+  const pen=document.getElementById('pending'), unicos=[...new Set(pendentes)];
   pen.style.display='block';
-  if(unicos.length){
-    pen.innerHTML = `<strong>${unicos.length} ponto(s) a conferir</strong> — destacados em amarelo na peça, pois não puderam ser lidos dos documentos anexados: ${unicos.map(escapeHtml).join('; ')}. Tudo o que não foi anexado foi tratado como inexistente e a peça foi ajustada de acordo.`;
-  } else {
-    pen.innerHTML = `<strong style="color:var(--green)">Nenhum destaque pendente.</strong> Todos os dados foram lidos dos documentos anexados. Confira a numeração das cláusulas no contrato específico do Operador antes do protocolo.`;
-  }
+  if(unicos.length) pen.innerHTML=`<strong>${unicos.length} ponto(s) a conferir</strong> — destacados em amarelo, pois não puderam ser lidos dos documentos: ${unicos.map(escapeHtml).join('; ')}. Tudo o que não foi anexado foi tratado como inexistente e a peça foi ajustada. Você pode editar o texto abaixo antes de baixar.`;
+  else pen.innerHTML=`<strong style="color:var(--green)">Nenhum destaque pendente.</strong> Todos os dados foram lidos dos documentos. Revise/edite o texto abaixo e confira a numeração das cláusulas do contrato do Operador antes do protocolo.`;
   document.getElementById('preview-wrap').scrollIntoView({behavior:'smooth',block:'start'});
 });
 
-document.getElementById('btn-doc').addEventListener('click', ()=>{
-  if(!ultimaPeca){ mostrarErro('Gere a peça antes de exportar.'); return; }
-  const dados = extrairDadosOficio();
-  const nome = `Resposta_Oficio_QESH_${(dados.oficioNum||'caso').replace(/[^\w-]/g,'')}_${new Date().toISOString().slice(0,10)}`;
-  const styleWord = `<style>
-    @page WordSection1 { size: 21cm 29.7cm; margin: 3cm 2.5cm 2.5cm 3cm; }
-    div.WordSection1 { page: WordSection1; }
-    body { font-family: 'Segoe UI', sans-serif; font-size: 11pt; color: #000; line-height: 1.5; text-align: justify; }
-    h1 { font-size: 11pt; font-weight: bold; text-align: left; line-height: 1.4; margin: 0 0 12pt; }
-    h2 { font-size: 11pt; font-weight: bold; text-transform: uppercase; margin: 18pt 0 8pt; text-align: left; }
-    p { margin: 0 0 10pt; text-align: justify; }
-    .ender { margin-bottom: 16pt; }
-    table { border-collapse: collapse; width: 100%; margin: 6pt 0 12pt; font-size: 10.5pt; }
-    th, td { border: 0.75pt solid #444; padding: 4pt 7pt; text-align: left; vertical-align: top; }
-    th { background: #efece4; width: 42%; }
-    .doclist { list-style: none; margin: 4pt 0 12pt; padding: 0; }
-    .doclist li { margin-bottom: 4pt; }
-    .assinatura { margin-top: 24pt; }
-    mark { background: yellow; color: #000; }
-    .np { font-weight: normal; }
-  </style>`;
-  const html = `<!DOCTYPE html><html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word'><head><meta charset="UTF-8">${styleWord}</head><body><div class="WordSection1">${ultimaPeca}</div></body></html>`;
-  const blob = new Blob(['﻿', html], { type:'application/msword' });
-  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = nome+'.doc'; a.click();
+function conteudoAtual(){ return document.getElementById('preview').innerHTML || ultimaPeca; }
+const STYLE_DOC = `
+  @page WordSection1 { size:21cm 29.7cm; margin:3cm 2.5cm 2.5cm 3cm; }
+  div.WordSection1 { page:WordSection1; }
+  body { font-family:'Segoe UI',sans-serif; font-size:11pt; color:#000; line-height:1.5; text-align:justify; }
+  h1 { font-size:11pt; font-weight:bold; text-align:left; line-height:1.4; margin:0 0 12pt; }
+  h2 { font-size:11pt; font-weight:bold; text-transform:uppercase; margin:18pt 0 8pt; text-align:left; }
+  p { margin:0 0 10pt; text-align:justify; }
+  .ender { margin-bottom:16pt; }
+  table { border-collapse:collapse; width:100%; margin:6pt 0 12pt; font-size:10.5pt; }
+  th,td { border:0.75pt solid #444; padding:4pt 7pt; text-align:left; vertical-align:top; }
+  th { background:#efece4; width:42%; }
+  .doclist { list-style:none; margin:4pt 0 12pt; padding:0; }
+  .doclist li { margin-bottom:4pt; }
+  .assinatura { margin-top:24pt; }
+  mark { background:yellow; color:#000; }
+  .np { font-weight:normal; }`;
+
+document.getElementById('btn-word').addEventListener('click', ()=>{
+  if(!conteudoAtual()){ mostrarErro('Gere a peça antes de exportar.'); return; }
+  const dd=extrairDadosOficio();
+  const nome=`Resposta_Oficio_QESH_${(dd.oficioNum||'caso').replace(/[^\w-]/g,'')}_${new Date().toISOString().slice(0,10)}`;
+  const html=`<!DOCTYPE html><html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word'><head><meta charset="UTF-8"><style>${STYLE_DOC}</style></head><body><div class="WordSection1">${conteudoAtual()}</div></body></html>`;
+  const blob=new Blob(['﻿',html],{type:'application/msword'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=nome+'.doc'; a.click();
+});
+
+document.getElementById('btn-pdf').addEventListener('click', ()=>{
+  if(!conteudoAtual()){ mostrarErro('Gere a peça antes de exportar.'); return; }
+  const dd=extrairDadosOficio();
+  const titulo=`Resposta_Oficio_QESH_${(dd.oficioNum||'caso').replace(/[^\w-]/g,'')}_${new Date().toISOString().slice(0,10)}`;
+  const w=window.open('','_blank');
+  if(!w){ mostrarErro('O navegador bloqueou a janela de impressão. Permita pop-ups para baixar o PDF.'); return; }
+  w.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${titulo}</title><style>${STYLE_DOC}
+    @media print { body { margin:0; } }
+    body { margin:3cm 2.5cm 2.5cm 3cm; }</style></head>
+    <body><div class="WordSection1">${conteudoAtual()}</div>
+    <script>window.onload=function(){setTimeout(function(){window.print();},350);};<\/script></body></html>`);
+  w.document.close();
 });
 
 document.getElementById('btn-limpar').addEventListener('click', ()=>{
@@ -657,7 +800,7 @@ document.getElementById('btn-limpar').addEventListener('click', ()=>{
   document.getElementById('diag-chips').style.display='none';
   document.getElementById('seg-cenario').style.display='none';
   document.getElementById('preview-wrap').style.display='none';
-  document.getElementById('btn-doc').disabled=true;
+  document.getElementById('btn-word').disabled=true; document.getElementById('btn-pdf').disabled=true;
   ultimaPeca='';
 });
 </script>
