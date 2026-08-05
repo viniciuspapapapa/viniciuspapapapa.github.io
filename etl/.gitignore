@@ -12,3 +12,9 @@ qsa_cache.json
 captacao-interna.html
 RESUMO_EXECUTIVO_5-50mi.html
 RESUMO_EXECUTIVO_5-50mi.pdf
+
+# indexador de jurisprudência STJ — dados brutos baixados e índice completo
+# local (o índice completo pode passar de 100MB; não é versionado, só o
+# recorte/amostra gerado com --limite vai para dados-jurisprudencia.json)
+jurisprudencia/stj_json/
+jurisprudencia/saida_local/
