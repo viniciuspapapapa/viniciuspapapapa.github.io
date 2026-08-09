@@ -7,7 +7,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Closet">
-<meta name="description" content="Guarda-roupa digital: recorte automático das peças, catalogação por tipo, cor e estilo, e gerador de looks por ocasião.">
+<meta name="description" content="Guarda-roupa digital: identifica as roupas nas suas fotos, desenha cada peça no catálogo e monta looks por ocasião.">
 <title>CLOSET · Guarda-roupa digital</title>
 <link rel="manifest" href="/manifest-guarda-roupa.json">
 <link rel="apple-touch-icon" href="/icon-closet-192.png">
@@ -333,6 +333,26 @@ body.labels .tile .cat{opacity:1}
   aspect-ratio:1/1;display:grid;place-items:center;overflow:hidden;border:1px solid var(--line);
 }
 .rev-stage img{width:88%;height:88%;object-fit:contain;filter:drop-shadow(0 10px 22px rgba(0,0,0,.5))}
+.rev-stage.art{
+  background:linear-gradient(160deg,var(--card2),var(--card));
+  background-size:auto;
+}
+.rev-stage.art img{width:82%;height:82%}
+.det-hero.art{background:linear-gradient(160deg,var(--card2),var(--card))}
+.evidence{
+  display:flex;align-items:center;gap:13px;margin-top:12px;
+  background:var(--card);border:1px solid var(--line);border-radius:18px;padding:10px 14px 10px 10px;
+}
+.evidence img{
+  width:62px;height:62px;flex:none;border-radius:14px;object-fit:contain;
+  background:
+    linear-gradient(45deg,#242212 25%,transparent 25%,transparent 75%,#242212 75%),
+    linear-gradient(45deg,#242212 25%,#1b1a11 25%,#1b1a11 75%,#242212 75%);
+  background-size:12px 12px;background-position:0 0,6px 6px;
+}
+.evidence .ev-t{flex:1;min-width:0}
+.evidence .ev-t b{display:block;font-size:13.5px;font-weight:600;text-transform:none}
+.evidence .ev-t span{display:block;font-size:11.5px;color:var(--mut2);line-height:1.45;margin-top:2px}
 .rev-nav{display:flex;align-items:center;gap:8px;justify-content:center;margin:14px 0 4px}
 .rev-dot{width:7px;height:7px;border-radius:50%;background:var(--line2);transition:all .25s var(--ease)}
 .rev-dot.on{background:var(--acc-lt);width:20px;border-radius:4px}
@@ -589,17 +609,17 @@ select.inp{appearance:none;-webkit-appearance:none;
     </div>
 
     <div class="section">
-      <div class="section-head"><h2>Recorte e catalogação</h2></div>
+      <div class="section-head"><h2>Reconhecimento</h2></div>
       <div class="card">
         <div class="switch-row">
-          <div class="st"><b>Recorte automático</b><span>Remove o fundo da foto e isola a peça ao importar.</span></div>
-          <button class="switch" id="sw-cutout" onclick="APP.toggleSetting('cutout',this)"></button>
+          <div class="st"><b>Identificar peças na foto</b><span>Reconhece cada roupa vestida na imagem — camisa, calça, calçado, bolsa, acessórios — mesmo em selfie de espelho. Usa um modelo de visão de 27 MB, baixado uma única vez e guardado no aparelho.</span></div>
+          <button class="switch" id="sw-detect" onclick="APP.toggleSetting('detect',this)"></button>
         </div>
+        <div id="aiStatus" class="hint" style="font-size:12px;color:var(--mut2);line-height:1.45;padding-bottom:10px"></div>
         <div class="switch-row" style="border-top:1px solid var(--line)">
-          <div class="st"><b>Classificação por IA</b><span>Baixa um modelo de visão (~40 MB, uma única vez) e reconhece o tipo da peça com muito mais precisão. Sem IA, a classificação usa análise de silhueta e cor.</span></div>
-          <button class="switch" id="sw-ai" onclick="APP.toggleSetting('ai',this)"></button>
+          <div class="st"><b>Mostrar a foto no lugar do desenho</b><span>Por padrão o catálogo exibe uma reprodução vetorial da peça, que fica limpa e uniforme. Aqui você troca pelo recorte da foto original.</span></div>
+          <button class="switch" id="sw-photo" onclick="APP.toggleSetting('showPhoto',this)"></button>
         </div>
-        <div id="aiStatus" class="hint" style="font-size:12px;color:var(--mut2);line-height:1.45"></div>
       </div>
     </div>
 
@@ -679,6 +699,7 @@ select.inp{appearance:none;-webkit-appearance:none;
 <input type="file" id="pickCamera" accept="image/*" capture="environment" class="sr">
 <input type="file" id="importFile" accept="application/json,.json" class="sr">
 
+<script src="/guarda-roupa-art.js"></script>
 <script src="/guarda-roupa-app.js"></script>
 </body>
 </html>

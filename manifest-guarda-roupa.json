@@ -1,7 +1,7 @@
 {
   "name": "CLOSET — Guarda-roupa digital",
   "short_name": "Closet",
-  "description": "Fotografe ou importe suas roupas: o app recorta o fundo, cataloga cada peça por tipo, cor e estilo e monta looks automáticos por ocasião.",
+  "description": "Fotografe ou importe suas roupas, inclusive vestidas: o app identifica cada peça, desenha uma reprodução dela, cataloga por tipo, cor e estilo e monta looks por ocasião.",
   "start_url": "/guarda-roupa.html",
   "scope": "/",
   "display": "standalone",
