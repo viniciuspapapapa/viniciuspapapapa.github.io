@@ -1,7 +1,8 @@
-const CACHE = 'closet-v1';
+const CACHE = 'closet-v2';
 const STATIC = [
   '/guarda-roupa.html',
   '/guarda-roupa-app.js',
+  '/guarda-roupa-art.js',
   '/manifest-guarda-roupa.json',
   '/icon-closet-192.png',
   '/icon-closet-512.png'
@@ -26,7 +27,7 @@ self.addEventListener('fetch', e => {
   if (url.origin !== self.location.origin) return;
 
   // Network-first para HTML e JS do app, para que atualizações apareçam de imediato.
-  if (url.pathname === '/guarda-roupa.html' || url.pathname === '/guarda-roupa-app.js') {
+  if (/^\/guarda-roupa(-app|-art)?\.(html|js)$/.test(url.pathname)) {
     e.respondWith(
       fetch(e.request, { cache: 'no-store' })
         .then(r => { const c = r.clone(); caches.open(CACHE).then(cc => cc.put(e.request, c)); return r; })

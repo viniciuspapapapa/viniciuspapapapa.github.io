@@ -857,65 +857,6 @@ const Classifier = {
     };
   },
 
-  /* ---------- 6.2 IA opcional: CLIP zero-shot via transformers.js ---------- */
-  ai: {
-    pipe: null, loading: null, failed: false,
-    labels: CATEGORIES.filter(c => c.id !== 'outro').map(c => ({
-      id: c.id,
-      prompt: {
-        camiseta: 'a plain t-shirt', regata: 'a sleeveless tank top', camisa: 'a button-up dress shirt',
-        polo: 'a polo shirt', moletom: 'a hoodie sweatshirt', trico: 'a knitted sweater',
-        blusa: 'a womens blouse', 'camisa-time': 'a soccer jersey',
-        calca: 'a pair of trousers', alfaiataria: 'a pair of tailored suit trousers', jeans: 'a pair of blue jeans',
-        bermuda: 'a pair of long shorts', short: 'a pair of short shorts', saia: 'a skirt', legging: 'a pair of leggings',
-        vestido: 'a dress', macacao: 'a jumpsuit', terno: 'a suit',
-        jaqueta: 'a jacket', blazer: 'a blazer', casaco: 'a winter coat', colete: 'a vest',
-        sobretudo: 'a long overcoat', 'corta-vento': 'a windbreaker',
-        tenis: 'a pair of sneakers', sapato: 'a pair of formal leather shoes', mocassim: 'a pair of loafers',
-        bota: 'a pair of boots', chinelo: 'a pair of flip flop slides', sandalia: 'a pair of sandals',
-        mochila: 'a backpack', shoulder: 'a small shoulder crossbody bag', bolsa: 'a handbag',
-        tote: 'a canvas tote bag', pochete: 'a fanny pack waist bag',
-        oculos: 'a pair of sunglasses', bone: 'a baseball cap', chapeu: 'a hat', cinto: 'a leather belt',
-        relogio: 'a wristwatch', colar: 'a necklace', cachecol: 'a scarf', meia: 'a pair of socks'
-      }[c.id] || c.label
-    })),
-
-    async load(onProgress) {
-      if (this.pipe) return this.pipe;
-      if (this.loading) return this.loading;
-      this.loading = (async () => {
-        const mod = await import('https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.5.1/dist/transformers.min.js');
-        mod.env.allowLocalModels = false;
-        this.pipe = await mod.pipeline('zero-shot-image-classification', 'Xenova/clip-vit-base-patch32', {
-          dtype: 'q8',
-          progress_callback: p => { if (p.status === 'progress' && p.total) onProgress?.(p.loaded / p.total); }
-        });
-        return this.pipe;
-      })().catch(e => { console.warn('[closet] IA indisponível:', e); this.failed = true; this.loading = null; throw e; });
-      return this.loading;
-    },
-
-    async classify(canvas) {
-      const pipe = await this.load();
-      // CLIP funciona melhor com fundo neutro claro do que com transparência
-      const c = document.createElement('canvas');
-      c.width = 224; c.height = 224;
-      const ctx = c.getContext('2d');
-      ctx.fillStyle = '#f2f2f2'; ctx.fillRect(0, 0, 224, 224);
-      ctx.imageSmoothingQuality = 'high';
-      ctx.drawImage(canvas, 0, 0, 224, 224);
-      const url = c.toDataURL('image/jpeg', .92);
-      const out = await pipe(url, this.labels.map(l => l.prompt));
-      const best = out[0];
-      const id = this.labels.find(l => l.prompt === best.label)?.id || 'outro';
-      return {
-        catId: id,
-        confidence: clamp(best.score * 2.2, .2, .97),
-        alternatives: out.slice(0, 5).map(o => this.labels.find(l => l.prompt === o.label)?.id).filter(Boolean)
-      };
-    }
-  },
-
   /* ---------- 6.3 monta o objeto final da peça ---------- */
   build(cls, pal, shape) {
     const cat = CAT[cls.catId] || CAT['outro'];
@@ -951,6 +892,251 @@ const Classifier = {
       seasons,
       ar: shape ? +shape.ar.toFixed(2) : 1
     };
+  }
+};
+
+
+/* ============================================================================
+   6b. SEGMENTADOR DE ROUPAS
+   Modelo SegFormer treinado para "human parsing": recebe a foto de uma pessoa
+   vestida e devolve uma máscara por peça (blusa, calça, saia, vestido, sapato,
+   bolsa, cinto, óculos, boné, cachecol). É o que permite catalogar a partir de
+   uma selfie de espelho, em vez de exigir foto da peça em fundo liso.
+   ========================================================================= */
+const Segmenter = {
+  MODEL: 'Xenova/segformer_b2_clothes',
+  LIB: 'https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.5.1/dist/transformers.min.js',
+  pipe: null, loading: null, failed: false, progress: 0,
+
+  async load(onProgress) {
+    if (this.pipe) return this.pipe;
+    if (this.loading) return this.loading;
+    this.loading = (async () => {
+      const mod = await import(this.LIB);
+      mod.env.allowLocalModels = false;
+      const seen = {};
+      this.pipe = await mod.pipeline('image-segmentation', this.MODEL, {
+        dtype: 'q8',
+        progress_callback: p => {
+          if (p.status === 'progress' && p.total) {
+            seen[p.file] = p.loaded / p.total;
+            const vals = Object.values(seen);
+            this.progress = vals.reduce((a, b) => a + b, 0) / vals.length;
+            onProgress?.(this.progress);
+          }
+        }
+      });
+      return this.pipe;
+    })().catch(e => {
+      console.warn('[closet] segmentação indisponível:', e);
+      this.failed = true; this.loading = null;
+      throw e;
+    });
+    return this.loading;
+  },
+
+  /* rótulo do modelo → como o app trata a peça */
+  MAP: {
+    'Upper-clothes': { group: 'top',       min: .012 },
+    'Pants':         { group: 'bottom',    min: .012 },
+    'Skirt':         { group: 'bottom',    min: .012, cat: 'saia' },
+    'Dress':         { group: 'fullbody',  min: .015, cat: 'vestido' },
+    'Left-shoe':     { group: 'shoes',     min: .002, cat: 'tenis', merge: 'shoes' },
+    'Right-shoe':    { group: 'shoes',     min: .002, cat: 'tenis', merge: 'shoes' },
+    'Bag':           { group: 'bag',       min: .004 },
+    'Belt':          { group: 'accessory', min: .0012, cat: 'cinto' },
+    'Hat':           { group: 'accessory', min: .0025, cat: 'bone' },
+    'Sunglasses':    { group: 'accessory', min: .0008, cat: 'oculos' },
+    'Scarf':         { group: 'accessory', min: .004,  cat: 'cachecol' }
+  },
+
+  /* ---- estatísticas lidas direto da máscara do modelo, sem redimensionar.
+          Varre de 2 em 2 pixels: bbox e área saem com precisão de sobra e o
+          custo cai a um quarto. ---- */
+  scan(mask) {
+    const w = mask.width, h = mask.height, d = mask.data, ch = mask.channels || 1;
+    let area = 0, x0 = w, y0 = h, x1 = -1, y1 = -1;
+    for (let y = 0; y < h; y += 2) {
+      const row = y * w;
+      for (let x = 0; x < w; x += 2) {
+        if (d[(row + x) * ch] <= 127) continue;
+        area++;
+        if (x < x0) x0 = x; if (x > x1) x1 = x;
+        if (y < y0) y0 = y; if (y > y1) y1 = y;
+      }
+    }
+    return { area: area * 4, x0, y0, x1, y1, w: x1 - x0 + 1, h: y1 - y0 + 1, mw: w, mh: h };
+  },
+
+  /* máscara → matriz booleana no tamanho do canvas (só para as peças mantidas) */
+  rescale(mask, w, h) {
+    const m = new Uint8Array(w * h);
+    const mw = mask.width, mh = mask.height, md = mask.data, ch = mask.channels || 1;
+    for (let y = 0; y < h; y++) {
+      const sy = Math.min(mh - 1, (y * mh / h) | 0) * mw;
+      const row = y * w;
+      for (let x = 0; x < w; x++) {
+        const sx = Math.min(mw - 1, (x * mw / w) | 0);
+        if (md[(sy + sx) * ch] > 127) m[row + x] = 1;
+      }
+    }
+    return m;
+  },
+
+  /* cores dominantes dos pixels cobertos pela máscara */
+  colorsOf(ctx, m, w, h, st) {
+    const img = ctx.getImageData(0, 0, w, h).data;
+    const labs = [], rgbs = [];
+    const step = Math.max(1, Math.floor(Math.sqrt(st.area / 2600)));
+    for (let y = st.y0; y <= st.y1; y += step) {
+      for (let x = st.x0; x <= st.x1; x += step) {
+        if (!m[y * w + x]) continue;
+        const i = (y * w + x) * 4;
+        const r = img[i], g = img[i + 1], b = img[i + 2];
+        const l = (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255;
+        if (l < .045 || l > .985) continue;          // sombra dura e estouro de luz
+        labs.push(Color.rgb2lab(r, g, b)); rgbs.push([r, g, b]);
+      }
+    }
+    if (labs.length < 20) return { colors: [{ hex: '#8a8d92', ratio: 1 }], pattern: 'liso' };
+
+    const cs = Vision.kmeans(labs, 3, 8).filter(k => k.count / labs.length > .08);
+    const total = cs.reduce((a, k) => a + k.count, 0);
+    let colors = cs.map(k => {
+      let sr = 0, sg = 0, sb = 0, n = 0;
+      for (let i = 0; i < labs.length; i++)
+        if (Color.dist(labs[i], k.lab) < 16) { sr += rgbs[i][0]; sg += rgbs[i][1]; sb += rgbs[i][2]; n++; }
+      return { hex: n ? Color.rgb2hex(sr / n, sg / n, sb / n) : '#8a8d92', ratio: k.count / total, lab: k.lab };
+    });
+    const merged = [];
+    for (const c of colors) {
+      const near = merged.find(m2 => Color.dist(m2.lab, c.lab) < 15 || nameColor(m2.hex).n === nameColor(c.hex).n);
+      if (near) near.ratio += c.ratio; else merged.push({ ...c });
+    }
+    colors = merged.sort((a, b) => b.ratio - a.ratio).map(c => ({ hex: c.hex, ratio: c.ratio }));
+
+    let variance = 0;
+    for (const l of labs) variance += Color.dist(l, cs[0].lab);
+    variance /= labs.length;
+    const sec = colors[1]?.ratio || 0;
+    const pattern = (variance > 24 && sec > .2) ? 'estampado' : (variance > 16 && sec > .28) ? 'listrado' : 'liso';
+    return { colors, pattern };
+  },
+
+  /* recorte da foto com a peça isolada — serve de comprovação visual */
+  crop(src, m, w, h, st, out = 260) {
+    const c = document.createElement('canvas');
+    c.width = out; c.height = out;
+    const ctx = c.getContext('2d');
+    const tmp = document.createElement('canvas');
+    tmp.width = st.w; tmp.height = st.h;
+    const tctx = tmp.getContext('2d', { willReadFrequently: true });
+    tctx.drawImage(src, st.x0, st.y0, st.w, st.h, 0, 0, st.w, st.h);
+    const d = tctx.getImageData(0, 0, st.w, st.h);
+    for (let y = 0; y < st.h; y++) for (let x = 0; x < st.w; x++)
+      if (!m[(y + st.y0) * w + (x + st.x0)]) d.data[(y * st.w + x) * 4 + 3] = 0;
+    tctx.putImageData(d, 0, 0);
+    const sc = Math.min((out - 16) / st.w, (out - 16) / st.h);
+    ctx.imageSmoothingQuality = 'high';
+    ctx.drawImage(tmp, (out - st.w * sc) / 2, (out - st.h * sc) / 2, st.w * sc, st.h * sc);
+    return c;
+  },
+
+  /* --------- detecta todas as peças de uma foto --------- */
+  BODY: ['Face', 'Hair', 'Left-arm', 'Right-arm', 'Left-leg', 'Right-leg'],
+
+  async detect(canvas) {
+    const pipe = await this.load();
+    const out = await pipe(canvas.toDataURL('image/jpeg', .92));
+    const w = canvas.width, h = canvas.height;
+
+    // 1ª passada: área e caixa de cada rótulo que interessa
+    const info = {};
+    for (const seg of out) {
+      if (!seg?.mask) continue;
+      if (!this.MAP[seg.label] && !this.BODY.includes(seg.label)) continue;
+      info[seg.label] = { mask: seg.mask, st: this.scan(seg.mask) };
+    }
+    const mtotal = (Object.values(info)[0]?.st.mw || w) * (Object.values(info)[0]?.st.mh || h);
+
+    // evidência de pessoa: rosto, cabelo, braços e pernas. Sem isso o modelo
+    // tende a inventar peças em cima de uma foto de roupa solta — quem decide
+    // o que fazer com essa informação é analysePhoto().
+    let person = 0;
+    for (const l of this.BODY) person += info[l]?.st.area || 0;
+    person /= mtotal;
+
+    const ext = lbls => {
+      let top = Infinity, bottom = -1, area = 0;
+      for (const l of lbls) {
+        const i = info[l]; if (!i || i.st.x1 < 0) continue;
+        area += i.st.area;
+        if (i.st.y0 < top) top = i.st.y0;
+        if (i.st.y1 > bottom) bottom = i.st.y1;
+      }
+      return { top, bottom, area };
+    };
+    const arms = ext(['Left-arm', 'Right-arm']);
+    const legs = ext(['Left-leg', 'Right-leg']);
+    const shoesE = ext(['Left-shoe', 'Right-shoe']);
+
+    // 3. sapatos viram uma peça só
+    const labels = Object.keys(info).filter(l => this.MAP[l]);
+    const merged = {};
+    for (const l of labels) merged[l] = info[l];
+    if (merged['Left-shoe'] && merged['Right-shoe']) delete merged['Right-shoe'];
+
+    const ctx = canvas.getContext('2d', { willReadFrequently: true });
+    const found = [];
+    for (const [label, i] of Object.entries(merged)) {
+      const cfg = this.MAP[label];
+      const share = i.st.area / mtotal;
+      if (i.st.x1 < 0 || share < cfg.min) continue;
+
+      // máscara no tamanho do canvas, agora que a peça foi aprovada
+      let m = this.rescale(i.mask, w, h);
+      if (label === 'Left-shoe' && info['Right-shoe']) {
+        const r = this.rescale(info['Right-shoe'].mask, w, h);
+        for (let k = 0; k < m.length; k++) if (r[k]) m[k] = 1;
+      }
+      const sx = w / i.st.mw, sy = h / i.st.mh;
+      const st = {
+        area: i.st.area, x0: Math.max(0, Math.floor(i.st.x0 * sx)), y0: Math.max(0, Math.floor(i.st.y0 * sy)),
+        x1: Math.min(w - 1, Math.ceil(i.st.x1 * sx)), y1: Math.min(h - 1, Math.ceil(i.st.y1 * sy))
+      };
+      if (label === 'Left-shoe' && info['Right-shoe']) {
+        const r = info['Right-shoe'].st;
+        st.x0 = Math.min(st.x0, Math.floor(r.x0 * sx)); st.x1 = Math.max(st.x1, Math.ceil(r.x1 * sx));
+        st.y0 = Math.min(st.y0, Math.floor(r.y0 * sy)); st.y1 = Math.max(st.y1, Math.ceil(r.y1 * sy));
+      }
+      st.w = st.x1 - st.x0 + 1; st.h = st.y1 - st.y0 + 1;
+
+      const { colors, pattern } = this.colorsOf(ctx, m, w, h, st);
+      let catId = cfg.cat;
+
+      if (label === 'Upper-clothes') {
+        const rel = arms.bottom >= 0 && i.st.h > 0 ? (arms.top - i.st.y0) / i.st.h : .45;
+        const shareArms = i.st.area ? arms.area / i.st.area : .2;
+        catId = rel > .78 ? 'camisa' : (rel < .22 || shareArms > .38) ? 'regata' : 'camiseta';
+      } else if (label === 'Pants') {
+        const ankle = Math.max(legs.bottom, shoesE.top >= 0 ? shoesE.top : -1);
+        const span = ankle > i.st.y0 ? ankle - i.st.y0 : i.st.h;
+        const cover = span > 0 ? i.st.h / span : 1;
+        const [hh, ss, ll] = Color.rgb2hsl(...Color.hex2rgb(colors[0].hex));
+        const denim = hh > 190 && hh < 250 && ss > .10 && ss < .55 && ll > .18 && ll < .72;
+        catId = cover > .78 ? (denim ? 'jeans' : 'calca') : cover > .45 ? 'bermuda' : 'short';
+      } else if (label === 'Bag') {
+        catId = st.h > st.w * 1.15 ? 'mochila' : 'shoulder';
+      }
+
+      found.push({
+        label, catId: catId || 'outro', group: cfg.group,
+        colors, pattern, share,
+        cropCanvas: this.crop(canvas, m, w, h, st)
+      });
+    }
+    found.sort((a, b) => b.share - a.share);
+    return { person, garments: found };
   }
 };
 
@@ -1217,7 +1403,7 @@ const APP = {
   filter: { cat: 'todos', styles: [], colors: [], patterns: [], fav: false },
   grouped: true, labels: false,
   gen: { occasion: 'diaadia', weather: 'ameno', palette: 'equilibrado', pinned: null, results: [] },
-  settings: { cutout: true, ai: false },
+  settings: { detect: true, showPhoto: false },
   queue: [], reviewIdx: 0,
 
   /* ---------- 8.1 boot ---------- */
@@ -1243,7 +1429,6 @@ const APP = {
     this.render();
     this.registerSW();
 
-    if (this.settings.ai) this.warmAI();
   },
 
   registerSW() {
@@ -1258,8 +1443,8 @@ const APP = {
   },
 
   syncUI() {
-    $('#sw-cutout').classList.toggle('on', this.settings.cutout);
-    $('#sw-ai').classList.toggle('on', this.settings.ai);
+    $('#sw-detect').classList.toggle('on', this.settings.detect);
+    $('#sw-photo').classList.toggle('on', this.settings.showPhoto);
     $('#groupBtn').classList.toggle('on', this.grouped);
     $('#labelBtn').classList.toggle('on', this.labels);
     document.body.classList.toggle('labels', this.labels);
@@ -1339,7 +1524,7 @@ const APP = {
     haptic(12);
     this.sheet(`
       <h3>Adicionar peças</h3>
-      <p class="sh-sub">Pode enviar várias fotos de uma vez. O fundo é removido automaticamente e cada peça é classificada por tipo, cor e estilo.</p>
+      <p class="sh-sub">Pode mandar várias fotos de uma vez, inclusive de você vestindo a roupa. O app identifica cada peça, extrai a cor e desenha uma reprodução dela para o catálogo.</p>
       <button class="opt" onclick="APP.closeSheet();setTimeout(()=>document.getElementById('pickAlbum').click(),180)">
         <div class="oi"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2.5"/><circle cx="8.5" cy="10" r="1.6"/><path d="M21 16l-5-5-5.5 5.5L8 14l-5 5"/></svg></div>
         <div class="ot"><b>Escolher do álbum</b><span>Selecione quantas fotos quiser da sua galeria</span></div>
@@ -1347,11 +1532,11 @@ const APP = {
       </button>
       <button class="opt" onclick="APP.closeSheet();setTimeout(()=>document.getElementById('pickCamera').click(),180)">
         <div class="oi"><svg viewBox="0 0 24 24"><path d="M3 8.5A2 2 0 0 1 5 6.5h2l1.4-2h7.2L17 6.5h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><circle cx="12" cy="13" r="3.6"/></svg></div>
-        <div class="ot"><b>Tirar foto agora</b><span>Fotografe a peça sobre um fundo liso</span></div>
+        <div class="ot"><b>Tirar foto agora</b><span>Vale foto do espelho, da peça na cama ou no cabide</span></div>
         <div class="chev"><svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></div>
       </button>
       <p style="font-size:12px;color:var(--mut2);line-height:1.55;margin-top:6px;padding:0 4px">
-        Dica: fundos lisos e claros (uma parede, o chão, a cama) dão os melhores recortes.
+        Numa foto de corpo inteiro ele separa camisa, calça, calçado e acessórios de uma vez só.
       </p>
     `);
   },
@@ -1366,7 +1551,7 @@ const APP = {
 
   async processFiles(files) {
     const total = files.length;
-    this.full('Processando', `${total} foto${total > 1 ? 's' : ''}`, `
+    this.full('Analisando', `${total} foto${total > 1 ? 's' : ''}`, `
       <div class="proc">
         <div class="proc-ring">
           <svg viewBox="0 0 96 96">
@@ -1375,10 +1560,28 @@ const APP = {
           </svg>
           <div class="pct" id="procPct">0%</div>
         </div>
-        <h3 id="procTitle">Recortando as peças…</h3>
-        <p id="procSub">Removendo o fundo e identificando o tipo de cada peça</p>
+        <h3 id="procTitle">Procurando as peças…</h3>
+        <p id="procSub">Identificando cada roupa e extraindo as cores</p>
         <div class="proc-strip" id="procStrip"></div>
       </div>`, '');
+
+    // o modelo de segmentação é o motor principal: carrega antes de tudo
+    let useAI = this.settings.detect && !Segmenter.failed;
+    if (useAI && !Segmenter.pipe) {
+      $('#procTitle').textContent = 'Preparando o reconhecimento';
+      $('#procSub').textContent = 'Baixando o modelo de visão (só na primeira vez)…';
+      try {
+        await Segmenter.load(pr => {
+          const pct = Math.round(pr * 100);
+          $('#procPct').textContent = pct + '%';
+          $('#procFg').style.strokeDashoffset = 270 - 270 * pr;
+          $('#procSub').textContent = `Baixando o modelo de visão… ${pct}%`;
+        });
+      } catch (e) {
+        useAI = false;
+        toast('Reconhecimento automático indisponível');
+      }
+    }
 
     const strip = $('#procStrip');
     files.forEach((f, i) => {
@@ -1387,33 +1590,22 @@ const APP = {
       strip.appendChild(t);
     });
 
-    // pré-carrega a IA se ativada
-    if (this.settings.ai && !Classifier.ai.failed) {
-      $('#procSub').textContent = 'Carregando modelo de visão…';
-      try {
-        await Classifier.ai.load(p => { $('#procSub').textContent = `Baixando modelo de visão… ${Math.round(p * 100)}%`; });
-      } catch (e) {
-        toast('IA indisponível — usando análise local');
-      }
-      $('#procSub').textContent = 'Removendo o fundo e identificando cada peça';
-    }
-
     const drafts = [];
     for (let i = 0; i < files.length; i++) {
-      const pct = Math.round(i / total * 100);
-      $('#procPct').textContent = pct + '%';
+      $('#procPct').textContent = Math.round(i / total * 100) + '%';
       $('#procFg').style.strokeDashoffset = 270 - 270 * (i / total);
-      $('#procTitle').textContent = `Peça ${i + 1} de ${total}`;
+      $('#procTitle').textContent = `Foto ${i + 1} de ${total}`;
+      $('#procSub').textContent = 'Identificando cada roupa e extraindo as cores';
       await nextFrame();
 
       try {
-        const draft = await this.processOne(files[i]);
-        drafts.push(draft);
+        const found = await this.analysePhoto(files[i], useAI);
+        drafts.push(...found);
         const t = $('#pt' + i);
-        if (t) {
+        if (t && found[0]) {
           t.classList.add('done');
           const img = document.createElement('img');
-          img.src = draft.previewUrl; t.appendChild(img);
+          img.src = found[0].previewUrl; t.appendChild(img);
         }
       } catch (e) {
         console.warn('[closet] falha ao processar', files[i]?.name, e);
@@ -1423,11 +1615,11 @@ const APP = {
 
     $('#procPct').textContent = '100%';
     $('#procFg').style.strokeDashoffset = 0;
-    await sleep(320);
+    await sleep(300);
 
     if (!drafts.length) {
       this.closeFull();
-      toast('Não consegui processar essas imagens');
+      toast('Não consegui identificar peças nessas fotos');
       return;
     }
     this.queue = drafts;
@@ -1435,49 +1627,147 @@ const APP = {
     this.renderReview();
   },
 
-  async processOne(file) {
+  /* --------- uma foto pode virar várias peças ---------
+     · foto de pessoa vestida → o modelo separa cada roupa
+     · foto da peça sozinha   → usa a maior região encontrada só para pegar a
+       cor certa, e deixa a silhueta dizer o tipo
+     · nada disso funcionando → remoção de fundo e análise de silhueta
+     O usuário pode forçar a separação em várias peças na tela de revisão.   */
+  async analysePhoto(file, useAI, force = false) {
     const canvas = await Vision.fileToCanvas(file);
-    let cut = null;
-    if (this.settings.cutout) {
-      // peças com pouco contraste contra o fundo somem na primeira passada;
-      // por isso tentamos tolerâncias progressivamente menores antes de desistir.
-      for (const tol of [1, .72, .5, .35]) {
-        try { cut = Vision.cutout(canvas, tol); } catch (e) { console.warn(e); }
-        if (cut) { cut.tolerance = tol; break; }
+
+    // cópia menor: é o que vai para o modelo e o que guardamos para reanálise
+    let seg = canvas;
+    if (Math.max(canvas.width, canvas.height) > 640) {
+      const sc = 640 / Math.max(canvas.width, canvas.height);
+      seg = document.createElement('canvas');
+      seg.width = Math.round(canvas.width * sc);
+      seg.height = Math.round(canvas.height * sc);
+      const sctx = seg.getContext('2d', { willReadFrequently: true });
+      sctx.imageSmoothingQuality = 'high';
+      sctx.drawImage(canvas, 0, 0, seg.width, seg.height);
+    }
+    const srcBlob = await Vision.toBlob(seg, 640, .82);
+    const out = [];
+
+    let garments = null;
+    if (useAI) {
+      let res = null;
+      try { res = await Segmenter.detect(seg); }
+      catch (e) { console.warn(e); Segmenter.failed = true; }
+
+      if (res?.garments?.length) {
+        garments = res.garments;
+        // pessoa vestida na foto: cada roupa vira uma peça
+        if (force || (res.person >= .012 && garments.length > 1)) {
+          for (const g of garments)
+            out.push(await this.makeDraft({
+              catId: g.catId, colors: g.colors, pattern: g.pattern,
+              evidence: g.cropCanvas, source: 'detectado', label: g.label, srcBlob
+            }));
+          return out;
+        }
       }
     }
-    const framed = cut
-      ? Vision.trimAndFrame(cut.data)
-      : Vision.trimAndFrame(canvas.getContext('2d').getImageData(0, 0, canvas.width, canvas.height));
 
-    const shape = Vision.shape(framed.canvas);
-    const pal = Vision.palette(framed.canvas);
-
-    let cls = Classifier.heuristic(shape, pal);
-    let source = 'silhueta';
-    if (this.settings.ai && !Classifier.ai.failed) {
-      try {
-        const aiRes = await Classifier.ai.classify(framed.canvas);
-        if (aiRes.confidence > cls.confidence) { cls = aiRes; source = 'ia'; }
-      } catch (e) { Classifier.ai.failed = true; }
+    // peça sozinha: a remoção de fundo dá um recorte melhor que a máscara do
+    // modelo, e a silhueta limpa identifica o tipo com mais precisão
+    for (const tol of [1, .72, .5]) {
+      try { var cut = Vision.cutout(canvas, tol); } catch (e) { }
+      if (cut) break;
+    }
+    if (cut) {
+      const framed = Vision.trimAndFrame(cut.data);
+      const pal = Vision.palette(framed.canvas);
+      const cls = Classifier.heuristic(Vision.shape(framed.canvas), pal);
+      out.push(await this.makeDraft({
+        catId: cls.catId, colors: pal.colors, pattern: pal.pattern,
+        evidence: framed.canvas, source: 'silhueta', srcBlob
+      }));
+      return out;
     }
 
-    const meta = Classifier.build(cls, pal, shape);
-    const fullBlob = await Vision.toBlob(framed.canvas, 720);
-    const thumbBlob = await Vision.toBlob(framed.canvas, 300, .88);
+    // fundo impossível de recortar, mas o modelo achou uma peça grande:
+    // aproveita a máscara dela para pegar ao menos a cor certa
+    if (garments && garments[0]?.share > .06) {
+      const g = garments[0];
+      const framed = Vision.trimAndFrame(
+        g.cropCanvas.getContext('2d').getImageData(0, 0, g.cropCanvas.width, g.cropCanvas.height));
+      out.push(await this.makeDraft({
+        catId: g.catId, colors: g.colors, pattern: g.pattern,
+        evidence: framed.canvas, source: 'detectado', label: g.label, srcBlob
+      }));
+      return out;
+    }
+
+    // último recurso: entrega a foto inteira para o usuário identificar
+    const framed = Vision.trimAndFrame(
+      canvas.getContext('2d').getImageData(0, 0, canvas.width, canvas.height));
+    const pal = Vision.palette(framed.canvas);
+    out.push(await this.makeDraft({
+      catId: 'outro', colors: pal.colors, pattern: pal.pattern,
+      evidence: framed.canvas, source: 'manual', srcBlob
+    }));
+    return out;
+  },
+
+  /* usuário avisa que a foto tem mais de uma peça → refaz forçando a separação */
+  async splitPhoto() {
+    const d = this.queue[this.reviewIdx];
+    if (!d?.srcBlob) return toast('Foto de origem indisponível');
+    if (!this.settings.detect || Segmenter.failed) return toast('Ligue o reconhecimento em Ajustes');
+    toast('Separando as peças…');
+    try {
+      const file = new File([d.srcBlob], 'foto.jpg', { type: d.srcBlob.type || 'image/jpeg' });
+      const found = await this.analysePhoto(file, true, true);
+      if (!found.length || found.length === 1) return toast('Só consegui identificar uma peça aqui');
+      URL.revokeObjectURL(d.previewUrl);
+      if (d.photoUrl) URL.revokeObjectURL(d.photoUrl);
+      this.queue.splice(this.reviewIdx, 1, ...found);
+      this.renderReview();
+      haptic(15);
+      toast(`${found.length} peças separadas`);
+    } catch (e) { console.warn(e); toast('Não consegui separar as peças'); }
+  },
+
+  /* monta a peça: reprodução vetorial + recorte da foto como comprovação */
+  async makeDraft({ catId, colors, pattern, evidence, source, label, srcBlob }) {
+    const cat = CAT[catId] || CAT['outro'];
+    const base = colors?.[0]?.hex || '#8a8d92';
+    const named = nameColor(base);
+    const [hue, sat, lig] = Color.rgb2hsl(...Color.hex2rgb(base));
+
+    const artCanvas = await Art.toCanvas(cat.id, colors, pattern, 512);
+    const artBlob = await Vision.toBlob(artCanvas, 512);
+    const artThumb = await Vision.toBlob(artCanvas, 260, .9);
+    const photoBlob = evidence ? await Vision.toBlob(evidence, 320, .86) : null;
 
     return {
       id: uid(),
-      ...meta,
-      source,
-      cutMode: cut ? cut.mode : 'sem recorte',
-      tolerance: cut?.tolerance ?? 1,
-      originalFile: file,
-      canvas: framed.canvas,
-      fullBlob, thumbBlob,
-      previewUrl: URL.createObjectURL(thumbBlob),
-      brand: '', notes: '', fav: false
+      catId: cat.id, group: cat.group, source, label,
+      colors: (colors || []).slice(0, 3),
+      color: base, colorName: named.n,
+      neutral: named.neutral || sat < .17 || lig < .12 || lig > .9,
+      hue, sat, lig,
+      pattern: pattern || 'liso',
+      styles: cat.styles.slice(),
+      seasons: cat.warmth <= 2 ? ['calor', 'ameno'] : cat.warmth >= 4 ? ['frio'] : ['ameno'],
+      brand: '', notes: '', fav: false,
+      artBlob, artThumb, photoBlob, srcBlob,
+      previewUrl: URL.createObjectURL(artThumb),
+      photoUrl: photoBlob ? URL.createObjectURL(photoBlob) : null
     };
+  },
+
+  /* redesenha a reprodução depois que o usuário muda tipo, cor ou estampa */
+  async refreshArt(d) {
+    try {
+      const artCanvas = await Art.toCanvas(d.catId, d.colors.length ? d.colors : [{ hex: d.color, ratio: 1 }], d.pattern, 512);
+      d.artBlob = await Vision.toBlob(artCanvas, 512);
+      d.artThumb = await Vision.toBlob(artCanvas, 260, .9);
+      URL.revokeObjectURL(d.previewUrl);
+      d.previewUrl = URL.createObjectURL(d.artThumb);
+    } catch (e) { console.warn(e); }
   },
 
   /* ---------- 8.5 tela de revisão ---------- */
@@ -1485,23 +1775,32 @@ const APP = {
     const d = this.queue[this.reviewIdx];
     if (!d) return;
     const n = this.queue.length;
-    const cat = CAT[d.catId] || CAT['outro'];
-
     const catsOfGroup = g => CATEGORIES.filter(c => c.group === g);
     const groupOrder = Object.keys(GROUPS).sort((a, b) => GROUPS[a].order - GROUPS[b].order);
-
     const dots = n > 1 ? `<div class="rev-nav">${this.queue.map((_, i) => `<span class="rev-dot ${i === this.reviewIdx ? 'on' : ''}"></span>`).join('')}</div>` : '';
 
+    const origem = {
+      detectado: 'reconhecida na foto',
+      silhueta: 'deduzida pela silhueta',
+      manual: 'não reconhecida — confirme o tipo',
+      editado: 'ajustada por você'
+    }[d.source] || '';
+
     const body = `
-      <div class="rev-stage"><img src="${d.previewUrl}" alt=""></div>
+      <div class="rev-stage art"><img src="${d.previewUrl}" alt=""></div>
+
+      ${d.photoUrl ? `
+      <div class="evidence">
+        <img src="${d.photoUrl}" alt="">
+        <div class="ev-t">
+          <b>${origem}</b>
+          <span>A reprodução acima usa a cor e o tipo tirados desta parte da foto. Corrija abaixo se preciso.</span>
+        </div>
+      </div>` : ''}
       ${dots}
 
       <div class="field">
-        <label>Tipo da peça
-          <span style="text-transform:none;letter-spacing:0;font-weight:500;color:${d.confidence > .55 ? 'var(--acc-lt)' : 'var(--mut2)'}">
-            · detectado por ${d.source === 'ia' ? 'IA' : 'silhueta e cor'} (${Math.round(d.confidence * 100)}%)
-          </span>
-        </label>
+        <label>Tipo da peça</label>
         <div style="display:flex;gap:8px;overflow-x:auto;padding-bottom:8px;margin:0 -16px;padding-left:16px;padding-right:16px">
           ${groupOrder.map(g => `<button class="tchip ${d.group === g ? 'on' : ''}" style="flex:none" onclick="APP.revSetGroup('${g}')">${GROUPS[g].label}</button>`).join('')}
         </div>
@@ -1511,9 +1810,9 @@ const APP = {
       </div>
 
       <div class="field">
-        <label>Cor predominante · <span style="text-transform:none;letter-spacing:0;font-weight:500">${esc(d.colorName)}</span></label>
+        <label>Cor · <span style="text-transform:none;letter-spacing:0;font-weight:500">${esc(d.colorName)}</span></label>
         <div class="wrapchips">
-          ${(d.colors || []).map((c, i) => `
+          ${(d.colors || []).map(c => `
             <button class="tchip ${c.hex === d.color ? 'on' : ''}" onclick="APP.revSetColor('${c.hex}')">
               <span class="sw" style="background:${c.hex}"></span>${nameColor(c.hex).n}
             </button>`).join('')}
@@ -1522,16 +1821,16 @@ const APP = {
       </div>
 
       <div class="field">
-        <label>Estilo</label>
+        <label>Padronagem</label>
         <div class="wrapchips">
-          ${STYLES.map(s => `<button class="tchip ${d.styles.includes(s.id) ? 'on' : ''}" onclick="APP.revToggle('styles','${s.id}')">${s.label}</button>`).join('')}
+          ${PATTERNS.map(p => `<button class="tchip ${d.pattern === p.id ? 'on' : ''}" onclick="APP.revSetPattern('${p.id}')">${p.label}</button>`).join('')}
         </div>
       </div>
 
       <div class="field">
-        <label>Padronagem</label>
+        <label>Estilo</label>
         <div class="wrapchips">
-          ${PATTERNS.map(p => `<button class="tchip ${d.pattern === p.id ? 'on' : ''}" onclick="APP.revSet('pattern','${p.id}')">${p.label}</button>`).join('')}
+          ${STYLES.map(s => `<button class="tchip ${d.styles.includes(s.id) ? 'on' : ''}" onclick="APP.revToggle('styles','${s.id}')">${s.label}</button>`).join('')}
         </div>
       </div>
 
@@ -1548,50 +1847,50 @@ const APP = {
       </div>
 
       <div class="field">
-        <label>Recorte do fundo</label>
-        <div class="switch-row" style="padding-top:4px">
-          <div class="st"><b>${d.cutMode === 'recortado' ? 'Fundo removido' : d.cutMode === 'preexistente' ? 'Imagem já sem fundo' : 'Fundo mantido'}</b>
-            <span>${d.cutMode === 'sem recorte' ? 'O fundo desta foto é muito irregular para recortar com segurança.' : 'Ajuste a intensidade se sobrou fundo ou faltou peça.'}</span></div>
-        </div>
-        <input class="slider" type="range" min="60" max="180" value="${Math.round((d.tolerance ?? 1) * 100)}"
-               oninput="APP.revTolerance(this.value)" onchange="APP.revRecut(this.value)">
-        <div class="hint">Menos fundo ← → Mais peça</div>
-      </div>
-
-      <div class="field">
-        <button class="btn ghost sm" onclick="APP.revDrop()">Descartar esta foto</button>
+        ${d.srcBlob && d.source !== 'detectado' ? `
+        <button class="btn ghost sm" style="margin-bottom:9px" onclick="APP.splitPhoto()">
+          Esta foto tem mais de uma peça
+        </button>` : ''}
+        <button class="btn ghost sm" onclick="APP.revDrop()">Descartar esta peça</button>
       </div>
     `;
 
     const foot = `
-      ${n > 1 ? `<button class="btn ghost" style="flex:0 0 44%" onclick="APP.revNav(-1)" ${this.reviewIdx === 0 ? 'disabled' : ''}>Anterior</button>` : ''}
+      ${n > 1 ? `<button class="btn ghost" style="flex:0 0 42%" onclick="APP.revNav(-1)" ${this.reviewIdx === 0 ? 'disabled' : ''}>Anterior</button>` : ''}
       ${this.reviewIdx < n - 1
         ? `<button class="btn primary" onclick="APP.revNav(1)">Próxima (${this.reviewIdx + 1}/${n})</button>`
         : `<button class="btn primary" onclick="APP.commitQueue()">Adicionar ${n} peça${n > 1 ? 's' : ''}</button>`}
     `;
 
     this.full('Revisar peças', `${this.reviewIdx + 1} de ${n}`, body, foot,
-      n > 1 && this.reviewIdx === n - 1 ? '' : `<button class="pill-btn" onclick="APP.commitQueue()">Salvar tudo</button>`);
+      n > 1 && this.reviewIdx < n - 1 ? `<button class="pill-btn" onclick="APP.commitQueue()">Salvar tudo</button>` : '');
   },
 
-  revSet(k, v) { this.queue[this.reviewIdx][k] = v; if (k !== 'brand') this.renderReview(); },
+  revSet(k, v) { this.queue[this.reviewIdx][k] = v; },
+  async revSetPattern(p) {
+    const d = this.queue[this.reviewIdx];
+    d.pattern = p;
+    await this.refreshArt(d);
+    this.renderReview();
+  },
   revSetGroup(g) {
     const d = this.queue[this.reviewIdx];
     d.group = g;
     const first = CATEGORIES.find(c => c.group === g);
-    if (first && CAT[d.catId]?.group !== g) this.applyCat(d, first.id);
+    if (first && CAT[d.catId]?.group !== g) return this.revSetCat(first.id);
     this.renderReview();
   },
-  revSetCat(id) { this.applyCat(this.queue[this.reviewIdx], id); this.renderReview(); },
-  applyCat(d, id) {
+  async revSetCat(id) {
+    const d = this.queue[this.reviewIdx];
     const c = CAT[id]; if (!c) return;
     d.catId = id; d.group = c.group;
-    d.formality = c.formality; d.warmth = c.warmth;
     d.styles = c.styles.slice();
     d.seasons = c.warmth <= 2 ? ['calor', 'ameno'] : c.warmth >= 4 ? ['frio'] : ['ameno'];
-    d.confidence = 1; d.source = 'manual';
+    d.source = 'editado';
+    await this.refreshArt(d);
+    this.renderReview();
   },
-  revSetColor(hex) {
+  async revSetColor(hex) {
     const d = this.queue[this.reviewIdx];
     d.color = hex;
     const nm = nameColor(hex);
@@ -1599,6 +1898,10 @@ const APP = {
     const [h, s, l] = Color.rgb2hsl(...Color.hex2rgb(hex));
     d.hue = h; d.sat = s; d.lig = l;
     d.neutral = nm.neutral || s < .17 || l < .12 || l > .9;
+    // a cor escolhida passa a ser a principal do desenho
+    const rest = (d.colors || []).filter(c => c.hex !== hex);
+    d.colors = [{ hex, ratio: .7 }, ...rest].slice(0, 3);
+    await this.refreshArt(d);
     this.renderReview();
   },
   revPickColor() {
@@ -1622,37 +1925,13 @@ const APP = {
     $('#fullBody').scrollTop = 0;
   },
   revDrop() {
-    URL.revokeObjectURL(this.queue[this.reviewIdx].previewUrl);
+    const d = this.queue[this.reviewIdx];
+    URL.revokeObjectURL(d.previewUrl);
+    if (d.photoUrl) URL.revokeObjectURL(d.photoUrl);
     this.queue.splice(this.reviewIdx, 1);
     if (!this.queue.length) { this.closeFull(); toast('Nenhuma peça adicionada'); return; }
     this.reviewIdx = clamp(this.reviewIdx, 0, this.queue.length - 1);
     this.renderReview();
-  },
-  revTolerance(v) { this.queue[this.reviewIdx].tolerance = v / 100; },
-  async revRecut(v) {
-    const d = this.queue[this.reviewIdx];
-    const tol = v / 100;
-    d.tolerance = tol;
-    if (d.cutMode === 'sem recorte' && tol < 1.4) { /* ainda assim tenta */ }
-    try {
-      const canvas = await Vision.fileToCanvas(d.originalFile);
-      const cut = Vision.cutout(canvas, tol);
-      const framed = cut ? Vision.trimAndFrame(cut.data)
-        : Vision.trimAndFrame(canvas.getContext('2d').getImageData(0, 0, canvas.width, canvas.height));
-      URL.revokeObjectURL(d.previewUrl);
-      d.canvas = framed.canvas;
-      d.cutMode = cut ? cut.mode : 'sem recorte';
-      d.fullBlob = await Vision.toBlob(framed.canvas, 720);
-      d.thumbBlob = await Vision.toBlob(framed.canvas, 300, .88);
-      d.previewUrl = URL.createObjectURL(d.thumbBlob);
-      const pal = Vision.palette(framed.canvas);
-      if (d.source !== 'manual') {
-        d.colors = pal.colors;
-        this.revSetColor(pal.colors[0]?.hex || d.color);
-        return;
-      }
-      this.renderReview();
-    } catch (e) { console.warn(e); }
   },
 
   async commitQueue() {
@@ -1666,16 +1945,16 @@ const APP = {
         pattern: d.pattern, styles: d.styles, seasons: d.seasons,
         formality: CAT[d.catId]?.formality ?? 3, warmth: CAT[d.catId]?.warmth ?? 2,
         brand: d.brand || '', notes: d.notes || '', fav: false,
-        wearCount: 0, lastWorn: null, source: d.source, cutMode: d.cutMode
+        wearCount: 0, lastWorn: null, source: d.source, hasPhoto: !!d.photoBlob
       });
-      blobs.push({ id: d.id, full: d.fullBlob, thumb: d.thumbBlob });
+      blobs.push({ id: d.id, full: d.artBlob, thumb: d.artThumb, photo: d.photoBlob || null });
       URL.revokeObjectURL(d.previewUrl);
+      if (d.photoUrl) URL.revokeObjectURL(d.photoUrl);
     });
 
     await DB.putMany('items', items);
     await DB.putMany('blobs', blobs);
-    this.items = [...items.slice().reverse(), ...this.items];
-    this.items.sort((a, b) => b.createdAt - a.createdAt);
+    this.items = [...items, ...this.items].sort((a, b) => b.createdAt - a.createdAt);
     const n = this.queue.length;
     this.queue = [];
     this.closeFull();
@@ -1691,7 +1970,9 @@ const APP = {
     if (this.urls.has(key)) return this.urls.get(key);
     const rec = await DB.get('blobs', id);
     if (!rec) return '';
-    const u = URL.createObjectURL(rec[kind] || rec.full);
+    const blob = rec[kind] || rec.thumb || rec.full;
+    if (!blob) return '';
+    const u = URL.createObjectURL(blob);
     this.urls.set(key, u);
     return u;
   },
@@ -1776,8 +2057,9 @@ const APP = {
   },
 
   tileHTML(i) {
+    const kind = this.settings.showPhoto && i.hasPhoto ? 'photo' : 'thumb';
     return `<button class="tile" onclick="APP.openItem('${i.id}')">
-      <img data-item="${i.id}" data-kind="thumb" alt="${esc(CAT[i.catId]?.label || '')}">
+      <img data-item="${i.id}" data-kind="${kind}" alt="${esc(CAT[i.catId]?.label || '')}">
       ${i.fav ? '<span class="fav"><svg viewBox="0 0 24 24"><path d="M12 21s-7-4.5-9-9a5 5 0 0 1 9-3 5 5 0 0 1 9 3c-2 4.5-9 9-9 9z"/></svg></span>' : ''}
       <span class="cat">${esc(CAT[i.catId]?.label || '')}</span>
     </button>`;
@@ -1836,7 +2118,7 @@ const APP = {
     const cat = CAT[i.catId] || CAT['outro'];
     const url = await this.url(id, 'full');
     this.full(cat.label, i.brand || i.colorName, `
-      <div class="det-hero"><img src="${url}" alt=""></div>
+      <div class="det-hero art"><img src="${url}" alt=""></div>
       <div class="meta-grid">
         <div class="meta"><div class="k">Tipo</div><div class="v">${cat.label}</div></div>
         <div class="meta"><div class="k">Cor</div><div class="v"><span class="sw" style="background:${i.color}"></span>${esc(i.colorName)}</div></div>
@@ -1849,6 +2131,14 @@ const APP = {
         ${(i.seasons || []).map(s => `<span class="tag">${SEASONS.find(x => x.id === s)?.label || s}</span>`).join('')}
         ${i.neutral ? '<span class="tag">neutra</span>' : '<span class="tag">cor de destaque</span>'}
       </div>
+      ${i.hasPhoto ? `
+      <div class="field">
+        <label>Foto de origem</label>
+        <div class="evidence">
+          <img data-item="${i.id}" data-kind="photo" alt="">
+          <div class="ev-t"><b>De onde veio</b><span>A peça no catálogo é um desenho feito a partir desta parte da foto.</span></div>
+        </div>
+      </div>` : ''}
       ${i.brand ? `<div class="field"><label>Marca</label><div style="font-size:15px">${esc(i.brand)}</div></div>` : ''}
       <div class="field">
         <label>Ações</label>
@@ -1866,6 +2156,7 @@ const APP = {
       <button class="btn ghost" style="flex:0 0 30%" onclick="APP.toggleItemFav('${i.id}')">${i.fav ? '★ Favorita' : '☆ Favoritar'}</button>
       <button class="btn primary" onclick="APP.wearToday('${i.id}')">Usei hoje</button>
     `);
+    this.paintImages($('#fullBody'));
   },
 
   async toggleItemFav(id) {
@@ -1950,6 +2241,18 @@ const APP = {
     i.styles = st.length ? st : c.styles.slice();
     i.pattern = $('#edPat .tchip.on')?.dataset.p || i.pattern;
     i.brand = $('#edBrand').value.trim();
+    i.colors = [{ hex, ratio: .7 }, ...(i.colors || []).filter(c => c.hex !== hex)].slice(0, 3);
+    try {
+      const artCanvas = await Art.toCanvas(i.catId, i.colors, i.pattern, 512);
+      const rec = (await DB.get('blobs', id)) || { id };
+      rec.full = await Vision.toBlob(artCanvas, 512);
+      rec.thumb = await Vision.toBlob(artCanvas, 260, .9);
+      await DB.put('blobs', rec);
+      for (const k of ['thumb', 'full']) {
+        const key = id + ':' + k;
+        if (this.urls.has(key)) { URL.revokeObjectURL(this.urls.get(key)); this.urls.delete(key); }
+      }
+    } catch (e) { console.warn(e); }
     await DB.put('items', i);
     this.closeSheet(); this.renderCatChips(); this.render(); this.openItem(id);
     toast('Peça atualizada');
@@ -2145,10 +2448,10 @@ const APP = {
       <div class="stat"><div class="n">${this.items.length ? Math.round(neutral / this.items.length * 100) : 0}%</div><div class="l">neutras</div></div>`;
     const el = $('#aiStatus');
     if (el) {
-      el.textContent = Classifier.ai.pipe ? 'Modelo carregado e pronto.'
-        : Classifier.ai.failed ? 'O modelo não pôde ser carregado neste dispositivo — a classificação local continua funcionando.'
-        : this.settings.ai ? 'O modelo será baixado na próxima importação de fotos.'
-        : '';
+      el.textContent = Segmenter.pipe ? 'Modelo carregado e pronto.'
+        : Segmenter.failed ? 'O modelo não carregou neste aparelho. Sem ele, o app só consegue ler fotos da peça sozinha em fundo liso.'
+        : this.settings.detect ? 'O modelo (27 MB) será baixado na primeira importação e fica salvo no aparelho.'
+        : 'Desligado: só fotos da peça sozinha em fundo liso serão reconhecidas.';
     }
   },
   toggleSetting(k, el) {
@@ -2156,20 +2459,19 @@ const APP = {
     el.classList.toggle('on', this.settings[k]);
     this.saveSettings();
     haptic();
-    if (k === 'ai' && this.settings.ai) { toast('IA ativada — o modelo baixa na próxima importação'); this.warmAI(); }
+    if (k === 'detect' && this.settings.detect) toast('Ligado — o modelo baixa na próxima importação');
+    if (k === 'showPhoto') this.render();
     this.renderMore();
   },
-  async warmAI() {
-    if (!this.settings.ai || Classifier.ai.pipe || Classifier.ai.loading) return;
-    try { await Classifier.ai.load(); this.renderMore(); } catch (e) { this.renderMore(); }
-  },
-
   async exportBackup() {
     toast('Preparando backup…');
     const blobs = await DB.all('blobs');
     const toB64 = b => new Promise(r => { const fr = new FileReader(); fr.onload = () => r(fr.result); fr.readAsDataURL(b); });
     const imgs = {};
-    for (const b of blobs) imgs[b.id] = { full: await toB64(b.full), thumb: await toB64(b.thumb) };
+    for (const b of blobs) imgs[b.id] = {
+      full: await toB64(b.full), thumb: await toB64(b.thumb),
+      photo: b.photo ? await toB64(b.photo) : null
+    };
     const data = { v: 1, exportedAt: new Date().toISOString(), items: this.items, looks: this.looks, images: imgs };
     const blob = new Blob([JSON.stringify(data)], { type: 'application/json' });
     const a = document.createElement('a');
@@ -2190,7 +2492,11 @@ const APP = {
       const items = data.items, looks = data.looks || [];
       const blobs = [];
       for (const id in (data.images || {})) {
-        blobs.push({ id, full: await fromB64(data.images[id].full), thumb: await fromB64(data.images[id].thumb) });
+        const im = data.images[id];
+        blobs.push({
+          id, full: await fromB64(im.full), thumb: await fromB64(im.thumb),
+          photo: im.photo ? await fromB64(im.photo) : null
+        });
       }
       await DB.putMany('items', items);
       await DB.putMany('blobs', blobs);
