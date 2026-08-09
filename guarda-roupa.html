@@ -1,0 +1,684 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+<meta name="theme-color" content="#14130c">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Closet">
+<meta name="description" content="Guarda-roupa digital: recorte automático das peças, catalogação por tipo, cor e estilo, e gerador de looks por ocasião.">
+<title>CLOSET · Guarda-roupa digital</title>
+<link rel="manifest" href="/manifest-guarda-roupa.json">
+<link rel="apple-touch-icon" href="/icon-closet-192.png">
+<link rel="icon" type="image/png" sizes="192x192" href="/icon-closet-192.png">
+<style>
+:root{
+  /* ---- paleta militar/oliva escura (base do layout de referência) ---- */
+  --bg:#14130c;
+  --bg2:#1b1a11;
+  --card:#302d1e;
+  --card2:#3a3726;
+  --card3:#454130;
+  --line:#403c29;
+  --line2:#524d37;
+  --txt:#f3f0e5;
+  --mut:#a8a289;
+  --mut2:#7d7862;
+
+  --acc:#2f5b45;          /* verde do botão "Criar" */
+  --acc-lt:#9fd6b3;       /* texto/ícone sobre o verde */
+  --acc-soft:rgba(63,122,92,.16);
+  --acc-line:rgba(159,214,179,.28);
+
+  --warn:#c8a45c;
+  --danger:#c2705f;
+
+  --r-sm:12px; --r:18px; --r-lg:26px; --r-xl:32px;
+  --sh:0 18px 40px -18px rgba(0,0,0,.85);
+  --sh-lg:0 30px 70px -20px rgba(0,0,0,.9);
+  --ease:cubic-bezier(.22,1,.36,1);
+
+  --nav-h:calc(64px + env(safe-area-inset-bottom));
+}
+
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0;height:100%}
+html{-webkit-text-size-adjust:100%}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,system-ui,sans-serif;
+  background:var(--bg); color:var(--txt);
+  line-height:1.45; letter-spacing:-.011em;
+  overflow-x:hidden; overscroll-behavior-y:none;
+  padding-bottom:var(--nav-h);
+  background-image:
+    radial-gradient(900px 520px at 88% -12%, rgba(63,122,92,.10), transparent 70%),
+    radial-gradient(760px 480px at -14% 6%, rgba(120,110,70,.07), transparent 70%);
+  background-attachment:fixed;
+}
+h1,h2,h3,h4{margin:0;font-weight:700;letter-spacing:-.028em}
+p{margin:0}
+button{font-family:inherit;cursor:pointer;border:0;background:none;color:inherit;padding:0}
+input,select,textarea{font-family:inherit;color:inherit}
+img{display:block;max-width:100%}
+svg{display:block}
+::-webkit-scrollbar{width:0;height:0}
+.hide{display:none !important}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+
+/* ============================ TOPBAR ============================ */
+.topbar{
+  position:sticky; top:0; z-index:60;
+  backdrop-filter:saturate(1.4) blur(18px); -webkit-backdrop-filter:saturate(1.4) blur(18px);
+  background:linear-gradient(to bottom, rgba(20,19,12,.94), rgba(20,19,12,.72));
+  padding:calc(8px + env(safe-area-inset-top)) 16px 8px;
+}
+.topbar .row{display:flex;align-items:center;gap:12px;min-height:44px}
+.icon-btn{
+  width:40px;height:40px;border-radius:14px;display:grid;place-items:center;
+  color:var(--txt); transition:background .18s var(--ease), transform .18s var(--ease);
+  flex:none;
+}
+.icon-btn:active{background:var(--card);transform:scale(.94)}
+.icon-btn svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.title-wrap{flex:1;min-width:0}
+.title-wrap h1{font-size:22px;line-height:1.15}
+.title-wrap .sub{font-size:12.5px;color:var(--mut);letter-spacing:0;margin-top:1px}
+.eyebrow{
+  font-size:10.5px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;
+  color:var(--mut2);
+}
+
+/* ============================ LAYOUT ============================ */
+main{max-width:760px;margin:0 auto;padding:0 14px 26px}
+.view{display:none}
+.view.active{display:block;animation:viewIn .38s var(--ease)}
+@keyframes viewIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.section{margin-top:22px}
+.section-head{display:flex;align-items:baseline;gap:10px;margin-bottom:11px;padding:0 2px}
+.section-head h2{font-size:16.5px;flex:1}
+.section-head .link{font-size:13px;color:var(--acc-lt);font-weight:600}
+
+/* ============================ BUSCA + CHIPS ============================ */
+.search{
+  display:flex;align-items:center;gap:9px;
+  background:var(--card);border:1px solid var(--line);
+  border-radius:16px;padding:0 13px;height:44px;margin-top:10px;
+  transition:border-color .2s var(--ease), background .2s var(--ease);
+}
+.search:focus-within{border-color:var(--line2);background:var(--card2)}
+.search svg{width:18px;height:18px;fill:none;stroke:var(--mut);stroke-width:1.9;flex:none}
+.search input{flex:1;background:none;border:0;outline:0;font-size:15.5px;min-width:0}
+.search input::placeholder{color:var(--mut2)}
+.search .clear{color:var(--mut);font-size:19px;line-height:1;padding:4px 2px}
+
+.chips{
+  display:flex;gap:8px;overflow-x:auto;scroll-snap-type:x proximity;
+  padding:12px 14px;margin:0 -14px;
+}
+.chips::-webkit-scrollbar{display:none}
+.chip{
+  flex:none;scroll-snap-align:start;
+  padding:8px 14px;border-radius:999px;font-size:13.5px;font-weight:600;
+  background:var(--card);border:1px solid var(--line);color:var(--mut);
+  transition:all .2s var(--ease);white-space:nowrap;
+  display:flex;align-items:center;gap:7px;
+}
+.chip .n{font-size:11.5px;opacity:.6;font-weight:600}
+.chip:active{transform:scale(.95)}
+.chip.on{background:var(--acc-soft);border-color:var(--acc-line);color:var(--acc-lt)}
+.chip.dot::before{content:"";width:11px;height:11px;border-radius:50%;background:var(--c,#888);border:1px solid rgba(255,255,255,.22);flex:none}
+
+/* filtros avançados */
+.filterbar{display:flex;gap:8px;align-items:center;margin-top:2px}
+.pill-btn{
+  display:flex;align-items:center;gap:6px;height:34px;padding:0 12px;border-radius:999px;
+  background:var(--card);border:1px solid var(--line);color:var(--mut);
+  font-size:12.5px;font-weight:600;transition:all .2s var(--ease);
+}
+.pill-btn.on{background:var(--acc-soft);border-color:var(--acc-line);color:var(--acc-lt)}
+.pill-btn:active{transform:scale(.96)}
+.pill-btn svg{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.pill-btn .badge{
+  min-width:16px;height:16px;padding:0 4px;border-radius:8px;background:var(--acc-lt);color:#14301f;
+  font-size:10px;font-weight:800;display:grid;place-items:center;
+}
+
+/* ============================ GRADE DE PEÇAS ============================ */
+.grid{
+  display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:4px;
+}
+@media(min-width:560px){ .grid{grid-template-columns:repeat(4,1fr);gap:12px} }
+.tile{
+  position:relative;aspect-ratio:1/1;border-radius:22px;overflow:hidden;
+  background:var(--card);
+  display:grid;place-items:center;
+  transition:transform .22s var(--ease), background .22s var(--ease);
+  animation:tileIn .4s var(--ease) both;
+}
+@keyframes tileIn{from{opacity:0;transform:scale(.94)}to{opacity:1;transform:none}}
+.tile:active{transform:scale(.955);background:var(--card2)}
+.tile img{width:82%;height:82%;object-fit:contain;filter:drop-shadow(0 6px 14px rgba(0,0,0,.45))}
+.tile .fav{
+  position:absolute;top:8px;right:8px;width:22px;height:22px;
+  display:grid;place-items:center;color:var(--acc-lt);opacity:.95;
+}
+.tile .fav svg{width:15px;height:15px;fill:currentColor;stroke:none}
+.tile .sel{
+  position:absolute;inset:0;border-radius:22px;border:2px solid var(--acc-lt);
+  background:rgba(47,91,69,.28);display:grid;place-items:center;
+}
+.tile .sel svg{width:26px;height:26px;stroke:var(--acc-lt);fill:none;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
+.tile .cat{
+  position:absolute;left:0;right:0;bottom:0;padding:16px 9px 7px;
+  background:linear-gradient(to top,rgba(12,11,7,.82),transparent);
+  font-size:10.5px;font-weight:600;color:#ded9c6;letter-spacing:.01em;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  opacity:0;transition:opacity .2s var(--ease);
+}
+body.labels .tile .cat{opacity:1}
+
+/* cabeçalho de agrupamento */
+.group-head{
+  display:flex;align-items:center;gap:9px;margin:22px 2px 10px;
+}
+.group-head .t{font-size:13px;font-weight:700;letter-spacing:.02em}
+.group-head .c{font-size:11.5px;color:var(--mut2);font-weight:600}
+.group-head .ln{flex:1;height:1px;background:var(--line)}
+
+/* ============================ FAB ============================ */
+.fab{
+  position:fixed;right:16px;bottom:calc(var(--nav-h) + 14px);z-index:70;
+  display:flex;align-items:center;gap:10px;
+  height:58px;padding:0 22px 0 19px;border-radius:20px;
+  background:var(--acc);color:var(--acc-lt);
+  font-size:17px;font-weight:600;letter-spacing:-.01em;
+  box-shadow:0 16px 34px -12px rgba(0,0,0,.75), 0 0 0 1px rgba(159,214,179,.10) inset;
+  transition:transform .2s var(--ease), filter .2s var(--ease);
+}
+.fab:active{transform:scale(.955);filter:brightness(1.1)}
+.fab svg{width:26px;height:26px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+
+/* ============================ NAV INFERIOR ============================ */
+.nav{
+  position:fixed;left:0;right:0;bottom:0;z-index:65;
+  display:grid;grid-template-columns:repeat(4,1fr);
+  background:rgba(20,19,12,.9);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+  border-top:1px solid var(--line);
+  padding-bottom:env(safe-area-inset-bottom);
+}
+.nav button{
+  height:64px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;
+  font-size:10.5px;font-weight:600;color:var(--mut2);transition:color .2s var(--ease);
+}
+.nav button svg{width:23px;height:23px;fill:none;stroke:currentColor;stroke-width:1.75;stroke-linecap:round;stroke-linejoin:round;transition:transform .25s var(--ease)}
+.nav button.on{color:var(--acc-lt)}
+.nav button.on svg{transform:translateY(-1px)}
+
+/* ============================ CARDS / BOTÕES ============================ */
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r-lg);padding:16px}
+.btn{
+  display:flex;align-items:center;justify-content:center;gap:9px;
+  height:52px;border-radius:17px;font-size:16px;font-weight:600;
+  background:var(--card2);color:var(--txt);border:1px solid var(--line2);
+  transition:transform .18s var(--ease), filter .18s var(--ease);width:100%;
+}
+.btn:active{transform:scale(.975);filter:brightness(1.12)}
+.btn.primary{background:var(--acc);color:var(--acc-lt);border-color:transparent;box-shadow:0 12px 26px -14px rgba(47,91,69,.9)}
+.btn.ghost{background:transparent;border-color:var(--line)}
+.btn.sm{height:42px;font-size:14.5px;border-radius:14px}
+.btn svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.btn[disabled]{opacity:.45;pointer-events:none}
+.btn-row{display:flex;gap:10px;margin-top:12px}
+
+/* ============================ ESTADO VAZIO ============================ */
+.empty{
+  text-align:center;padding:56px 26px;color:var(--mut);
+}
+.empty .ico{
+  width:86px;height:86px;margin:0 auto 18px;border-radius:30px;
+  background:var(--card);display:grid;place-items:center;border:1px solid var(--line);
+}
+.empty .ico svg{width:40px;height:40px;fill:none;stroke:var(--mut);stroke-width:1.4;stroke-linecap:round;stroke-linejoin:round}
+.empty h3{font-size:18px;color:var(--txt);margin-bottom:7px}
+.empty p{font-size:14px;line-height:1.55;max-width:300px;margin:0 auto}
+
+/* ============================ SHEETS / MODAIS ============================ */
+.overlay{
+  position:fixed;inset:0;z-index:100;background:rgba(6,6,3,.68);
+  backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);
+  display:none;align-items:flex-end;justify-content:center;
+  opacity:0;transition:opacity .28s var(--ease);
+}
+.overlay.on{display:flex;opacity:1}
+.sheet{
+  width:100%;max-width:560px;max-height:92vh;overflow-y:auto;-webkit-overflow-scrolling:touch;
+  background:var(--bg2);border:1px solid var(--line);border-bottom:0;
+  border-radius:var(--r-xl) var(--r-xl) 0 0;
+  padding:10px 18px calc(24px + env(safe-area-inset-bottom));
+  transform:translateY(100%);transition:transform .34s var(--ease);
+  box-shadow:var(--sh-lg);
+}
+.overlay.on .sheet{transform:none}
+.grab{width:38px;height:4px;border-radius:4px;background:var(--line2);margin:0 auto 14px}
+.sheet h3{font-size:19px;margin-bottom:4px}
+.sheet .sh-sub{font-size:13.5px;color:var(--mut);margin-bottom:16px;line-height:1.5}
+
+.opt{
+  display:flex;align-items:center;gap:14px;width:100%;
+  padding:15px;border-radius:18px;background:var(--card);border:1px solid var(--line);
+  margin-bottom:10px;text-align:left;transition:transform .18s var(--ease),background .18s var(--ease);
+}
+.opt:active{transform:scale(.98);background:var(--card2)}
+.opt .oi{
+  width:44px;height:44px;border-radius:15px;background:var(--acc-soft);
+  display:grid;place-items:center;flex:none;color:var(--acc-lt);
+}
+.opt .oi svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.opt .ot{flex:1;min-width:0}
+.opt .ot b{display:block;font-size:15.5px;font-weight:600}
+.opt .ot span{display:block;font-size:12.5px;color:var(--mut);margin-top:2px;line-height:1.4}
+.opt .chev{color:var(--mut2)}
+.opt .chev svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.opt.danger .oi{background:rgba(194,112,95,.14);color:var(--danger)}
+
+/* ============================ TELA CHEIA (revisão / detalhe) ============================ */
+.full{
+  position:fixed;inset:0;z-index:110;background:var(--bg);
+  display:none;flex-direction:column;
+}
+.full.on{display:flex;animation:fullIn .3s var(--ease)}
+@keyframes fullIn{from{opacity:0;transform:scale(1.015)}to{opacity:1;transform:none}}
+.full-head{
+  display:flex;align-items:center;gap:10px;
+  padding:calc(8px + env(safe-area-inset-top)) 14px 8px;
+  border-bottom:1px solid var(--line);flex:none;
+  background:var(--bg2);
+}
+.full-head .ft{flex:1;min-width:0}
+.full-head .ft b{font-size:16px;font-weight:600;display:block}
+.full-head .ft span{font-size:12px;color:var(--mut)}
+.full-body{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:16px 16px 20px}
+.full-foot{
+  flex:none;padding:12px 16px calc(12px + env(safe-area-inset-bottom));
+  border-top:1px solid var(--line);background:var(--bg2);display:flex;gap:10px;
+}
+
+/* ============================ PROCESSAMENTO ============================ */
+.proc{padding:30px 20px;text-align:center}
+.proc-ring{width:96px;height:96px;margin:0 auto 20px;position:relative}
+.proc-ring svg{width:96px;height:96px;transform:rotate(-90deg)}
+.proc-ring circle{fill:none;stroke-width:6;stroke-linecap:round}
+.proc-ring .bg{stroke:var(--card2)}
+.proc-ring .fg{stroke:var(--acc-lt);transition:stroke-dashoffset .3s var(--ease)}
+.proc-ring .pct{
+  position:absolute;inset:0;display:grid;place-items:center;font-size:20px;font-weight:700;
+}
+.proc h3{font-size:17px;margin-bottom:6px}
+.proc p{font-size:13.5px;color:var(--mut)}
+.proc-strip{display:flex;gap:8px;overflow-x:auto;margin-top:22px;padding:2px}
+.proc-strip .t{
+  width:62px;height:62px;flex:none;border-radius:16px;background:var(--card);
+  display:grid;place-items:center;overflow:hidden;opacity:.35;transition:opacity .3s var(--ease)
+}
+.proc-strip .t.done{opacity:1}
+.proc-strip .t img{width:80%;height:80%;object-fit:contain}
+
+/* ============================ REVISÃO DE PEÇA ============================ */
+.rev-stage{
+  position:relative;border-radius:24px;background:
+    linear-gradient(45deg,#242212 25%,transparent 25%,transparent 75%,#242212 75%),
+    linear-gradient(45deg,#242212 25%,#1b1a11 25%,#1b1a11 75%,#242212 75%);
+  background-size:18px 18px;background-position:0 0,9px 9px;
+  aspect-ratio:1/1;display:grid;place-items:center;overflow:hidden;border:1px solid var(--line);
+}
+.rev-stage img{width:88%;height:88%;object-fit:contain;filter:drop-shadow(0 10px 22px rgba(0,0,0,.5))}
+.rev-nav{display:flex;align-items:center;gap:8px;justify-content:center;margin:14px 0 4px}
+.rev-dot{width:7px;height:7px;border-radius:50%;background:var(--line2);transition:all .25s var(--ease)}
+.rev-dot.on{background:var(--acc-lt);width:20px;border-radius:4px}
+
+.field{margin-top:18px}
+.field > label{
+  display:block;font-size:10.5px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--mut2);margin-bottom:9px;
+}
+.field .hint{font-size:12px;color:var(--mut2);margin-top:7px;line-height:1.45}
+.wrapchips{display:flex;flex-wrap:wrap;gap:7px}
+.tchip{
+  padding:8px 13px;border-radius:12px;font-size:13.5px;font-weight:600;
+  background:var(--card);border:1px solid var(--line);color:var(--mut);
+  transition:all .18s var(--ease);display:flex;align-items:center;gap:6px;
+}
+.tchip:active{transform:scale(.95)}
+.tchip.on{background:var(--acc-soft);border-color:var(--acc-line);color:var(--acc-lt)}
+.tchip.auto::after{content:"auto";font-size:9px;font-weight:700;letter-spacing:.08em;opacity:.6;text-transform:uppercase}
+.tchip .sw{width:14px;height:14px;border-radius:5px;border:1px solid rgba(255,255,255,.25);flex:none}
+
+.inp{
+  width:100%;height:46px;background:var(--card);border:1px solid var(--line);
+  border-radius:14px;padding:0 14px;font-size:15px;outline:0;
+  transition:border-color .2s var(--ease);
+}
+.inp:focus{border-color:var(--line2)}
+select.inp{appearance:none;-webkit-appearance:none;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23a8a289' stroke-width='2' stroke-linecap='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 12px center;background-size:18px;padding-right:38px;
+}
+
+.slider{
+  -webkit-appearance:none;appearance:none;width:100%;height:4px;border-radius:4px;
+  background:var(--card3);outline:0;margin:8px 0;
+}
+.slider::-webkit-slider-thumb{
+  -webkit-appearance:none;width:24px;height:24px;border-radius:50%;
+  background:var(--acc-lt);border:4px solid var(--bg2);box-shadow:0 2px 10px rgba(0,0,0,.5);cursor:pointer;
+}
+.slider::-moz-range-thumb{width:20px;height:20px;border-radius:50%;background:var(--acc-lt);border:4px solid var(--bg2)}
+
+.switch-row{
+  display:flex;align-items:center;gap:12px;padding:13px 0;
+}
+.switch-row .st{flex:1;min-width:0}
+.switch-row .st b{display:block;font-size:14.5px;font-weight:600}
+.switch-row .st span{display:block;font-size:12.5px;color:var(--mut);margin-top:2px;line-height:1.4}
+.switch{
+  width:50px;height:30px;border-radius:15px;background:var(--card3);position:relative;flex:none;
+  transition:background .25s var(--ease);
+}
+.switch::after{
+  content:"";position:absolute;top:3px;left:3px;width:24px;height:24px;border-radius:50%;
+  background:#e8e4d5;transition:transform .25s var(--ease);
+}
+.switch.on{background:var(--acc)}
+.switch.on::after{transform:translateX(20px);background:var(--acc-lt)}
+
+/* ============================ DETALHE DA PEÇA ============================ */
+.det-hero{
+  aspect-ratio:1/1;border-radius:26px;background:var(--card);
+  display:grid;place-items:center;overflow:hidden;position:relative;
+}
+.det-hero img{width:84%;height:84%;object-fit:contain;filter:drop-shadow(0 14px 28px rgba(0,0,0,.5))}
+.meta-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:16px}
+.meta{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:12px 14px}
+.meta .k{font-size:10px;font-weight:700;letter-spacing:.13em;text-transform:uppercase;color:var(--mut2)}
+.meta .v{font-size:15px;font-weight:600;margin-top:4px;display:flex;align-items:center;gap:8px}
+.meta .v .sw{width:15px;height:15px;border-radius:5px;border:1px solid rgba(255,255,255,.22)}
+.tagline{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}
+.tag{
+  padding:6px 11px;border-radius:9px;font-size:12px;font-weight:600;
+  background:var(--card2);border:1px solid var(--line);color:var(--mut);
+}
+
+/* ============================ OCASIÕES ============================ */
+.occ-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
+.occ{
+  position:relative;border-radius:22px;padding:15px;text-align:left;overflow:hidden;
+  background:var(--card);border:1px solid var(--line);min-height:104px;
+  display:flex;flex-direction:column;justify-content:space-between;
+  transition:all .22s var(--ease);
+}
+.occ:active{transform:scale(.975)}
+.occ.on{border-color:var(--acc-line);background:var(--acc-soft)}
+.occ .oc-i{width:34px;height:34px;border-radius:12px;background:var(--card2);display:grid;place-items:center;color:var(--mut)}
+.occ.on .oc-i{background:rgba(159,214,179,.16);color:var(--acc-lt)}
+.occ .oc-i svg{width:19px;height:19px;fill:none;stroke:currentColor;stroke-width:1.75;stroke-linecap:round;stroke-linejoin:round}
+.occ b{font-size:14.5px;font-weight:600;display:block;margin-top:10px}
+.occ span{font-size:11.5px;color:var(--mut2);display:block;margin-top:2px;line-height:1.35}
+.occ.on b{color:var(--txt)}
+
+/* ============================ LOOKS ============================ */
+.look{
+  background:var(--card);border:1px solid var(--line);border-radius:26px;
+  padding:16px;margin-bottom:12px;animation:tileIn .4s var(--ease) both;
+}
+.look-top{display:flex;align-items:flex-start;gap:10px;margin-bottom:13px}
+.look-top .lt{flex:1;min-width:0}
+.look-top .lt b{font-size:16px;font-weight:600;display:block;letter-spacing:-.02em}
+.look-top .lt span{font-size:12.5px;color:var(--mut);display:block;margin-top:2px;line-height:1.4}
+.score{
+  display:flex;align-items:center;gap:5px;flex:none;
+  background:var(--acc-soft);border:1px solid var(--acc-line);color:var(--acc-lt);
+  border-radius:10px;padding:5px 9px;font-size:12px;font-weight:700;
+}
+.score svg{width:12px;height:12px;fill:currentColor;stroke:none}
+.look-items{display:grid;grid-template-columns:repeat(auto-fit,minmax(0,1fr));gap:8px}
+.look-item{
+  aspect-ratio:1/1;border-radius:16px;background:var(--card2);
+  display:grid;place-items:center;overflow:hidden;position:relative;
+  transition:transform .18s var(--ease);
+}
+.look-item:active{transform:scale(.94)}
+.look-item img{width:82%;height:82%;object-fit:contain}
+.look-item .lk{
+  position:absolute;top:5px;right:5px;width:18px;height:18px;border-radius:6px;
+  background:rgba(20,19,12,.75);display:grid;place-items:center;color:var(--acc-lt);
+}
+.look-item .lk svg{width:11px;height:11px;fill:none;stroke:currentColor;stroke-width:2.2}
+.palette{display:flex;gap:4px;margin-top:12px;align-items:center}
+.palette .p{width:20px;height:20px;border-radius:7px;border:1px solid rgba(255,255,255,.14)}
+.palette .pl{font-size:11.5px;color:var(--mut2);margin-left:5px;font-weight:600}
+.look-why{
+  font-size:12.5px;color:var(--mut);line-height:1.5;margin-top:12px;
+  padding-top:12px;border-top:1px solid var(--line);
+}
+.look-why b{color:#cfc9b3;font-weight:600}
+.look-acts{display:flex;gap:8px;margin-top:12px}
+.look-acts button{
+  flex:1;height:40px;border-radius:13px;background:var(--card2);border:1px solid var(--line);
+  font-size:13px;font-weight:600;color:var(--mut);
+  display:flex;align-items:center;justify-content:center;gap:6px;transition:all .18s var(--ease);
+}
+.look-acts button:active{transform:scale(.96)}
+.look-acts button.on{color:var(--acc-lt);border-color:var(--acc-line);background:var(--acc-soft)}
+.look-acts svg{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.look-acts button.on svg.fillable{fill:currentColor;stroke:none}
+
+/* ============================ AJUSTES ============================ */
+.stat-row{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-top:12px}
+.stat{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:14px 12px;text-align:center}
+.stat .n{font-size:22px;font-weight:700;letter-spacing:-.04em}
+.stat .l{font-size:10.5px;color:var(--mut2);font-weight:600;letter-spacing:.06em;text-transform:uppercase;margin-top:3px}
+.bar{height:6px;border-radius:3px;background:var(--card3);overflow:hidden;margin-top:10px}
+.bar .f{height:100%;background:var(--acc-lt);border-radius:3px;transition:width .5s var(--ease)}
+
+/* ============================ TOAST ============================ */
+.toast{
+  position:fixed;left:50%;bottom:calc(var(--nav-h) + 78px);transform:translate(-50%,20px);
+  background:#efece0;color:#1a1810;padding:12px 20px;border-radius:16px;
+  font-size:14px;font-weight:600;z-index:200;opacity:0;pointer-events:none;
+  transition:all .3s var(--ease);box-shadow:var(--sh);max-width:88vw;text-align:center;
+}
+.toast.on{opacity:1;transform:translate(-50%,0)}
+
+/* ============================ SKELETON ============================ */
+.skel{background:linear-gradient(90deg,var(--card) 25%,var(--card2) 50%,var(--card) 75%);background-size:200% 100%;animation:sk 1.4s infinite}
+@keyframes sk{to{background-position:-200% 0}}
+</style>
+</head>
+<body>
+
+<!-- ============================ TOPBAR ============================ -->
+<header class="topbar">
+  <div class="row">
+    <button class="icon-btn" id="backBtn" onclick="APP.topAction()" aria-label="Voltar">
+      <svg viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+    </button>
+    <div class="title-wrap">
+      <div class="eyebrow" id="topEyebrow">Closet</div>
+      <h1 id="topTitle">Guarda-roupa</h1>
+    </div>
+    <button class="icon-btn" onclick="APP.openMenu()" aria-label="Menu">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="5" r="1.3" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.3" fill="currentColor" stroke="none"/><circle cx="12" cy="19" r="1.3" fill="currentColor" stroke="none"/></svg>
+    </button>
+  </div>
+</header>
+
+<main>
+
+  <!-- ==================== VIEW: GUARDA-ROUPA ==================== -->
+  <section class="view active" id="v-closet">
+    <div class="search">
+      <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+      <input id="q" type="search" placeholder="Buscar peça, cor, marca…" autocomplete="off" oninput="APP.render()">
+      <button class="clear hide" id="qClear" onclick="APP.clearSearch()">✕</button>
+    </div>
+
+    <div class="chips" id="catChips"></div>
+
+    <div class="filterbar">
+      <button class="pill-btn" id="filterBtn" onclick="APP.openFilters()">
+        <svg viewBox="0 0 24 24"><path d="M4 6h16M7 12h10M10 18h4"/></svg>
+        Filtros <span class="badge hide" id="filterBadge">0</span>
+      </button>
+      <button class="pill-btn" id="groupBtn" onclick="APP.toggleGroup()">
+        <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
+        Agrupar
+      </button>
+      <button class="pill-btn" id="labelBtn" onclick="APP.toggleLabels()">
+        <svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h10M4 17h7"/></svg>
+        Nomes
+      </button>
+    </div>
+
+    <div id="closetBody"></div>
+  </section>
+
+  <!-- ==================== VIEW: LOOKS ==================== -->
+  <section class="view" id="v-looks">
+    <div class="section" style="margin-top:14px">
+      <div class="section-head"><h2>Qual é a ocasião?</h2></div>
+      <div class="occ-grid" id="occGrid"></div>
+    </div>
+
+    <div class="section">
+      <div class="section-head"><h2>Ajuste fino</h2></div>
+      <div class="card">
+        <div class="field" style="margin-top:0">
+          <label>Clima</label>
+          <div class="wrapchips" id="weatherChips"></div>
+        </div>
+        <div class="field">
+          <label>Paleta</label>
+          <div class="wrapchips" id="paletteChips"></div>
+        </div>
+        <div class="field" id="pinnedField">
+          <label>Peça-âncora <span style="text-transform:none;letter-spacing:0;font-weight:500">(opcional)</span></label>
+          <div id="pinnedBox"></div>
+        </div>
+      </div>
+    </div>
+
+    <button class="btn primary" style="margin-top:16px" onclick="APP.generate()">
+      <svg viewBox="0 0 24 24"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z"/><path d="M18 15l.8 2.2L21 18l-2.2.8L18 21l-.8-2.2L15 18l2.2-.8z"/></svg>
+      Gerar looks
+    </button>
+
+    <div class="section" id="looksResult"></div>
+  </section>
+
+  <!-- ==================== VIEW: SALVOS ==================== -->
+  <section class="view" id="v-saved">
+    <div id="savedBody"></div>
+  </section>
+
+  <!-- ==================== VIEW: AJUSTES ==================== -->
+  <section class="view" id="v-more">
+    <div class="section" style="margin-top:14px">
+      <div class="section-head"><h2>Seu guarda-roupa</h2></div>
+      <div class="stat-row" id="statRow"></div>
+    </div>
+
+    <div class="section">
+      <div class="section-head"><h2>Recorte e catalogação</h2></div>
+      <div class="card">
+        <div class="switch-row">
+          <div class="st"><b>Recorte automático</b><span>Remove o fundo da foto e isola a peça ao importar.</span></div>
+          <button class="switch" id="sw-cutout" onclick="APP.toggleSetting('cutout',this)"></button>
+        </div>
+        <div class="switch-row" style="border-top:1px solid var(--line)">
+          <div class="st"><b>Classificação por IA</b><span>Baixa um modelo de visão (~40 MB, uma única vez) e reconhece o tipo da peça com muito mais precisão. Sem IA, a classificação usa análise de silhueta e cor.</span></div>
+          <button class="switch" id="sw-ai" onclick="APP.toggleSetting('ai',this)"></button>
+        </div>
+        <div id="aiStatus" class="hint" style="font-size:12px;color:var(--mut2);line-height:1.45"></div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-head"><h2>Dados</h2></div>
+      <button class="opt" onclick="APP.exportBackup()">
+        <div class="oi"><svg viewBox="0 0 24 24"><path d="M12 3v12M8 11l4 4 4-4"/><path d="M4 17v3h16v-3"/></svg></div>
+        <div class="ot"><b>Exportar backup</b><span>Baixa um arquivo com todas as peças e imagens.</span></div>
+        <div class="chev"><svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></div>
+      </button>
+      <button class="opt" onclick="document.getElementById('importFile').click()">
+        <div class="oi"><svg viewBox="0 0 24 24"><path d="M12 15V3M8 7l4-4 4 4"/><path d="M4 17v3h16v-3"/></svg></div>
+        <div class="ot"><b>Restaurar backup</b><span>Importa um arquivo exportado anteriormente.</span></div>
+        <div class="chev"><svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></div>
+      </button>
+      <button class="opt danger" onclick="APP.confirmWipe()">
+        <div class="oi"><svg viewBox="0 0 24 24"><path d="M4 7h16M9 7V5h6v2M6 7l1 13h10l1-13"/></svg></div>
+        <div class="ot"><b>Apagar tudo</b><span>Remove todas as peças e looks deste dispositivo.</span></div>
+        <div class="chev"><svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></div>
+      </button>
+      <p style="font-size:12px;color:var(--mut2);line-height:1.55;margin-top:14px;padding:0 4px">
+        Tudo fica salvo apenas neste aparelho (armazenamento local do navegador). Nenhuma foto é enviada para servidores.
+      </p>
+    </div>
+  </section>
+
+</main>
+
+<!-- ============================ FAB ============================ -->
+<button class="fab" id="fab" onclick="APP.openAdd()">
+  <svg viewBox="0 0 24 24"><path d="M12 4.5a1.7 1.7 0 1 0 0 3.4c.6 0 .9.4.9.9 0 .5-.4.8-.9 1L4 14.6c-.7.4-1 1-1 1.6 0 1 .8 1.8 1.8 1.8h14.4c1 0 1.8-.8 1.8-1.8 0-.7-.3-1.2-1-1.6l-8-4.8"/></svg>
+  Criar
+</button>
+
+<!-- ============================ NAV ============================ -->
+<nav class="nav" id="nav">
+  <button class="on" data-v="closet" onclick="APP.go('closet')">
+    <svg viewBox="0 0 24 24"><path d="M12 3.5a1.6 1.6 0 1 0 0 3.2c.5 0 .8.3.8.8s-.3.7-.8.9L4.6 13c-.6.3-.9.8-.9 1.4 0 .9.7 1.6 1.6 1.6h13.4c.9 0 1.6-.7 1.6-1.6 0-.6-.3-1.1-.9-1.4l-7.4-4.2"/><path d="M4 19.5h16"/></svg>
+    Peças
+  </button>
+  <button data-v="looks" onclick="APP.go('looks')">
+    <svg viewBox="0 0 24 24"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z"/><path d="M18.5 16l.6 1.7 1.7.6-1.7.6-.6 1.7-.6-1.7-1.7-.6 1.7-.6z"/></svg>
+    Looks
+  </button>
+  <button data-v="saved" onclick="APP.go('saved')">
+    <svg viewBox="0 0 24 24"><path d="M6 3.5h12a1 1 0 0 1 1 1v15.6a.6.6 0 0 1-.94.5L12 16.6l-6.06 4a.6.6 0 0 1-.94-.5V4.5a1 1 0 0 1 1-1z"/></svg>
+    Salvos
+  </button>
+  <button data-v="more" onclick="APP.go('more')">
+    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.6 1.6 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.6 1.6 0 0 0-1.8-.3 1.6 1.6 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1A1.6 1.6 0 0 0 9 19.4a1.6 1.6 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.6 1.6 0 0 0 .3-1.8 1.6 1.6 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1A1.6 1.6 0 0 0 4.6 9a1.6 1.6 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.6 1.6 0 0 0 1.8.3H9a1.6 1.6 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.6 1.6 0 0 0 1 1.5 1.6 1.6 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.6 1.6 0 0 0-.3 1.8V9a1.6 1.6 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.6 1.6 0 0 0-1.5 1z"/></svg>
+    Ajustes
+  </button>
+</nav>
+
+<!-- ============================ OVERLAY / SHEET ============================ -->
+<div class="overlay" id="overlay" onclick="if(event.target===this)APP.closeSheet()">
+  <div class="sheet" id="sheet"></div>
+</div>
+
+<!-- ============================ TELA CHEIA ============================ -->
+<div class="full" id="full">
+  <div class="full-head">
+    <button class="icon-btn" onclick="APP.closeFull()" aria-label="Fechar">
+      <svg viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg>
+    </button>
+    <div class="ft"><b id="fullTitle"></b><span id="fullSub"></span></div>
+    <div id="fullAction"></div>
+  </div>
+  <div class="full-body" id="fullBody"></div>
+  <div class="full-foot" id="fullFoot"></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- inputs ocultos: álbum (múltiplas) e câmera -->
+<input type="file" id="pickAlbum" accept="image/*" multiple class="sr">
+<input type="file" id="pickCamera" accept="image/*" capture="environment" class="sr">
+<input type="file" id="importFile" accept="application/json,.json" class="sr">
+
+<script src="/guarda-roupa-app.js"></script>
+</body>
+</html>
