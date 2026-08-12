@@ -1,0 +1,115 @@
+{
+ "meta": {
+  "versao": "1.0",
+  "descricao": "Parâmetros do score de PRIORIDADE DE PROSPECÇÃO. Todos os pesos são editáveis sem alterar código.",
+  "aviso_metodologico": "O score mede a RELEVÂNCIA DA EMPRESA PARA VERIFICAÇÃO JURÍDICA POSTERIOR, combinando (a) exposição ambiental potencial da atividade declarada e (b) adequação ao perfil comercial-alvo (pequeno e médio porte). NÃO é probabilidade de infração, não é indício de ilícito e não deve ser lido como tal. Uma empresa com score 90 e uma com score 20 estão, ambas, em situação de regularidade presumida até que verificação individual em fonte oficial demonstre o contrário.",
+  "fundamento_da_agregacao": "Lei nº 6.938/1981, art. 17-D, § 3º — quando o estabelecimento exerce mais de uma atividade sujeita à fiscalização, considera-se a de MAIOR grau. Por isso o fator de maior peso no score é a atividade de maior exposição entre TODOS os CNAEs (principal e secundários), e não o CNAE principal isoladamente."
+ },
+
+ "fatores": {
+  "atividade_dominante": {
+   "pontos_max": 45,
+   "descricao": "Maior peso da matriz de CNAEs entre todos os CNAEs da empresa (principal + secundários), multiplicado por 4,5.",
+   "multiplicador": 4.5
+  },
+
+  "multiplicidade_cnaes_risco": {
+   "pontos_max": 15,
+   "descricao": "Acúmulo de atividades de risco distintas. Cada CNAE de risco além do primeiro soma pontos, até o teto.",
+   "pontos_por_cnae_adicional": 3,
+   "maximo_cnaes_adicionais_contados": 5
+  },
+
+  "aderencia_do_cnae_principal": {
+   "pontos_max": 10,
+   "descricao": "Distingue a empresa cuja ATIVIDADE PRINCIPAL é de risco daquela em que o risco aparece apenas em atividade secundária. Ambas entram na base (requisito 7), mas a primeira é comercialmente mais qualificada.",
+   "principal_e_de_risco": 10,
+   "apenas_secundarios_de_risco": 4
+  },
+
+  "porte_alvo": {
+   "pontos_max": 15,
+   "descricao": "Adequação ao perfil comercial-alvo. NÃO mede risco ambiental: mede o quanto a empresa corresponde ao público de prospecção (pequeno e médio porte). Empresa de grande porte zera este fator.",
+   "por_classificacao": {
+    "MEDIO": 15,
+    "PEQUENO": 12,
+    "MICRO": 10,
+    "MEI": 5,
+    "NAO_IDENTIFICADO": 8,
+    "GRANDE": 0
+   }
+  },
+
+  "maturidade_operacional": {
+   "pontos_max": 10,
+   "descricao": "Tempo de atividade do estabelecimento. Operação longa amplia a janela temporal de eventual passivo ambiental acumulado e indica capacidade de contratação de serviços jurídicos.",
+   "faixas_anos": [
+    {"min": 20, "pontos": 10},
+    {"min": 10, "pontos": 8},
+    {"min": 5, "pontos": 6},
+    {"min": 2, "pontos": 4},
+    {"min": 0, "pontos": 2}
+   ]
+  },
+
+  "concentracao_setorial_municipal": {
+   "pontos_max": 5,
+   "descricao": "Sede em município com concentração relevante do mesmo setor de risco. Municípios-polo concentram fiscalização, operações de órgãos ambientais e, portanto, demanda jurídica. Calculado sobre a própria base (percentil da contagem municipal por setor).",
+   "percentil_alto": 90,
+   "pontos_percentil_alto": 5,
+   "percentil_medio": 75,
+   "pontos_percentil_medio": 3
+  }
+ },
+
+ "classificacao": {
+  "descricao": "Faixas de prioridade de prospecção (requisito 9).",
+  "faixas": [
+   {"grau": "A", "rotulo": "Alta prioridade", "score_min": 70},
+   {"grau": "B", "rotulo": "Média prioridade", "score_min": 45},
+   {"grau": "C", "rotulo": "Baixa prioridade", "score_min": 0}
+  ]
+ },
+
+ "situacao_cadastral": {
+  "descricao": "Tratamento por situação cadastral (requisito 23). Códigos oficiais da RFB no layout dos Dados Abertos do CNPJ.",
+  "regras": {
+   "02": {"nome": "ATIVA", "acao": "incluir", "ajuste_score": 0},
+   "03": {"nome": "SUSPENSA", "acao": "avaliar_separadamente", "ajuste_score": -10},
+   "04": {"nome": "INAPTA", "acao": "avaliar_separadamente", "ajuste_score": -15},
+   "08": {"nome": "BAIXADA", "acao": "excluir", "ajuste_score": 0},
+   "01": {"nome": "NULA", "acao": "excluir", "ajuste_score": 0}
+  }
+ },
+
+ "porte": {
+  "descricao": "Critérios objetivos de classificação e exclusão por porte (requisito 8). Nenhuma exclusão é feita por inferência arbitrária: toda decisão fica registrada em MOTIVO_EXCLUSAO_PORTE.",
+  "fundamento": "Lei nº 6.938/1981, art. 17-D, § 1º, III — para fins da Política Nacional do Meio Ambiente, empresa de GRANDE PORTE é a que tem receita bruta anual superior a R$ 12.000.000,00. A base da RFB não publica receita bruta; usam-se, por isso, sinais objetivos disponíveis, cada um registrado individualmente.",
+  "codigos_rfb": {
+   "00": "NÃO INFORMADO",
+   "01": "MICRO EMPRESA",
+   "03": "EMPRESA DE PEQUENO PORTE",
+   "05": "DEMAIS"
+  },
+  "observacao_codigo_05": "O código 05 ('DEMAIS') agrupa médio E grande porte — não permite, sozinho, excluir grande porte. Por isso os sinais complementares abaixo.",
+
+  "capital_social_grande_porte": 12000000.0,
+  "capital_social_grande_porte_fonte": "Limiar espelhado do art. 17-D, § 1º, III, da Lei nº 6.938/1981 (R$ 12 milhões). ATENÇÃO: capital social NÃO é receita bruta — é um PROXY, adotado por ser a única grandeza financeira publicada na base da RFB. Por isso a exclusão por este critério é registrada e reversível.",
+
+  "min_estabelecimentos_grande_porte": 20,
+  "min_estabelecimentos_fonte": "Número de estabelecimentos (matriz + filiais) do mesmo CNPJ raiz no território nacional, contado na própria base da RFB. Rede extensa é incompatível com o perfil de pequeno e médio porte.",
+
+  "naturezas_juridicas_grande_porte": {
+   "2046": "Sociedade Anônima Aberta",
+   "2011": "Empresa Pública",
+   "2038": "Sociedade de Economia Mista"
+  },
+  "naturezas_juridicas_fonte": "Tabela oficial de naturezas jurídicas da RFB (Naturezas.zip). Somente formas societárias CATEGORICAMENTE incompatíveis com o perfil de prospecção: companhia ABERTA (capital negociado em bolsa), empresa pública e sociedade de economia mista. Os códigos são conferidos contra a tabela oficial a cada execução — um código inexistente ou com descrição divergente interrompe o pipeline.",
+  "naturezas_juridicas_deliberadamente_fora": "NÃO entram aqui: 2054 (Sociedade Anônima Fechada) — companhia fechada é forma comum em empresas de médio porte; 2062 (Sociedade Empresária Limitada) e 2240 (Sociedade Simples Limitada) — formas majoritárias entre micro, pequenas e médias empresas. Excluí-las eliminaria justamente o público-alvo.",
+
+  "excluir_grande_porte": true,
+  "excluir_por_capital_social": true,
+  "excluir_mei": false,
+  "excluir_mei_observacao": "MEI tem faturamento-teto muito baixo e raramente sustenta contratação de defesa ambiental; mantido por padrão, mas com pontuação reduzida. Ative para removê-lo da base."
+ }
+}

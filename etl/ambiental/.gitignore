@@ -1,0 +1,12 @@
+# Dados brutos da Receita Federal (~7,7 GB por competência) — nunca versionar
+data/raw/
+# Saídas geradas localmente. A base de empresas nominadas com classificação de
+# exposição ambiental é INSUMO INTERNO de prospecção: não vai para o GitHub
+# Pages nem para o repositório (risco reputacional e LGPD).
+data/output/
+data/output_demo/
+data/processed/
+logs/
+*.xlsx
+*.csv
+__pycache__/

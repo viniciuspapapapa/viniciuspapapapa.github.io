@@ -1,0 +1,1 @@
+openpyxl>=3.1      # geração das planilhas .xlsx (o restante do pipeline usa só a biblioteca padrão)
