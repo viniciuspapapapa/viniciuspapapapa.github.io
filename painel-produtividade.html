@@ -255,7 +255,27 @@
   .sec-sugestao{border-top:1px solid #EFEFEF;} .sec-sugestao h4{color:var(--azul);} .sec-sugestao li::before{background:var(--azul);}
   .sec-rent{border-top:1px solid #EFEFEF;background:#FCFBEE;} .sec-rent h4{color:#7A7600;} .sec-rent li::before{background:var(--amarelo);}
   .crit-empty{font-size:12.5px;color:#9A9A9A;font-style:italic;}
-  @media(max-width:760px){ .crit-cols{grid-template-columns:1fr;} .sec-melhorar{border-left:none;} }
+  /* resumo dos dados (espelho do relatório completo) dentro do crítico */
+  .crit-dados{margin:2px 22px 6px;background:#FAFAF7;border:1px solid #ECEBE3;border-radius:6px;padding:14px 16px;}
+  .crit-dados h4{font-size:11.5px;text-transform:uppercase;letter-spacing:.7px;font-weight:800;color:var(--grafite);margin-bottom:10px;}
+  .cd-kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px;}
+  .cd-kpi{background:#fff;border:1px solid #ECEBE3;border-radius:5px;padding:8px 10px;}
+  .cd-kpi span{display:block;font-size:9.5px;text-transform:uppercase;letter-spacing:.4px;color:#8A8A8A;font-weight:600;}
+  .cd-kpi b{display:block;font-size:14px;color:var(--preto);margin-top:3px;line-height:1.2;}
+  .cd-cols{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;}
+  .cd-list h5{font-size:10px;text-transform:uppercase;letter-spacing:.4px;color:var(--grafite);font-weight:800;margin-bottom:6px;padding-bottom:4px;border-bottom:1px solid #ECEBE3;}
+  .cd-list ol{list-style:none;}
+  .cd-list li{display:flex;justify-content:space-between;gap:8px;font-size:11px;padding:3px 0;color:var(--texto-escuro);border-bottom:1px solid #F3F2EC;}
+  .cd-list li span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .cd-list li b{color:var(--preto);white-space:nowrap;font-variant-numeric:tabular-nums;}
+  .cd-list li.cd-none{color:#A5A5A5;font-style:italic;justify-content:flex-start;border:none;}
+  .cd-pecas{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px;}
+  .cd-pecas span{background:#fff;border:1px solid #ECEBE3;border-left:3px solid var(--amarelo);border-radius:4px;padding:7px 11px;font-size:11.5px;color:var(--texto-escuro);}
+  .cd-pecas b{color:var(--preto);}
+  .cd-erros{margin-top:12px;background:#fff;border:1px solid #ECEBE3;border-left:3px solid var(--laranja);border-radius:4px;padding:8px 11px;font-size:11.5px;color:var(--texto-escuro);line-height:1.6;}
+  .cd-erros b{color:var(--preto);}
+  @media(max-width:760px){ .crit-cols{grid-template-columns:1fr;} .sec-melhorar{border-left:none;} .cd-kpis,.cd-cols{grid-template-columns:1fr 1fr;} }
+  @media print{ .cd-kpis,.cd-cols{grid-template-columns:repeat(4,1fr)!important;} .crit-dados{break-inside:avoid;} }
 </style>
 </head>
 <body>
@@ -1616,6 +1636,43 @@ function analiseCritica(key){
 
 function critLista(arr){ return `<ul>${arr.map(t=>`<li>${t}</li>`).join('')}</ul>`; }
 
+// resumo dos dados (espelho compacto do relatório completo) por advogado
+function resumoDadosAdvogado(s){
+  const cut=(t,n)=> t.length>n ? t.slice(0,n)+'…' : t;
+  const ext=s.porClienteMin.filter(e=>!isInterno(e[0]));
+  const maiorCli=ext[0] || s.porClienteMin[0] || ['—',0];
+  const topClientes=s.porClienteMin.slice(0,5);
+  const topTarefas=s.porTipoCount.slice(0,5);
+  const topPecas=s.pecasPorTipo.slice(0,4);
+  const pecaMin=Object.fromEntries(s.pecasPorTipoMin);
+  const recorrentes=(s.descArr||[]).filter(d=>d.count>1).slice(0,5);
+  const pecaElab=s.pecasPorTipo[0];
+  const pecaTempo=s.pecasPorTipoMin[0];
+  const d=s.diag;
+  const erros=[['sem duração',d.nSemDur],[`curtos (&lt;${CFG.curtoMin}min)`,d.nMuitoCurta+d.nCurta],
+    ['sem tipo',d.nSemTipo],['descrições incompletas',d.nDescRuim],['peças não especificadas',s.nSubNaoEspec||0]];
+  return `<div class="crit-dados">
+    <h4>▤ Resumo dos dados — espelho do relatório completo</h4>
+    <div class="cd-kpis">
+      <div class="cd-kpi"><span>Horas apontadas</span><b>${fmtHM(s.totalMin)}</b></div>
+      <div class="cd-kpi"><span>Horas internas (TPC)</span><b>${fmtPct(s.pctInterno)} · ${fmtH(s.internoMin)}</b></div>
+      <div class="cd-kpi"><span>Horas faturáveis</span><b>${fmtPct(s.pctExterno)} · ${fmtH(s.externoMin)}</b></div>
+      <div class="cd-kpi"><span>Maior tempo dedicado (cliente)</span><b>${cut(maiorCli[0],26)} — ${fmtHM(maiorCli[1])}</b></div>
+    </div>
+    <div class="cd-cols">
+      <div class="cd-list"><h5>Principais clientes (horas)</h5><ol>${topClientes.map(c=>`<li><span>${cut(c[0],30)}${isInterno(c[0])?' (TPC)':''}</span><b>${fmtHM(c[1])}</b></li>`).join('')}</ol></div>
+      <div class="cd-list"><h5>Principais tarefas (nº lançs.)</h5><ol>${topTarefas.map(t=>`<li><span>${cut(t[0],28)}</span><b>${t[1]}</b></li>`).join('')}</ol></div>
+      <div class="cd-list"><h5>Peças mais realizadas (nº · h)</h5><ol>${topPecas.length?topPecas.map(p=>`<li><span>${cut(p[0],24)}</span><b>${p[1]}× · ${fmtHM(pecaMin[p[0]]||0)}</b></li>`).join(''):'<li class="cd-none">Nenhuma peça no período</li>'}</ol></div>
+      <div class="cd-list"><h5>Tarefas mais recorrentes</h5><ol>${recorrentes.length?recorrentes.map(r=>`<li><span>${cut(r.ex,32)}</span><b>${r.count}×</b></li>`).join(''):'<li class="cd-none">Nenhuma repetição</li>'}</ol></div>
+    </div>
+    <div class="cd-pecas">
+      ${pecaElab?`<span>Peça mais elaborada (nº): <b>${pecaElab[0]}</b> — ${pecaElab[1]} lançamentos</span>`:''}
+      ${pecaTempo?`<span>Peça que mais consumiu tempo: <b>${pecaTempo[0]}</b> — ${fmtHM(pecaTempo[1])}</span>`:''}
+    </div>
+    <div class="cd-erros"><b>Possíveis erros de lançamento</b> (exceto tarefas repetidas): ${erros.map(([l,v])=>`<b>${v}</b>&nbsp;${l}`).join(' · ')}</div>
+  </div>`;
+}
+
 function gerarCritico(){
   if(!ANALISE){ return; }
   const modal=document.getElementById('criticoModal');
@@ -1627,6 +1684,7 @@ function gerarCritico(){
     return `<div class="crit-lawyer">
       <div class="crit-head"><div class="t">${c.nome}</div><div class="s">${c.label}</div></div>
       <p class="crit-resumo">${c.resumo}</p>
+      ${resumoDadosAdvogado(ANALISE[a])}
       <div class="crit-cols">
         <div class="crit-sec sec-manter"><h4>✓ Pontos a manter</h4>${critLista(c.F)}</div>
         <div class="crit-sec sec-melhorar"><h4>▲ Pontos a melhorar</h4>${critLista(c.M)}</div>
