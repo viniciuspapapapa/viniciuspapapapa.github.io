@@ -1,12 +1,22 @@
-# Dados brutos da Receita Federal (~7,7 GB por competência) — nunca versionar
-data/raw/
-# Saídas geradas localmente. A base de empresas nominadas com classificação de
-# exposição ambiental é INSUMO INTERNO de prospecção: não vai para o GitHub
-# Pages nem para o repositório (risco reputacional e LGPD).
-data/output/
-data/output_demo/
-data/processed/
+# ---------------------------------------------------------------------------
+# NADA de data/ é versionado.
+# ---------------------------------------------------------------------------
+# Além dos dados brutos da RFB (~7,7 GB por competência), as SAÍDAS também
+# ficam de fora — e isso é uma decisão de conteúdo, não de tamanho: os
+# relatórios e planilhas trazem CNPJ e razão social de empresas reais dentro de
+# um documento sobre exposição a risco ambiental. Fora de contexto, isso se lê
+# como acusação. É insumo interno de prospecção e não vai para o repositório
+# nem para o GitHub Pages — mesma decisão do projeto de Dívida Ativa.
+#
+# A regra é a pasta inteira, e não subpastas nomeadas uma a uma: qualquer
+# pasta de saída nova (output_teste, output_parcial, ...) já nasce ignorada.
+data/
+
+# Logs de execução (registram contagens e caminhos locais)
 logs/
+
+# Planilhas geradas em qualquer lugar da árvore
 *.xlsx
 *.csv
+
 __pycache__/

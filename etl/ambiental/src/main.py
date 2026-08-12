@@ -177,6 +177,11 @@ def main() -> None:
     p.add_argument("--config", default="../config")
     p.add_argument("--logs", default="../logs")
     p.add_argument("--uf", default="MG")
+    p.add_argument("--min-peso", type=int, default=0, metavar="N",
+                   help="peso mínimo da atividade de maior exposição (0-10). "
+                        "Filtra JÁ NA LEITURA, o que reduz muito a memória e o "
+                        "tamanho da base. 7 = apenas exposição Alta e Muito "
+                        "alta. Padrão 0 (base completa).")
     p.add_argument("--min-score", type=int, default=0,
                    help="score mínimo para entrar nas planilhas")
     p.add_argument("--grau", default="", help="filtra por grau (ex.: A ou A,B)")
@@ -228,7 +233,7 @@ def main() -> None:
     log(f"\n[ETAPA 1-4] lendo {len(arqs_estab)} arquivo(s) de estabelecimentos ...")
 
     selecionados: dict[str, list[dict]] = {}   # cnpj_basico → [estabelecimentos]
-    lidos = mg = com_risco = excl_situacao = 0
+    lidos = mg = com_risco = excl_situacao = excl_peso = 0
 
     for caminho in arqs_estab:
         log(f"  · {os.path.basename(caminho)}")
@@ -252,6 +257,13 @@ def main() -> None:
                 continue
             com_risco += 1
 
+            # corte por intensidade de exposição, aplicado ANTES de guardar o
+            # registro: é o que mantém a memória proporcional ao recorte
+            # desejado, e não ao total de empresas com qualquer exposição
+            if aval["peso_maximo"] < args.min_peso:
+                excl_peso += 1
+                continue
+
             # requisito 23 — situação cadastral
             sit = (row["situacao_cadastral"] or "").strip().zfill(2)
             regra = regras_situacao.get(sit, {})
@@ -265,6 +277,8 @@ def main() -> None:
     log(f"[i] estabelecimentos lidos ....... {lidos:,}")
     log(f"[i] em {args.uf} ................... {mg:,}")
     log(f"[i] com CNAE de exposição ........ {com_risco:,}")
+    if args.min_peso:
+        log(f"[i] excluídos por peso < {args.min_peso} ....... {excl_peso:,}")
     log(f"[i] excluídos por situação ....... {excl_situacao:,}")
     log(f"[i] CNPJ raiz distintos .......... {len(selecionados):,}")
 
@@ -574,6 +588,8 @@ def main() -> None:
             "estabelecimentos_mg": mg,
             "com_cnae_risco": com_risco,
             "excluidos_situacao": excl_situacao,
+            "excluidos_peso_minimo": excl_peso,
+            "min_peso_aplicado": args.min_peso,
             "excluidos_porte": excl_porte,
             "base_final": len(empresas),
             "porte_nao_identificado": sum(

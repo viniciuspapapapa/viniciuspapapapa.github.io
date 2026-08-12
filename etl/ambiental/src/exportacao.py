@@ -61,8 +61,22 @@ STATUS_PESQUISA = ["NÃO PESQUISADO", "EM PESQUISA", "SEM RESULTADOS IDENTIFICAD
                    "RESULTADO IDENTIFICADO", "NECESSITA ANÁLISE", "DESCARTADO"]
 
 
-def linha_empresa(e: dict) -> list:
-    return [e.get(c, "") for c in CAMPOS_EMPRESAS]
+# Colunas que NÃO vão para o CSV completo.
+#
+# São constantes por CNAE, não por empresa: repeti-las em centenas de milhares
+# de linhas acrescenta ~650 bytes por registro (mais de um terço do arquivo)
+# sem acrescentar informação. Elas continuam na planilha XLSX — onde o recorte
+# é pequeno e a leitura é humana — e a íntegra está na aba MATRIZ_CNAE, que se
+# relaciona com o CSV pela coluna CNAE_MAIOR_EXPOSICAO.
+#
+# A explicação POR EMPRESA (LOGICA_DA_CLASSIFICACAO) permanece no CSV: ela é
+# específica de cada registro e é o que torna o score auditável.
+CAMPOS_SO_XLSX = ["JUSTIFICATIVA_AMBIENTAL", "FUNDAMENTO_NORMATIVO"]
+CAMPOS_EMPRESAS_CSV = [c for c in CAMPOS_EMPRESAS if c not in CAMPOS_SO_XLSX]
+
+
+def linha_empresa(e: dict, campos: list[str] | None = None) -> list:
+    return [e.get(c, "") for c in (campos or CAMPOS_EMPRESAS)]
 
 
 # ---------------------------------------------------------------------------
@@ -71,10 +85,12 @@ def linha_empresa(e: dict) -> list:
 def exportar_csv(empresas: list[dict], caminho: str, log=print) -> None:
     with open(caminho, "w", encoding="utf-8-sig", newline="") as f:
         w = csv.writer(f, delimiter=";")
-        w.writerow(CAMPOS_EMPRESAS)
+        w.writerow(CAMPOS_EMPRESAS_CSV)
         for e in empresas:
-            w.writerow(linha_empresa(e))
-    log(f"[ok] {caminho} ({len(empresas):,} linhas)")
+            w.writerow(linha_empresa(e, CAMPOS_EMPRESAS_CSV))
+    log(f"[ok] {caminho} ({len(empresas):,} linhas; "
+        f"{len(CAMPOS_EMPRESAS_CSV)} colunas — justificativa e fundamento "
+        f"normativo ficam na aba MATRIZ_CNAE, por CNAE)")
 
 
 def exportar_csv_socios(socios: list[dict], campos: list[str], caminho: str,

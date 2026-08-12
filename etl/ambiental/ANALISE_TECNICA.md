@@ -305,6 +305,42 @@ receber o arquivo sem contexto lê o aviso antes dos dados.
 
 ---
 
+## H-bis. Dimensionamento medido
+
+Execução real sobre `Estabelecimentos0.zip` (≈45% da base nacional):
+
+| Etapa | Registros |
+|---|---:|
+| Estabelecimentos lidos | 30.008.723 |
+| Em Minas Gerais | 3.246.043 |
+| Com CNAE de exposição | 568.412 (17,5% de MG) |
+| Excluídos por situação cadastral | 221.512 |
+| Base resultante | 343.745 |
+
+Custo: **712 s e 3,36 GB de pico**. Extrapolado para a competência inteira:
+~26 min, ~8 GB, CSV de ~1,5 GB.
+
+Duas consequências de projeto vieram desta medição:
+
+1. **`--min-peso` filtra na leitura.** A memória passa a ser proporcional ao
+   recorte desejado, não ao total de empresas com qualquer exposição. Com
+   `--min-peso 7` (exposição Alta e Muito alta) a base cai para ~29% e a
+   memória para 2–3 GB — o que devolve o pipeline ao notebook da equipe.
+2. **`JUSTIFICATIVA_AMBIENTAL` e `FUNDAMENTO_NORMATIVO` saem do CSV.** São
+   constantes por CNAE; repetidas por linha custavam ~650 bytes por registro,
+   mais de um terço do arquivo, sem acrescentar informação. Continuam no XLSX e
+   na aba `MATRIZ_CNAE`, relacionadas pela coluna `CNAE_MAIOR_EXPOSICAO`. A
+   explicação **por empresa** (`LOGICA_DA_CLASSIFICACAO`) permanece no CSV — é
+   ela que torna o score auditável.
+
+A distribuição por nível de exposição (Muito alta 6,4%; Alta 22,2%; Média
+64,1%; Baixa 7,3%) mostra que o volume está na faixa Média, formada por
+atividades numerosas e de exposição difusa — oficinas, comércio, pequenas
+agroindústrias. É exatamente a faixa que o corte por peso remove quando o
+objetivo é prospecção, e que se mantém quando o objetivo é auditoria.
+
+---
+
 ## I. Plano de implementação
 
 | Etapa | Escopo | Estado |
@@ -313,7 +349,7 @@ receber o arquivo sem contexto lê o aviso antes dos dados.
 | 2 | Matriz de CNAEs a partir da lista oficial + âncoras normativas | ✅ concluída — 479 subclasses |
 | 3 | Pipeline modular (ingestão → limpeza → filtros → porte → score → sócios → exportação) | ✅ concluída |
 | 4 | Amostra sintética e validação ponta a ponta | ✅ concluída |
-| 5 | Execução sobre a base real de MG | ⏳ depende do download completo (~7,7 GB) |
+| 5 | Execução sobre a base real de MG | ⏳ em andamento — validada em 45% da base |
 | 6 | Enriquecimento pontual dos melhores leads via API de CNPJ | 🔜 próxima |
 | 7 | Vínculo CNAE ↔ DN COPAM 217/2017 (manual, com revisão jurídica) | 🔜 futura |
 | 8 | Cruzamento com autos de infração e licenças do SISEMA/FEAM | 🔜 futura |

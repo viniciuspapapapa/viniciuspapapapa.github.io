@@ -107,6 +107,7 @@ python main.py --dados ../data/raw/2026-08 --saida ../data/output \
 |---|---|---|
 | `--dados` | — | pasta com os arquivos da RFB |
 | `--saida` | `../data/output` | pasta de saída |
+| `--min-peso N` | `0` | peso mínimo da atividade (0–10). **Filtra já na leitura** — principal controle de memória e de tamanho da base |
 | `--min-score N` | `0` | score mínimo |
 | `--grau A,B` | — | filtra por grau de prioridade |
 | `--setor TEXTO` | — | filtra por setor (busca parcial) |
@@ -118,6 +119,49 @@ python main.py --dados ../data/raw/2026-08 --saida ../data/output \
 
 O **CSV sempre leva a base completa** (auditoria); o **XLSX leva as de maior
 score** (uso comercial) — é o princípio "qualidade > quantidade".
+
+### Dimensionamento — leia antes do primeiro run completo
+
+Números **medidos** sobre `Estabelecimentos0.zip` (≈45% da base nacional):
+
+| Etapa | Registros |
+|---|---:|
+| Estabelecimentos lidos | 30.008.723 |
+| Em Minas Gerais | 3.246.043 |
+| Com CNAE de exposição ambiental | 568.412 (17,5% de MG) |
+| Excluídos por situação cadastral (baixada/nula) | 221.512 |
+| Base resultante | 343.745 |
+
+Custo desse recorte: **12 minutos e 3,4 GB de memória**. Extrapolando para a
+competência inteira: **~26 minutos e ~8 GB**, com CSV de ~1,5 GB.
+
+Distribuição por nível de exposição na base completa:
+
+| Nível | Participação |
+|---|---:|
+| Muito alta | 6,4% |
+| Alta | 22,2% |
+| Média | 64,1% |
+| Baixa | 7,3% |
+
+O volume da faixa "Média" vem de atividades numerosas e de exposição difusa
+(oficinas mecânicas, comércio, pequenas agroindústrias). **Para prospecção,
+rode com `--min-peso 7`**: mantém apenas exposição Alta e Muito alta, reduz a
+base a ~29% do total e derruba a memória para a faixa de 2–3 GB.
+
+```bash
+# recomendado para uso comercial
+python main.py --dados ../data/raw/2026-08 --saida ../data/output --min-peso 7
+
+# base completa (auditoria) — exige ~8 GB de RAM
+python main.py --dados ../data/raw/2026-08 --saida ../data/output
+```
+
+As colunas `JUSTIFICATIVA_AMBIENTAL` e `FUNDAMENTO_NORMATIVO` **não vão para o
+CSV**: são constantes por CNAE e repeti-las por linha inflaria o arquivo em
+mais de um terço sem acrescentar informação. Elas estão na planilha XLSX e, na
+íntegra, na aba `MATRIZ_CNAE` — que se relaciona com o CSV pela coluna
+`CNAE_MAIOR_EXPOSICAO`.
 
 ---
 
