@@ -144,6 +144,23 @@ def testes_porte(cfg: dict, naturezas: dict) -> None:
            r["porte_classificado"], "NAO_IDENTIFICADO")
     checar("não identificado permanece na base", r["incluir"], True)
 
+    # "DEMAIS" abrange médio E grande: sem sinal objetivo NÃO se chuta "médio".
+    # (Regressão: o ramo NAO_IDENTIFICADO já foi inalcançável porque o número de
+    # estabelecimentos, sempre >= 1, era tratado como sinal de porte médio.)
+    r = c.classificar(porte_rfb="05", **{**base, "optante_simples": None})
+    checar("DEMAIS sem sinal → NAO_IDENTIFICADO",
+           r["porte_classificado"], "NAO_IDENTIFICADO")
+    r = c.classificar(porte_rfb="05", **{**base, "optante_simples": False})
+    checar("DEMAIS não-optante → NAO_IDENTIFICADO",
+           r["porte_classificado"], "NAO_IDENTIFICADO")
+    r = c.classificar(porte_rfb="05", **{**base, "optante_simples": True})
+    checar("DEMAIS optante do Simples → MEDIO",
+           r["porte_classificado"], "MEDIO")
+    r = c.classificar(porte_rfb="05", **{**base, "capital_social": "5000000,00",
+                                         "optante_simples": None})
+    checar("capital abaixo do limiar não vira prova de porte médio",
+           r["porte_classificado"], "NAO_IDENTIFICADO")
+
     # a conferência dos códigos contra a tabela oficial precisa abortar
     ruim = json.loads(json.dumps(cfg))
     ruim["porte"]["naturezas_juridicas_grande_porte"]["2062"] = "S.A. Fechada"

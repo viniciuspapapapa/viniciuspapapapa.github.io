@@ -164,16 +164,23 @@ class ClassificadorPorte:
         elif cod_porte == "03":
             classificacao = PEQUENO
         elif cod_porte == "05":
-            # "DEMAIS" = médio OU grande. Decide-se pelos sinais objetivos.
+            # "DEMAIS" significa apenas: acima do teto de EPP (LC nº 123/2006).
+            # Isso abrange TODA a faixa entre médio e grande porte, e a base da
+            # RFB não traz receita bruta para separá-las. Sem um sinal objetivo,
+            # dizer "médio" seria inferência arbitrária — vedada pelo escopo — e
+            # ainda por cima premiaria a empresa com a maior pontuação de porte.
             if motivos_exclusao:
+                # sobrou o proxy de capital social (os sinais categóricos já
+                # foram tratados acima): presunção relativa de grande porte
                 classificacao = GRANDE
             elif optante_simples:
-                # Simples com porte 05: receita dentro do teto legal → não é
-                # grande; o enquadramento mais provável é médio.
-                classificacao = MEDIO
-            elif capital > 0 or qtd_estabelecimentos > 0:
+                # Ato oficial: optante do Simples tem receita dentro do teto
+                # legal, o que afasta o grande porte. Resta o enquadramento
+                # médio.
                 classificacao = MEDIO
             else:
+                # A AUSÊNCIA do proxy não prova porte médio — apenas não prova
+                # grande porte. Sem sinal, não se arbitra.
                 classificacao = NAO_IDENTIFICADO
         else:  # "00" — não informado
             if motivos_exclusao:
