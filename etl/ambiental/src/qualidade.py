@@ -13,8 +13,7 @@ from __future__ import annotations
 from comum import cnpj_valido
 
 
-def verificar(empresas: list[dict], socios: list[dict], referencias,
-              matriz) -> dict:
+def verificar(empresas: list[dict], socios: list[dict], referencias) -> dict:
     """Roda as verificações e devolve o relatório estruturado."""
     problemas: dict[str, list[str]] = {}
     contagens: dict[str, int] = {}

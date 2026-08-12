@@ -104,10 +104,9 @@ class MatrizCnae:
             "setor_principal": dominante["setor"],
             "setores": setores,
             "nivel_exposicao": dominante["exposicao_ambiental"],
-            "detalhe_cnaes_risco": [
-                {"codigo": i["codigo"], "descricao": i["descricao"],
-                 "posicao": i["posicao"], "peso": i["peso"],
-                 "setor": i["setor"]}
-                for i in sorted(de_risco, key=lambda i: -i["peso"])
-            ],
         }
+        # Nota: o detalhamento de cada CNAE de risco não é mantido aqui de
+        # propósito. Ele seria replicado para cada um dos milhares de
+        # estabelecimentos selecionados, e a informação já está disponível sem
+        # custo: a coluna CNAES_RISCO lista os códigos e a aba MATRIZ_CNAE traz
+        # descrição, peso, justificativa e fontes de cada um.

@@ -466,6 +466,14 @@ def main() -> None:
                                  -e["_aval"]["peso_maximo"],
                                  e["RAZAO_SOCIAL"]))
 
+    # libera as estruturas intermediárias: em uma execução real são centenas de
+    # milhares de registros, e elas não são mais necessárias após o score
+    for e in empresas:
+        for chave in ("_aval", "_laudo", "_row", "_emp", "_anos", "_sit"):
+            e.pop(chave, None)
+    selecionados.clear()
+    dados_empresa.clear()
+
     # ---- filtros de recorte comercial -----------------------------------
     antes = len(empresas)
     if args.min_score:
@@ -516,7 +524,7 @@ def main() -> None:
     # ETAPA 9 — qualidade, agregados e exportação
     # =====================================================================
     log("\n[ETAPA 9] verificando qualidade e exportando ...")
-    rel_qualidade = qualidade.verificar(empresas, lista_socios, refs, matriz)
+    rel_qualidade = qualidade.verificar(empresas, lista_socios, refs)
     log(qualidade.resumo_texto(rel_qualidade))
 
     agregados = exportacao.agregar_municipios(empresas)
