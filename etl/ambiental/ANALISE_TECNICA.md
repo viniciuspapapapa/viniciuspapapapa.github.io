@@ -307,37 +307,49 @@ receber o arquivo sem contexto lê o aviso antes dos dados.
 
 ## H-bis. Dimensionamento medido
 
-Execução real sobre `Estabelecimentos0.zip` (≈45% da base nacional):
+Execução completa sobre a competência 2026-08, com `--min-peso 7`:
 
 | Etapa | Registros |
 |---|---:|
-| Estabelecimentos lidos | 30.008.723 |
-| Em Minas Gerais | 3.246.043 |
-| Com CNAE de exposição | 568.412 (17,5% de MG) |
-| Excluídos por situação cadastral | 221.512 |
-| Base resultante | 343.745 |
+| Estabelecimentos lidos (Brasil) | 72.789.638 |
+| Em Minas Gerais | 7.887.626 |
+| Com CNAE de exposição | 1.375.939 (17,4% de MG) |
+| Excluídos por exposição abaixo de Alta | 983.566 |
+| Excluídos por situação cadastral | 152.487 |
+| Excluídos por porte | 9.329 |
+| Base final | 230.557 estabelecimentos / 219.697 empresas |
 
-Custo: **712 s e 3,36 GB de pico**. Extrapolado para a competência inteira:
-~26 min, ~8 GB, CSV de ~1,5 GB.
+Custo: **1.733 s e 2,48 GB de pico**.
 
-Duas consequências de projeto vieram desta medição:
+Três decisões de projeto vieram da medição:
 
-1. **`--min-peso` filtra na leitura.** A memória passa a ser proporcional ao
-   recorte desejado, não ao total de empresas com qualquer exposição. Com
-   `--min-peso 7` (exposição Alta e Muito alta) a base cai para ~29% e a
-   memória para 2–3 GB — o que devolve o pipeline ao notebook da equipe.
+1. **`--min-peso` filtra na leitura.** Sem ele a base passa de 1,2 milhão de
+   registros e a memória vai à faixa de 8 GB; com `--min-peso 7` fica em
+   230 mil e 2,5 GB — o pipeline volta a caber no notebook da equipe.
 2. **`JUSTIFICATIVA_AMBIENTAL` e `FUNDAMENTO_NORMATIVO` saem do CSV.** São
    constantes por CNAE; repetidas por linha custavam ~650 bytes por registro,
-   mais de um terço do arquivo, sem acrescentar informação. Continuam no XLSX e
-   na aba `MATRIZ_CNAE`, relacionadas pela coluna `CNAE_MAIOR_EXPOSICAO`. A
-   explicação **por empresa** (`LOGICA_DA_CLASSIFICACAO`) permanece no CSV — é
-   ela que torna o score auditável.
+   mais de um terço do arquivo, sem acrescentar informação. Seguem no XLSX e na
+   aba `MATRIZ_CNAE`, ligadas por `CNAE_MAIOR_EXPOSICAO`. A explicação **por
+   empresa** (`LOGICA_DA_CLASSIFICACAO`) permanece no CSV — é ela que torna o
+   score auditável.
+3. **O ramo `NAO_IDENTIFICADO` do porte era inalcançável.** A primeira execução
+   completa marcou `porte_nao_identificado = 0` em 222 mil empresas — número
+   implausível que denunciou o defeito: a condição usava
+   `qtd_estabelecimentos > 0` como sinal de porte médio, e toda empresa tem ao
+   menos um estabelecimento. Resultado: 30.223 empresas com porte "DEMAIS"
+   recebiam o rótulo MÉDIO e a pontuação máxima de porte sem qualquer
+   fundamento. Corrigido, são 29.638 empresas honestamente marcadas como não
+   identificadas, e o Grau A caiu de 60.645 para 51.924 — a diferença era
+   pontuação indevida.
 
-A distribuição por nível de exposição (Muito alta 6,4%; Alta 22,2%; Média
-64,1%; Baixa 7,3%) mostra que o volume está na faixa Média, formada por
-atividades numerosas e de exposição difusa — oficinas, comércio, pequenas
-agroindústrias. É exatamente a faixa que o corte por peso remove quando o
-objetivo é prospecção, e que se mantém quando o objetivo é auditoria.
+Qualidade da base final: **zero CNPJ inválido**, **zero duplicidade**, 100% dos
+CNPJ raiz localizados no cadastro de empresas, 853 municípios cobertos (todos
+os de MG).
+
+No recorte de maior score (5.000 empresas, faixa 84–98) predominam mineração,
+resíduos, siderurgia e madeira — os setores prioritários do escopo —, e o MEI
+aparece em apenas 11 registros. O score cumpriu a função de ordenar sem que
+fosse preciso filtrar setor a setor.
 
 ---
 
@@ -349,7 +361,7 @@ objetivo é prospecção, e que se mantém quando o objetivo é auditoria.
 | 2 | Matriz de CNAEs a partir da lista oficial + âncoras normativas | ✅ concluída — 479 subclasses |
 | 3 | Pipeline modular (ingestão → limpeza → filtros → porte → score → sócios → exportação) | ✅ concluída |
 | 4 | Amostra sintética e validação ponta a ponta | ✅ concluída |
-| 5 | Execução sobre a base real de MG | ⏳ em andamento — validada em 45% da base |
+| 5 | Execução sobre a base real de MG | ✅ concluída — 230.557 registros, 29 min, 2,48 GB |
 | 6 | Enriquecimento pontual dos melhores leads via API de CNPJ | 🔜 próxima |
 | 7 | Vínculo CNAE ↔ DN COPAM 217/2017 (manual, com revisão jurídica) | 🔜 futura |
 | 8 | Cruzamento com autos de infração e licenças do SISEMA/FEAM | 🔜 futura |

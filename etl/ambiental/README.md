@@ -120,50 +120,50 @@ python main.py --dados ../data/raw/2026-08 --saida ../data/output \
 O **CSV sempre leva a base completa** (auditoria); o **XLSX leva as de maior
 score** (uso comercial) — é o princípio "qualidade > quantidade".
 
-### Dimensionamento — leia antes do primeiro run completo
+### Dimensionamento — execução real sobre Minas Gerais
 
-Números **medidos** sobre `Estabelecimentos0.zip` (≈45% da base nacional):
+Números **medidos** na competência 2026-08, com `--min-peso 7`:
 
 | Etapa | Registros |
 |---|---:|
-| Estabelecimentos lidos | 30.008.723 |
-| Em Minas Gerais | 3.246.043 |
-| Com CNAE de exposição ambiental | 568.412 (17,5% de MG) |
-| Excluídos por situação cadastral (baixada/nula) | 221.512 |
-| Base resultante | 343.745 |
+| Estabelecimentos lidos (Brasil) | 72.789.638 |
+| Em Minas Gerais | 7.887.626 |
+| Com CNAE de exposição ambiental | 1.375.939 (17,4% de MG) |
+| Excluídos por exposição abaixo de Alta | 983.566 |
+| Excluídos por situação cadastral (baixada/nula) | 152.487 |
+| Excluídos por porte | 9.329 |
+| **Base final** | **230.557 estabelecimentos / 219.697 empresas** |
+| Registros de sócios | 206.493 |
+| Municípios cobertos | 853 (todos os de MG) |
 
-Custo desse recorte: **12 minutos e 3,4 GB de memória**. Extrapolando para a
-competência inteira: **~26 minutos e ~8 GB**, com CSV de ~1,5 GB.
+Custo: **29 minutos e 2,48 GB de pico** — roda em notebook.
 
-Distribuição por nível de exposição na base completa:
+Sem `--min-peso 7`, a base sobe para ~1,2 milhão de registros e a memória
+para a faixa de 8 GB. O corte é o que torna o pipeline utilizável **e**
+alinhado ao princípio "qualidade > quantidade".
 
-| Nível | Participação |
-|---|---:|
-| Muito alta | 6,4% |
-| Alta | 22,2% |
-| Média | 64,1% |
-| Baixa | 7,3% |
+Distribuição da base final:
 
-O volume da faixa "Média" vem de atividades numerosas e de exposição difusa
-(oficinas mecânicas, comércio, pequenas agroindústrias). **Para prospecção,
-rode com `--min-peso 7`**: mantém apenas exposição Alta e Muito alta, reduz a
-base a ~29% do total e derruba a memória para a faixa de 2–3 GB.
+| Grau | Empresas | |
+|---|---:|---:|
+| A — alta prioridade | 51.924 | 22,5% |
+| B — média prioridade | 166.051 | 72,0% |
+| C — baixa prioridade | 12.582 | 5,5% |
 
-```bash
-# recomendado para uso comercial
-python main.py --dados ../data/raw/2026-08 --saida ../data/output --min-peso 7
+No recorte que vai para o XLSX (as 5.000 de maior score, faixa 84–98), os
+setores predominantes são **mineração (1.906), resíduos (1.170), siderurgia e
+metalurgia (588) e madeira (514)** — exatamente os setores prioritários do
+escopo. MEI representa apenas 11 desses 5.000: o score os despriorizou sozinho.
 
-# base completa (auditoria) — exige ~8 GB de RAM
-python main.py --dados ../data/raw/2026-08 --saida ../data/output
-```
+Qualidade da base: **zero CNPJ inválido**, **zero duplicidade**, 100% dos CNPJ
+raiz encontrados no cadastro de empresas. 29.638 empresas ficaram com porte
+não identificado (mantidas e sinalizadas) e 259 municípios sem código IBGE.
 
 As colunas `JUSTIFICATIVA_AMBIENTAL` e `FUNDAMENTO_NORMATIVO` **não vão para o
 CSV**: são constantes por CNAE e repeti-las por linha inflaria o arquivo em
 mais de um terço sem acrescentar informação. Elas estão na planilha XLSX e, na
 íntegra, na aba `MATRIZ_CNAE` — que se relaciona com o CSV pela coluna
 `CNAE_MAIOR_EXPOSICAO`.
-
----
 
 ## Arquivos gerados
 
