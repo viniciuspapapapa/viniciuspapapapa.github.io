@@ -191,7 +191,7 @@ EMPRESAS                                  SOCIOS
 ├── ...52 colunas                         ├── NOME_SOCIO
 └── STATUS_PESQUISA_CRIMINAL              ├── QUALIFICACAO
                                           ├── E_ADMINISTRADOR
-PROCESSOS  (vazia — só se houver processo)└── ...17 colunas
+PROCESSOS  (vazia — só se houver processo)└── ...18 colunas
 ├── ID_EMPRESA / CNPJ
 ├── NUMERO_PROCESSO_CNJ
 └── ...14 colunas                    MAPA_MUNICIPIOS

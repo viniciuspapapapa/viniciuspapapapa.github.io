@@ -312,10 +312,15 @@ etl/ambiental/
 │   ├── exportacao.py               XLSX, CSV, mapa, relatório
 │   ├── gerar_amostra.py            amostra sintética para teste
 │   └── main.py                     orquestração
+├── testes.py                       testes de regressão (python testes.py)
 ├── data/{raw,processed,output}/    dados brutos e saídas (não versionados)
 ├── logs/
 └── requirements.txt
 ```
+
+Antes de alterar pesos, filtros ou configuração, rode `python testes.py` —
+são 51 verificações sobre o que quebra em silêncio (validação de CNPJ,
+formatos da RFB, precedência da matriz, exclusão de porte, faixas do score).
 
 ---
 
