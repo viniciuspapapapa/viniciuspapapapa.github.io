@@ -1,0 +1,648 @@
+<title>IA na Área Criminal</title>
+<meta name="description" content="Apresentação ao Comitê de Tecnologia — ferramentas de IA em operação na área criminal do TPC Advogados e propostas em análise.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+
+<style>
+:root{
+  --preto:#0F0F10;
+  --painel:#17171A;
+  --grafite:#2B2B2B;
+  --claro:#EDEDED;
+  --branco:#FFFFFF;
+  --texto:#E7E7E4;
+  --texto-escuro:#33332F;
+  --muted:#9C9C93;
+  --muted-claro:#6B6B63;
+  --amarelo:#E8E347;
+  --amarelo-suave:#F2EE80;
+  --filete:#2A2A2E;
+  --filete-claro:#D2D2CA;
+
+  --display:"Archivo","Segoe UI",system-ui,sans-serif;
+  --corpo:"IBM Plex Sans","Segoe UI",system-ui,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,"Cascadia Mono",monospace;
+
+  --margem:clamp(1.5rem,5vw,5.5rem);
+  --slide-max:1180px;
+}
+
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0;
+  background:var(--preto);
+  color:var(--texto);
+  font-family:var(--corpo);
+  font-size:clamp(15px,1.05vw,17px);
+  line-height:1.55;
+  -webkit-font-smoothing:antialiased;
+}
+
+/* ---------- estrutura de slides ---------- */
+.deck{scroll-snap-type:y mandatory;overflow-y:auto;height:100vh}
+.slide{
+  scroll-snap-align:start;
+  min-height:100vh;
+  padding:clamp(2.5rem,6vh,4.5rem) var(--margem) clamp(3.2rem,7vh,4.5rem);
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  position:relative;
+  border-bottom:2px solid var(--amarelo);
+  background:var(--preto);
+}
+.slide > .interno{width:100%;max-width:var(--slide-max);margin:0 auto}
+.slide.claro{background:var(--claro);color:var(--texto-escuro);border-bottom-color:var(--amarelo-suave)}
+
+/* selo institucional */
+.selo{
+  position:absolute;top:clamp(1.1rem,3vh,2rem);right:var(--margem);
+  display:flex;align-items:center;gap:.5rem;
+  font-family:var(--display);font-size:.62rem;letter-spacing:.16em;
+  color:var(--texto);opacity:.85;
+}
+.claro .selo{color:var(--texto-escuro);opacity:.75}
+.selo b{
+  border:1px solid currentColor;padding:.28rem .42rem;font-weight:600;letter-spacing:.1em;
+}
+
+/* ---------- tipografia ---------- */
+h1,h2,h3{font-family:var(--display);font-weight:500;text-wrap:balance;margin:0}
+.eyebrow{
+  font-family:var(--display);font-size:.7rem;letter-spacing:.3em;text-transform:uppercase;
+  color:var(--amarelo);margin:0 0 1rem;
+}
+.claro .eyebrow{color:var(--muted-claro)}
+h1{font-size:clamp(2.2rem,5.2vw,4rem);line-height:1.04;letter-spacing:.01em}
+h2{font-size:clamp(1.45rem,2.9vw,2.35rem);line-height:1.12;letter-spacing:.02em;color:var(--amarelo)}
+.claro h2{color:var(--branco)}
+.sub{color:var(--muted);margin:.85rem 0 0;max-width:62ch;font-size:.95rem}
+.regua{width:min(240px,32%);height:3px;background:var(--amarelo);border:0;margin:1.6rem 0 0}
+
+/* faixa de título dos slides claros — banda superior sangrada */
+.slide.claro{justify-content:flex-start;padding-top:clamp(5.5rem,12vh,7.5rem)}
+.faixa{
+  position:absolute;top:0;left:0;right:0;margin:0;
+  background:var(--grafite);padding:clamp(1rem,2.6vh,1.5rem) var(--margem);
+}
+.faixa h2{max-width:var(--slide-max);margin:0 auto;width:100%}
+
+/* ---------- capa ---------- */
+.capa{justify-content:center;overflow:hidden}
+.capa .relevo{position:absolute;inset:0;pointer-events:none}
+.capa .relevo span{position:absolute;display:block;background:#1A1A1B}
+.capa .relevo span:nth-child(1){top:0;right:0;width:32%;height:42%}
+.capa .relevo span:nth-child(2){top:20%;right:0;width:20%;height:58%;background:#232325}
+.capa .assinatura{display:flex;align-items:center;gap:1rem;margin-top:clamp(2.5rem,7vh,4.5rem)}
+.capa .assinatura .marca{
+  border:1.5px solid #A0A0A0;padding:.75rem .85rem;font-family:var(--display);
+  font-weight:600;letter-spacing:.14em;font-size:.85rem;
+}
+.capa .assinatura p{margin:0;font-size:.72rem;letter-spacing:.12em;line-height:1.75;text-transform:uppercase}
+.capa .assinatura b{font-weight:600}
+.capa .data{margin:1.6rem 0 0;font-size:.72rem;letter-spacing:.16em;color:var(--muted);text-transform:uppercase}
+
+/* ---------- lista de linhas (slides escuros) ---------- */
+.linhas{margin:2rem 0 0;border-top:1px solid var(--filete)}
+.linha{
+  display:grid;grid-template-columns:minmax(180px,4fr) 9fr;gap:clamp(1rem,3vw,2.6rem);
+  padding:clamp(.85rem,1.7vh,1.15rem) 0;border-bottom:1px solid var(--filete);
+}
+.linha dt{margin:0}
+.linha .rotulo{
+  font-family:var(--display);font-weight:600;font-size:.92rem;letter-spacing:.07em;
+  text-transform:uppercase;color:var(--branco);display:block;
+}
+.linha .tag{
+  display:block;margin-top:.3rem;font-family:var(--mono);font-size:.76rem;
+  color:var(--amarelo);letter-spacing:.01em;
+}
+.linha dd{margin:0;color:#CFCFC9;font-size:.92rem}
+
+/* ---------- blocos (slides claros) ---------- */
+.blocos{display:grid;gap:clamp(1.2rem,3vh,2.2rem) clamp(1.5rem,4vw,3rem);margin:2.2rem 0 0}
+.blocos.duas{grid-template-columns:repeat(2,minmax(0,1fr))}
+.bloco h3{
+  font-size:.9rem;letter-spacing:.09em;text-transform:uppercase;font-weight:600;
+  color:var(--texto-escuro);padding-bottom:.55rem;border-bottom:2px solid var(--amarelo);
+}
+.bloco p{margin:.7rem 0 0;font-size:.9rem;color:#45453F}
+.bloco .un{font-family:var(--mono);font-weight:400;color:var(--muted-claro);text-transform:none;letter-spacing:0}
+
+/* ---------- divisores ---------- */
+.divisor{justify-content:center}
+.divisor .painel{position:absolute;top:0;right:0;bottom:0;width:28%;background:#151516}
+.divisor .interno{position:relative}
+
+/* ---------- rodapé de slide ---------- */
+.nota{
+  margin:clamp(1.4rem,3.5vh,2.4rem) 0 0;
+  font-size:.76rem;color:var(--muted);letter-spacing:.02em;max-width:80ch;
+}
+.claro .nota{color:var(--muted-claro)}
+
+/* ---------- contato ---------- */
+.contato .grade{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr));gap:1.6rem 2.5rem;margin-top:2.5rem}
+.contato h3{font-size:.78rem;letter-spacing:.14em;text-transform:uppercase;font-weight:600}
+.contato p{margin:.45rem 0 0;font-size:.78rem;color:#B9B9B2;line-height:1.6}
+
+/* ---------- cromo de navegação ---------- */
+.progresso{position:fixed;top:0;left:0;height:3px;background:var(--amarelo);width:0;z-index:40;transition:width .18s ease-out}
+.contador{
+  position:fixed;right:var(--margem);bottom:1.1rem;z-index:40;
+  font-family:var(--mono);font-size:.72rem;letter-spacing:.08em;
+  background:rgba(15,15,16,.82);color:var(--texto);border:1px solid var(--filete);
+  padding:.35rem .6rem;cursor:pointer;
+}
+.contador:hover,.contador:focus-visible{border-color:var(--amarelo);color:var(--amarelo)}
+.dica{
+  position:fixed;left:var(--margem);bottom:1.1rem;z-index:40;
+  font-size:.68rem;letter-spacing:.12em;text-transform:uppercase;color:#6E6E68;
+}
+
+/* índice */
+.indice[hidden]{display:none}
+.indice{
+  position:fixed;inset:0;z-index:50;background:var(--preto);
+  padding:clamp(2rem,6vh,4rem) var(--margem);overflow-y:auto;
+}
+.indice ol{list-style:none;margin:1.5rem 0 0;padding:0;
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:.15rem 2.5rem}
+.indice li a{
+  display:grid;grid-template-columns:2.6rem 1fr;gap:.8rem;align-items:baseline;
+  padding:.5rem 0;border-bottom:1px solid var(--filete);
+  color:var(--texto);text-decoration:none;font-size:.86rem;
+}
+.indice li a span{font-family:var(--mono);font-size:.72rem;color:var(--muted)}
+.indice li a:hover,.indice li a:focus-visible{color:var(--amarelo)}
+.indice li a:hover span,.indice li a:focus-visible span{color:var(--amarelo)}
+.fechar{
+  position:absolute;top:1.2rem;right:var(--margem);background:none;border:1px solid var(--filete);
+  color:var(--texto);font-family:var(--mono);font-size:.72rem;padding:.35rem .6rem;cursor:pointer;
+}
+.fechar:hover{border-color:var(--amarelo);color:var(--amarelo)}
+
+:focus-visible{outline:2px solid var(--amarelo);outline-offset:3px}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}.progresso{transition:none}}
+
+/* telas pequenas: vira documento rolável, sem encaixe de slide */
+@media (max-width:900px){
+  .deck{scroll-snap-type:none}
+  .slide{min-height:auto;padding-bottom:clamp(2.5rem,6vh,3.5rem)}
+  .slide.capa,.slide.divisor{min-height:80vh}
+  .linha{grid-template-columns:1fr;gap:.35rem}
+  .blocos.duas{grid-template-columns:1fr}
+  .dica{display:none}
+  .contador{bottom:.7rem}
+}
+
+@media print{
+  .progresso,.contador,.dica,.indice{display:none!important}
+  .deck{height:auto;overflow:visible}
+  .slide{min-height:auto;page-break-after:always;border-bottom:none;padding:2cm}
+  body{background:#fff}
+  .slide,.divisor .painel,.capa .relevo span{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+}
+</style>
+
+<div class="progresso" id="progresso"></div>
+
+<main class="deck" id="deck">
+
+<!-- 01 CAPA -->
+<section class="slide capa" id="s1" data-titulo="Capa">
+  <div class="relevo" aria-hidden="true"><span></span><span></span></div>
+  <div class="interno">
+    <p class="eyebrow">Comitê de Tecnologia</p>
+    <h1>Inteligência artificial<br>na área criminal</h1>
+    <hr class="regua">
+    <p class="sub">O que já está em operação e o que proponho como próximo passo.</p>
+    <div class="assinatura">
+      <div class="marca">TPC</div>
+      <p>Toledo, Paoliello, de Paula,<br>Campos, Cunha e Cordeiro <b>Advogados.</b></p>
+    </div>
+    <p class="data">Área de Direito Penal · Agosto de 2026</p>
+  </div>
+</section>
+
+<!-- 02 SUMÁRIO -->
+<section class="slide" id="s2" data-titulo="O que este comitê vai ver">
+  <div class="selo"><b>TPC</b> ADVOGADOS.</div>
+  <div class="interno">
+    <h2>O que este comitê vai ver</h2>
+    <p class="sub">Roteiro da apresentação.</p>
+    <dl class="linhas">
+      <div class="linha"><dt><span class="rotulo">01 · Panorama</span></dt>
+        <dd>O que foi construído nos últimos três meses, em números, e a arquitetura em três camadas que sustenta tudo.</dd></div>
+      <div class="linha"><dt><span class="rotulo">02 · Em operação</span></dt>
+        <dd>As dezoito rotinas de IA e as nove ferramentas web já usadas no dia a dia da área criminal — e as que extrapolaram para outras áreas.</dd></div>
+      <div class="linha"><dt><span class="rotulo">03 · Governança</span></dt>
+        <dd>Sigilo, LGPD, validação humana obrigatória e os limites que foram desenhados no próprio código.</dd></div>
+      <div class="linha"><dt><span class="rotulo">04 · Em análise</span></dt>
+        <dd>Seis propostas de expansão, um plano de noventa dias e o que preciso do Comitê para executá-lo.</dd></div>
+    </dl>
+    <p class="nota">Toledo, Paoliello, de Paula, Campos, Cunha e Cordeiro Advogados · Área Criminal</p>
+  </div>
+</section>
+
+<!-- 03 NÚMEROS -->
+<section class="slide claro" id="s3" data-titulo="O que já existe, em números">
+  <div class="selo"><b>TPC</b> ADVOGADOS.</div>
+  <div class="interno">
+    <div class="faixa"><h2>O que já existe, em números</h2></div>
+    <div class="blocos duas">
+      <article class="bloco"><h3>18 rotinas de IA</h3>
+        <p>Rotinas especializadas (“skills”) escritas para o escritório, das quais 11 são exclusivas da área criminal. Cada uma carrega o método de trabalho da área, não apenas um comando.</p></article>
+      <article class="bloco"><h3>9 ferramentas web</h3>
+        <p>Aplicações próprias publicadas e acessíveis pelo navegador, sem instalação: comparador de depoimentos, índice de jurisprudência, gerador de resposta a ofícios, painéis e simuladores.</p></article>
+      <article class="bloco"><h3>2 bases próprias</h3>
+        <p>Pipelines que baixam e organizam dados públicos oficiais: acórdãos do STJ (dados abertos) e Dívida Ativa da União (PGFN). Atualizáveis por comando, sem retrabalho manual.</p></article>
+      <article class="bloco"><h3>126 versões</h3>
+        <p>Todo o código está versionado e auditável desde 23 de maio de 2026, com histórico de cada alteração. Nada depende da memória ou do computador de uma pessoa só.</p></article>
+    </div>
+    <p class="nota">Período: 23/05/2026 a 12/08/2026 · desenvolvimento interno, sem contratação de fornecedor.</p>
+  </div>
+</section>
+
+<!-- 04 ARQUITETURA -->
+<section class="slide" id="s4" data-titulo="Como isso está construído">
+  <div class="selo"><b>TPC</b> ADVOGADOS.</div>
+  <div class="interno">
+    <h2>Como isso está construído</h2>
+    <p class="sub">Três camadas, cada uma resolvendo um tipo diferente de problema.</p>
+    <dl class="linhas">
+      <div class="linha"><dt><span class="rotulo">Camada 1</span><span class="tag">rotinas de IA</span></dt>
+        <dd>O método da área codificado. Cada rotina obriga a IA a seguir o mesmo fluxo que um advogado sênior seguiria: ler os autos, entregar relatório estratégico, validar jurisprudência e só então redigir. Trabalho sob demanda, iniciado por conversa.</dd></div>
+      <div class="linha"><dt><span class="rotulo">Camada 2</span><span class="tag">ferramentas web</span></dt>
+        <dd>O que precisa ser usado repetidamente, por qualquer pessoa da equipe, sem depender de IA a cada uso. Abrem no navegador, funcionam offline quando preciso e não guardam dados em servidor.</dd></div>
+      <div class="linha"><dt><span class="rotulo">Camada 3</span><span class="tag">pipelines de dados</span></dt>
+        <dd>O que precisa de dado bruto e atualização periódica. Baixam fontes oficiais e abertas, filtram, classificam e alimentam as ferramentas da camada 2. Custo zero de licença de dados.</dd></div>
+    </dl>
+    <p class="nota">Custo de infraestrutura hoje: hospedagem gratuita (GitHub Pages) + licença Claude.</p>
+  </div>
+</section>
+
+<!-- 05 DIVISOR -->
+<section class="slide divisor" id="s5" data-titulo="Bloco 01 — O que já está em operação">
+  <div class="painel" aria-hidden="true"></div>
+  <div class="interno">
+    <p class="eyebrow">Bloco 01</p>
+    <h1>O que já está<br>em operação</h1>
+    <hr class="regua">
+    <p class="sub">Rotinas de IA, ferramentas web e bases de dados em uso na área criminal.</p>
+  </div>
+</section>
+
+<!-- 06 PEÇAS -->
+<section class="slide" id="s6" data-titulo="Produção de peças criminais">
+  <div class="selo"><b>TPC</b> ADVOGADOS.</div>
+  <div class="interno">
+    <h2>Produção de peças criminais</h2>
+    <p class="sub">Cinco rotinas cobrem o ciclo completo de um caso, da análise dos autos à peça pronta.</p>
+    <dl class="linhas">
+      <div class="linha"><dt><span class="rotulo">Defesa criminal</span><span class="tag">/defesa-criminal</span></dt>
+        <dd>Elabora e revisa peças defensivas a partir dos PDFs dos autos: resposta à acusação, alegações finais, memoriais, HC, recursos, manifestações em inquérito, impugnação de cautelares. Fluxo em três etapas com validação do advogado antes de cada avanço.</dd></div>
+      <div class="linha"><dt><span class="rotulo">Estudo de caso</span><span class="tag">/criminal-case-study</span></dt>
+        <dd>Documento analítico interno: reconstrução fática, mapeamento probatório favorável e desfavorável, análise de tipicidade e teses defensivas. Não vai aos autos — orienta a estratégia.</dd></div>
+      <div class="linha"><dt><span class="rotulo">Assistente de acusação</span><span class="tag">/assistente-acusacao</span></dt>
+        <dd>A mesma profundidade, pela perspectiva da vítima: reforça a acusação, corrige fragilidades do MP e antecipa teses defensivas.</dd></div>
+      <div class="linha"><dt><span class="rotulo">Recurso especial</span><span class="tag">/recurso-especial-criminal</span></dt>
+        <dd>Trata a admissibilidade como problema central: prequestionamento, cotejo analítico, dissídio jurisprudencial e Súmula 7 do STJ, antes de qualquer redação.</dd></div>
+      <div class="linha"><dt><span class="rotulo">Organizador de documentos</span><span class="tag">/organizador-documentos</span></dt>
+        <dd>Transforma documentos avulsos do cliente em um PDF único, com capas numeradas e descritas, pronto para instruir a peça.</dd></div>
+    </dl>
+    <p class="nota">A rotina /criminal-review foi absorvida por /defesa-criminal — consolidação, não acúmulo.</p>
+  </div>
+</section>
+
+<!-- 07 PADRONIZAÇÃO -->
+<section class="slide claro" id="s7" data-titulo="Padronização e legal design">
+  <div class="selo"><b>TPC</b> ADVOGADOS.</div>
+  <div class="interno">
+    <div class="faixa"><h2>Padronização e legal design</h2></div>
+    <div class="blocos duas">
+      <article class="bloco"><h3>TPC Legal Design <span class="un">/tpc-legal-design</span></h3>
+        <p>Insere fluxogramas, linhas do tempo, quadros comparativos e destaques em peças já prontas, editando o arquivo original — mesmo timbre, mesma fonte, mesmas margens. Nenhuma palavra do texto é alterada. Cada elemento visual precisa ter função argumentativa: o fluxograma expõe a contradição, a linha do tempo revela a lacuna.</p></article>
+      <article class="bloco"><h3>Legal Design DOCX <span class="un">/legal-design-docx</span></h3>
+        <p>Versão genérica da anterior, aplicável a qualquer documento jurídico e a qualquer identidade visual — inclusive de outras áreas do escritório. Mesmo princípio: a integridade do conteúdo é intocável, só a estrutura visual é trabalhada.</p></article>
+      <article class="bloco"><h3>Apresentação TPC <span class="un">/tpc-apresentacao</span></h3>
+        <p>Gera apresentações no padrão institucional do escritório: paleta, tipografia, geometria dos slides e endereços das cinco filiais. Estes slides que o Comitê está vendo foram produzidos por ela.</p></article>
+      <article class="bloco"><h3>Por que isso importa</h3>
+        <p>Padronização deixa de depender de disciplina individual e passa a estar embutida na ferramenta. Quem entra na equipe produz no padrão desde a primeira peça, sem curva de adaptação.</p></article>
+    </div>
+    <p class="nota">Ganho principal: identidade visual e estrutura uniformes, independentemente de quem redige.</p>
+  </div>
+</section>
+
+<!-- 08 INTELIGÊNCIA -->
+<section class="slide" id="s8" data-titulo="Inteligência jurídica e conteúdo">
+  <div class="selo"><b>TPC</b> ADVOGADOS.</div>
+  <div class="interno">
+    <h2>Inteligência jurídica e conteúdo</h2>
+    <p class="sub">Monitoramento contínuo do que muda no direito penal, convertido em comunicação.</p>
+    <dl class="linhas">
+      <div class="linha"><dt><span class="rotulo">Clipping criminal</span><span class="tag">/conjur-criminal-news</span></dt>
+        <dd>Levanta e resume as notícias criminais das últimas duas semanas no Consultor Jurídico e entrega um mailing pronto para circulação interna e para clientes, em linguagem clara.</dd></div>
+      <div class="linha"><dt><span class="rotulo">Pauta criminal</span><span class="tag">/pauta-criminal-instagram</span></dt>
+        <dd>Consolida decisões recentes do STJ e do STF em dois formatos: resumo técnico para clientes e texto acessível para redes sociais, com link de cada matéria.</dd></div>
+      <div class="linha"><dt><span class="rotulo">Projetos de lei</span><span class="tag">/projetos-lei-criminal-instagram</span></dt>
+        <dd>Rastreia PLs penais e processuais penais na Câmara, no Senado e no Planalto, com ementa, relator e fase de tramitação — antecipando mudanças legislativas que atingem a carteira.</dd></div>
+      <div class="linha"><dt><span class="rotulo">Mailing tributário</span><span class="tag">/mailing-tributario</span></dt>
+        <dd>Mesma lógica aplicada à área tributária: pautas de julgamento do STF e do STJ nos quinze dias seguintes, com alerta de ajuizamento preventivo. Nasceu na área criminal e foi cedida.</dd></div>
+    </dl>
+    <p class="nota">Trabalho que antes consumia horas de pesquisa manual a cada quinzena.</p>
+  </div>
+</section>
+
+<!-- 09 GESTÃO -->
+<section class="slide claro" id="s9" data-titulo="Gestão e rotina da equipe">
+  <div class="selo"><b>TPC</b> ADVOGADOS.</div>
+  <div class="interno">
+    <div class="faixa"><h2>Gestão e rotina da equipe</h2></div>
+    <div class="blocos duas">
+      <article class="bloco"><h3>Pauta de audiências <span class="un">/pauta-audiencias</span></h3>
+        <p>Varre todos os calendários do Google e devolve uma planilha com audiências, oitivas e compromissos das duas semanas seguintes, de segunda a domingo. Substitui a montagem manual da pauta semanal.</p></article>
+      <article class="bloco"><h3>Painel de produtividade <span class="un">/painel-produtividade</span></h3>
+        <p>Nasceu de uma análise pontual de 11 mil tarefas feita para o comitê de líderes e virou painel permanente: qualquer nova exportação do ADVWin o regenera. Mede granularidade de apontamento, tempo interno versus cliente, possível duplicidade de lançamento e evolução semanal por advogado.</p></article>
+      <article class="bloco"><h3>Privacidade por desenho</h3>
+        <p>O painel abre sempre vazio: nenhum dado de advogado ou cliente fica embutido no arquivo publicado. Os dados são carregados pelo usuário no próprio navegador e não trafegam para servidor algum — decisão registrada no histórico do código.</p></article>
+      <article class="bloco"><h3>De análise pontual a rotina</h3>
+        <p>É o padrão que se repetiu em quase tudo: um trabalho manual pesado, feito uma vez, foi convertido em ferramenta que se repete a custo próximo de zero.</p></article>
+    </div>
+    <p class="nota">Integração automática com o ADVWin ainda depende de acesso — ver pedidos ao Comitê.</p>
+  </div>
+</section>
+
+<!-- 10 FERRAMENTAS WEB -->
+<section class="slide" id="s10" data-titulo="Ferramentas web próprias">
+  <div class="selo"><b>TPC</b> ADVOGADOS.</div>
+  <div class="interno">
+    <h2>Ferramentas web próprias</h2>
+    <p class="sub">Abrem no navegador, sem instalação e sem servidor guardando dados.</p>
+    <dl class="linhas">
+      <div class="linha"><dt><span class="rotulo">Comparador de versões</span></dt>
+        <dd>Confronta depoimentos e versões fáticas de um mesmo caso e organiza o resultado em contradições, convergências, lacunas narrativas, afirmações isoladas, síntese e recomendações estratégicas. Trabalho artesanal de cotejo, feito de forma estruturada.</dd></div>
+      <div class="linha"><dt><span class="rotulo">Índice de jurisprudência</span></dt>
+        <dd>Busca em acórdãos do STJ por ementa, tese, relator, órgão julgador, ano e tema repetitivo, com exportação. Base construída sobre os dados abertos oficiais do próprio tribunal.</dd></div>
+      <div class="linha"><dt><span class="rotulo">Resposta a ofícios</span></dt>
+        <dd>Monta resposta a requisições de autoridade a partir dos documentos do caso, com estrutura completa: tempestividade, arquitetura da operação, repartição de responsabilidades, medidas antifraude, compliance e reserva de jurisdição.</dd></div>
+      <div class="linha"><dt><span class="rotulo">Transcrição de áudio e vídeo</span></dt>
+        <dd>Aplicativo próprio para transcrever audiências, oitivas e reuniões, com fila de múltiplos arquivos e suporte aos formatos que os tribunais e celulares realmente produzem.</dd></div>
+    </dl>
+    <p class="nota">Também disponíveis: simulador da Reforma Tributária, diagnóstico patrimonial, painel de captação e Lex Dashboard.</p>
+  </div>
+</section>
+
+<!-- 11 BASES -->
+<section class="slide claro" id="s11" data-titulo="Bases de dados próprias">
+  <div class="selo"><b>TPC</b> ADVOGADOS.</div>
+  <div class="interno">
+    <div class="faixa"><h2>Bases de dados próprias</h2></div>
+    <div class="blocos duas">
+      <article class="bloco"><h3>Acórdãos do STJ <span class="un">custo zero</span></h3>
+        <p>Indexador dos “Espelhos de Acórdãos” publicados pelo próprio STJ em dados abertos: número, classe, órgão julgador, relator, ementa, tese, tema repetitivo e referências. Sem chave de API e sem assinatura. O STJ é hoje o único tribunal superior com dump em lote — por isso a base começou por ele.</p></article>
+      <article class="bloco"><h3>Dívida Ativa da União <span class="un">PGFN</span></h3>
+        <p>Pipeline que baixa a base da PGFN, filtra Minas Gerais, agrega por CNPJ, calcula score de oportunidade e enriquece as maiores devedoras com dados cadastrais públicos. Alimenta o painel de captação da área tributária.</p></article>
+      <article class="bloco"><h3>Cruzamento penal-tributário</h3>
+        <p>Sobre essa base, classifiquei 633 empresas por probabilidade de exposição penal-tributária a partir da natureza do tributo inscrito — contribuição descontada do segurado (art. 168-A, CP) e tributo retido na fonte (art. 2º, II, Lei 8.137/90). É priorização, não parecer.</p></article>
+      <article class="bloco"><h3>O limite está escrito na ferramenta</h3>
+        <p>O próprio documento registra que dívida ativa é cobrança cível, que a inferência não confirma existência de ação penal, que a responsabilidade é do administrador à época e que pagamento extingue a punibilidade. A ferramenta prioriza; quem conclui é o advogado.</p></article>
+    </div>
+    <p class="nota">Fontes públicas e oficiais · pessoas físicas descartadas por padrão · material interno não publicado.</p>
+  </div>
+</section>
+
+<!-- 12 FLUXO -->
+<section class="slide" id="s12" data-titulo="Um caso, de ponta a ponta">
+  <div class="selo"><b>TPC</b> ADVOGADOS.</div>
+  <div class="interno">
+    <h2>Um caso, de ponta a ponta</h2>
+    <p class="sub">Como as peças se encaixam quando chega um inquérito novo.</p>
+    <dl class="linhas">
+      <div class="linha"><dt><span class="rotulo">1 · Ler</span></dt>
+        <dd>Os PDFs dos autos entram no estudo de caso. Sai um documento com reconstrução fática, mapa probatório e teses candidatas — antes de qualquer decisão estratégica.</dd></div>
+      <div class="linha"><dt><span class="rotulo">2 · Cotejar</span></dt>
+        <dd>Depoimentos e versões vão para o comparador. Contradições, lacunas e afirmações isoladas ficam explícitas e viram munição da peça.</dd></div>
+      <div class="linha"><dt><span class="rotulo">3 · Pesquisar</span></dt>
+        <dd>A tese é confrontada com o índice de jurisprudência do STJ e com a pesquisa validada pelo advogado. Nada entra na peça sem conferência na fonte.</dd></div>
+      <div class="linha"><dt><span class="rotulo">4 · Redigir</span></dt>
+        <dd>A rotina de defesa criminal produz a peça em etapas, com aprovação do advogado a cada avanço, já no padrão do escritório.</dd></div>
+      <div class="linha"><dt><span class="rotulo">5 · Entregar</span></dt>
+        <dd>Legal design aplica os elementos visuais argumentativos e o organizador monta o PDF de documentos com capas numeradas. Peça e anexos saem juntos.</dd></div>
+    </dl>
+    <p class="nota">Cada etapa tem parada obrigatória para validação humana — nenhuma delas é automática de ponta a ponta.</p>
+  </div>
+</section>
+
+<!-- 13 DIVISOR -->
+<section class="slide divisor" id="s13" data-titulo="Bloco 02 — Governança, sigilo e limites">
+  <div class="painel" aria-hidden="true"></div>
+  <div class="interno">
+    <p class="eyebrow">Bloco 02</p>
+    <h1>Governança,<br>sigilo e limites</h1>
+    <hr class="regua">
+    <p class="sub">As restrições foram desenhadas dentro das ferramentas, não escritas depois.</p>
+  </div>
+</section>
+
+<!-- 14 GOVERNANÇA -->
+<section class="slide claro" id="s14" data-titulo="Como o risco está controlado hoje">
+  <div class="selo"><b>TPC</b> ADVOGADOS.</div>
+  <div class="interno">
+    <div class="faixa"><h2>Como o risco está controlado hoje</h2></div>
+    <div class="blocos duas">
+      <article class="bloco"><h3>A IA não assina nada</h3>
+        <p>Todas as rotinas de produção de peça param e pedem validação do advogado antes de avançar. O produto é minuta de trabalho, submetida a revisão humana como qualquer outra.</p></article>
+      <article class="bloco"><h3>Jurisprudência conferida na fonte</h3>
+        <p>A pesquisa é etapa separada e validada antes da redação, justamente para impedir citação inventada. O índice do STJ vem do dado oficial do tribunal, não de resumo de terceiro.</p></article>
+      <article class="bloco"><h3>Dado de cliente não é publicado</h3>
+        <p>O que é confidencial fica fora do repositório público. O painel de produtividade abre vazio e processa no navegador do usuário. O material de risco penal está marcado como interno e não foi publicado.</p></article>
+      <article class="bloco"><h3>Fontes abertas e LGPD</h3>
+        <p>As bases usam dados públicos oficiais (PGFN e STJ). No pipeline de captação, pessoas físicas são descartadas por padrão e o uso é prospecção entre empresas, com conferência da situação atual antes de qualquer abordagem.</p></article>
+      <article class="bloco"><h3>Tudo versionado e auditável</h3>
+        <p>Cada alteração tem autor, data e justificativa registrados. É possível reconstruir por que uma ferramenta se comporta de determinado modo — inclusive as decisões de privacidade.</p></article>
+      <article class="bloco"><h3>O que ainda precisa de decisão</h3>
+        <p>Não existe política formal de uso de IA no escritório, nem repositório privado institucional, nem definição de quem homologa uma rotina antes de virar padrão da área. É o principal pedido desta apresentação.</p></article>
+    </div>
+    <p class="nota">Nada aqui substitui juízo profissional — as ferramentas encurtam o caminho até ele.</p>
+  </div>
+</section>
+
+<!-- 15 DIVISOR -->
+<section class="slide divisor" id="s15" data-titulo="Bloco 03 — O que está em análise">
+  <div class="painel" aria-hidden="true"></div>
+  <div class="interno">
+    <p class="eyebrow">Bloco 03</p>
+    <h1>O que está<br>em análise</h1>
+    <hr class="regua">
+    <p class="sub">Seis propostas de expansão submetidas à avaliação do Comitê.</p>
+  </div>
+</section>
+
+<!-- 16 PROPOSTAS -->
+<section class="slide" id="s16" data-titulo="Propostas em avaliação">
+  <div class="selo"><b>TPC</b> ADVOGADOS.</div>
+  <div class="interno">
+    <h2>Propostas em avaliação</h2>
+    <p class="sub">Todas partem de algo que já funciona — são extensões, não recomeços.</p>
+    <dl class="linhas">
+      <div class="linha"><dt><span class="rotulo">Memória da área</span></dt>
+        <dd>Banco pesquisável das peças e teses já produzidas pelo escritório. Hoje a experiência acumulada está espalhada em pastas; indexada, passaria a alimentar cada peça nova. Maior ganho potencial da lista.</dd></div>
+      <div class="linha"><dt><span class="rotulo">Jurisprudência ampliada</span></dt>
+        <dd>Estender o índice ao TJMG e ao TRF6, que concentram nossa carteira, e adicionar busca por sentido, não só por palavra exata. Depende de fonte de dados: fora do STJ não há dump aberto equivalente.</dd></div>
+      <div class="linha"><dt><span class="rotulo">Assistente de audiência</span></dt>
+        <dd>Ligar a transcrição já existente ao comparador de versões: sai da audiência com o depoimento transcrito e as contradições em relação às versões anteriores já apontadas.</dd></div>
+      <div class="linha"><dt><span class="rotulo">Dosimetria e ANPP</span></dt>
+        <dd>Rotina para cálculo de pena e avaliação de requisitos de acordo de não persecução penal, com simulação de cenários de proposta. Cálculo conferível, não estimativa.</dd></div>
+      <div class="linha"><dt><span class="rotulo">Painel da carteira criminal</span></dt>
+        <dd>Visão única de fase processual, próximos atos, prazos e risco por caso. Depende de acesso de leitura ao ADVWin — hoje o dado entra por exportação manual.</dd></div>
+      <div class="linha"><dt><span class="rotulo">Resposta a ofícios generalizada</span></dt>
+        <dd>Transformar o gerador feito para um cliente específico em ferramenta para qualquer requisição de autoridade, aproveitando a estrutura já validada na prática.</dd></div>
+    </dl>
+    <p class="nota">Ordem de execução sugerida no slide seguinte.</p>
+  </div>
+</section>
+
+<!-- 17 90 DIAS -->
+<section class="slide claro" id="s17" data-titulo="Plano sugerido para 90 dias">
+  <div class="selo"><b>TPC</b> ADVOGADOS.</div>
+  <div class="interno">
+    <div class="faixa"><h2>Plano sugerido para 90 dias</h2></div>
+    <div class="blocos duas">
+      <article class="bloco"><h3>Dias 1 a 30 <span class="un">consolidar</span></h3>
+        <p>Formalizar a política de uso de IA e o repositório privado institucional. Treinar a equipe criminal nas rotinas que já existem — o maior ganho imediato não é construir mais, é fazer o que já está pronto ser usado por todos.</p></article>
+      <article class="bloco"><h3>Dias 31 a 60 <span class="un">memória</span></h3>
+        <p>Construir o banco interno de peças e teses e ligá-lo às rotinas de produção. É a proposta com maior retorno e a que mais depende de decisão institucional sobre onde o acervo pode ficar hospedado.</p></article>
+      <article class="bloco"><h3>Dias 61 a 90 <span class="un">integrar</span></h3>
+        <p>Assistente de audiência e painel da carteira criminal, ambos condicionados a acesso: um ao ambiente de transcrição, outro ao ADVWin. Dosimetria e ANPP entram aqui se houver folga.</p></article>
+      <article class="bloco"><h3>Como medir</h3>
+        <p>Proponho acompanhar três indicadores simples desde o dia 1: número de peças que passaram por alguma rotina, tempo entre recebimento dos autos e primeira minuta, e adesão da equipe. Sem medição, a discussão do próximo ciclo vira opinião.</p></article>
+    </div>
+    <p class="nota">Execução dentro da própria área, sem contratação externa — o que muda é o tempo alocado.</p>
+  </div>
+</section>
+
+<!-- 18 PEDIDOS -->
+<section class="slide" id="s18" data-titulo="O que peço ao Comitê">
+  <div class="selo"><b>TPC</b> ADVOGADOS.</div>
+  <div class="interno">
+    <h2>O que peço ao Comitê</h2>
+    <p class="sub">Seis decisões destravam tudo o que foi apresentado no bloco anterior.</p>
+    <dl class="linhas">
+      <div class="linha"><dt><span class="rotulo">Política de IA</span></dt>
+        <dd>Regra formal sobre que tipo de informação de cliente pode ser submetida a ferramenta de IA, com o crivo do sigilo profissional. Hoje o critério é individual — deveria ser institucional.</dd></div>
+      <div class="linha"><dt><span class="rotulo">Repositório privado</span></dt>
+        <dd>Ambiente institucional para o que é confidencial. Parte do material já precisa ficar deliberadamente fora do repositório público por não haver alternativa.</dd></div>
+      <div class="linha"><dt><span class="rotulo">Acesso ao ADVWin</span></dt>
+        <dd>Leitura automatizada dos dados de tarefas, prazos e andamentos. Sem isso, painel de produtividade e painel de carteira continuam dependendo de exportação manual.</dd></div>
+      <div class="linha"><dt><span class="rotulo">Licenças e treinamento</span></dt>
+        <dd>Licenças para a equipe criminal e tempo formalmente alocado para treinamento. Ferramenta não usada não gera retorno algum.</dd></div>
+      <div class="linha"><dt><span class="rotulo">Ambiente com rede liberada</span></dt>
+        <dd>Os pipelines de dados precisam alcançar PGFN, STJ e APIs públicas de CNPJ. Hoje essa etapa roda em máquina pessoal por restrição de rede.</dd></div>
+      <div class="linha"><dt><span class="rotulo">Quem homologa</span></dt>
+        <dd>Definir quem aprova uma rotina antes de ela virar padrão da área, e como se registra essa aprovação. É a peça que falta para escalar isso para além de uma pessoa.</dd></div>
+    </dl>
+    <p class="nota">Sem essas decisões, o que existe continua funcionando — mas continua dependendo de iniciativa individual.</p>
+  </div>
+</section>
+
+<!-- 19 FECHAMENTO -->
+<section class="slide" id="s19" data-titulo="Em síntese">
+  <div class="interno">
+    <p class="eyebrow">Em síntese</p>
+    <h1>A área criminal já opera<br>com essas ferramentas.</h1>
+    <hr class="regua">
+    <p class="sub">O que trago ao Comitê não é um pedido de aprovação para começar, e sim as decisões institucionais que permitem transformar iniciativa individual em capacidade do escritório.</p>
+  </div>
+</section>
+
+<!-- 20 CONTATO -->
+<section class="slide contato" id="s20" data-titulo="Contato">
+  <div class="interno">
+    <div class="assinatura" style="display:flex;align-items:center;gap:1rem">
+      <div style="border:1.5px solid #A0A0A0;padding:.75rem .85rem;font-family:var(--display);font-weight:600;letter-spacing:.14em;font-size:.85rem">TPC</div>
+      <p style="margin:0;font-size:.72rem;letter-spacing:.12em;line-height:1.75;text-transform:uppercase">Toledo, Paoliello, de Paula,<br>Campos, Cunha e Cordeiro <b>Advogados.</b></p>
+    </div>
+    <div class="grade">
+      <div><h3>Belo Horizonte</h3><p>Rua Yvon Magalhães Pinto, 615, 8º andar | São Bento<br>Belo Horizonte | MG | CEP 30350.560 | Tel. (31) 3527.5800</p></div>
+      <div><h3>São Paulo</h3><p>Rua Bandeira Paulista, 726, 17º andar | Itaim Bibi<br>São Paulo | SP | CEP 04532.002 | Tel. (11) 3056.2110</p></div>
+      <div><h3>Brasília</h3><p>SHS Quadra 6, Brasil 21, Bloco A, sala 501<br>Brasília | DF | CEP 70316.102 | Tel. (61) 2193.1283</p></div>
+      <div><h3>Cuiabá</h3><p>Av. das Flores, 945, 10º andar<br>Jardim Cuiabá | Cuiabá | MT | CEP 78043.172</p></div>
+      <div><h3>João Monlevade</h3><p>Av. Wilson Alvarenga, 1.059, sala 601 | Carneirinhos<br>João Monlevade | MG | CEP 35930.001 | Tel. (31) 3193.0191</p></div>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<nav class="indice" id="indice" hidden aria-label="Índice de slides">
+  <button class="fechar" id="fechar" type="button">fechar (esc)</button>
+  <p class="eyebrow">Índice</p>
+  <h2 style="color:var(--branco)">IA na área criminal</h2>
+  <ol id="lista"></ol>
+</nav>
+
+<button class="contador" id="contador" type="button" aria-label="Abrir índice de slides">01 / 20</button>
+<p class="dica">← → navegar · i índice</p>
+
+<script>
+(function(){
+  const deck = document.getElementById('deck');
+  const slides = Array.from(deck.querySelectorAll('.slide'));
+  const contador = document.getElementById('contador');
+  const progresso = document.getElementById('progresso');
+  const indice = document.getElementById('indice');
+  const lista = document.getElementById('lista');
+  const total = String(slides.length).padStart(2,'0');
+  let atual = 0;
+
+  slides.forEach(function(s, i){
+    const li = document.createElement('li');
+    const a = document.createElement('a');
+    a.href = '#' + s.id;
+    a.innerHTML = '<span>' + String(i+1).padStart(2,'0') + '</span>' + s.dataset.titulo;
+    a.addEventListener('click', function(){ fecharIndice(); });
+    li.appendChild(a);
+    lista.appendChild(li);
+  });
+
+  function marcar(i){
+    atual = i;
+    contador.textContent = String(i+1).padStart(2,'0') + ' / ' + total;
+    progresso.style.width = ((i+1)/slides.length*100) + '%';
+  }
+
+  const obs = new IntersectionObserver(function(entradas){
+    entradas.forEach(function(e){
+      if (e.isIntersecting) marcar(slides.indexOf(e.target));
+    });
+  }, { threshold: 0.55 });
+  slides.forEach(function(s){ obs.observe(s); });
+
+  function irPara(i){
+    const alvo = Math.max(0, Math.min(slides.length - 1, i));
+    slides[alvo].scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+  function abrirIndice(){ indice.hidden = false; }
+  function fecharIndice(){ indice.hidden = true; }
+
+  contador.addEventListener('click', function(){ indice.hidden ? abrirIndice() : fecharIndice(); });
+  document.getElementById('fechar').addEventListener('click', fecharIndice);
+
+  document.addEventListener('keydown', function(e){
+    if (e.key === 'Escape') { fecharIndice(); return; }
+    if (e.key === 'i' || e.key === 'I') { indice.hidden ? abrirIndice() : fecharIndice(); return; }
+    if (indice.hidden === false) return;
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === 'PageDown' || e.key === ' ') {
+      e.preventDefault(); irPara(atual + 1);
+    } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp' || e.key === 'PageUp') {
+      e.preventDefault(); irPara(atual - 1);
+    } else if (e.key === 'Home') { e.preventDefault(); irPara(0); }
+    else if (e.key === 'End') { e.preventDefault(); irPara(slides.length - 1); }
+  });
+
+  marcar(0);
+})();
+</script>
