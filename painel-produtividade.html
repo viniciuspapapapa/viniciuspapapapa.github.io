@@ -330,6 +330,9 @@ const CFG = {
   descMinChars: 15,      // descrição abaixo disto = incompleta
   cargaAltaMin: 600,     // > 10h/dia = carga suspeita
   cargaBaixaMin: 240,    // < 4h em dia útil trabalhado = subaproveitamento
+  jornadaBaixaMin: 360,  // < 6h/dia = jornada abaixo do esperado
+  jornadaAltaMin: 480,   // > 8h/dia = jornada acima de 8h
+  tarefaLongaMin: 90,    // > 1h30 em um único lançamento = tarefa longa
   internoAltoPct: 40,    // > 40% interno = alerta de rentabilidade
   descricoesGenericas: [ // descrições genéricas demais (isoladas)
     'analise','análise','reuniao','reunião','contato','leitura','estudo','pesquisa',
@@ -538,7 +541,7 @@ function descProblema(desc){
 }
 function agg(records){
   const porCliente={}, porTipo={}, porTipoMin={}, porClienteMin={};
-  const dias={}, diaSem={}, semanas={}, porDiaAdv={};
+  const dias={}, diaSem={}, semanas={}, porDiaAdv={}, porDia={};
   const porDesc={};        // descrição normalizada -> {count,min,ex,tipos}
   const natureza={};       // natureza -> {min,count}
   const pecas=[];          // lançamentos de elaboração/revisão de peças
@@ -578,6 +581,9 @@ function agg(records){
       const pk=r.advogado+'¦'+r.data;
       porDiaAdv[pk]=porDiaAdv[pk]||{adv:r.advogado,data:r.data,min:0,tasks:0};
       porDiaAdv[pk].min+=r.min; porDiaAdv[pk].tasks++;
+      // total por dia (da visão atual) — para jornada diária <6h / >8h
+      porDia[r.data]=porDia[r.data]||{data:r.data,min:0,tasks:0};
+      porDia[r.data].min+=r.min; porDia[r.data].tasks++;
     }
   });
   // classificar flags por registro
@@ -599,6 +605,12 @@ function agg(records){
   // cargas diárias anômalas
   const cargasAltas=Object.values(porDiaAdv).filter(x=>x.min>CFG.cargaAltaMin)
      .sort((a,b)=>b.min-a.min);
+  // jornada diária: dias abaixo de 6h e acima de 8h (da visão atual)
+  const diasArr=Object.values(porDia).sort((a,b)=>a.data.localeCompare(b.data));
+  const diasBaixos=diasArr.filter(x=>x.min<CFG.jornadaBaixaMin).sort((a,b)=>a.min-b.min);
+  const diasAltos=diasArr.filter(x=>x.min>CFG.jornadaAltaMin).sort((a,b)=>b.min-a.min);
+  // tarefas longas (> 1h30)
+  const tarefasLongas=records.filter(r=>r.min>CFG.tarefaLongaMin).sort((a,b)=>b.min-a.min);
   const externoMin=totalMin-internoMin;
   const sortEntries=o=>Object.entries(o).sort((a,b)=>b[1]-a[1]);
   // descrições recorrentes (só as que repetem)
@@ -645,6 +657,7 @@ function agg(records){
     pecasPorTipo: sortEntries(pecasPorTipo),
     pecasPorTipoMin: sortEntries(pecasPorTipoMin),
     subtipoArr, nSubNaoEspec,
+    diasArr, diasBaixos, diasAltos, tarefasLongas,
     natArr, adminMin,
     carteira:{
       nClientesExt: extClientes.length,
@@ -1044,6 +1057,51 @@ function subtipoPecaSection(s){
   return html;
 }
 
+/* Jornada diária — dias abaixo de 6h e acima de 8h */
+function jornadaSection(s){
+  const escopo = atual==='__equipe__' ? 'total da equipe por dia' : 'do advogado por dia';
+  const dataBR=d=>d.split('-').reverse().join('/')+' ('+diaSemana(d).slice(0,3)+')';
+  const tabela=(lista,vazio)=> lista.length
+    ? `<div class="tablewrap" style="border:none;max-height:230px;overflow-y:auto"><table>
+        <thead><tr><th>Dia</th><th class="num">Horas</th><th class="num">Tarefas</th></tr></thead>
+        <tbody>${lista.map(x=>`<tr><td>${dataBR(x.data)}</td><td class="num">${fmtHM(x.min)}</td><td class="num">${x.tasks}</td></tr>`).join('')}</tbody></table></div>`
+    : `<div class="empty-state" style="padding:20px">${vazio}</div>`;
+  return sectionTitle('◷','Jornada diária','dias com menos de 6h e dias com mais de 8h de lançamentos ('+escopo+')')
+   + `<div class="kpis" style="grid-template-columns:repeat(4,1fr)">
+        <div class="kpi ${s.diasBaixos.length?'flag':''}"><div class="label">Dias abaixo de 6h</div><div class="value">${s.diasBaixos.length}</div><div class="sub">de ${s.diasArr.length} dias com lançamento</div></div>
+        <div class="kpi ${s.diasAltos.length?'good':''}"><div class="label">Dias acima de 8h</div><div class="value">${s.diasAltos.length}</div><div class="sub">jornada intensa</div></div>
+        <div class="kpi"><div class="label">Dias entre 6h e 8h</div><div class="value">${s.diasArr.length-s.diasBaixos.length-s.diasAltos.length}</div><div class="sub">dentro do esperado</div></div>
+        <div class="kpi"><div class="label">Média por dia</div><div class="value">${fmtH(s.diasArr.length? s.totalMin/s.diasArr.length:0)}</div><div class="sub">${s.diasArr.length} dias trabalhados</div></div>
+      </div>
+      <div class="grid" style="margin-top:14px">
+        <div class="panel canvas-tall" style="grid-column:1 / -1"><h3>Horas lançadas por dia <span class="legend-note" style="margin:0">— vermelho &lt; 6h · cinza 6–8h · amarelo &gt; 8h</span></h3><canvas id="cJornada"></canvas></div>
+      </div>
+      <div class="grid" style="margin-top:14px">
+        <div class="panel"><h3>Dias abaixo de 6h (${s.diasBaixos.length})</h3>${tabela(s.diasBaixos,'Nenhum dia abaixo de 6h.')}</div>
+        <div class="panel"><h3>Dias acima de 8h (${s.diasAltos.length})</h3>${tabela(s.diasAltos,'Nenhum dia acima de 8h.')}</div>
+      </div>`;
+}
+
+/* Tarefas mais longas (> 1h30 num único lançamento) */
+function tarefasLongasSection(s){
+  const L=s.tarefasLongas;
+  const title=sectionTitle('⧗','Tarefas mais longas','lançamentos individuais acima de 1h30');
+  if(!L.length) return title+`<div class="empty-state">Nenhum lançamento acima de 1h30 neste recorte.</div>`;
+  const totMin=L.reduce((a,r)=>a+r.min,0);
+  return title
+   + `<div class="legend-note" style="margin-bottom:10px"><b>${L.length}</b> lançamento(s) acima de 1h30, somando <b>${fmtHM(totMin)}</b> (${fmtPct(s.totalMin?totMin/s.totalMin*100:0)} do total). Ordenados do maior para o menor.</div>
+      <div class="tablewrap" style="max-height:460px;overflow-y:auto"><table>
+        <thead><tr>${atual==='__equipe__'?'<th>Advogado</th>':''}<th>Data</th><th>Cliente</th><th>Tipo</th><th>Descrição</th><th class="num">Tempo</th></tr></thead>
+        <tbody>${L.map(r=>`<tr>
+          ${atual==='__equipe__'?`<td>${primeiroNome(r.advogado)}</td>`:''}
+          <td>${r.data?r.data.split('-').reverse().join('/'):'—'}</td>
+          <td>${r.cliente}${isInterno(r.cliente)?' <span class="pill pill-int">int</span>':''}</td>
+          <td>${r.tipo||'<span class="muted">—</span>'}</td>
+          <td>${r.descricao||'<span class="muted">(vazio)</span>'}</td>
+          <td class="num"><b>${fmtHM(r.min)}</b></td>
+        </tr>`).join('')}</tbody></table></div>`;
+}
+
 function render(){
   const s=ANALISE[atual];
   const app=document.getElementById('app');
@@ -1070,6 +1128,9 @@ function render(){
     <div class="panel"><h3>Faturável × Interno</h3><canvas id="cInterno"></canvas>
       <div class="legend-note" style="text-align:center">${fmtH(s.externoMin)} para clientes · ${fmtH(s.internoMin)} interno TPC</div></div>
   </div>`;
+
+  // Jornada diária (dias < 6h e > 8h)
+  html+=jornadaSection(s);
 
   // Rentabilidade & carteira + Natureza da atividade (adicionais de gestão)
   html+=rentabilidadeSection(s);
@@ -1111,6 +1172,9 @@ function render(){
   html+=descricoesSection(s);
   html+=pecasSection(s);
   html+=subtipoPecaSection(s);
+
+  // Tarefas mais longas (> 1h30)
+  html+=tarefasLongasSection(s);
 
   // (e) diagnósticos + (f) descrições
   html+=sectionTitle('e','Diagnóstico de falhas no lançamento','clique em uma categoria para filtrar a tabela');
@@ -1213,6 +1277,11 @@ function fullTable(s,key){
       <input id="buscaFull" placeholder="Buscar em ${s.records.length} lançamentos…">
       <select id="fltCliente"><option value="">Todos os clientes</option>${
         [...new Set(s.records.map(r=>r.cliente))].sort().map(c=>`<option>${c}</option>`).join('')}</select>
+      <select id="ordFull">
+        <option value="data">Ordenar: Data (padrão)</option>
+        <option value="min_desc">Horas: maiores primeiro</option>
+        <option value="min_asc">Horas: menores primeiro</option>
+      </select>
       <span class="count" id="cntFull"></span>
     </div>
     <div class="tablewrap" style="max-height:520px;overflow-y:auto">
@@ -1249,12 +1318,18 @@ function wireFullTable(s,key){
   const tbody=document.getElementById('tbodyFull');
   const busca=document.getElementById('buscaFull');
   const fCli=document.getElementById('fltCliente');
+  const ord=document.getElementById('ordFull');
   const cnt=document.getElementById('cntFull');
-  const data=s.records.map(r=>({r,txt:semAcento(r.advogado+' '+r.cliente+' '+r.tipo+' '+r.descricao)}))
-    .sort((a,b)=>(a.r.data||'').localeCompare(b.r.data||''));
+  const data=s.records.map(r=>({r,txt:semAcento(r.advogado+' '+r.cliente+' '+r.tipo+' '+r.descricao)}));
+  const ordena=arr=>{
+    const o=ord?ord.value:'data';
+    if(o==='min_desc') return arr.slice().sort((a,b)=>b.r.min-a.r.min);
+    if(o==='min_asc')  return arr.slice().sort((a,b)=>a.r.min-b.r.min);
+    return arr.slice().sort((a,b)=>(a.r.data||'').localeCompare(b.r.data||''));
+  };
   function paint(){
     const bv=semAcento(busca.value), cv=fCli.value;
-    const vis=data.filter(d=>(!bv||d.txt.includes(bv))&&(!cv||d.r.cliente===cv));
+    const vis=ordena(data.filter(d=>(!bv||d.txt.includes(bv))&&(!cv||d.r.cliente===cv)));
     tbody.innerHTML=vis.slice(0,600).map(({r})=>`<tr>
       ${key==='__equipe__'?`<td>${primeiroNome(r.advogado)}</td>`:''}
       <td>${r.data?r.data.split('-').reverse().join('/'):'—'}</td>
@@ -1265,12 +1340,12 @@ function wireFullTable(s,key){
     </tr>`).join('');
     cnt.textContent=`${vis.length} de ${data.length}`+(vis.length>600?' (mostrando 600)':'');
   }
-  busca.oninput=paint; fCli.onchange=paint;
+  busca.oninput=paint; fCli.onchange=paint; if(ord) ord.onchange=paint;
   paint();
 }
 
 /* ---- charts ---- */
-const CORES={amarelo:'#E8E347',grafite:'#2B2B2B',preto:'#0F0F10',cinza:'#B8B8B8',cinza2:'#8A8A8A'};
+const CORES={amarelo:'#E8E347',grafite:'#2B2B2B',preto:'#0F0F10',cinza:'#B8B8B8',cinza2:'#8A8A8A',vermelho:'#D03B3B'};
 function destroyCharts(){ Object.values(charts).forEach(c=>c.destroy()); charts={}; }
 function buildCharts(s){
   destroyCharts();
@@ -1354,6 +1429,18 @@ function buildCharts(s){
         backgroundColor:st.map(x=>x.nome==='Não especificado'?CORES.amarelo:CORES.grafite),borderRadius:3}]},
       options:{indexAxis:'y',plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>c.parsed.x+' lançamentos'}}},
         scales:{x:{beginAtZero:true,grid:{color:gridC},ticks:{precision:0}},y:{grid:{display:false},ticks:{font:{size:10}}}}}
+    });
+  }
+  // jornada diária: horas por dia, coloridas por faixa (<6h / 6-8h / >8h)
+  if(document.getElementById('cJornada') && s.diasArr && s.diasArr.length){
+    const dj=s.diasArr;
+    const cor=m=> m<CFG.jornadaBaixaMin?CORES.vermelho : (m>CFG.jornadaAltaMin?CORES.amarelo:CORES.grafite);
+    charts.jornada=new Chart(document.getElementById('cJornada'),{
+      type:'bar',
+      data:{labels:dj.map(x=>{const p=x.data.split('-');return p[2]+'/'+p[1];}),
+        datasets:[{data:dj.map(x=>+(x.min/60).toFixed(2)),backgroundColor:dj.map(x=>cor(x.min)),borderRadius:2}]},
+      options:{plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>fmtHM(dj[c.dataIndex].min)+' · '+dj[c.dataIndex].tasks+' tarefas'}}},
+        scales:{y:{beginAtZero:true,grid:{color:gridC},title:{display:true,text:'horas'}},x:{grid:{display:false},ticks:{font:{size:9},maxRotation:0,autoSkip:true}}}}
     });
   }
 }
