@@ -255,6 +255,19 @@
   .sec-sugestao{border-top:1px solid #EFEFEF;} .sec-sugestao h4{color:var(--azul);} .sec-sugestao li::before{background:var(--azul);}
   .sec-rent{border-top:1px solid #EFEFEF;background:#FCFBEE;} .sec-rent h4{color:#7A7600;} .sec-rent li::before{background:var(--amarelo);}
   .crit-empty{font-size:12.5px;color:#9A9A9A;font-style:italic;}
+  /* ---- drill-down (lançamentos de um item clicado) ---- */
+  .drillable{cursor:pointer;}
+  .drillable:hover{background:#FCFBEE!important;}
+  td.drillable:hover, .cd-list li.drillable:hover{outline:1px solid var(--amarelo);}
+  .drill-hint{color:#B4B400;font-weight:700;}
+  #drillModal{display:none;position:fixed;inset:0;background:rgba(15,15,16,.72);z-index:9999;padding:26px;overflow:auto;}
+  #drillModal .drill-inner{max-width:920px;margin:0 auto;background:var(--branco);border-radius:10px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.4);}
+  .drill-top{position:sticky;top:0;background:var(--preto);color:#fff;padding:15px 22px;display:flex;justify-content:space-between;align-items:flex-start;gap:16px;border-left:5px solid var(--amarelo);}
+  .drill-top .drill-k{font-size:10.5px;text-transform:uppercase;letter-spacing:1px;color:var(--amarelo-suave);font-weight:700;}
+  .drill-top .drill-t{font-size:18px;font-weight:700;margin-top:3px;}
+  .drill-top .drill-s{font-size:12px;color:#B8B8B8;margin-top:4px;}
+  .drill-top button{font:inherit;font-size:13px;font-weight:700;border:none;border-radius:6px;padding:8px 14px;cursor:pointer;background:#3A3A3A;color:#fff;flex:0 0 auto;}
+  .drill-body{padding:16px 20px 22px;}
   /* resumo dos dados (espelho do relatório completo) dentro do crítico */
   .crit-dados{margin:2px 22px 6px;background:#FAFAF7;border:1px solid #ECEBE3;border-radius:6px;padding:14px 16px;}
   .crit-dados h4{font-size:11.5px;text-transform:uppercase;letter-spacing:.7px;font-weight:800;color:var(--grafite);margin-bottom:10px;}
@@ -310,6 +323,7 @@
 <div id="pdfOverlay"><div class="spin"></div><div>Montando o relatório… preparando gráficos e tabelas de cada advogado.</div></div>
 <div id="printArea"></div>
 <div id="criticoModal"></div>
+<div id="drillModal"></div>
 
 <script>
 /* ============================================================
@@ -775,7 +789,7 @@ function insightsBlock(key,s){
 function topList(entries, fmt, unit){
   const max=entries.length?entries[0][1]:1;
   return `<div class="tablewrap"><table><tbody>`+entries.slice(0,8).map((e,i)=>`
-    <tr>
+    <tr class="drillable" data-drill-kind="cliente" data-drill-value="${attr(e[0])}" data-drill-label="${attr(e[0])}" title="Ver lançamentos">
       <td style="width:26px"><span class="rank-tag">${i+1}</span></td>
       <td>${e[0].length>52?e[0].slice(0,52)+'…':e[0]}${isInterno(e[0])?' <span class="pill pill-int">interno</span>':''}</td>
       <td class="num">${fmt(e[1])}<span class="bar-inline" style="width:${Math.max(4,e[1]/max*70)}px"></span></td>
@@ -792,7 +806,7 @@ function clienteRowsHtml(s, filtro){
   const arr=ranked.filter(x=>!f||semAcento(x.e[0]).includes(f));
   if(!arr.length) return `<tr><td colspan="5" style="text-align:center;color:#9A9A9A;padding:20px">Nenhum cliente encontrado.</td></tr>`;
   return arr.map(({e,rank})=>`
-    <tr>
+    <tr class="drillable" data-drill-kind="cliente" data-drill-value="${attr(e[0])}" data-drill-label="${attr(e[0])}" title="Ver lançamentos">
       <td style="width:26px"><span class="rank-tag">${rank}</span></td>
       <td>${e[0]}${isInterno(e[0])?' <span class="pill pill-int">interno</span>':''}</td>
       <td class="num">${countMap[e[0]]||0}</td>
@@ -930,7 +944,7 @@ function naturezaSection(s){
        <div class="panel"><h3>Detalhamento</h3>
          <div class="tablewrap" style="border:none"><table>
            <thead><tr><th>Natureza</th><th class="num">Horas</th><th class="num">% do tempo</th><th class="num">Lançamentos</th></tr></thead>
-           <tbody>${s.natArr.map(n=>`<tr><td>${natBadge(n.nome)}</td><td class="num">${fmtHM(n.min)}</td><td class="num">${fmtPct(s.totalMin?n.min/s.totalMin*100:0)}</td><td class="num">${n.count}</td></tr>`).join('')}</tbody>
+           <tbody>${s.natArr.map(n=>`<tr class="drillable" data-drill-kind="natureza" data-drill-value="${attr(n.nome)}" data-drill-label="${attr(n.nome)}" title="Ver lançamentos"><td>${natBadge(n.nome)}</td><td class="num">${fmtHM(n.min)}</td><td class="num">${fmtPct(s.totalMin?n.min/s.totalMin*100:0)}</td><td class="num">${n.count}</td></tr>`).join('')}</tbody>
          </table></div>
          <div class="legend-note">Classificação automática pelo tipo de serviço. Contencioso = trabalho processual; Consultivo = pareceres e consultoria; Gestão/Administrativo = cadastros, relatórios e tarefas internas (custo, não receita).</div>
        </div>
@@ -950,7 +964,7 @@ function descricoesSection(s){
     <thead><tr><th style="width:26px">#</th><th>Descrição (texto exatamente como lançado)</th><th>Tipo de serviço predominante</th><th class="num">Lançamentos</th><th class="num">Horas</th></tr></thead>
     <tbody>${rec.map((d,i)=>{
       const tp=Object.entries(d.tipos).sort((a,b)=>b[1]-a[1])[0];
-      return `<tr>
+      return `<tr class="drillable" data-drill-kind="descricao" data-drill-value="${attr(semAcento(d.ex))}" data-drill-label="${attr(d.ex)}" title="Ver lançamentos">
         <td><span class="rank-tag">${i+1}</span></td>
         <td>"${d.ex}"</td>
         <td class="muted">${tp?tp[0]:'—'}</td>
@@ -992,7 +1006,7 @@ function pecasSection(s){
     <div class="panel"><h3>Tempo por tipo de peça</h3>
       <div class="tablewrap" style="border:none"><table>
         <thead><tr><th>Tipo de peça</th><th class="num">Qtd</th><th class="num">Total</th><th class="num">Médio</th></tr></thead>
-        <tbody>${s.pecasPorTipo.map(([t,cc])=>{const tot=(s.pecasPorTipoMin.find(e=>e[0]===t)||[0,0])[1];return `<tr><td>${t}</td><td class="num">${cc}</td><td class="num">${fmtHM(tot)}</td><td class="num">${fmtHM(tot/cc)}</td></tr>`;}).join('')}</tbody>
+        <tbody>${s.pecasPorTipo.map(([t,cc])=>{const tot=(s.pecasPorTipoMin.find(e=>e[0]===t)||[0,0])[1];return `<tr class="drillable" data-drill-kind="pecaTipo" data-drill-value="${attr(t)}" data-drill-label="${attr(t)}" title="Ver lançamentos"><td>${t}</td><td class="num">${cc}</td><td class="num">${fmtHM(tot)}</td><td class="num">${fmtHM(tot/cc)}</td></tr>`;}).join('')}</tbody>
       </table></div></div>
   </div>`;
   // tempo de elaboração por peça (cliente+tipo)
@@ -1032,7 +1046,7 @@ function subtipoPecaSection(s){
     <div class="panel"><h3>Resumo por tipo de petição</h3>
       <div class="tablewrap" style="border:none;max-height:340px;overflow-y:auto"><table>
         <thead><tr><th>Tipo de petição/minuta</th><th class="num">Qtd</th><th class="num">Horas</th><th class="num">Médio</th></tr></thead>
-        <tbody>${arr.map(x=>`<tr>
+        <tbody>${arr.map(x=>`<tr class="drillable" data-drill-kind="subtipo" data-drill-value="${attr(x.nome)}" data-drill-label="${attr(x.nome)}" title="Ver lançamentos">
           <td>${x.nome==='Não especificado'?'<span class="pill pill-crit">Não especificado</span>':x.nome}</td>
           <td class="num">${x.count}</td><td class="num">${fmtHM(x.min)}</td><td class="num">${fmtHM(x.min/x.count)}</td></tr>`).join('')}</tbody>
       </table></div></div>
@@ -1064,7 +1078,7 @@ function jornadaSection(s){
   const tabela=(lista,vazio)=> lista.length
     ? `<div class="tablewrap" style="border:none;max-height:230px;overflow-y:auto"><table>
         <thead><tr><th>Dia</th><th class="num">Horas</th><th class="num">Tarefas</th></tr></thead>
-        <tbody>${lista.map(x=>`<tr><td>${dataBR(x.data)}</td><td class="num">${fmtHM(x.min)}</td><td class="num">${x.tasks}</td></tr>`).join('')}</tbody></table></div>`
+        <tbody>${lista.map(x=>`<tr class="drillable" data-drill-kind="dia" data-drill-value="${attr(x.data)}" data-drill-label="${attr(dataBR(x.data))}" title="Ver lançamentos"><td>${dataBR(x.data)}</td><td class="num">${fmtHM(x.min)}</td><td class="num">${x.tasks}</td></tr>`).join('')}</tbody></table></div>`
     : `<div class="empty-state" style="padding:20px">${vazio}</div>`;
   return sectionTitle('◷','Jornada diária','dias com menos de 6h e dias com mais de 8h de lançamentos ('+escopo+')')
    + `<div class="kpis" style="grid-template-columns:repeat(4,1fr)">
@@ -1388,7 +1402,8 @@ function buildCharts(s){
   charts.tiposC=new Chart(document.getElementById('cTiposCount'),{
     type:'bar',
     data:{labels:tc.map(t=>t[0]),datasets:[{data:tc.map(t=>t[1]),backgroundColor:CORES.grafite,borderRadius:3}]},
-    options:{indexAxis:'y',plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>c.parsed.x+' lançamentos'}}},
+    options:{indexAxis:'y',onClick:chartDrill('tipo',i=>({value:tc[i][0],label:tc[i][0]})),onHover:chartHover,
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>c.parsed.x+' lançamentos'}}},
       scales:{x:{beginAtZero:true,grid:{color:gridC}},y:{grid:{display:false},ticks:{font:{size:10.5}}}}}
   });
   // tipos min
@@ -1396,7 +1411,8 @@ function buildCharts(s){
   charts.tiposM=new Chart(document.getElementById('cTiposMin'),{
     type:'bar',
     data:{labels:tm.map(t=>t[0]),datasets:[{data:tm.map(t=>+(t[1]/60).toFixed(1)),backgroundColor:CORES.amarelo,borderRadius:3}]},
-    options:{indexAxis:'y',plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>c.parsed.x+'h'}}},
+    options:{indexAxis:'y',onClick:chartDrill('tipo',i=>({value:tm[i][0],label:tm[i][0]})),onHover:chartHover,
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>c.parsed.x+'h'}}},
       scales:{x:{beginAtZero:true,grid:{color:gridC}},y:{grid:{display:false},ticks:{font:{size:10.5}}}}}
   });
   // natureza da atividade (doughnut)
@@ -1406,7 +1422,8 @@ function buildCharts(s){
       data:{labels:s.natArr.map(n=>n.nome),
         datasets:[{data:s.natArr.map(n=>+(n.min/60).toFixed(1)),
           backgroundColor:s.natArr.map(n=>NAT_CORES[n.nome]||'#B8B8B8'),borderWidth:2,borderColor:'#fff'}]},
-      options:{cutout:'58%',plugins:{legend:{position:'bottom',labels:{boxWidth:11,font:{size:10.5}}},
+      options:{cutout:'58%',onClick:chartDrill('natureza',i=>({value:s.natArr[i].nome,label:s.natArr[i].nome})),onHover:chartHover,
+        plugins:{legend:{position:'bottom',labels:{boxWidth:11,font:{size:10.5}}},
         tooltip:{callbacks:{label:c=>c.label+': '+c.parsed+'h'}}}}
     });
   }
@@ -1416,7 +1433,8 @@ function buildCharts(s){
     charts.pecas=new Chart(document.getElementById('cPecas'),{
       type:'bar',
       data:{labels:pt.map(t=>t[0]),datasets:[{data:pt.map(t=>t[1]),backgroundColor:CORES.grafite,borderRadius:3}]},
-      options:{indexAxis:'y',plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>c.parsed.x+' lançamentos'}}},
+      options:{indexAxis:'y',onClick:chartDrill('pecaTipo',i=>({value:pt[i][0],label:pt[i][0]})),onHover:chartHover,
+        plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>c.parsed.x+' lançamentos'}}},
         scales:{x:{beginAtZero:true,grid:{color:gridC},ticks:{precision:0}},y:{grid:{display:false},ticks:{font:{size:10.5}}}}}
     });
   }
@@ -1427,7 +1445,8 @@ function buildCharts(s){
       type:'bar',
       data:{labels:st.map(x=>x.nome),datasets:[{data:st.map(x=>x.count),
         backgroundColor:st.map(x=>x.nome==='Não especificado'?CORES.amarelo:CORES.grafite),borderRadius:3}]},
-      options:{indexAxis:'y',plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>c.parsed.x+' lançamentos'}}},
+      options:{indexAxis:'y',onClick:chartDrill('subtipo',i=>({value:st[i].nome,label:st[i].nome})),onHover:chartHover,
+        plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>c.parsed.x+' lançamentos'}}},
         scales:{x:{beginAtZero:true,grid:{color:gridC},ticks:{precision:0}},y:{grid:{display:false},ticks:{font:{size:10}}}}}
     });
   }
@@ -1439,7 +1458,8 @@ function buildCharts(s){
       type:'bar',
       data:{labels:dj.map(x=>{const p=x.data.split('-');return p[2]+'/'+p[1];}),
         datasets:[{data:dj.map(x=>+(x.min/60).toFixed(2)),backgroundColor:dj.map(x=>cor(x.min)),borderRadius:2}]},
-      options:{plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>fmtHM(dj[c.dataIndex].min)+' · '+dj[c.dataIndex].tasks+' tarefas'}}},
+      options:{onClick:chartDrill('dia',i=>({value:dj[i].data,label:dj[i].data.split('-').reverse().join('/')})),onHover:chartHover,
+        plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>fmtHM(dj[c.dataIndex].min)+' · '+dj[c.dataIndex].tasks+' tarefas'}}},
         scales:{y:{beginAtZero:true,grid:{color:gridC},title:{display:true,text:'horas'}},x:{grid:{display:false},ticks:{font:{size:9},maxRotation:0,autoSkip:true}}}}
     });
   }
@@ -1457,7 +1477,8 @@ function drawClientes(s){
     data:{labels:top.map(c=>c[0].length>34?c[0].slice(0,34)+'…':c[0]),
       datasets:[{data:top.map(c=>clientChartMode==='horas'?+(c[1]/60).toFixed(1):c[1]),
         backgroundColor:top.map(c=>isInterno(c[0])?CORES.amarelo:CORES.grafite),borderRadius:3}]},
-    options:{indexAxis:'y',plugins:{legend:{display:false},
+    options:{indexAxis:'y',onClick:chartDrill('cliente',i=>({value:top[i][0],label:top[i][0]})),onHover:chartHover,
+      plugins:{legend:{display:false},
       tooltip:{callbacks:{label:c=>clientChartMode==='horas'?c.parsed.x+'h':c.parsed.x+' tarefas'}}},
       scales:{x:{beginAtZero:true,grid:{color:'#F0F0F0'}},y:{grid:{display:false},ticks:{font:{size:10}}}}}
   });
@@ -1809,6 +1830,64 @@ function imprimirCritico(){
   window.onafterprint=()=>{ document.body.classList.remove('crit-print'); window.onafterprint=null; };
   window.print();
 }
+
+/* ============================================================
+   10. DRILL-DOWN — lançamentos por trás de cada item clicado
+   ============================================================ */
+function attr(v){ return String(v==null?'':v).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;'); }
+function drillFilter(kind, value){
+  const recs=(ANALISE && ANALISE[atual]) ? ANALISE[atual].records : [];
+  switch(kind){
+    case 'cliente':   return recs.filter(r=>r.cliente===value);
+    case 'tipo':      return recs.filter(r=>r.tipo===value);
+    case 'natureza':  return recs.filter(r=>classifyNatureza(r.tipo)===value);
+    case 'subtipo':   return recs.filter(r=>isPeca(r.tipo)&&classifySubtipoPeca(r.tipo,r.descricao)===value);
+    case 'pecaTipo':  return recs.filter(r=>isPeca(r.tipo)&&r.tipo===value);
+    case 'descricao': return recs.filter(r=>semAcento(r.descricao)===value);
+    case 'dia':       return recs.filter(r=>r.data===value);
+    default: return [];
+  }
+}
+const DRILL_LABEL={cliente:'Cliente',tipo:'Tipo de serviço',natureza:'Natureza da atividade',subtipo:'Tipo de petição/minuta',pecaTipo:'Tipo de peça',descricao:'Descrição',dia:'Dia'};
+function openDrill(kind, value, label){
+  if(!ANALISE) return;
+  const modal=document.getElementById('drillModal');
+  const recs=drillFilter(kind,value).slice().sort((a,b)=>b.min-a.min);
+  const totMin=recs.reduce((a,r)=>a+r.min,0);
+  const eq=atual==='__equipe__';
+  const body=recs.length?recs.map(r=>`<tr>
+      ${eq?`<td>${primeiroNome(r.advogado)}</td>`:''}
+      <td>${r.data?r.data.split('-').reverse().join('/'):'—'}</td>
+      <td>${r.cliente}${isInterno(r.cliente)?' <span class="pill pill-int">int</span>':''}</td>
+      <td>${r.tipo||'<span class="muted">—</span>'}</td>
+      <td>${r.descricao||'<span class="muted">(vazio)</span>'}</td>
+      <td class="num">${r.min?fmtHM(r.min):'<span class="pill pill-crit">00:00</span>'}</td>
+    </tr>`).join('') : `<tr><td colspan="6" style="text-align:center;color:#9A9A9A;padding:22px">Nenhum lançamento.</td></tr>`;
+  modal.innerHTML=`<div class="drill-inner">
+    <div class="drill-top">
+      <div><div class="drill-k">${DRILL_LABEL[kind]||''}</div><div class="drill-t">${label}</div>
+        <div class="drill-s"><b>${recs.length}</b> lançamento(s) · <b>${fmtHM(totMin)}</b>${eq?' · equipe':''}</div></div>
+      <button onclick="closeDrill()">✕ Fechar</button>
+    </div>
+    <div class="drill-body"><div class="tablewrap" style="max-height:70vh;overflow:auto"><table>
+      <thead><tr>${eq?'<th>Advogado</th>':''}<th>Data</th><th>Cliente</th><th>Tipo</th><th>Descrição</th><th class="num">Tempo</th></tr></thead>
+      <tbody>${body}</tbody></table></div></div>
+  </div>`;
+  modal.style.display='block'; modal.scrollTop=0; document.body.style.overflow='hidden';
+}
+function closeDrill(){ const m=document.getElementById('drillModal'); m.style.display='none'; m.innerHTML=''; document.body.style.overflow=''; }
+// delegação: qualquer elemento com data-drill-kind abre o drill
+document.addEventListener('click', e=>{
+  const el=e.target.closest && e.target.closest('[data-drill-kind]');
+  if(!el) return;
+  openDrill(el.getAttribute('data-drill-kind'), el.getAttribute('data-drill-value'), el.getAttribute('data-drill-label')||el.getAttribute('data-drill-value'));
+});
+document.addEventListener('keydown', e=>{ if(e.key==='Escape') closeDrill(); });
+// clique em gráfico -> drill pelo item clicado
+function chartDrill(kind, valuesFn){
+  return (evt, els, chart)=>{ if(els && els.length){ const v=valuesFn(els[0].index); if(v && v.value!=null) openDrill(kind, v.value, v.label); } };
+}
+function chartHover(evt, els){ const c=evt.native&&evt.native.target; if(c) c.style.cursor = els.length?'pointer':'default'; }
 
 /* abre SEMPRE vazio — sem análises anteriores visíveis */
 showLanding();
