@@ -311,7 +311,7 @@ details.acc .body{padding:14px}
     <button class="btn ghost block" onclick="document.getElementById('importFile').click()">⬆ Importar backup</button>
     <input type="file" id="importFile" accept="application/json" style="display:none" onchange="importData(event)">
     <div style="height:10px"></div>
-    <button class="btn ghost block" style="color:#ff6b8a" onclick="if(confirm('Apagar TODOS os dados? Esta ação não pode ser desfeita.')){localStorage.clear();location.reload()}">🗑 Resetar aplicativo</button>
+    <button class="btn ghost block" style="color:#ff6b8a" onclick="if(confirm('Apagar TODOS os dados? Esta ação não pode ser desfeita.')){Object.keys(localStorage).filter(k=>!k.startsWith('lex_')).forEach(k=>localStorage.removeItem(k));location.reload()}">🗑 Resetar aplicativo</button>
     <p class="note" style="text-align:center;margin-top:14px">IRONFIT · seus dados ficam salvos só neste aparelho.</p>
   </section>
 </main>

@@ -22,7 +22,7 @@
   --font-serif:'Source Serif 4',Georgia,'Times New Roman',serif;
   --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
   --r-sm:8px;--r:12px;--r-lg:16px;
-  --sidebar-w:248px;
+  --sidebar-w:264px;
   --ease:cubic-bezier(.2,.8,.2,1);
   --z-sticky:20;--z-sidebar:40;--z-drawer:60;--z-modal:80;--z-confirm:90;--z-toast:100;
 }
@@ -36,7 +36,7 @@
   --success:#067647;--success-soft:#E2F5E9;--on-success:#FFFFFF;
   --info:#1E5BB8;--info-soft:#E4EEFC;
   --st-pending:#5F6878;--st-waiting:#6D4FD8;--st-medium:#9A5B06;
-  --cat-judicial:#2F4F9E;--cat-internal:#6941C6;--cat-admin:#0B6E77;--cat-prosp:#9A5B06;
+  --cat-judicial:#2F4F9E;--cat-internal:#6941C6;--cat-admin:#0B6E77;--cat-prosp:#9A5B06;--cat-update:#4B6313;--cat-contact:#A8255F;
   --shadow-sm:0 1px 2px rgba(26,33,48,.05);
   --shadow:0 4px 14px rgba(26,33,48,.07),0 1px 2px rgba(26,33,48,.05);
   --shadow-lg:0 24px 56px rgba(26,33,48,.20);
@@ -53,7 +53,7 @@
   --success:#5BD08F;--success-soft:#14301F;--on-success:#0B1A11;
   --info:#8AB4F0;--info-soft:#1A2A40;
   --st-pending:#9AA4B2;--st-waiting:#B6A1FA;--st-medium:#E2AC4E;
-  --cat-judicial:#97AEEC;--cat-internal:#B6A1FA;--cat-admin:#5CC8CF;--cat-prosp:#E2AC4E;
+  --cat-judicial:#97AEEC;--cat-internal:#B6A1FA;--cat-admin:#5CC8CF;--cat-prosp:#E2AC4E;--cat-update:#B3CD6A;--cat-contact:#F291BF;
   --shadow-sm:0 1px 2px rgba(0,0,0,.3);
   --shadow:0 4px 16px rgba(0,0,0,.35);
   --shadow-lg:0 24px 60px rgba(0,0,0,.6);
@@ -104,11 +104,24 @@ kbd{font:600 11px var(--font);padding:1px 6px;border-radius:5px;border:1px solid
 .nav-item{display:flex;align-items:center;gap:11px;min-height:40px;padding:8px 12px;border-radius:10px;color:var(--text-2);font-size:14px;font-weight:500;border:0;background:none;width:100%;text-align:left;transition:background .15s,color .15s}
 .nav-item:hover{background:var(--surface-2);color:var(--text)}
 .nav-item.active{background:var(--accent-soft);color:var(--accent);font-weight:600}
+.nav-item>span:not(.count){white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
 .count{margin-left:auto;font-size:11.5px;font-weight:700;min-width:22px;height:20px;padding:0 7px;border-radius:999px;display:inline-grid;place-items:center;background:var(--surface-3);color:var(--text-2);font-variant-numeric:tabular-nums}
 .count.alert{background:var(--danger);color:var(--on-danger)}
 .sidebar-foot{margin-top:auto;padding-top:12px;border-top:1px solid var(--border);display:flex;flex-direction:column;gap:2px}
 .me{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;min-height:48px}
 .me:hover{background:var(--surface-2)}
+.save-state{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted);padding:4px 12px 8px}
+.save-state .i{color:var(--success)}
+.save-state.err{color:var(--danger)}.save-state.err .i{color:var(--danger)}
+.filter-note{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:13px;color:var(--text-2);background:var(--info-soft);border-radius:10px;padding:6px 12px;margin-bottom:14px}
+.filter-note .link-btn{padding:2px 4px;min-height:28px}
+.imp-list{max-height:260px;overflow:auto;border:1px solid var(--border);border-radius:12px;padding:6px 12px;margin:0;list-style:none;font-size:14px}
+.imp-list li{padding:6px 0;border-top:1px solid var(--border)}
+.imp-list li:first-child{border-top:0}
+.snap-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:10px 0;border-top:1px solid var(--border);font-size:14px}
+.snap-row:first-child{border-top:0}
+.snap-row b{min-width:92px}
+.snap-row .hint{flex:1}
 .me-name{display:block;font-size:13.5px;font-weight:600;line-height:1.2}
 .me-role{display:block;font-size:12px;color:var(--muted)}
 .scrim,.drawer-scrim{position:fixed;inset:0;background:var(--scrim);opacity:0;pointer-events:none;transition:opacity .2s}
@@ -638,9 +651,12 @@ button.kpi:hover{transform:translateY(-2px);box-shadow:var(--shadow);border-colo
       <a class="nav-item" href="#/tarefas/internal" data-route="tarefas/internal"><svg class="i" aria-hidden="true" style="color:var(--cat-internal)"><use href="#i-folder"/></svg><span>Prazos internos</span><span class="count" id="c-internal" hidden></span></a>
       <a class="nav-item" href="#/tarefas/admin" data-route="tarefas/admin"><svg class="i" aria-hidden="true" style="color:var(--cat-admin)"><use href="#i-briefcase"/></svg><span>Administrativo</span><span class="count" id="c-admin" hidden></span></a>
       <a class="nav-item" href="#/tarefas/prospecting" data-route="tarefas/prospecting"><svg class="i" aria-hidden="true" style="color:var(--cat-prosp)"><use href="#i-target"/></svg><span>Prospecção</span><span class="count" id="c-prospecting" hidden></span></a>
+      <a class="nav-item" href="#/tarefas/update" data-route="tarefas/update"><svg class="i" aria-hidden="true" style="color:var(--cat-update)"><use href="#i-rotate"/></svg><span>Atualizações</span><span class="count" id="c-update" hidden></span></a>
+      <a class="nav-item" href="#/tarefas/contact" data-route="tarefas/contact"><svg class="i" aria-hidden="true" style="color:var(--cat-contact)"><use href="#i-phone"/></svg><span>Contato com cliente</span><span class="count" id="c-contact" hidden></span></a>
       <a class="nav-item" href="#/tarefas/concluidas" data-route="tarefas/concluidas"><svg class="i" aria-hidden="true" style="color:var(--success)"><use href="#i-check-circle"/></svg><span>Concluídas</span><span class="count" id="c-concluidas" hidden></span></a>
     </nav>
     <div class="sidebar-foot">
+      <div class="save-state" id="save-state" role="status" aria-live="polite"></div>
       <a class="nav-item" href="#/config" data-route="config"><svg class="i" aria-hidden="true"><use href="#i-sliders"/></svg><span>Configurações</span></a>
       <button class="nav-item" type="button" id="theme-btn"><svg class="i" aria-hidden="true"><use id="theme-ico" href="#i-moon"/></svg><span id="theme-lbl">Tema escuro</span></button>
       <a class="me" href="#/config" aria-label="Perfil e configurações"><span id="me-avatar"></span><span><span class="me-name" id="me-name"></span><span class="me-role" id="me-role"></span></span></a>
@@ -680,6 +696,7 @@ button.kpi:hover{transform:translateY(-2px);box-shadow:var(--shadow);border-colo
 <div class="modal-wrap" id="confirm-wrap"></div>
 <div class="toasts" id="toasts" aria-live="polite"></div>
 <input type="file" id="import-file" accept=".json,application/json" hidden>
+<input type="file" id="clients-file" accept=".xlsx,.xls,.csv,.ods,.txt" hidden>
 <script>
 'use strict';
 /* =========================================================
@@ -689,14 +706,119 @@ const DB_KEY = 'lex_dashboard_v2';
 const THEME_KEY = 'lex_theme', UI_KEY = 'lex_ui';
 const MS_DAY = 86400000;
 const DEFAULT_SETTINGS = { name:'Dr. Vinicius', office:'Escritório de Advocacia', oab:'', area:'', alertDays:3, urgentDays:1, staleDays:10, safetyDays:2 };
+const DEFAULT_TEAM = ['Vinicius', 'Rodrigo', 'Laís', 'Renato'];
+const DEFAULT_COUNTERPARTS = ['MP', 'PC', 'Juiz'];
 
 function loadDB(){ try{ const r = localStorage.getItem(DB_KEY); if(r){ const d = JSON.parse(r); if(d && typeof d === 'object') return d; } }catch(e){} return {}; }
 let db = loadDB();
 
+let lastSavedAt = null;
 function saveDB(){
-  try{ localStorage.setItem(DB_KEY, JSON.stringify(db)); return true; }
-  catch(e){ toast('Não foi possível salvar. Exporte um backup agora (Configurações).', 'error'); return false; }
+  try{
+    if(!db.meta || typeof db.meta !== 'object') db.meta = {};
+    db.meta.rev = (db.meta.rev || 0) + 1;
+    db.meta.savedAt = new Date().toISOString();
+    localStorage.setItem(DB_KEY, JSON.stringify(db));
+    lastSavedAt = new Date(); updateSaveState(); scheduleMirror();
+    return true;
+  }catch(e){ updateSaveState(true); toast('Não foi possível salvar. Exporte um backup agora (Configurações).', 'error'); return false; }
 }
+function updateSaveState(err){
+  const el = document.getElementById('save-state'); if(!el) return;
+  if(err){ el.className = 'save-state err'; el.innerHTML = ic('alert', 'i-sm') + 'Falha ao salvar — faça um backup'; return; }
+  el.className = 'save-state';
+  el.innerHTML = ic('check', 'i-sm') + (lastSavedAt ? 'Salvo às ' + pad(lastSavedAt.getHours()) + ':' + pad(lastSavedAt.getMinutes()) : 'Dados salvos neste navegador');
+}
+
+/* ---------- Cópia de segurança automática (IndexedDB) ----------
+   Espelha os dados fora do localStorage. Se outro app do site apagar o armazenamento,
+   ou uma aba antiga sobrescrever os dados, eles são recuperados automaticamente. */
+const IDB_NAME = 'lex_seguranca', IDB_STORE = 'kv', SNAP_DAYS = 14;
+let _idb = null, mirrorT = null, mirrorReady = false;
+function idbOpen(){
+  if(_idb) return Promise.resolve(_idb);
+  return new Promise((res, rej) => {
+    try{
+      if(!window.indexedDB) return rej(new Error('IndexedDB indisponível'));
+      const r = indexedDB.open(IDB_NAME, 1);
+      r.onupgradeneeded = () => r.result.createObjectStore(IDB_STORE);
+      r.onsuccess = () => { _idb = r.result; res(_idb); };
+      r.onerror = () => rej(r.error); r.onblocked = () => rej(new Error('bloqueado'));
+    }catch(e){ rej(e); }
+  });
+}
+function idbGet(k){ return idbOpen().then(d => new Promise((res, rej) => { const q = d.transaction(IDB_STORE, 'readonly').objectStore(IDB_STORE).get(k); q.onsuccess = () => res(q.result); q.onerror = () => rej(q.error); })); }
+function idbSet(k, v){ return idbOpen().then(d => new Promise((res, rej) => { const tx = d.transaction(IDB_STORE, 'readwrite'); tx.objectStore(IDB_STORE).put(v, k); tx.oncomplete = () => res(); tx.onerror = () => rej(tx.error); })); }
+function scheduleMirror(){ clearTimeout(mirrorT); mirrorT = setTimeout(mirrorNow, 250); }
+async function mirrorNow(){
+  clearTimeout(mirrorT); mirrorT = null;
+  if(!mirrorReady) return;
+  try{
+    const json = JSON.stringify(db);
+    await idbSet('db', json);
+    const day = todayISO();
+    let snaps = await idbGet('snaps'); if(!Array.isArray(snaps)) snaps = [];
+    snaps = snaps.filter(x => x && x.day !== day);
+    snaps.push({ day, savedAt:new Date().toISOString(), tasks:db.tasks.length, clients:db.clients.length, events:db.events.length, data:json });
+    snaps.sort((a, b) => a.day.localeCompare(b.day));
+    await idbSet('snaps', snaps.slice(-SNAP_DAYS));
+  }catch(e){}
+}
+function markDeleted(id){
+  if(!db.meta.deleted) db.meta.deleted = {};
+  db.meta.deleted[id] = new Date().toISOString();
+  const ks = Object.keys(db.meta.deleted);
+  if(ks.length > 600) ks.sort((a, b) => db.meta.deleted[a].localeCompare(db.meta.deleted[b])).slice(0, ks.length - 600).forEach(k => delete db.meta.deleted[k]);
+}
+function unmarkDeleted(id){ if(db.meta.deleted) delete db.meta.deleted[id]; }
+function mergeDB(a, b){
+  const ts = x => String((x && (x.updatedAt || x.createdAt)) || '');
+  const del = Object.assign({}, (b.meta && b.meta.deleted) || {}, (a.meta && a.meta.deleted) || {});
+  const out = Object.assign({}, b, a);
+  ['tasks', 'clients', 'events'].forEach(k => {
+    const map = new Map();
+    [...(b[k] || []), ...(a[k] || [])].forEach(x => { if(!x || !x.id) return; const p = map.get(x.id); if(!p || ts(x) >= ts(p)) map.set(x.id, x); });
+    out[k] = [...map.values()].filter(x => !(del[x.id] && del[x.id] >= ts(x)));
+  });
+  const byName = new Map();
+  out.clients.forEach(c => { const n = norm(c.name); const p = byName.get(n); if(!p || ts(c) > ts(p)) byName.set(n, c); });
+  out.clients = [...byName.values()];
+  const am = new Map(); [...(b.activity || []), ...(a.activity || [])].forEach(x => { if(x && x.id) am.set(x.id, x); });
+  out.activity = [...am.values()].sort((x, y) => String(x.date).localeCompare(String(y.date))).slice(-150);
+  const sa = a.settings || {}, sb = b.settings || {};
+  out.settings = String(sb.updatedAt || '') > String(sa.updatedAt || '') ? sb : sa;
+  out.meta = Object.assign({}, b.meta || {}, a.meta || {}, { deleted:del, lastBackup:[a.meta && a.meta.lastBackup, b.meta && b.meta.lastBackup].filter(Boolean).sort().pop() });
+  return out;
+}
+async function reconcileWithMirror(){
+  let m = null;
+  try{ const raw = await idbGet('db'); m = raw ? JSON.parse(raw) : null; }catch(e){ m = null; }
+  let lsHas = true; try{ lsHas = !!localStorage.getItem(DB_KEY); }catch(e){}
+  if(m && Array.isArray(m.tasks)){
+    const same = m.meta && db.meta && m.meta.rev === db.meta.rev && m.meta.savedAt === db.meta.savedAt;
+    if(!same){
+      const before = db.tasks.length + db.clients.length + db.events.length;
+      db = lsHas ? mergeDB(db, m) : m; normalizeDB();
+      const gained = db.tasks.length + db.clients.length + db.events.length - before;
+      mirrorReady = true; saveDB(); refresh();
+      if(gained > 0) toast(gained + ' ' + plural(gained, 'item foi recuperado', 'itens foram recuperados') + ' da cópia de segurança automática.', 'success');
+      return;
+    }
+  }
+  mirrorReady = true; scheduleMirror();
+}
+async function listSnapshots(){ try{ const s = await idbGet('snaps'); return Array.isArray(s) ? s.slice().reverse() : []; }catch(e){ return []; } }
+async function recoverFromSnapshot(day){
+  const snap = (await listSnapshots()).find(x => x.day === day); if(!snap) return;
+  let data; try{ data = JSON.parse(snap.data); }catch(e){ toast('Cópia corrompida.', 'error'); return; }
+  let added = 0;
+  ['tasks', 'events'].forEach(k => (data[k] || []).forEach(x => { if(x && x.id && !db[k].some(y => y.id === x.id)){ db[k].push(x); unmarkDeleted(x.id); added++; } }));
+  (data.clients || []).forEach(c => { if(c && c.name && !db.clients.some(y => y.id === c.id || norm(y.name) === norm(c.name))){ db.clients.push(c); unmarkDeleted(c.id); added++; } });
+  if(!added){ toast('Nada a recuperar: todos os itens desta cópia já estão no painel.', 'info'); return; }
+  normalizeDB(); addActivity('update', 'Itens recuperados da cópia de ' + fmtDate(day)); saveDB(); refresh();
+  toast(added + ' ' + plural(added, 'item recuperado', 'itens recuperados') + ' da cópia de ' + fmtDate(day) + '.', 'success');
+}
+async function downloadSnapshot(day){ const snap = (await listSnapshots()).find(x => x.day === day); if(snap) download('lex_copia_' + day + '.json', snap.data, 'application/json'); }
 
 /* =========================================================
    UTILITÁRIOS
@@ -780,7 +902,9 @@ const CATS = {
   judicial:   { label:'Prazo judicial', plural:'Prazos judiciais', short:'Judicial', icon:'landmark', color:'var(--cat-judicial)', css:'--cat-judicial' },
   internal:   { label:'Prazo interno', plural:'Prazos internos', short:'Interno', icon:'folder', color:'var(--cat-internal)', css:'--cat-internal' },
   admin:      { label:'Administrativo', plural:'Administrativo', short:'Administrativo', icon:'briefcase', color:'var(--cat-admin)', css:'--cat-admin' },
-  prospecting:{ label:'Prospecção / Vendas', plural:'Prospecção e vendas', short:'Prospecção', icon:'target', color:'var(--cat-prosp)', css:'--cat-prosp' }
+  prospecting:{ label:'Prospecção / Vendas', plural:'Prospecção e vendas', short:'Prospecção', icon:'target', color:'var(--cat-prosp)', css:'--cat-prosp' },
+  update:     { label:'Atualização', plural:'Atualizações', short:'Atualização', icon:'rotate', color:'var(--cat-update)', css:'--cat-update' },
+  contact:    { label:'Contato com cliente', plural:'Contatos com clientes', short:'Contato', icon:'phone', color:'var(--cat-contact)', css:'--cat-contact' }
 };
 const STATUS = {
   pending:     { label:'Pendente', icon:'circle', color:'var(--st-pending)', css:'--st-pending' },
@@ -811,6 +935,9 @@ function normalizeDB(){
   db.settings = Object.assign({}, DEFAULT_SETTINGS, db.settings || {});
   ['alertDays','urgentDays','staleDays','safetyDays'].forEach(k => { const v = parseInt(db.settings[k], 10); db.settings[k] = isNaN(v) ? DEFAULT_SETTINGS[k] : v; });
   if(!db.meta || typeof db.meta !== 'object') db.meta = {};
+  const asList = (v, d) => Array.isArray(v) ? v.map(x => String(x).trim()).filter(Boolean) : (typeof v === 'string' ? v.split(/[\n,;]+/).map(x => x.trim()).filter(Boolean) : d.slice());
+  db.settings.team = asList(db.settings.team, DEFAULT_TEAM);
+  db.settings.counterparts = asList(db.settings.counterparts, DEFAULT_COUNTERPARTS);
   db.tasks.forEach(t => {
     if(!t.id) t.id = uid();
     if(!Array.isArray(t.progress)) t.progress = [];
@@ -838,7 +965,7 @@ function staleDays(t){ return Math.max(0, Math.floor((Date.now() - lastTouch(t))
 function score(t){
   if(!isOpen(t)) return -1;
   let s = (PRI[t.priority] || PRI.medium).w;
-  s += ({ judicial:14, internal:8, admin:4, prospecting:6 })[t.category] || 5;
+  s += ({ judicial:14, internal:8, admin:4, prospecting:6, update:7, contact:7 })[t.category] || 5;
   const d = daysLeft(effDate(t));
   if(d !== null) s += d < 0 ? 60 : d === 0 ? 50 : d === 1 ? 42 : d <= 3 ? 32 : d <= 7 ? 20 : d <= 15 ? 10 : 3;
   if(t.status === 'in_progress') s += 4;
@@ -894,7 +1021,13 @@ function ensureClient(name){
 }
 function migrateClientsFromTasks(){ let n = 0; db.tasks.forEach(t => { if(t.clientName && !db.clients.find(c => norm(c.name) === norm(t.clientName))){ ensureClient(t.clientName); n++; } }); return n; }
 function addActivity(type, title){ db.activity.push({ id:uid(), type, title, date:new Date().toISOString() }); if(db.activity.length > 150) db.activity = db.activity.slice(-150); }
-function responsibles(){ const s = new Set(); db.tasks.forEach(t => { if(t.responsible && t.responsible.trim()) s.add(t.responsible.trim()); }); if(db.settings.name) s.add(db.settings.name); return [...s].sort((a, b) => a.localeCompare(b, 'pt')); }
+function optionList(base, field){
+  const out = [...base], seen = new Set(base.map(norm));
+  db.tasks.map(t => String(t[field] || '').trim()).filter(Boolean).sort((a, b) => a.localeCompare(b, 'pt')).forEach(v => { if(!seen.has(norm(v))){ seen.add(norm(v)); out.push(v); } });
+  return out;
+}
+function responsibles(){ return optionList(db.settings.team || DEFAULT_TEAM, 'responsible'); }
+function counterparts(){ return optionList(db.settings.counterparts || DEFAULT_COUNTERPARTS, 'counterpart'); }
 function newTaskObj(p = {}){
   const now = new Date().toISOString();
   const t = { id:uid(), title:'', clientName:'', processNumber:'', category:'judicial', status:'pending', priority:'medium', dueDate:'', internalDate:'', startDate:'', description:'', court:'', counterpart:'', responsible:'', tags:[], observations:'', strategic:'', nextStep:'', nextStepDate:'', progress:[], checklist:[], createdAt:now, updatedAt:now };
@@ -1027,8 +1160,9 @@ function agItem(it){
    ========================================================= */
 let ui = {}; try{ ui = JSON.parse(localStorage.getItem(UI_KEY) || '{}') || {}; }catch(e){ ui = {}; }
 const tf = Object.assign({ view:'list', cat:'', status:'', resp:'', q:'', sort:'score', showDone:false, collapsed:{} }, ui.tf || {});
+tf.resp = '';
 tf.q = ''; tf.status = ''; tf.showDone = false;
-function saveUI(){ try{ localStorage.setItem(UI_KEY, JSON.stringify({ tf:{ view:tf.view, sort:tf.sort, collapsed:tf.collapsed, resp:tf.resp } })); }catch(e){} }
+function saveUI(){ try{ localStorage.setItem(UI_KEY, JSON.stringify({ tf:{ view:tf.view, sort:tf.sort, collapsed:tf.collapsed } })); }catch(e){} }
 const ag = { month:new Date(new Date().getFullYear(), new Date().getMonth(), 1), selected:todayISO() };
 let cq = '', backupSnoozed = false;
 
@@ -1243,7 +1377,8 @@ function renderTasksBody(){
   if(!doneRoute && tf.view === 'matrix'){ b.innerHTML = renderMatrix(a); return; }
   if(tf.status) a = a.filter(t => t.status === tf.status); else if(!tf.showDone) a = a.filter(isOpen);
   const filtered = tf.q || tf.resp || (tf.status && !doneRoute);
-  b.innerHTML = a.length ? renderList(a) : `<div class="card">${emptyState(doneRoute ? 'check-circle' : 'search', doneRoute ? 'Nenhuma tarefa concluída' : 'Nada encontrado', doneRoute ? 'As tarefas concluídas aparecerão aqui.' : filtered ? 'Ajuste os filtros ou a busca.' : 'Nenhuma tarefa aberta nesta categoria.', filtered ? `<button type="button" class="btn secondary sm" data-clear-filters>Limpar filtros</button>` : `<button type="button" class="btn primary sm" data-new-task="${tf.cat}">${ic('plus')}Nova tarefa</button>`)}</div>`;
+  const note = filtered ? `<div class="filter-note">${ic('info', 'i-sm')}<span>Filtros ativos:${tf.q ? ' texto “' + esc(tf.q) + '”' : ''}${tf.resp ? ' · responsável ' + esc(tf.resp) : ''}${tf.status && !doneRoute ? ' · status ' + STATUS[tf.status].label : ''}. Algumas tarefas podem estar ocultas.</span><button type="button" class="link-btn" data-clear-filters>Limpar filtros</button></div>` : '';
+  b.innerHTML = note + (a.length ? renderList(a) : `<div class="card">${emptyState(doneRoute ? 'check-circle' : 'search', doneRoute ? 'Nenhuma tarefa concluída' : 'Nada encontrado', doneRoute ? 'As tarefas concluídas aparecerão aqui.' : filtered ? 'Ajuste os filtros ou a busca.' : 'Nenhuma tarefa aberta nesta categoria.', filtered ? `<button type="button" class="btn secondary sm" data-clear-filters>Limpar filtros</button>` : `<button type="button" class="btn primary sm" data-new-task="${tf.cat}">${ic('plus')}Nova tarefa</button>`)}</div>`);
 }
 function renderList(tasks){
   const G = [
@@ -1355,8 +1490,9 @@ function renderClientes(){
   $('#view-clientes').innerHTML = `
   <div class="page-head">
     <div><h1 class="page-title">Clientes</h1><p class="page-sub">${db.clients.length} ${plural(db.clients.length, 'cliente cadastrado', 'clientes cadastrados')} · o cadastro é criado automaticamente a partir das tarefas.</p></div>
-    <div class="head-actions"><input class="input" type="search" id="c-search" placeholder="Buscar por nome, CPF/CNPJ ou e-mail" value="${esc(cq)}" aria-label="Buscar cliente"><button type="button" class="btn primary" data-new-client>${ic('plus')}<span class="lbl">Novo cliente</span></button></div>
+    <div class="head-actions"><input class="input" type="search" id="c-search" placeholder="Buscar por nome, CPF/CNPJ ou e-mail" value="${esc(cq)}" aria-label="Buscar cliente"><button type="button" class="btn secondary" data-import-clients>${ic('upload')}<span class="lbl">Importar planilha</span></button><button type="button" class="btn primary" data-new-client>${ic('plus')}<span class="lbl">Novo cliente</span></button></div>
   </div>
+  <p class="hint" style="margin:-8px 0 16px">Importe uma planilha Excel (.xlsx, .xls) ou CSV com os nomes dos clientes — todos são cadastrados de uma vez. Depois, abra cada cliente para completar os dados quando quiser.</p>
   <div id="c-body"></div>`;
   renderClientsBody();
 }
@@ -1464,7 +1600,8 @@ function applyTheme(){
   const mc = document.querySelector('meta[name=theme-color]'); if(mc) mc.content = t === 'dark' ? '#0E1318' : '#F5F3EE';
 }
 function setTheme(p){ try{ localStorage.setItem(THEME_KEY, p); }catch(e){} applyTheme(); if(route.view === 'indicadores' || route.view === 'config') renderView(); }
-function renderConfig(){
+function renderConfig(){ setTimeout(fillSnapshots, 0); renderConfigBody(); }
+function renderConfigBody(){
   const s = db.settings, th = getThemePref(), lb = db.meta.lastBackup;
   const num = (k, l, h, min, max) => `<div class="field"><label for="s-${k}">${l}</label><input class="input" type="number" inputmode="numeric" id="s-${k}" data-setting="${k}" min="${min}" max="${max}" value="${s[k]}"><p class="hint">${h}</p></div>`;
   const txt = (k, l, ph) => `<div class="field"><label for="s-${k}">${l}</label><input class="input" id="s-${k}" data-setting="${k}" value="${esc(s[k] || '')}" placeholder="${ph}"></div>`;
@@ -1484,14 +1621,34 @@ function renderConfig(){
       <p class="muted-p mt-s">Os dados ficam salvos neste navegador (${db.tasks.length} ${plural(db.tasks.length, 'tarefa', 'tarefas')}, ${db.clients.length} ${plural(db.clients.length, 'cliente', 'clientes')}, ${db.events.length} ${plural(db.events.length, 'compromisso', 'compromissos')}). Faça backups periódicos e use a restauração para levar os dados a outro computador.</p>
       <p class="hint mt-s">Último backup: <b>${lb ? fmtDT(lb) : 'nunca'}</b></p>
       <div class="btn-row mt"><button type="button" class="btn primary" data-export>${ic('download')}Exportar backup</button><button type="button" class="btn secondary" data-import>${ic('upload')}Restaurar backup</button><button type="button" class="btn secondary" data-ics>${ic('calendar')}Exportar agenda (.ics)</button></div></section>
+    <section class="card"><h2 class="card-title">${ic('users')}Listas pré-definidas</h2><div class="grid2 mt">
+      <div class="field"><label for="s-team">Responsáveis</label><textarea class="textarea" id="s-team" data-setting-list="team" rows="5" style="min-height:120px">${esc(s.team.join('\n'))}</textarea><p class="hint">Um nome por linha. Aparecem como opções no campo “Responsável”.</p></div>
+      <div class="field"><label for="s-cps">Contrapartes</label><textarea class="textarea" id="s-cps" data-setting-list="counterparts" rows="5" style="min-height:120px">${esc(s.counterparts.join('\n'))}</textarea><p class="hint">Um item por linha. Aparecem como opções no campo “Contraparte”.</p></div>
+    </div></section>
+    <section class="card"><h2 class="card-title">${ic('rotate')}Cópias automáticas</h2>
+      <p class="muted-p mt-s">Além do salvamento normal, o painel guarda uma cópia de segurança separada e uma cópia por dia (últimos ${SNAP_DAYS} dias). Se algo sumir, recupere por aqui — nada do que já está no painel é apagado.</p>
+      <div id="snap-list" class="mt-s"><p class="hint">Carregando cópias…</p></div></section>
     <section class="card danger-zone span-all"><h2 class="card-title">${ic('alert')}Zona de risco</h2><p class="muted-p">Apaga todas as tarefas, clientes, compromissos e configurações deste navegador. Faça um backup antes.</p><button type="button" class="btn danger-ghost" data-clear-all>${ic('trash')}Apagar todos os dados</button></section>
   </div>`;
+}
+async function fillSnapshots(){
+  const box = $('#snap-list'); if(!box) return;
+  const snaps = await listSnapshots();
+  if(!box.isConnected) return;
+  box.innerHTML = snaps.length ? snaps.map(x => `<div class="snap-row"><b>${x.day === todayISO() ? 'Hoje' : fmtDate(x.day)}</b><span class="hint">${x.tasks} ${plural(x.tasks, 'tarefa', 'tarefas')} · ${x.clients} ${plural(x.clients, 'cliente', 'clientes')} · ${x.events} ${plural(x.events, 'compromisso', 'compromissos')}</span><button type="button" class="btn sm secondary" data-snap-recover="${x.day}">${ic('rotate')}Recuperar itens</button><button type="button" class="btn sm ghost" data-snap-download="${x.day}" aria-label="Baixar cópia de ${fmtDate(x.day)}">${ic('download')}</button></div>`).join('') : '<p class="hint">Nenhuma cópia ainda — elas são criadas automaticamente a partir de agora.</p>';
+}
+function saveSettingList(el){
+  const k = el.dataset.settingList;
+  const v = [...new Set(el.value.split(/[\n,;]+/).map(x => x.trim()).filter(Boolean))];
+  db.settings[k] = v.length ? v : (k === 'team' ? DEFAULT_TEAM.slice() : DEFAULT_COUNTERPARTS.slice());
+  db.settings.updatedAt = new Date().toISOString();
+  el.value = db.settings[k].join('\n'); saveDB(); toast('Lista atualizada', 'success');
 }
 function saveSetting(el){
   const k = el.dataset.setting; let v = el.value;
   if(el.type === 'number'){ v = parseInt(v, 10); if(isNaN(v)) v = DEFAULT_SETTINGS[k]; v = Math.max(+el.min, Math.min(+el.max, v)); el.value = v; }
   else v = v.trim();
-  db.settings[k] = v; saveDB(); updateNav(); toast('Configuração salva', 'success');
+  db.settings[k] = v; db.settings.updatedAt = new Date().toISOString(); saveDB(); updateNav(); toast('Configuração salva', 'success');
 }
 </script>
 <script>
@@ -1513,8 +1670,15 @@ function openDrawer(){
 }
 function hasDraftContent(){ return cur && (String(cur.title || '').trim() || cur.description || cur.checklist.length || cur.progress.length || cur.nextStep); }
 async function confirmLeaveDraft(){
-  if(drawerMode === 'task' && curIsNew && hasDraftContent()) return confirmDialog({ title:'Descartar nova tarefa?', text:'As informações preenchidas ainda não foram salvas.', ok:'Descartar', danger:true });
+  if(drawerMode === 'task' && curIsNew){
+    if(String(cur.title || '').trim()){ createCurrent({ quiet:true }); return true; }
+    if(hasDraftContent()) return confirmDialog({ title:'Descartar nova tarefa?', text:'A tarefa ainda não tem título, por isso não pode ser salva.', ok:'Descartar', danger:true });
+  }
   return true;
+}
+async function discardDraft(){
+  if(hasDraftContent()){ const ok = await confirmDialog({ title:'Descartar nova tarefa?', text:'O que foi preenchido será perdido.', ok:'Descartar', danger:true }); if(!ok) return; }
+  closeDrawer(true);
 }
 function finishSession(){
   if(drawerMode === 'task' && cur && !curIsNew){
@@ -1605,7 +1769,7 @@ function renderTaskDrawer(){
   </header>
   <div class="dr-body" id="dr-body" role="tabpanel" aria-labelledby="tab-${drawerTab}">${body}</div>
   <footer class="dr-foot">${curIsNew
-    ? `<button type="button" class="btn secondary" data-close-drawer>Cancelar</button><button type="button" class="btn primary" id="btn-create" style="margin-left:auto">${ic('plus')}Criar tarefa</button>`
+    ? `<button type="button" class="btn ghost" id="btn-discard">Descartar</button><button type="button" class="btn primary" id="btn-create" style="margin-left:auto">${ic('check')}Salvar tarefa</button>`
     : `<button type="button" class="btn danger-ghost sm" id="btn-del-task">${ic('trash')}Excluir</button><span class="foot-meta">Criada em ${fmtDT(t.createdAt)}${t.updatedAt ? '<br>Atualizada em ' + fmtDT(t.updatedAt) : ''}</span>`}</footer>`;
   autosize($('#f-title'));
   if(drawerTab === 'resumo') updateCalcOut();
@@ -1666,13 +1830,12 @@ function tabResumo(){
       <div class="field"><label for="f-client">Cliente</label><input class="input" id="f-client" data-f="clientName" list="dl-clients" value="${val('clientName')}" placeholder="Nome do cliente" autocomplete="off"></div>
       <div class="field"><label for="f-proc">Nº do processo / inquérito</label><input class="input mono" id="f-proc" data-f="processNumber" value="${val('processNumber')}" placeholder="0000000-00.0000.0.00.0000"></div>
       <div class="field"><label for="f-court">Vara / Tribunal / Delegacia</label><input class="input" id="f-court" data-f="court" value="${val('court')}" placeholder="Ex.: 2ª Vara Criminal"></div>
-      <div class="field"><label for="f-cp">Contraparte</label><input class="input" id="f-cp" data-f="counterpart" value="${val('counterpart')}" placeholder="Ex.: Ministério Público"></div>
-      <div class="field"><label for="f-resp">Responsável</label><input class="input" id="f-resp" data-f="responsible" list="dl-resp" value="${val('responsible')}" placeholder="Quem executa?" autocomplete="off"></div>
+      ${pickField('f-cp', 'counterpart', 'Contraparte', counterparts(), t.counterpart, 'Digite a contraparte')}
+      ${pickField('f-resp', 'responsible', 'Responsável', responsibles(), t.responsible, 'Digite o nome do responsável')}
       <div class="field"><label for="f-start">Data de início</label><input class="input" type="date" id="f-start" data-f="startDate" value="${val('startDate')}"></div>
       <div class="field span-2"><label for="f-tags">Etiquetas</label><input class="input" id="f-tags" data-f="tags" value="${esc((t.tags || []).join(', '))}" placeholder="Separe por vírgulas: réu preso, júri, liminar"><p class="hint">A etiqueta “réu preso” eleva a prioridade automaticamente.</p></div>
     </div>
     <datalist id="dl-clients">${db.clients.map(c => `<option value="${esc(c.name)}">`).join('')}</datalist>
-    <datalist id="dl-resp">${responsibles().map(r => `<option value="${esc(r)}">`).join('')}</datalist>
   </section>
 
   <section class="fgroup">
@@ -1680,6 +1843,11 @@ function tabResumo(){
     <label class="sr-only" for="f-desc">Descrição da tarefa</label>
     <textarea class="textarea" id="f-desc" data-f="description" placeholder="Detalhe a tarefa, providências e documentos necessários.">${esc(t.description || '')}</textarea>
   </section>`;
+}
+function pickField(id, f, label, opts, value, ph){
+  const v = String(value || '').trim();
+  const all = opts.slice(); if(v && !all.some(o => o === v)) all.push(v);
+  return `<div class="field"><label for="${id}">${label}</label><select class="select" id="${id}" data-pick="${f}"><option value="">Selecione…</option>${all.map(o => `<option ${o === v ? 'selected' : ''}>${esc(o)}</option>`).join('')}<option value="__other">Outro…</option></select><input class="input" id="${id}-other" data-f="${f}" placeholder="${ph}" hidden autocomplete="off"></div>`;
 }
 function tabChecklist(){
   const l = cur.checklist, d = l.filter(i => i.done).length, p = l.length ? Math.round(d / l.length * 100) : 0;
@@ -1759,23 +1927,27 @@ function applyCalc(){
   renderTaskDrawer();
   toast('Prazo fatal definido: ' + fmtDate(iso), 'success');
 }
-function createCurrent(){
+function createCurrent(opts = {}){
   const title = String(cur.title || '').trim();
-  if(!title){ const e = $('#err-title'); if(e) e.hidden = false; const f = $('#f-title'); if(f) f.focus(); return; }
+  if(!title){ const e = $('#err-title'); if(e) e.hidden = false; const f = $('#f-title'); if(f) f.focus(); return false; }
   cur.title = title; const now = new Date().toISOString(); cur.createdAt = now; cur.updatedAt = now;
   db.tasks.push(cur); curIsNew = false; curOrigTitle = title;
-  ensureClient(cur.clientName); addActivity('create', 'Nova tarefa: ' + title); saveDB();
-  refreshBackground(); renderTaskDrawer(); drawer.setAttribute('aria-label', 'Tarefa: ' + title);
-  toast('Tarefa criada', 'success');
+  ensureClient(cur.clientName); addActivity('create', 'Nova tarefa: ' + title);
+  if(!saveDB()) return false;
+  refreshBackground();
+  const id = cur.id;
+  toast('Tarefa salva', 'success', { action:{ label:'Abrir', fn:() => openTask(id) } });
+  if(!opts.quiet){ renderTaskDrawer(); closeDrawer(true); }
+  return true;
 }
 async function deleteTask(id){
   const ok = await confirmDialog({ title:'Excluir tarefa?', text:'A tarefa, o checklist e todos os andamentos serão removidos.', ok:'Excluir', danger:true });
   if(!ok) return;
   const i = db.tasks.findIndex(t => t.id === id); if(i < 0) return;
-  const [t] = db.tasks.splice(i, 1);
+  const [t] = db.tasks.splice(i, 1); markDeleted(t.id);
   addActivity('delete', 'Tarefa excluída: ' + t.title); saveDB();
   curIsNew = false; curEdited = false; cur = null; drawerMode = null; await closeDrawer(true); refresh();
-  toast('Tarefa excluída', 'info', { action:{ label:'Desfazer', fn:() => { db.tasks.splice(Math.min(i, db.tasks.length), 0, t); saveDB(); refresh(); } } });
+  toast('Tarefa excluída', 'info', { action:{ label:'Desfazer', fn:() => { unmarkDeleted(t.id); t.updatedAt = new Date().toISOString(); db.tasks.splice(Math.min(i, db.tasks.length), 0, t); saveDB(); refresh(); } } });
 }
 function completeTask(id){
   const t = db.tasks.find(x => x.id === id); if(!t || t.status === 'completed') return;
@@ -1934,9 +2106,9 @@ async function deleteClient(){
   const c = curClient; if(!c) return;
   const ok = await confirmDialog({ title:'Excluir cliente?', text:'O cadastro será removido. As tarefas vinculadas continuam existindo.', ok:'Excluir', danger:true });
   if(!ok) return;
-  const i = db.clients.indexOf(c); if(i >= 0) db.clients.splice(i, 1); saveDB();
+  const i = db.clients.indexOf(c); if(i >= 0) db.clients.splice(i, 1); markDeleted(c.id); saveDB();
   curClient = null; drawerMode = null; await closeDrawer(true); refresh();
-  toast('Cliente excluído', 'info', { action:{ label:'Desfazer', fn:() => { db.clients.splice(Math.min(i, db.clients.length), 0, c); saveDB(); refresh(); } } });
+  toast('Cliente excluído', 'info', { action:{ label:'Desfazer', fn:() => { unmarkDeleted(c.id); c.updatedAt = new Date().toISOString(); db.clients.splice(Math.min(i, db.clients.length), 0, c); saveDB(); refresh(); } } });
 }
 
 /* Eventos do painel */
@@ -1949,6 +2121,7 @@ drawer.addEventListener('click', e => {
   if((el = q('[data-ns-quick]'))){ const n = +el.dataset.nsQuick; const iso = n === 0 ? todayISO() : isoDate(nextBusiness(addDays(startOfToday(), n))); const inp = $('#f-nsd'); if(inp) inp.value = iso; setField('nextStepDate', iso); return; }
   if((el = q('#calc-apply'))){ applyCalc(); return; }
   if((el = q('#btn-create'))){ createCurrent(); return; }
+  if((el = q('#btn-discard'))){ discardDraft(); return; }
   if((el = q('#btn-del-task'))){ deleteTask(cur.id); return; }
   if((el = q('[data-chk-del]'))){ removeChecklist(el.dataset.chkDel); return; }
   if((el = q('[data-prog-del]'))){ removeProgress(el.dataset.progDel); return; }
@@ -1965,7 +2138,15 @@ drawer.addEventListener('input', e => {
     if(el.id === 'prog-text'){ const er = $('#err-prog'); if(er) er.hidden = true; }
   } else if(drawerMode === 'client' && el.dataset.cf) setClientField(el.dataset.cf, el.value);
 });
-drawer.addEventListener('change', e => { const el = e.target; if(el.matches('[data-chk-toggle]')) toggleChecklist(el.dataset.chkToggle, el.checked); });
+drawer.addEventListener('change', e => {
+  const el = e.target;
+  if(el.matches('[data-chk-toggle]')) toggleChecklist(el.dataset.chkToggle, el.checked);
+  if(el.matches('[data-pick]') && drawerMode === 'task'){
+    const other = document.getElementById(el.id + '-other');
+    if(el.value === '__other'){ other.hidden = false; other.value = ''; other.focus(); setField(el.dataset.pick, ''); }
+    else { if(other) other.hidden = true; setField(el.dataset.pick, el.value); }
+  }
+});
 drawer.addEventListener('submit', e => { e.preventDefault(); if(e.target.id === 'chk-form') addChecklist(); else if(e.target.id === 'prog-form') addProgress(); });
 drawer.addEventListener('keydown', e => {
   if(e.key !== 'Enter') return;
@@ -2046,11 +2227,11 @@ async function deleteEvent(){
   const ok = await confirmDialog({ title:'Excluir compromisso?', text:'“' + ev.title + '” será removido da agenda.', ok:'Excluir', danger:true });
   if(!ok) return;
   const i = db.events.findIndex(x => x.id === ev.id); if(i < 0) return;
-  const [removed] = db.events.splice(i, 1); saveDB(); closeModal(); refresh();
-  toast('Compromisso excluído', 'info', { action:{ label:'Desfazer', fn:() => { db.events.splice(Math.min(i, db.events.length), 0, removed); saveDB(); refresh(); } } });
+  const [removed] = db.events.splice(i, 1); markDeleted(removed.id); saveDB(); closeModal(); refresh();
+  toast('Compromisso excluído', 'info', { action:{ label:'Desfazer', fn:() => { unmarkDeleted(removed.id); removed.updatedAt = new Date().toISOString(); db.events.splice(Math.min(i, db.events.length), 0, removed); saveDB(); refresh(); } } });
 }
 $('#modal').addEventListener('submit', e => { e.preventDefault(); saveEvent(); });
-$('#modal').addEventListener('click', e => { if(e.target.closest('#ev-del')) deleteEvent(); });
+$('#modal').addEventListener('click', e => { if(e.target.closest('#ev-del')) deleteEvent(); if(e.target.closest('#imp-confirm')) confirmImportClients(); });
 $('#modal').addEventListener('input', e => { if(e.target.id === 'ev-title') $('#err-ev').hidden = true; if(e.target.id === 'ev-date') $('#err-evd').hidden = true; });
 $('#modal').addEventListener('change', e => {
   if(e.target.id !== 'ev-task') return;
@@ -2058,6 +2239,85 @@ $('#modal').addEventListener('change', e => {
   if(t && c && !c.value.trim()) c.value = t.clientName || '';
 });
 $('#modal-wrap').addEventListener('mousedown', e => { if(e.target.id === 'modal-wrap') closeModal(); });
+
+/* =========================================================
+   IMPORTAR CLIENTES (Excel / CSV)
+   ========================================================= */
+let impNames = [];
+function loadSheetJS(){
+  if(window.XLSX) return Promise.resolve(window.XLSX);
+  return new Promise((res, rej) => {
+    const sc = document.createElement('script');
+    sc.src = 'https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js';
+    sc.onload = () => window.XLSX ? res(window.XLSX) : rej(new Error('biblioteca indisponível'));
+    sc.onerror = () => rej(new Error('Não foi possível carregar o leitor de Excel (verifique a internet).'));
+    document.head.appendChild(sc);
+  });
+}
+function csvRows(text){
+  const lines = text.replace(/^\uFEFF/, '').split(/\r?\n/).filter(l => l.trim());
+  const sep = [';', '\t', ','].find(c => lines.slice(0, 5).some(l => l.includes(c))) || ';';
+  return lines.map(l => l.split(sep).map(c => c.replace(/^"|"$/g, '').trim()));
+}
+function namesFromRows(rows){
+  rows = rows.filter(r => Array.isArray(r) && r.some(c => String(c).trim()));
+  if(!rows.length) return { names:[], col:'' };
+  const head = rows[0].map(c => norm(c));
+  let col = head.findIndex(h => /^(nome|cliente|clientes|nome do cliente|nome completo|razao social|name)$/.test(h));
+  if(col < 0) col = head.findIndex(h => /nome|cliente|razao/.test(h));
+  let start = 0, colLabel = '';
+  if(col >= 0){ start = 1; colLabel = String(rows[0][col]).trim(); }
+  else {
+    const width = Math.max(...rows.map(r => r.length)); let best = 0, bestN = -1;
+    for(let c = 0; c < width; c++){ const n = rows.filter(r => /[a-zà-ú]{2,}/i.test(String(r[c] || ''))).length; if(n > bestN){ bestN = n; best = c; } }
+    col = best; colLabel = 'coluna ' + String.fromCharCode(65 + col);
+  }
+  const seen = new Set(), names = [];
+  rows.slice(start).forEach(r => {
+    const v = String(r[col] == null ? '' : r[col]).replace(/\s+/g, ' ').trim();
+    if(v.length < 2 || !/[a-zà-ú]/i.test(v)) return;
+    const k = norm(v); if(seen.has(k)) return; seen.add(k); names.push(v);
+  });
+  return { names, col:colLabel };
+}
+async function importClientsFile(file){
+  if(!file) return;
+  const ext = (file.name.split('.').pop() || '').toLowerCase();
+  let rows;
+  try{
+    if(ext === 'csv' || ext === 'txt') rows = csvRows(await file.text());
+    else {
+      toast('Lendo a planilha…', 'info');
+      const X = await loadSheetJS();
+      const wb = X.read(await file.arrayBuffer(), { type:'array' });
+      rows = X.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { header:1, defval:'', raw:false });
+    }
+  }catch(e){ toast(e && e.message ? e.message : 'Não foi possível ler a planilha.', 'error'); return; }
+  const { names, col } = namesFromRows(rows);
+  if(!names.length){ toast('Nenhum nome de cliente encontrado na planilha.', 'error'); return; }
+  const fresh = names.filter(n => !db.clients.some(c => norm(c.name) === norm(n)));
+  impNames = fresh;
+  const dup = names.length - fresh.length;
+  $('#modal').innerHTML = `
+    <div class="modal-head"><span class="chip" style="--c:var(--accent)">${ic('upload')}Importar clientes</span><h2 id="modal-title" class="modal-h">Confirmar importação</h2><button type="button" class="icon-btn sm" data-close-modal aria-label="Fechar">${ic('x')}</button></div>
+    <div class="modal-body">
+      <p>Encontramos <b>${names.length}</b> ${plural(names.length, 'nome', 'nomes')} em “${esc(file.name)}” (${esc(col)}). ${fresh.length ? `<b>${fresh.length}</b> ${plural(fresh.length, 'será cadastrado', 'serão cadastrados')}` : 'Nenhum cliente novo'}${dup ? ` e ${dup} já ${plural(dup, 'existe', 'existem')} no painel` : ''}.</p>
+      ${fresh.length ? `<ul class="imp-list">${fresh.slice(0, 200).map(n => `<li>${esc(n)}</li>`).join('')}${fresh.length > 200 ? `<li class="hint">+ ${fresh.length - 200} outros</li>` : ''}</ul><p class="hint">Somente o nome é cadastrado. Os demais dados podem ser completados depois, na ficha de cada cliente.</p>` : ''}
+    </div>
+    <div class="modal-foot"><button type="button" class="btn secondary" data-close-modal>Cancelar</button>${fresh.length ? `<button type="button" class="btn primary" id="imp-confirm">${ic('check')}Cadastrar ${fresh.length} ${plural(fresh.length, 'cliente', 'clientes')}</button>` : ''}</div>`;
+  modalOpener = document.activeElement;
+  $('#modal-wrap').classList.add('open'); document.body.classList.add('lock');
+  setTimeout(() => { const b = $('#imp-confirm') || $('#modal [data-close-modal]'); if(b) b.focus(); }, 60);
+}
+function confirmImportClients(){
+  const pj = /\b(ltda|s\/?a|eireli|epp|me|cia|companhia|comercio|industria|servicos|engenharia|associacao|condominio|construtora|holding|participacoes|grupo)\b/i;
+  let n = 0;
+  impNames.forEach(name => { const had = db.clients.length; const c = ensureClient(name); if(c && db.clients.length > had){ if(pj.test(norm(name))) c.type = 'pj'; n++; } });
+  impNames = [];
+  addActivity('create', n + ' ' + plural(n, 'cliente importado', 'clientes importados') + ' de planilha');
+  saveDB(); closeModal(); refresh();
+  toast(n + ' ' + plural(n, 'cliente cadastrado', 'clientes cadastrados') + '. Clique em um cliente para completar os dados.', 'success');
+}
 
 /* =========================================================
    CONFIRMAÇÃO E AVISOS
@@ -2137,7 +2397,7 @@ function importData(file){
     if(!data || !Array.isArray(data.tasks)){ toast('Arquivo inválido: não contém tarefas do Lex.', 'error'); return; }
     const ok = await confirmDialog({ title:'Restaurar backup?', text:`Serão carregadas ${data.tasks.length} tarefas, ${(data.clients || []).length} clientes e ${(data.events || []).length} compromissos. Os dados atuais deste navegador serão substituídos.`, ok:'Restaurar' });
     if(!ok) return;
-    await closeDrawer(true); db = data; normalizeDB(); migrateClientsFromTasks(); saveDB(); refresh();
+    await closeDrawer(true); db = data; normalizeDB(); migrateClientsFromTasks(); saveDB(); await mirrorNow(); refresh();
     toast('Backup restaurado com sucesso', 'success');
   };
   r.onerror = () => toast('Não foi possível ler o arquivo.', 'error');
@@ -2146,7 +2406,7 @@ function importData(file){
 async function clearAll(){
   const ok = await confirmDialog({ title:'Apagar todos os dados?', text:'Esta ação não pode ser desfeita. Recomendamos exportar um backup antes.', ok:'Apagar tudo', danger:true });
   if(!ok) return;
-  await closeDrawer(true); db = {}; normalizeDB(); saveDB(); refresh(); toast('Todos os dados foram apagados', 'info');
+  await closeDrawer(true); db = {}; normalizeDB(); saveDB(); await mirrorNow(); refresh(); toast('Todos os dados foram apagados', 'info');
 }
 function icsEsc(s){ return String(s || '').replace(/\\/g, '\\\\').replace(/;/g, '\\;').replace(/,/g, '\\,').replace(/\r?\n/g, '\\n'); }
 function icsFold(l){ const out = []; while(l.length > 60){ out.push(l.slice(0, 60)); l = ' ' + l.slice(60); } out.push(l); return out.join('\r\n'); }
@@ -2234,6 +2494,9 @@ document.addEventListener('click', e => {
   if((el = q('[data-open-client]'))){ openClient(el.dataset.openClient); return; }
   if((el = q('[data-client-name]'))){ openClientByName(el.dataset.clientName); return; }
   if((el = q('[data-new-client]'))){ openClient(null); return; }
+  if((el = q('[data-import-clients]'))){ $('#clients-file').click(); return; }
+  if((el = q('[data-snap-recover]'))){ recoverFromSnapshot(el.dataset.snapRecover); return; }
+  if((el = q('[data-snap-download]'))){ downloadSnapshot(el.dataset.snapDownload); return; }
   if((el = q('[data-open-task]'))){ openTask(el.dataset.openTask); return; }
   if((el = q('[data-new-task]'))){ const c = el.dataset.newTask; openTask(null, CATS[c] ? { category:c } : {}); return; }
   if((el = q('[data-close-drawer]'))){ closeDrawer(); return; }
@@ -2274,6 +2537,8 @@ document.addEventListener('change', e => {
   else if(el.id === 't-done'){ tf.showDone = el.checked; renderTasksBody(); }
   else if(el.dataset && el.dataset.setting){ saveSetting(el); }
   else if(el.id === 'import-file'){ importData(el.files[0]); el.value = ''; }
+  else if(el.id === 'clients-file'){ importClientsFile(el.files[0]); el.value = ''; }
+  else if(el.dataset && el.dataset.settingList){ saveSettingList(el); }
 });
 /* Arrastar e soltar no quadro */
 document.addEventListener('dragstart', e => { const c = e.target.closest && e.target.closest('[data-drag-id]'); if(!c) return; e.dataTransfer.setData('text/plain', c.dataset.dragId); e.dataTransfer.effectAllowed = 'move'; c.classList.add('dragging'); });
@@ -2286,6 +2551,7 @@ document.addEventListener('drop', e => { const col = e.target.closest && e.targe
    ========================================================= */
 normalizeDB();
 if(migrateClientsFromTasks()) saveDB();
+updateSaveState();
 applyTheme();
 route = parseHash(); applyRouteParams();
 if(!/^#\/(hoje|agenda|tarefas|clientes|indicadores|config)/.test(location.hash)) history.replaceState(null, '', '#/hoje');
@@ -2305,6 +2571,11 @@ window.addEventListener('storage', e => {
   if(isDrawerOpen() && drawerMode === 'client' && curClient && !curClientIsNew){ const n = db.clients.find(c => c.id === curClient.id); if(n){ curClient = n; curClientOrig = n.name; renderClientDrawer(); } else closeDrawer(true); }
   refresh();
 });
+/* Recupera dados da cópia de segurança se o armazenamento foi apagado ou sobrescrito */
+reconcileWithMirror();
+if(navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(() => {});
+document.addEventListener('visibilitychange', () => { if(document.visibilityState === 'hidden' && mirrorT) mirrorNow(); });
+window.addEventListener('pagehide', () => { if(mirrorT) mirrorNow(); });
 /* Virada do dia com a página aberta */
 let lastDay = todayISO();
 setInterval(() => { const t = todayISO(); if(t !== lastDay){ lastDay = t; ag.selected = t; refresh(); } }, 60000);
