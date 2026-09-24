@@ -1551,7 +1551,7 @@ function salvarParams() {
 
 function resetarDados() {
   if (!confirm('Tem certeza? Todos os gastos variáveis, personalizações mensais e faturas serão apagados. Os custos fixos voltarão aos valores padrão.')) return;
-  localStorage.clear();
+  Object.keys(localStorage).filter(k=>!k.startsWith('lex_')).forEach(k=>localStorage.removeItem(k));
   initData();
   alert('Dados restaurados para os valores originais!');
   renderFixos();
