@@ -115,6 +115,18 @@ kbd{font:600 11px var(--font);padding:1px 6px;border-radius:5px;border:1px solid
 .save-state.err{color:var(--danger)}.save-state.err .i{color:var(--danger)}
 .filter-note{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:13px;color:var(--text-2);background:var(--info-soft);border-radius:10px;padding:6px 12px;margin-bottom:14px}
 .filter-note .link-btn{padding:2px 4px;min-height:28px}
+.modal.wide{width:min(920px,100%)}
+.map-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px 12px}
+.map-grid .field>label{font-size:12px}
+.map-grid .select{min-height:36px;font-size:13px}
+.map-grid .select.mapped{border-color:color-mix(in srgb,var(--success) 55%,var(--border-strong))}
+.pv-wrap{overflow-x:auto;border:1px solid var(--border);border-radius:12px}
+.pv-table{width:100%;border-collapse:collapse;font-size:12.5px}
+.pv-table th{text-align:left;background:var(--surface-2);font-weight:600;color:var(--text-2);padding:8px 10px;white-space:nowrap}
+.pv-table td{padding:8px 10px;border-top:1px solid var(--border);vertical-align:top;max-width:260px;overflow-wrap:anywhere}
+.imp-stats{display:flex;gap:8px;flex-wrap:wrap}
+@media (max-width:760px){.map-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:480px){.map-grid{grid-template-columns:minmax(0,1fr)}}
 .imp-list{max-height:260px;overflow:auto;border:1px solid var(--border);border-radius:12px;padding:6px 12px;margin:0;list-style:none;font-size:14px}
 .imp-list li{padding:6px 0;border-top:1px solid var(--border)}
 .imp-list li:first-child{border-top:0}
@@ -697,6 +709,7 @@ button.kpi:hover{transform:translateY(-2px);box-shadow:var(--shadow);border-colo
 <div class="toasts" id="toasts" aria-live="polite"></div>
 <input type="file" id="import-file" accept=".json,application/json" hidden>
 <input type="file" id="clients-file" accept=".xlsx,.xls,.csv,.ods,.txt" hidden>
+<input type="file" id="tasks-file" accept=".xlsx,.xls,.csv,.ods,.txt" hidden>
 <script>
 'use strict';
 /* =========================================================
@@ -1346,7 +1359,11 @@ function renderTarefas(){
   $('#view-tarefas').innerHTML = `
   <div class="page-head">
     <div><h1 class="page-title">${title}</h1><p class="page-sub">${openN} ${plural(openN, 'aberta', 'abertas')} · ${doneN} ${plural(doneN, 'concluída', 'concluídas')}</p></div>
+    <div class="head-actions">
+      <button type="button" class="btn secondary sm" data-import-tasks>${ic('upload')}<span class="lbl">Importar planilha</span></button>
+      <button type="button" class="btn secondary sm" data-export-tasks>${ic('download')}<span class="lbl">Exportar Excel</span></button>
     ${doneRoute ? '' : `<div class="seg" role="group" aria-label="Modo de visualização">${[['list','list','Lista'],['board','columns','Quadro'],['matrix','grid','Prioridades']].map(([k, i, l]) => `<button type="button" data-tview="${k}" aria-pressed="${view === k}">${ic(i)}<span class="lbl">${l}</span></button>`).join('')}</div>`}
+    </div>
   </div>
   <div class="toolbar">
     <div class="fchips" role="group" aria-label="Filtrar por categoria">
@@ -1620,7 +1637,9 @@ function renderConfigBody(){
     <section class="card"><h2 class="card-title">${ic('shield')}Backup e dados</h2>
       <p class="muted-p mt-s">Os dados ficam salvos neste navegador (${db.tasks.length} ${plural(db.tasks.length, 'tarefa', 'tarefas')}, ${db.clients.length} ${plural(db.clients.length, 'cliente', 'clientes')}, ${db.events.length} ${plural(db.events.length, 'compromisso', 'compromissos')}). Faça backups periódicos e use a restauração para levar os dados a outro computador.</p>
       <p class="hint mt-s">Último backup: <b>${lb ? fmtDT(lb) : 'nunca'}</b></p>
-      <div class="btn-row mt"><button type="button" class="btn primary" data-export>${ic('download')}Exportar backup</button><button type="button" class="btn secondary" data-import>${ic('upload')}Restaurar backup</button><button type="button" class="btn secondary" data-ics>${ic('calendar')}Exportar agenda (.ics)</button></div></section>
+      <div class="btn-row mt"><button type="button" class="btn primary" data-export>${ic('download')}Exportar backup</button><button type="button" class="btn secondary" data-import>${ic('upload')}Restaurar backup</button><button type="button" class="btn secondary" data-ics>${ic('calendar')}Exportar agenda (.ics)</button></div>
+      <h3 class="subhead">Planilhas</h3>
+      <div class="btn-row"><button type="button" class="btn secondary" data-import-tasks>${ic('upload')}Importar tarefas (Excel/CSV)</button><button type="button" class="btn secondary" data-export-tasks>${ic('download')}Exportar tarefas (Excel)</button><button type="button" class="btn ghost" data-task-template>${ic('file')}Baixar modelo</button></div></section>
     <section class="card"><h2 class="card-title">${ic('users')}Listas pré-definidas</h2><div class="grid2 mt">
       <div class="field"><label for="s-team">Responsáveis</label><textarea class="textarea" id="s-team" data-setting-list="team" rows="5" style="min-height:120px">${esc(s.team.join('\n'))}</textarea><p class="hint">Um nome por linha. Aparecem como opções no campo “Responsável”.</p></div>
       <div class="field"><label for="s-cps">Contrapartes</label><textarea class="textarea" id="s-cps" data-setting-list="counterparts" rows="5" style="min-height:120px">${esc(s.counterparts.join('\n'))}</textarea><p class="hint">Um item por linha. Aparecem como opções no campo “Contraparte”.</p></div>
@@ -2169,6 +2188,7 @@ function openEvent(id, preset = {}){
 function renderEventModal(){
   const e = curEvent;
   const tasks = db.tasks.filter(t => isOpen(t) || t.id === e.taskId).sort((a, b) => a.title.localeCompare(b.title, 'pt'));
+  $('#modal').className = 'modal';
   $('#modal').innerHTML = `<form id="ev-form" novalidate>
     <div class="modal-head"><span class="chip" style="--c:var(--accent)">${ic('calendar')}Compromisso</span><h2 id="modal-title" class="modal-h">${curEventIsNew ? 'Novo compromisso' : 'Editar compromisso'}</h2><button type="button" class="icon-btn sm" data-close-modal aria-label="Fechar">${ic('x')}</button></div>
     <div class="modal-body">
@@ -2190,7 +2210,7 @@ function renderEventModal(){
   </form>`;
 }
 function closeModal(){
-  $('#modal-wrap').classList.remove('open');
+  $('#modal-wrap').classList.remove('open'); timp = null;
   if(!isDrawerOpen()) document.body.classList.remove('lock');
   curEvent = null;
   const o = modalOpener; modalOpener = null; if(o && document.contains(o) && o.focus) o.focus({ preventScroll:true });
@@ -2231,9 +2251,13 @@ async function deleteEvent(){
   toast('Compromisso excluído', 'info', { action:{ label:'Desfazer', fn:() => { unmarkDeleted(removed.id); removed.updatedAt = new Date().toISOString(); db.events.splice(Math.min(i, db.events.length), 0, removed); saveDB(); refresh(); } } });
 }
 $('#modal').addEventListener('submit', e => { e.preventDefault(); saveEvent(); });
-$('#modal').addEventListener('click', e => { if(e.target.closest('#ev-del')) deleteEvent(); if(e.target.closest('#imp-confirm')) confirmImportClients(); });
+$('#modal').addEventListener('click', e => { if(e.target.closest('#ev-del')) deleteEvent(); if(e.target.closest('#imp-confirm')) confirmImportClients(); if(e.target.closest('#timp-confirm')) confirmTaskImport(); });
 $('#modal').addEventListener('input', e => { if(e.target.id === 'ev-title') $('#err-ev').hidden = true; if(e.target.id === 'ev-date') $('#err-evd').hidden = true; });
 $('#modal').addEventListener('change', e => {
+  const el = e.target;
+  if(timp && el.matches('[data-map]')){ timp.map[el.dataset.map] = +el.value; renderTaskImport(el.id); return; }
+  if(timp && el.matches('[data-tdef]')){ timp.defaults[el.dataset.tdef] = el.value; renderTaskImport(el.id); return; }
+  if(timp && el.id === 'timp-skip'){ timp.skipDup = el.checked; renderTaskImport(el.id); return; }
   if(e.target.id !== 'ev-task') return;
   const t = db.tasks.find(x => x.id === e.target.value); const c = $('#ev-client');
   if(t && c && !c.value.trim()) c.value = t.clientName || '';
@@ -2255,9 +2279,20 @@ function loadSheetJS(){
   });
 }
 function csvRows(text){
-  const lines = text.replace(/^\uFEFF/, '').split(/\r?\n/).filter(l => l.trim());
-  const sep = [';', '\t', ','].find(c => lines.slice(0, 5).some(l => l.includes(c))) || ';';
-  return lines.map(l => l.split(sep).map(c => c.replace(/^"|"$/g, '').trim()));
+  text = String(text).replace(/^﻿/, '');
+  const head = text.split(/\r?\n/).slice(0, 5).join('\n');
+  const sep = [';', '\t', ','].map(c => [c, head.split(c).length]).sort((a, b) => b[1] - a[1])[0][0];
+  const rows = []; let row = [], cell = '', q = false;
+  for(let i = 0; i < text.length; i++){
+    const ch = text[i];
+    if(q){ if(ch === '"'){ if(text[i + 1] === '"'){ cell += '"'; i++; } else q = false; } else cell += ch; }
+    else if(ch === '"') q = true;
+    else if(ch === sep){ row.push(cell); cell = ''; }
+    else if(ch === '\n' || ch === '\r'){ if(ch === '\r' && text[i + 1] === '\n') i++; row.push(cell); rows.push(row); row = []; cell = ''; }
+    else cell += ch;
+  }
+  if(cell || row.length){ row.push(cell); rows.push(row); }
+  return rows.map(r => r.map(c => c.trim())).filter(r => r.some(c => c));
 }
 function namesFromRows(rows){
   rows = rows.filter(r => Array.isArray(r) && r.some(c => String(c).trim()));
@@ -2298,6 +2333,7 @@ async function importClientsFile(file){
   const fresh = names.filter(n => !db.clients.some(c => norm(c.name) === norm(n)));
   impNames = fresh;
   const dup = names.length - fresh.length;
+  $('#modal').className = 'modal';
   $('#modal').innerHTML = `
     <div class="modal-head"><span class="chip" style="--c:var(--accent)">${ic('upload')}Importar clientes</span><h2 id="modal-title" class="modal-h">Confirmar importação</h2><button type="button" class="icon-btn sm" data-close-modal aria-label="Fechar">${ic('x')}</button></div>
     <div class="modal-body">
@@ -2317,6 +2353,233 @@ function confirmImportClients(){
   addActivity('create', n + ' ' + plural(n, 'cliente importado', 'clientes importados') + ' de planilha');
   saveDB(); closeModal(); refresh();
   toast(n + ' ' + plural(n, 'cliente cadastrado', 'clientes cadastrados') + '. Clique em um cliente para completar os dados.', 'success');
+}
+
+/* =========================================================
+   IMPORTAR / EXPORTAR TAREFAS (Excel / CSV)
+   ========================================================= */
+const TIMP_FIELDS = [
+  ['title', 'Tarefa / título *'], ['clientName', 'Cliente'], ['processNumber', 'Nº do processo'],
+  ['dueDate', 'Prazo fatal'], ['internalDate', 'Meta interna'], ['startDate', 'Data de início'],
+  ['category', 'Categoria'], ['status', 'Status'], ['priority', 'Prioridade'],
+  ['responsible', 'Responsável'], ['counterpart', 'Contraparte'], ['court', 'Vara / Tribunal'],
+  ['description', 'Descrição'], ['nextStep', 'Próximo passo'], ['tags', 'Etiquetas'], ['observations', 'Observações']
+];
+/* Palavras reconhecidas nos cabeçalhos da planilha (ordem = prioridade) */
+const TIMP_GUESS = [
+  ['nextStep', /proximo passo|proxima (acao|etapa|providencia)/],
+  ['internalDate', /meta|prazo interno|prazo de seguranca|data interna/],
+  ['counterpart', /contraparte|parte contraria|parte adversa|adverso/],
+  ['title', /^(tarefa|titulo|atividade|assunto|providencia|compromisso|evento|acao|servico|tipo de servico|descricao da tarefa|tarefa \/ titulo)$/],
+  ['title', /tarefa|titulo|atividade|assunto|providencia|compromisso|servico/],
+  ['processNumber', /processo|autos|cnj|inquerito|ipl|n[ºo°]\s*proc/],
+  ['dueDate', /prazo fatal|fatal|vencimento|data limite|prazo final|data final|^prazo$|prazo/],
+  ['startDate', /inicio|abertura|cadastr|criacao|distribuicao/],
+  ['clientName', /cliente|constituinte|outorgante|^parte$|^nome/],
+  ['category', /categoria|^tipo|natureza/],
+  ['status', /status|situacao|estado/],
+  ['priority', /prioridade|urgencia/],
+  ['responsible', /responsavel|advogado|executante|colaborador|encarregado|usuario/],
+  ['court', /vara|tribunal|orgao|juizo|comarca|foro|delegacia/],
+  ['description', /descricao|detalhe|historico|texto|conteudo/],
+  ['tags', /etiqueta|tag|marcador/],
+  ['observations', /observac|^obs|nota|comentario/],
+  ['dueDate', /^data$|^dia$|data/]
+];
+let timp = null;
+function colLetter(i){ let s = ''; i++; while(i > 0){ const m = (i - 1) % 26; s = String.fromCharCode(65 + m) + s; i = Math.floor((i - 1) / 26); } return s; }
+function guessMap(header){
+  const map = {}; TIMP_FIELDS.forEach(([f]) => { map[f] = -1; });
+  const used = new Set(), H = header.map(h => norm(h).trim());
+  TIMP_GUESS.forEach(([f, re]) => { if(map[f] >= 0) return; const i = H.findIndex((h, idx) => h && !used.has(idx) && re.test(h)); if(i >= 0){ map[f] = i; used.add(i); } });
+  return map;
+}
+function findHeaderRow(rows){
+  let best = 0, bestScore = -1;
+  rows.slice(0, 15).forEach((r, i) => {
+    const cells = r.map(c => norm(c)).filter(Boolean); if(cells.length < 2) return;
+    const sc = cells.filter(h => TIMP_GUESS.some(([, re]) => re.test(h))).length * 3 + (cells.every(c => isNaN(Number(c))) ? 1 : 0);
+    if(sc > bestScore){ bestScore = sc; best = i; }
+  });
+  return best;
+}
+function validISO(iso){ const d = parseISO(iso); return d && isoDate(d) === iso ? iso : ''; }
+function parseAnyDate(v){
+  if(v == null || v === '') return '';
+  if(v instanceof Date && !isNaN(v)) return isoDate(v);
+  if(typeof v === 'number'){
+    if(v > 20000 && v < 80000){ const d = new Date(Math.round((v - 25569) * MS_DAY)); return validISO(d.getUTCFullYear() + '-' + pad(d.getUTCMonth() + 1) + '-' + pad(d.getUTCDate())); }
+    return '';
+  }
+  const s = String(v).trim();
+  let m = s.match(/^(\d{1,2})[\/.\-](\d{1,2})[\/.\-](\d{2,4})/);
+  if(m){ let y = +m[3]; if(y < 100) y += 2000; return validISO(y + '-' + pad(+m[2]) + '-' + pad(+m[1])); }
+  m = s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+  if(m) return validISO(m[1] + '-' + pad(+m[2]) + '-' + pad(+m[3]));
+  if(/^\d{5}(\.\d+)?$/.test(s)) return parseAnyDate(Number(s));
+  return '';
+}
+function mapCategory(v, def){
+  const n = norm(v); if(!n) return def;
+  const exact = Object.keys(CATS).find(k => norm(CATS[k].label) === n || norm(CATS[k].plural) === n || norm(CATS[k].short) === n || k === n);
+  if(exact) return exact;
+  if(/contato|ligac|retorno ao cliente|falar com/.test(n)) return 'contact';
+  if(/atualiz|acompanh|consulta processual|andamento processual/.test(n)) return 'update';
+  if(/judic|processual|audien|recurso|peticao|juizo|forum|manifestac|memoria|alegac|habeas|resposta a acusacao/.test(n)) return 'judicial';
+  if(/intern/.test(n)) return 'internal';
+  if(/admin|financ|cobranc|contrato|honorar/.test(n)) return 'admin';
+  if(/prospec|venda|comercial|proposta|captac/.test(n)) return 'prospecting';
+  return def;
+}
+function mapStatus(v, def){
+  const n = norm(v); if(!n) return def;
+  if(/conclu|finaliz|cumpri|baixad|encerrad|realizad|feito|^ok$|entregue|protocolad/.test(n)) return 'completed';
+  if(/aguard|suspens|sobrestad|espera/.test(n)) return 'waiting';
+  if(/andamento|execu|iniciad|fazendo/.test(n)) return 'in_progress';
+  if(/urgen/.test(n)) return 'urgent';
+  if(/pendente|aberto|a fazer|nao iniciad/.test(n)) return 'pending';
+  return def;
+}
+function mapPriority(v){ const n = norm(v); if(/urgen|critic|maxima/.test(n)) return 'urgent'; if(/alta|high|importante/.test(n)) return 'high'; if(/baixa|low/.test(n)) return 'low'; return 'medium'; }
+function timpKey(t){ return norm(t.title) + '|' + norm(t.processNumber) + '|' + (t.dueDate || ''); }
+function cellTxt(v){ if(v == null) return ''; if(v instanceof Date) return isoDate(v); return String(v).replace(/\s+/g, ' ').trim(); }
+function timpBuild(){
+  const { rows, headerIdx, map, defaults } = timp;
+  const get = (r, f) => map[f] >= 0 ? r[map[f]] : '';
+  const existing = new Set(db.tasks.map(timpKey)), seen = new Set(), out = [];
+  rows.slice(headerIdx + 1).forEach(r => {
+    if(!r || !r.some(c => String(c == null ? '' : c).trim())) return;
+    const desc = String(get(r, 'description') == null ? '' : get(r, 'description')).trim();
+    let title = cellTxt(get(r, 'title'));
+    if(!title && desc) title = desc.split(/\r?\n/)[0].slice(0, 140);
+    if(!title){ out.push({ invalid:true }); return; }
+    const t = newTaskObj({
+      title, clientName:cellTxt(get(r, 'clientName')), processNumber:cellTxt(get(r, 'processNumber')),
+      dueDate:parseAnyDate(get(r, 'dueDate')), internalDate:parseAnyDate(get(r, 'internalDate')), startDate:parseAnyDate(get(r, 'startDate')),
+      category:map.category >= 0 ? mapCategory(cellTxt(get(r, 'category')), defaults.category) : (mapCategory(title, null) || defaults.category), status:mapStatus(cellTxt(get(r, 'status')), defaults.status),
+      priority:map.priority >= 0 ? mapPriority(cellTxt(get(r, 'priority'))) : 'medium',
+      responsible:cellTxt(get(r, 'responsible')) || defaults.responsible, counterpart:cellTxt(get(r, 'counterpart')), court:cellTxt(get(r, 'court')),
+      description:desc, nextStep:cellTxt(get(r, 'nextStep')),
+      tags:cellTxt(get(r, 'tags')).split(/[,;]+/).map(x => x.trim()).filter(Boolean),
+      observations:String(get(r, 'observations') == null ? '' : get(r, 'observations')).trim()
+    });
+    if(t.status === 'completed') t.completedAt = t.dueDate ? new Date(t.dueDate + 'T12:00').toISOString() : new Date().toISOString();
+    const k = timpKey(t); const dup = existing.has(k) || seen.has(k); seen.add(k);
+    out.push({ t, dup });
+  });
+  return out;
+}
+async function readSheetRows(file, preferName){
+  const ext = (file.name.split('.').pop() || '').toLowerCase();
+  if(ext === 'csv' || ext === 'txt') return csvRows(await file.text());
+  toast('Lendo a planilha…', 'info');
+  const X = await loadSheetJS();
+  const wb = X.read(await file.arrayBuffer(), { type:'array' });
+  const sn = (preferName && wb.SheetNames.find(n => preferName.test(norm(n)))) || wb.SheetNames[0];
+  return X.utils.sheet_to_json(wb.Sheets[sn], { header:1, defval:'', raw:true });
+}
+async function importTasksFile(file){
+  if(!file) return;
+  let rows;
+  try{ rows = await readSheetRows(file, /tarefa/); }
+  catch(e){ toast(e && e.message ? e.message : 'Não foi possível ler a planilha.', 'error'); return; }
+  rows = (rows || []).filter(r => Array.isArray(r) && r.some(c => String(c == null ? '' : c).trim()));
+  if(rows.length < 2){ toast('A planilha precisa ter uma linha de cabeçalho e ao menos uma tarefa.', 'error'); return; }
+  const headerIdx = findHeaderRow(rows);
+  const header = rows[headerIdx].map(c => cellTxt(c));
+  timp = { fileName:file.name, rows, headerIdx, header, map:guessMap(header), skipDup:true,
+    defaults:{ category:route.view === 'tarefas' && tf.cat ? tf.cat : 'judicial', status:'pending', responsible:'' } };
+  renderTaskImport();
+  modalOpener = document.activeElement;
+  $('#modal-wrap').classList.add('open'); document.body.classList.add('lock');
+  setTimeout(() => { const b = $('#timp-confirm'); if(b && !b.disabled) b.focus(); else { const c = $('#modal [data-close-modal]'); if(c) c.focus(); } }, 60);
+}
+function renderTaskImport(focusId){
+  const res = timpBuild();
+  const valid = res.filter(x => !x.invalid), inv = res.length - valid.length;
+  const dups = valid.filter(x => x.dup).length;
+  const fresh = valid.filter(x => !x.dup || !timp.skipDup);
+  const withDue = fresh.filter(x => x.t.dueDate).length;
+  const colOpts = sel => `<option value="-1">— não importar —</option>` + timp.header.map((h, i) => `<option value="${i}" ${sel === i ? 'selected' : ''}>${esc(h || 'Coluna ' + colLetter(i))}</option>`).join('');
+  const pv = fresh.slice(0, 6);
+  $('#modal').className = 'modal wide';
+  $('#modal').innerHTML = `
+    <div class="modal-head"><span class="chip" style="--c:var(--accent)">${ic('upload')}Importar tarefas</span><h2 id="modal-title" class="modal-h">${esc(timp.fileName)}</h2><button type="button" class="icon-btn sm" data-close-modal aria-label="Fechar">${ic('x')}</button></div>
+    <div class="modal-body">
+      <div class="imp-stats">
+        <span class="chip" style="--c:var(--success)">${ic('check')}${fresh.length} ${plural(fresh.length, 'tarefa para importar', 'tarefas para importar')}</span>
+        <span class="chip" style="--c:var(--info)">${ic('calendar')}${withDue} com prazo</span>
+        ${dups ? `<span class="chip" style="--c:var(--muted)">${dups} já ${plural(dups, 'existe', 'existem')} no painel</span>` : ''}
+        ${inv ? `<span class="chip" style="--c:var(--warning)">${inv} ${plural(inv, 'linha sem título ignorada', 'linhas sem título ignoradas')}</span>` : ''}
+      </div>
+      <div><h3 class="subhead" style="margin-top:4px">1. Confira as colunas</h3><p class="hint">Reconhecemos as colunas da sua planilha automaticamente. Ajuste o que for preciso — só o título é obrigatório.</p></div>
+      <div class="map-grid">${TIMP_FIELDS.map(([f, l]) => `<div class="field"><label for="map-${f}">${l}</label><select class="select ${timp.map[f] >= 0 ? 'mapped' : ''}" id="map-${f}" data-map="${f}">${colOpts(timp.map[f])}</select></div>`).join('')}</div>
+      <div><h3 class="subhead">2. Valores padrão</h3><p class="hint">Usados quando a planilha não tem a coluna ou o valor não é reconhecido. Sem coluna de categoria, ela é deduzida pelo título (ex.: “Contato com cliente”, “Atualização processual”, “Petição”).</p></div>
+      <div class="grid3">
+        <div class="field"><label for="tdef-category">Categoria</label><select class="select" id="tdef-category" data-tdef="category">${Object.entries(CATS).map(([k, c]) => `<option value="${k}" ${timp.defaults.category === k ? 'selected' : ''}>${c.label}</option>`).join('')}</select></div>
+        <div class="field"><label for="tdef-status">Status</label><select class="select" id="tdef-status" data-tdef="status">${['pending','in_progress','waiting','completed'].map(k => `<option value="${k}" ${timp.defaults.status === k ? 'selected' : ''}>${STATUS[k].label}</option>`).join('')}</select></div>
+        <div class="field"><label for="tdef-responsible">Responsável</label><select class="select" id="tdef-responsible" data-tdef="responsible"><option value="">Nenhum</option>${responsibles().map(r => `<option ${timp.defaults.responsible === r ? 'selected' : ''}>${esc(r)}</option>`).join('')}</select></div>
+      </div>
+      <label class="switch"><input type="checkbox" id="timp-skip" ${timp.skipDup ? 'checked' : ''}>Ignorar tarefas que já existem no painel (mesmo título, processo e prazo)</label>
+      <div><h3 class="subhead">3. Prévia</h3>
+      ${pv.length ? `<div class="pv-wrap"><table class="pv-table"><thead><tr><th>Tarefa</th><th>Cliente</th><th>Processo</th><th>Prazo fatal</th><th>Categoria</th><th>Status</th><th>Responsável</th></tr></thead><tbody>${pv.map(({ t }) => `<tr><td>${esc(t.title)}</td><td>${esc(t.clientName)}</td><td class="mono">${esc(t.processNumber)}</td><td>${t.dueDate ? fmtDate(t.dueDate) : '—'}</td><td>${esc(CATS[t.category].short)}</td><td>${esc(STATUS[t.status].label)}</td><td>${esc(t.responsible)}</td></tr>`).join('')}</tbody></table></div>${fresh.length > pv.length ? `<p class="hint" style="margin-top:6px">+ ${fresh.length - pv.length} outras</p>` : ''}` : `<p class="muted-p">Nenhuma tarefa nova para importar. Confira se a coluna de título está correta.</p>`}</div>
+    </div>
+    <div class="modal-foot"><button type="button" class="btn ghost" data-task-template style="margin-right:auto">${ic('file')}Baixar modelo</button><button type="button" class="btn secondary" data-close-modal>Cancelar</button><button type="button" class="btn primary" id="timp-confirm" ${fresh.length ? '' : 'disabled'}>${ic('check')}Importar ${fresh.length} ${plural(fresh.length, 'tarefa', 'tarefas')}</button></div>`;
+  if(focusId){ const el = document.getElementById(focusId); if(el) el.focus(); }
+}
+function confirmTaskImport(){
+  if(!timp) return;
+  const list = timpBuild().filter(x => !x.invalid && (!x.dup || !timp.skipDup));
+  if(!list.length) return;
+  list.forEach(({ t }) => { db.tasks.push(t); ensureClient(t.clientName); });
+  addActivity('create', list.length + ' ' + plural(list.length, 'tarefa importada', 'tarefas importadas') + ' de planilha (' + timp.fileName + ')');
+  timp = null;
+  if(!saveDB()) return;
+  closeModal(); refresh();
+  toast(list.length + ' ' + plural(list.length, 'tarefa importada', 'tarefas importadas') + ' com sucesso.', 'success', { action:{ label:'Ver tarefas', fn:() => go('tarefas') } });
+}
+async function writeSheet(name, sheets){
+  try{
+    const X = await loadSheetJS();
+    const wb = X.utils.book_new();
+    sheets.forEach(([title, aoa]) => {
+      const ws = X.utils.aoa_to_sheet(aoa);
+      ws['!cols'] = (aoa[0] || []).map((_, c) => ({ wch:Math.min(60, Math.max(10, ...aoa.slice(0, 300).map(r => String(r[c] == null ? '' : r[c]).length + 2))) }));
+      X.utils.book_append_sheet(wb, ws, title);
+    });
+    X.writeFile(wb, name + '.xlsx');
+    return 'xlsx';
+  }catch(e){
+    const aoa = sheets[0][1];
+    const csv = aoa.map(r => r.map(c => { const v = String(c == null ? '' : c); return /[;"\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; }).join(';')).join('\r\n');
+    download(name + '.csv', '﻿' + csv, 'text/csv;charset=utf-8');
+    return 'csv';
+  }
+}
+async function exportTasksSheet(){
+  if(!db.tasks.length){ toast('Não há tarefas para exportar.', 'info'); return; }
+  const H = ['Tarefa', 'Cliente', 'Nº do processo', 'Categoria', 'Status', 'Prioridade', 'Prazo fatal', 'Meta interna', 'Responsável', 'Contraparte', 'Vara / Tribunal', 'Próximo passo', 'Data do próximo passo', 'Descrição', 'Etiquetas', 'Observações', 'Notas estratégicas', 'Checklist', 'Último andamento', 'Data do último andamento', 'Criada em', 'Concluída em'];
+  const f = d => d ? fmtDate(d) : '';
+  const tasks = db.tasks.slice().sort((a, b) => (isOpen(b) - isOpen(a)) || byDue(a, b));
+  const rows = tasks.map(t => {
+    const last = (t.progress || []).slice().sort((a, b) => String(b.date).localeCompare(String(a.date)))[0];
+    const chk = t.checklist || [];
+    return [t.title, t.clientName || '', t.processNumber || '', (CATS[t.category] || {}).label || '', (STATUS[t.status] || {}).label || '', (PRI[t.priority] || {}).label || '', f(t.dueDate), f(t.internalDate), t.responsible || '', t.counterpart || '', t.court || '', t.nextStep || '', f(t.nextStepDate), t.description || '', (t.tags || []).join(', '), t.observations || '', t.strategic || '', chk.length ? chk.filter(i => i.done).length + '/' + chk.length : '', last ? last.text : '', last ? fmtDT(last.date) : '', fmtDT(t.createdAt), t.completedAt ? fmtDT(t.completedAt) : ''];
+  });
+  const prog = [['Tarefa', 'Cliente', 'Nº do processo', 'Data', 'Tipo', 'Descrição']];
+  tasks.forEach(t => (t.progress || []).slice().sort((a, b) => String(a.date).localeCompare(String(b.date))).forEach(p => prog.push([t.title, t.clientName || '', t.processNumber || '', fmtDT(p.date), (PROG[p.type] || PROG.andamento).label, p.text])));
+  const kind = await writeSheet('lex-tarefas-' + todayISO(), [['Tarefas', [H, ...rows]], ['Andamentos', prog]]);
+  toast(rows.length + ' ' + plural(rows.length, 'tarefa exportada', 'tarefas exportadas') + (kind === 'csv' ? ' em CSV (sem conexão para gerar Excel).' : ' para Excel.'), 'success');
+}
+async function downloadTaskTemplate(){
+  const aoa = [
+    ['Tarefa', 'Cliente', 'Nº do processo', 'Prazo fatal', 'Meta interna', 'Categoria', 'Status', 'Prioridade', 'Responsável', 'Contraparte', 'Vara / Tribunal', 'Descrição', 'Próximo passo', 'Etiquetas'],
+    ['Resposta à acusação', 'João da Silva', '0000000-00.2026.8.13.0000', '30/10/2026', '28/10/2026', 'Prazo judicial', 'Pendente', 'Alta', 'Vinicius', 'MP', '1ª Vara Criminal', 'Elaborar e protocolar a resposta', 'Ler a denúncia', 'réu preso'],
+    ['Atualizar andamento do processo', 'Maria Souza', '1111111-11.2025.8.13.0000', '05/11/2026', '', 'Atualização', 'Pendente', 'Média', 'Rodrigo', '', '', '', '', ''],
+    ['Retornar ligação sobre proposta', 'Empresa XYZ Ltda', '', '02/11/2026', '', 'Contato com cliente', 'Pendente', 'Baixa', 'Laís', '', '', '', '', '']
+  ];
+  await writeSheet('modelo-importacao-tarefas', [['Tarefas', aoa]]);
+  toast('Modelo baixado. Preencha e importe em Tarefas → Importar planilha.', 'success');
 }
 
 /* =========================================================
@@ -2495,6 +2758,9 @@ document.addEventListener('click', e => {
   if((el = q('[data-client-name]'))){ openClientByName(el.dataset.clientName); return; }
   if((el = q('[data-new-client]'))){ openClient(null); return; }
   if((el = q('[data-import-clients]'))){ $('#clients-file').click(); return; }
+  if((el = q('[data-import-tasks]'))){ $('#tasks-file').click(); return; }
+  if((el = q('[data-export-tasks]'))){ exportTasksSheet(); return; }
+  if((el = q('[data-task-template]'))){ downloadTaskTemplate(); return; }
   if((el = q('[data-snap-recover]'))){ recoverFromSnapshot(el.dataset.snapRecover); return; }
   if((el = q('[data-snap-download]'))){ downloadSnapshot(el.dataset.snapDownload); return; }
   if((el = q('[data-open-task]'))){ openTask(el.dataset.openTask); return; }
@@ -2538,6 +2804,7 @@ document.addEventListener('change', e => {
   else if(el.dataset && el.dataset.setting){ saveSetting(el); }
   else if(el.id === 'import-file'){ importData(el.files[0]); el.value = ''; }
   else if(el.id === 'clients-file'){ importClientsFile(el.files[0]); el.value = ''; }
+  else if(el.id === 'tasks-file'){ importTasksFile(el.files[0]); el.value = ''; }
   else if(el.dataset && el.dataset.settingList){ saveSettingList(el); }
 });
 /* Arrastar e soltar no quadro */
