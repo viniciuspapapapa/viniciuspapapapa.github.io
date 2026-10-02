@@ -582,10 +582,11 @@ function csv(rows) { const e = v => { const s = String(v ?? ''); return /[;"\n]/
 const n2 = v => (Number(v) || 0).toFixed(2).replace('.', ',');
 function printDoc(title, html) {
   const w = window.open('', '_blank'); if (!w) return toast('Permita pop-ups para imprimir.', 'err');
-  w.document.write(`<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><title>${esc(title)}</title><style>body{font-family:Georgia,'Times New Roman',serif;color:#111;max-width:760px;margin:40px auto;padding:0 24px;line-height:1.6;font-size:14px}h1{font-size:20px;text-align:center;letter-spacing:.06em;text-transform:uppercase;margin-bottom:24px}table{width:100%;border-collapse:collapse;font-family:Arial,sans-serif;font-size:12px;margin-top:12px}th,td{border-bottom:1px solid #ccc;padding:6px;text-align:left}td.r,th.r{text-align:right}.head{font-family:Arial,sans-serif;font-size:12px;color:#444;border-bottom:2px solid #1D4E89;padding-bottom:10px;margin-bottom:24px}.sig{margin-top:64px;text-align:center}.sig div{border-top:1px solid #333;width:320px;margin:0 auto;padding-top:6px}.small{font-size:11px;color:#555;font-family:Arial,sans-serif}@media print{body{margin:0 auto}}</style></head><body>${html}<script>setTimeout(()=>print(),300)<\/script></body></html>`);
+  w.document.write(`<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><title>${esc(title)}</title><style>body{font-family:Calibri,'Segoe UI',Arial,sans-serif;color:#1E1E1E;max-width:760px;margin:40px auto;padding:0 24px;line-height:1.6;font-size:14px}h1{font-size:20px;text-align:center;letter-spacing:.06em;text-transform:uppercase;margin-bottom:24px}table{width:100%;border-collapse:collapse;font-family:Arial,sans-serif;font-size:12px;margin-top:12px}th,td{border-bottom:1px solid #ccc;padding:6px;text-align:left}td.r,th.r{text-align:right}.head{font-family:Arial,sans-serif;font-size:12px;color:#444;border-bottom:3px solid #F5EF90;padding-bottom:12px;margin-bottom:28px}.sig{margin-top:64px;text-align:center}.sig div{border-top:1px solid #333;width:320px;margin:0 auto;padding-top:6px}.small{font-size:11px;color:#555;font-family:Arial,sans-serif}@media print{body{margin:0 auto}}</style></head><body>${html}<script>setTimeout(()=>print(),300)<\/script></body></html>`);
   w.document.close();
 }
-const cabecalho = ent => ent ? `<div class="head"><b>${esc(ent.razao)}</b>${ent.cnpj ? ` · CNPJ ${esc(fmtDoc(ent.cnpj))}` : ''}${ent.endereco ? `<br>${esc(ent.endereco)}` : ''}${ent.email ? ` · ${esc(ent.email)}` : ''}${ent.telefone ? ` · ${esc(ent.telefone)}` : ''}</div>` : '';
+const LOGO_URL = () => new URL('img/tpc-logo.png', location.href).href;
+const cabecalho = ent => ent ? `<div class="head"><img src="${LOGO_URL()}" alt="TPC Advogados" style="height:34px;display:block;margin-bottom:10px"><b>${esc(ent.razao)}</b>${ent.cnpj ? ` · CNPJ ${esc(fmtDoc(ent.cnpj))}` : ''}${ent.endereco ? `<br>${esc(ent.endereco)}` : ''}${ent.email ? ` · ${esc(ent.email)}` : ''}${ent.telefone ? ` · ${esc(ent.telefone)}` : ''}</div>` : '';
 function loadScript(src) { return new Promise((res, rej) => { if ($(`script[src="${src}"]`)) return res(); const s = document.createElement('script'); s.src = src; s.onload = res; s.onerror = () => rej(new Error('Falha ao carregar ' + src)); document.head.append(s); }); }
 const cssVar = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
 const optList = (arr, sel, empty) => (empty != null ? `<option value="">${esc(empty)}</option>` : '') + arr.map(([v, l]) => `<option value="${esc(v)}" ${String(v) === String(sel ?? '') ? 'selected' : ''}>${esc(l)}</option>`).join('');
@@ -594,7 +595,17 @@ const optList = (arr, sel, empty) => (empty != null ? `<option value="">${esc(em
 function route() {
   const h = location.hash.replace(/^#\/?/, ''); const [r, p] = h.split('/');
   ui.route = VIEWS[r] ? r : 'painel'; ui.param = p ? decodeURIComponent(p) : null; ui.sel.clear();
-  render(); window.scrollTo(0, 0);
+  const go = () => { render(); window.scrollTo(0, 0); countUp(); $('#main').focus({ preventScroll: true }); };
+  if (document.startViewTransition && !REDUZ()) document.startViewTransition(go); else go();
+}
+const REDUZ = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
+function countUp() {
+  if (REDUZ()) return;
+  $$('[data-count]').forEach(el => {
+    const to = +el.dataset.count, f = v => el.dataset.fmt === 'pct' ? pct(v) : brl(v), t0 = performance.now(), d = 700;
+    const step = n => { const k = Math.min(1, (n - t0) / d); el.textContent = f(to * (1 - Math.pow(1 - k, 3))); if (k < 1) requestAnimationFrame(step); else el.textContent = f(to); };
+    requestAnimationFrame(step);
+  });
 }
 function render() {
   ui.charts.forEach(c => c.destroy()); ui.charts = [];
@@ -615,8 +626,17 @@ function updateNav() {
   $('#n-fila').textContent = ui.fila.length || '';
   $('#btn-lock').hidden = !cryptoKey;
 }
-const pageH = (t, sub, actions = '') => `<div class="page-h"><div><h1>${t}</h1>${sub ? `<p class="sub">${sub}</p>` : ''}</div><div class="actions">${actions}</div></div>`;
-const emptyBox = (t, d, a = '') => `<div class="empty"><h3>${t}</h3><p>${d}</p>${a ? `<div class="actions" style="justify-content:center;margin-top:14px">${a}</div>` : ''}</div>`;
+const EYEBROW = { painel: 'Visão geral', contratos: 'Carteira', contrato: 'Contrato', recebiveis: 'Régua de cobrança', prognostico: 'Planejamento', comissoes: 'Captação', verificacao: 'Conformidade', importar: 'Dados', cadastros: 'Administração', config: 'Administração' };
+const pageH = (t, sub, actions = '') => `<div class="page-h"><div><div class="eyebrow">${EYEBROW[ui.route] || 'Honorários'}</div><h1>${t}</h1>${sub ? `<p class="sub">${sub}</p>` : ''}</div><div class="actions">${actions}</div></div>`;
+const emptyBox = (t, d, a = '') => `<div class="empty"><h3>${t}</h3><p>${d}</p>${a ? `<div class="actions" style="margin-top:18px">${a}</div>` : ''}</div>`;
+function spark(vals) {
+  const w = 160, h = 28, mx = Math.max(1, ...vals), st = w / Math.max(1, vals.length - 1);
+  const pts = vals.map((v, i) => [i * st, h - 3 - (v / mx) * (h - 6)]);
+  const d = pts.map((p, i) => (i ? 'L' : 'M') + p[0].toFixed(1) + ' ' + p[1].toFixed(1)).join(' ');
+  const last = pts[pts.length - 1];
+  return `<svg class="spark" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" aria-hidden="true"><path class="area" d="${d} L${w} ${h} L0 ${h} Z"/><path d="${d}" vector-effect="non-scaling-stroke"/><circle cx="${last[0]}" cy="${last[1]}" r="2.2"/></svg>`;
+}
+const kpi = (o) => `<${o.href ? `a href="${o.href}"` : 'div'} class="kpi ${o.cls || ''}"><div class="lbl">${o.lbl}</div><div class="val"${o.n != null ? ` data-count="${o.n}" data-fmt="${o.fmt || 'brl'}"` : ''}>${o.val}</div>${o.spark || ''}<div class="sub">${o.sub}</div>${o.href ? icon('arrow', 'i-sm go') : ''}</${o.href ? 'a' : 'div'}>`;
 
 /* =========================================================
    VIEWS
@@ -647,47 +667,118 @@ VIEWS.painel = {
     const maxA = Math.max(1, ...Object.values(porArea)), maxAg = Math.max(1, ...aging);
     const pend = db.contratos.filter(c => c.status === 'ativo').map(c => ({ c, v: verificar(c).filter(x => x.nivel === 'erro') })).filter(x => x.v.length);
     const semBackup = !db.settings.ultimoBackup || diffDays(db.settings.ultimoBackup.slice(0, 10), t) > 7;
-    return pageH('Painel financeiro', `${dataExtenso(t)} · ${db.contratos.filter(c => c.status === 'ativo').length} contratos ativos`, `<button class="btn" data-act="ct-new">${icon('plus')} Novo contrato</button>${fila.length ? `<button class="btn primary" data-act="fila-send">${icon('send')} Enviar cobranças do dia (${fila.length})</button>` : ''}`) +
+    const hist = prognostico(1, 5).meses;
+    return pageH('Painel financeiro', `${dataExtenso(t)} · ${db.contratos.filter(c => c.status === 'ativo').length} contratos ativos`, `<button class="btn" data-act="ct-new">${icon('plus')} Novo contrato</button>${fila.length ? `<button class="btn primary" data-act="fila-send">${icon('send')} Enviar cobranças do dia <span class="count alert">${fila.length}</span></button>` : ''}`) +
       (semBackup ? `<div class="notice warn">${icon('alert')}<div>Os dados ficam armazenados neste navegador. ${db.settings.ultimoBackup ? `O último backup foi feito em ${fdate(db.settings.ultimoBackup)}.` : 'Nenhum backup foi feito ainda.'} <a href="#" data-act="backup">Fazer backup agora</a>.</div></div>` : '') +
-      `<div class="kpis">
-        <div class="kpi"><div class="lbl">A receber em ${MESES_EXT[new Date().getMonth()]}</div><div class="val">${brl(aReceberMes)}</div><div class="sub">parcelas a vencer no mês</div></div>
-        <div class="kpi success"><div class="lbl">Recebido no mês</div><div class="val">${brl(recebidoMes)}</div><div class="sub">baixas registradas</div></div>
-        <div class="kpi danger"><div class="lbl">Em atraso</div><div class="val">${brl(atrasado)}</div><div class="sub">${clientesAtr.size} contrato(s) inadimplente(s)</div></div>
-        <div class="kpi"><div class="lbl">Inadimplência (12 meses)</div><div class="val">${pct(inad * 100)}</div><div class="sub">vencidas há mais de 30 dias</div></div>
-        <div class="kpi"><div class="lbl">Carteira a receber</div><div class="val">${brl(carteira)}</div><div class="sub">todas as parcelas em aberto</div></div>
-        <div class="kpi"><div class="lbl">Comissões a pagar</div><div class="val">${brl(comAPagar)}</div><div class="sub">sobre honorários recebidos</div></div>
+      `<div class="kpis k6 stagger">
+        ${kpi({ cls: 'hl', href: '#/recebiveis', lbl: `A receber em ${MESES_EXT[new Date().getMonth()]}`, n: aReceberMes, val: brl(aReceberMes), sub: 'parcelas a vencer no mês' })}
+        ${kpi({ lbl: 'Recebido no mês', n: recebidoMes, val: brl(recebidoMes), spark: spark(hist.map(m => m.recebido)), sub: 'evolução dos últimos 6 meses' })}
+        ${kpi({ cls: atrasado ? 'danger' : '', href: '#/recebiveis', lbl: 'Em atraso', n: atrasado, val: brl(atrasado), sub: `${clientesAtr.size} contrato(s) inadimplente(s)` })}
+        ${kpi({ lbl: 'Inadimplência · 12 meses', n: inad * 100, fmt: 'pct', val: pct(inad * 100), sub: 'vencidas há mais de 30 dias' })}
+        ${kpi({ href: '#/prognostico', lbl: 'Carteira a receber', n: carteira, val: brl(carteira), sub: 'todas as parcelas em aberto' })}
+        ${kpi({ href: '#/comissoes', lbl: 'Comissões a pagar', n: comAPagar, val: brl(comAPagar), sub: 'sobre honorários recebidos' })}
       </div>
       <div class="grid g-2-1">
-        <div class="card"><div class="card-h"><div><h2>Prognóstico de receitas</h2><p class="hint">Recebido nos últimos meses e previsão ajustada pela inadimplência histórica</p></div><a class="btn sm" href="#/prognostico">Detalhar</a></div><div class="chart-box"><canvas id="ch-prog"></canvas></div></div>
-        <div class="card"><div class="card-h"><h2>Atraso por faixa</h2></div><div class="bars">${['1 a 30 dias', '31 a 60 dias', '61 a 90 dias', 'Acima de 90 dias'].map((l, i) => `<div class="bar-row"><span class="lbl">${l}</span><div class="bar"><span style="width:${aging[i] / maxAg * 100}%;background:var(--${i < 1 ? 'warning' : 'danger'})"></span></div><span class="num">${brl(aging[i])}</span></div>`).join('')}</div>
-          <div class="card-h" style="margin-top:22px"><h2>Carteira por área</h2></div><div class="bars">${Object.entries(porArea).sort((a, b) => b[1] - a[1]).map(([a, v]) => `<div class="bar-row"><span class="lbl" title="${esc(a)}">${esc(a)}</span><div class="bar"><span style="width:${v / maxA * 100}%"></span></div><span class="num">${brl(v)}</span></div>`).join('') || '<p class="hint">Sem parcelas em aberto.</p>'}</div></div>
+        <div class="card"><div class="card-h"><div><h2>Prognóstico de receitas</h2><p class="hint">Clique em um mês para ver as parcelas que o compõem</p></div>
+          <div class="seg" role="group" aria-label="Horizonte">${[6, 12, 18].map(h => `<button data-act="painel-h" data-h="${h}" class="${(ui.f.painelH || 6) === h ? 'on' : ''}" aria-pressed="${(ui.f.painelH || 6) === h}">${h} meses</button>`).join('')}</div></div>
+          <div class="chart-legend" id="ch-prog-lg"></div><div class="chart-box"><canvas id="ch-prog" role="img" aria-label="Gráfico de receitas recebidas e previstas por mês"></canvas></div></div>
+        <div class="card"><div class="card-h"><div><h2>Atraso por faixa</h2><p class="hint">Valor original das parcelas vencidas</p></div></div><div class="bars">${['1 a 30 dias', '31 a 60 dias', '61 a 90 dias', 'Acima de 90 dias'].map((l, i) => `<button class="bar-row" data-act="ir-atraso"><span class="lbl">${l}</span><div class="bar"><span style="width:${aging[i] / maxAg * 100}%;background:${i ? 'var(--danger)' : 'var(--warning)'};opacity:${.55 + i * .15}"></span></div><span class="num">${brl(aging[i])}</span></button>`).join('')}</div>
+          <div class="card-h" style="margin-top:26px"><div><h2>Carteira por área</h2><p class="hint">Clique para filtrar os contratos</p></div></div><div class="bars">${Object.entries(porArea).sort((a, b) => b[1] - a[1]).map(([a, v]) => `<button class="bar-row" data-act="area-filtro" data-a="${esc(a)}"><span class="lbl" title="${esc(a)}">${esc(a)}</span><div class="bar"><span style="width:${v / maxA * 100}%"></span></div><span class="num">${brl(v)}</span></button>`).join('') || '<p class="hint">Sem parcelas em aberto.</p>'}</div></div>
       </div>
-      <div class="grid g-2-1" style="margin-top:16px">
-        <div class="card"><div class="card-h"><h2>Próximos vencimentos</h2><a class="btn sm" href="#/recebiveis">Ver cobrança</a></div>${prox.length ? tabelaParcelas(prox, { compacta: true }) : '<p class="hint">Nenhum vencimento nos próximos 10 dias.</p>'}</div>
-        <div class="card"><div class="card-h"><h2>Maiores pendências</h2></div>${devedores.length ? `<div class="table-wrap"><table class="tbl"><tbody>${devedores.map(({ c, r }) => `<tr class="click" data-go="contrato/${c.id}"><td><div class="cell-main">${esc(c.cliente.nome)}</div><div class="cell-sub">${r.nAtr} parcela(s) · maior atraso ${r.maxAtr} dias</div></td><td class="right num t-danger">${brl(r.atrasado)}</td></tr>`).join('')}</tbody></table></div>` : '<p class="hint">Nenhum contrato em atraso.</p>'}
+      <div class="grid g-2-1" style="margin-top:18px">
+        <div class="card"><div class="card-h"><div><h2>Próximos vencimentos</h2><p class="hint">Próximos 10 dias</p></div><a class="btn sm" href="#/recebiveis">Abrir cobrança ${icon('arrow', 'i-sm')}</a></div>${prox.length ? tabelaParcelas(prox, { compacta: true }) : '<p class="hint">Nenhum vencimento nos próximos 10 dias.</p>'}</div>
+        <div class="card"><div class="card-h"><div><h2>Maiores pendências</h2><p class="hint">Contratos com parcelas vencidas</p></div></div>${devedores.length ? `<div class="table-wrap"><table class="tbl"><tbody>${devedores.map(({ c, r }) => `<tr class="click" data-go="contrato/${c.id}"><td><div class="cell-main">${esc(c.cliente.nome)}</div><div class="cell-sub">${r.nAtr} parcela(s) · maior atraso ${r.maxAtr} dias</div></td><td class="right num t-danger">${brl(r.atrasado)}</td></tr>`).join('')}</tbody></table></div>` : '<p class="hint">Nenhum contrato em atraso.</p>'}
           ${pend.length ? `<div class="notice danger" style="margin:16px 0 0">${icon('shield')}<div>${pend.length} contrato(s) ativo(s) com pendência crítica de cadastro ou cobrança. <a href="#/verificacao">Ver verificação</a></div></div>` : ''}</div>
       </div>`;
   },
-  mount() { if (db.contratos.length) chartProg('ch-prog', prognostico(7, 5)); }
+  mount() { if (db.contratos.length) { const h = ui.f.painelH || 6; chartProg('ch-prog', prognostico(h + 1, Math.max(3, 12 - h - 1))); } }
 };
 function chartProg(id, prog) {
   const el = document.getElementById(id); if (!el || !window.Chart) return;
-  const base = prog.base;
-  ui.charts.push(new Chart(el, {
-    data: {
-      labels: prog.meses.map(m => ymLabel(m.k)),
-      datasets: [
-        { type: 'bar', label: 'Recebido', data: prog.meses.map(m => round2(m.recebido)), backgroundColor: cssVar('--chart-2'), stack: 's', borderRadius: 4 },
-        { type: 'bar', label: 'Previsto a receber (ajustado)', data: prog.meses.map(m => m.k >= base ? round2(m.aberto * (1 - prog.inad) + m.exito) : 0), backgroundColor: cssVar('--chart-1'), stack: 's', borderRadius: 4 },
-        { type: 'line', label: 'Contratado no mês', data: prog.meses.map(m => round2(m.contratual)), borderColor: cssVar('--chart-3'), backgroundColor: cssVar('--chart-3'), stack: 'l', tension: .25, pointRadius: 3, borderWidth: 2 }
-      ]
-    },
+  const base = prog.base, idxBase = prog.meses.findIndex(m => m.k === base);
+  Chart.defaults.font.family = "'Instrument Sans', 'Segoe UI', sans-serif";
+  Chart.defaults.font.size = 12;
+  const banda = { id: 'banda', beforeDatasetsDraw(ch) { if (idxBase < 0) return; const x = ch.scales.x, a = ch.chartArea, w = x.width / ch.data.labels.length; const ctx = ch.ctx; ctx.save(); ctx.fillStyle = cssVar('--c-band'); ctx.fillRect(x.getPixelForValue(idxBase) - w / 2, a.top, w, a.bottom - a.top); ctx.restore(); } };
+  const series = [
+    { type: 'bar', label: 'Recebido', data: prog.meses.map(m => round2(m.recebido)), backgroundColor: cssVar('--c-recebido'), stack: 's', borderRadius: 0, barPercentage: .62, categoryPercentage: .9 },
+    { type: 'bar', label: 'A receber (ajustado)', data: prog.meses.map(m => m.k >= base ? round2(m.aberto * (1 - prog.inad) + m.exito) : 0), backgroundColor: cssVar('--c-previsto'), stack: 's', borderRadius: 0, barPercentage: .62, categoryPercentage: .9 },
+    { type: 'line', label: 'Contratado no mês', data: prog.meses.map(m => round2(m.contratual)), borderColor: cssVar('--c-linha'), backgroundColor: cssVar('--c-linha'), stack: 'l', tension: .3, pointRadius: 2.5, pointHoverRadius: 5, borderWidth: 1.6, borderDash: [5, 4] }
+  ];
+  const ch = new Chart(el, {
+    data: { labels: prog.meses.map(m => ymLabel(m.k)), datasets: series }, plugins: [banda],
     options: {
       responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false },
-      plugins: { legend: { position: 'bottom', labels: { color: cssVar('--text-2'), boxWidth: 12 } }, tooltip: { callbacks: { label: c => `${c.dataset.label}: ${brl(c.parsed.y)}` } } },
-      scales: { x: { stacked: true, grid: { display: false }, ticks: { color: cssVar('--muted') } }, y: { stacked: true, ticks: { color: cssVar('--muted'), callback: v => 'R$ ' + (v >= 1000 ? (v / 1000).toLocaleString('pt-BR') + ' mil' : v) }, grid: { color: cssVar('--border') } } }
+      animation: REDUZ() ? false : { duration: 650, easing: 'easeOutCubic' },
+      onHover: (e, els) => { e.native.target.style.cursor = els.length ? 'pointer' : 'default'; },
+      onClick: (e, els) => { if (els.length) detalheMes(prog.meses[els[0].index].k); },
+      plugins: {
+        legend: { display: false },
+        tooltip: { backgroundColor: '#1E1E1E', titleColor: '#F5EF90', bodyColor: '#EDECEC', footerColor: '#B9B5B1', padding: 12, cornerRadius: 3, boxPadding: 4, titleFont: { family: 'Jost', size: 13, weight: '500' },
+          callbacks: { title: it => { const k = prog.meses[it[0].dataIndex].k; return ymLabel(k) + (k === base ? ' · mês atual' : k < base ? ' · realizado' : ' · previsão'); }, label: c => ` ${c.dataset.label}: ${brl(c.parsed.y)}`, footer: () => 'Clique para detalhar' } }
+      },
+      scales: {
+        x: { stacked: true, grid: { display: false }, border: { color: cssVar('--border-strong') }, ticks: { color: cssVar('--muted'), maxRotation: 0, autoSkip: true, autoSkipPadding: 10 } },
+        y: { stacked: true, border: { display: false }, ticks: { color: cssVar('--muted'), maxTicksLimit: 6, callback: v => v >= 1e6 ? 'R$ ' + (v / 1e6).toLocaleString('pt-BR') + ' mi' : v >= 1000 ? 'R$ ' + (v / 1000).toLocaleString('pt-BR') + ' mil' : 'R$ ' + v }, grid: { color: cssVar('--c-grid'), drawTicks: false } }
+      }
     }
-  }));
+  });
+  ui.charts.push(ch);
+  const lg = document.getElementById(id + '-lg');
+  if (lg) {
+    lg.innerHTML = series.map((d, i) => `<button class="lg" data-i="${i}" aria-pressed="true"><i style="background:${d.type === 'line' ? 'transparent' : d.backgroundColor};${d.type === 'line' ? `border-top:2px dashed ${d.borderColor};height:0` : ''}"></i>${d.label}</button>`).join('');
+    lg.onclick = e => { const b = e.target.closest('.lg'); if (!b) return; const i = +b.dataset.i, vis = ch.isDatasetVisible(i); ch.setDatasetVisibility(i, !vis); b.classList.toggle('off', vis); b.setAttribute('aria-pressed', String(!vis)); ch.update(); };
+  }
+}
+function detalheMes(k) {
+  const t = today();
+  const doMes = db.parcelas.filter(p => ctById(p.contratoId) && valida(p) && ((p.status === 'paga' && ym(p.pagoEm || p.venc) === k) || (p.status !== 'paga' && ym(p.venc) === k))).sort((a, b) => a.venc.localeCompare(b.venc));
+  const rec = doMes.filter(p => p.status === 'paga').reduce((s, p) => s + pago(p), 0), ab = doMes.filter(p => p.status !== 'paga').reduce((s, p) => s + p.valor, 0);
+  const [y, m] = k.split('-');
+  openModal({
+    title: `${MESES_EXT[+m - 1][0].toUpperCase() + MESES_EXT[+m - 1].slice(1)} de ${y}`, wide: true,
+    body: `<div class="kpis" style="box-shadow:none">${kpi({ lbl: 'Recebido', val: brl(rec), sub: `${doMes.filter(p => p.status === 'paga').length} parcela(s)` })}${kpi({ lbl: k < ym(t) ? 'Não pago' : 'Em aberto', cls: k < ym(t) && ab ? 'danger' : '', val: brl(ab), sub: `${doMes.filter(p => p.status !== 'paga').length} parcela(s)` })}${kpi({ lbl: 'Total do mês', val: brl(rec + ab), sub: 'recebido e em aberto' })}</div>
+      ${doMes.length ? tabelaParcelas(doMes, {}) : '<p class="hint">Nenhuma parcela neste mês.</p>'}`,
+    foot: `<button class="btn ghost" data-act="modal-close">Fechar</button>`
+  });
+}
+
+/* ---------- paleta de comandos (Ctrl K) ---------- */
+function openPalette() {
+  if ($('.palette') || !db) return;
+  const el = document.createElement('div'); el.className = 'palette';
+  el.innerHTML = `<div class="palette-box" role="dialog" aria-modal="true" aria-label="Buscar"><input type="text" placeholder="Buscar cliente, nº do contrato ou ação" aria-label="Buscar" autocomplete="off"><div class="palette-list" role="listbox"></div></div>`;
+  document.body.append(el);
+  const inp = $('input', el), list = $('.palette-list', el); let sel = 0, items = [];
+  const nav = [['painel', 'Painel', 'home'], ['contratos', 'Contratos', 'file'], ['recebiveis', 'Cobrança', 'cash'], ['prognostico', 'Prognóstico', 'chart'], ['comissoes', 'Comissões', 'percent'], ['verificacao', 'Verificação', 'shield'], ['importar', 'Importar', 'upload'], ['cadastros', 'Cadastros', 'building'], ['config', 'Configurações', 'gear']]
+    .map(([r, l, i]) => ({ g: 'Ir para', l, i, run: () => location.hash = '#/' + r }));
+  const acoes = [
+    { g: 'Ações', l: 'Novo contrato', i: 'plus', run: () => formContrato() },
+    { g: 'Ações', l: 'Enviar cobranças do dia', i: 'send', run: () => enviarLote(filaHoje()) },
+    { g: 'Ações', l: 'Importar planilha da carteira', i: 'upload', run: () => pick('planilha') },
+    { g: 'Ações', l: 'Importar arquivos de contratos', i: 'file', run: () => pick('contratos') },
+    { g: 'Ações', l: 'Fazer backup', i: 'download', run: () => gerarBackup() },
+    { g: 'Ações', l: 'Alternar tema claro ou escuro', i: 'sun', run: () => ACT.theme() }
+  ];
+  const draw = () => {
+    const q = norm(inp.value);
+    const cts = db.contratos.filter(c => q && norm([c.cliente.nome, c.numero, c.cliente.doc, c.area].join(' ')).includes(q)).slice(0, 8)
+      .map(c => ({ g: 'Contratos', l: c.cliente.nome, s: `${c.numero || ''} · ${brl(resumoCt(c).aberto)} em aberto`, i: 'file', run: () => location.hash = '#/contrato/' + c.id }));
+    items = [...cts, ...[...acoes, ...nav].filter(a => !q || norm(a.l).includes(q))];
+    sel = Math.max(0, Math.min(sel, items.length - 1));
+    let g = '';
+    list.innerHTML = items.map((it, i) => `${it.g !== g ? `<div class="palette-group">${(g = it.g)}</div>` : ''}<button class="palette-item ${i === sel ? 'sel' : ''}" data-i="${i}" role="option" aria-selected="${i === sel}">${icon(it.i || 'arrow', 'i-sm')}<span>${esc(it.l)}</span>${it.s ? `<small>${esc(it.s)}</small>` : ''}</button>`).join('') || '<p class="hint" style="padding:14px">Nada encontrado.</p>';
+    list.querySelector('.sel')?.scrollIntoView({ block: 'nearest' });
+  };
+  const close = () => el.remove(), run = i => { const it = items[i]; close(); it?.run(); };
+  inp.addEventListener('input', () => { sel = 0; draw(); });
+  inp.addEventListener('keydown', e => {
+    if (e.key === 'ArrowDown') { sel = Math.min(items.length - 1, sel + 1); draw(); e.preventDefault(); }
+    else if (e.key === 'ArrowUp') { sel = Math.max(0, sel - 1); draw(); e.preventDefault(); }
+    else if (e.key === 'Enter') { e.preventDefault(); run(sel); }
+    else if (e.key === 'Escape') { e.stopPropagation(); close(); }
+  });
+  el.addEventListener('click', e => { e.stopPropagation(); const b = e.target.closest('[data-i]'); if (b) run(+b.dataset.i); else if (e.target === el) close(); });
+  draw(); inp.focus();
 }
 
 /* ---------- tabela de parcelas reutilizável ---------- */
@@ -698,8 +789,8 @@ function tabelaParcelas(ps, o = {}) {
     return `<tr>
       ${o.sel ? `<td><input type="checkbox" data-sel="${p.id}" ${ui.sel.has(p.id) ? 'checked' : ''} aria-label="Selecionar"></td>` : ''}
       <td class="num">${fdate(p.venc)}</td>
-      ${o.semCliente ? '' : `<td><a href="#/contrato/${c.id}" class="cell-main" style="color:inherit">${esc(c.cliente.nome)}</a><div class="cell-sub">${esc(c.numero || '')}${c.area && !o.compacta ? ' · ' + esc(c.area) : ''}</div></td>`}
-      <td>${esc(p.desc || 'Parcela')} ${p.n ? `<span class="muted">${p.n}</span>` : ''}</td>
+      ${o.semCliente ? '' : `<td style="min-width:${o.compacta ? 170 : 200}px"><a href="#/contrato/${c.id}" class="cell-main" style="color:inherit">${esc(c.cliente.nome)}</a><div class="cell-sub">${esc(c.numero || '')}${c.area && !o.compacta ? ' · ' + esc(c.area) : ''}</div></td>`}
+      <td style="white-space:nowrap">${esc(p.desc || 'Parcela')} ${p.n ? `<span class="muted">${p.n}</span>` : ''}</td>
       <td class="right num">${brl(p.valor)}${s === 'atrasada' && !o.compacta ? `<div class="cell-sub">${brl(atualizado(p))} atualiz.</div>` : ''}${s === 'paga' && pago(p) !== p.valor ? `<div class="cell-sub">pago ${brl(pago(p))}</div>` : ''}</td>
       <td>${chipP(p)}${s === 'paga' && p.pagoEm ? `<div class="cell-sub">em ${fdate(p.pagoEm)}</div>` : ''}</td>
       ${o.compacta ? '' : `<td class="cell-sub">${ult ? `${fdatetime(ult.em)}<br>${esc(ult.canal)} · ${(p.cobrancas || []).length}x` : '—'}</td>`}
@@ -759,7 +850,7 @@ VIEWS.contrato = {
     const ps = parcelasDe(c.id);
     const hist = ps.flatMap(p => (p.cobrancas || []).map(h => ({ ...h, p }))).sort((a, b) => b.em.localeCompare(a.em));
     const prog = (r.total ? r.recebido / r.total * 100 : 0);
-    return `<p style="margin-bottom:10px"><a href="#/contratos" class="hint">← Contratos</a></p>` +
+    return `<a class="back" href="#/contratos">← Todos os contratos</a>` +
       pageH(esc(cl.nome), `Contrato ${esc(c.numero || 's/n')} · ${esc(c.area || 'área não definida')} · <span class="chip ${STATUS_CT[c.status]?.[1]}">${STATUS_CT[c.status]?.[0]}</span>${c.pausarCobranca ? ' <span class="chip warn">cobrança automática pausada</span>' : ''}`,
         `${c.arquivoId ? `<button class="btn" data-act="ver-arquivo" data-id="${c.id}">${icon('file')} Ver contrato</button>` : ''}<button class="btn" data-act="extrato" data-id="${c.id}">${icon('printer')} Extrato</button>${r.atrasado ? `<button class="btn" data-act="reneg" data-id="${c.id}">${icon('repeat')} Renegociar</button>` : ''}<button class="btn primary" data-act="ct-edit" data-id="${c.id}">${icon('edit')} Editar</button>`) +
       `<div class="kpis">
@@ -817,7 +908,7 @@ VIEWS.recebiveis = {
     return pageH('Cobrança', 'Régua de cobrança, envio com um clique e baixa de pagamentos', `<button class="btn" data-act="exp-parcelas">${icon('download')} Exportar</button>`) +
       `<div class="card" style="margin-bottom:16px"><div class="card-h"><div><h2>Fila de cobrança de hoje</h2><p class="hint">Lembretes ${db.settings.diasLembrete} dia(s) antes do vencimento, aviso no dia e reiteração de atrasos a cada ${db.settings.intervaloReenvio} dias. Canal: ${esc(MODOS_EMAIL[db.settings.emailMode])}.</p></div>
         ${fila.length ? `<button class="btn primary" data-act="fila-send">${icon('send')} Enviar ${fila.length} cobrança(s)</button>` : '<span class="chip ok">Nada pendente hoje</span>'}</div>
-        ${fila.length ? `<div class="bars">${['lembrete', 'vencimento', 'atraso'].map(k => { const n = fila.filter(x => x.tipo === k); return n.length ? `<div class="bar-row"><span class="lbl">${esc(db.settings.templates[k].nome)}</span><span class="hint">${n.length} parcela(s)</span><span class="num">${brl(n.reduce((s, x) => s + x.p.valor, 0))}</span></div>` : ''; }).join('')}</div>` : ''}</div>
+        ${fila.length ? `<div class="bars">${['lembrete', 'vencimento', 'atraso'].map(k => { const n = fila.filter(x => x.tipo === k); return n.length ? `<div class="bar-row wide"><span class="lbl">${esc(db.settings.templates[k].nome)}</span><span class="hint">${n.length} parcela(s)</span><span class="num">${brl(n.reduce((s, x) => s + x.p.valor, 0))}</span></div>` : ''; }).join('')}</div>` : ''}</div>
       <div class="card"><div class="tabs">${Object.entries(abas).map(([k, [l, arr]]) => `<button class="tab ${f.aba === k ? 'active' : ''}" data-act="aba" data-k="${k}">${l}<span class="count ${k === 'atrasadas' && arr.length ? 'alert' : ''}">${arr.length || ''}</span></button>`).join('')}</div>
         <div class="toolbar"><div class="search">${icon('search')}<input type="search" placeholder="Filtrar por cliente ou contrato" value="${esc(f.q)}" data-f="rec.q"></div>
           <span class="hint">${ps.length} parcela(s) · <b>${brl(soma)}</b></span>
@@ -847,10 +938,10 @@ VIEWS.prognostico = {
         <div class="kpi danger"><div class="lbl">Atraso a recuperar</div><div class="val">${brl(atrasado)}</div><div class="sub">fora do prognóstico mensal</div></div>
         <div class="kpi"><div class="lbl">Prazo médio de pagamento</div><div class="val">${prazoMedio > 0 ? '+' : ''}${prazoMedio.toFixed(1).replace('.', ',')} dias</div><div class="sub">em relação ao vencimento</div></div>
       </div>
-      <div class="card" style="margin-bottom:16px"><div class="chart-box" style="height:340px"><canvas id="ch-prog2"></canvas></div></div>
+      <div class="card" style="margin-bottom:18px"><div class="card-h"><div><h2>Receitas mês a mês</h2><p class="hint">Faixa destacada indica o mês atual. Clique em um mês para detalhar.</p></div></div><div class="chart-legend" id="ch-prog2-lg"></div><div class="chart-box" style="height:360px"><canvas id="ch-prog2" role="img" aria-label="Gráfico do prognóstico mensal de receitas"></canvas></div></div>
       <div class="grid g-2-1">
         <div class="card"><div class="card-h"><h2>Mês a mês</h2></div><div class="table-wrap"><table class="tbl"><thead><tr><th>Mês</th><th class="right">Contratado</th><th class="right">Recebido</th><th class="right">A receber</th><th class="right">Êxito pond.</th><th class="right">Previsão ajustada</th><th class="right">Comissões</th><th class="right">Líquido</th></tr></thead>
-          <tbody>${prog.meses.map(m => `<tr ${m.k === base ? 'style="background:var(--accent-soft)"' : ''}><td>${ymLabel(m.k)}${m.k < base ? ' <span class="cell-sub">realizado</span>' : ''}</td><td class="right num">${brl(m.contratual)}</td><td class="right num t-success">${brl(m.recebido)}</td><td class="right num">${brl(m.aberto)}</td><td class="right num">${brl(m.exito)}</td><td class="right num"><b>${brl(m.ajustado)}</b></td><td class="right num">${brl(m.comissao)}</td><td class="right num">${brl(m.liquido)}</td></tr>`).join('')}</tbody></table></div></div>
+          <tbody>${prog.meses.map(m => `<tr class="click" data-act="mes" data-k="${m.k}" ${m.k === base ? 'style="background:var(--accent-soft)"' : ''}><td>${ymLabel(m.k)}${m.k < base ? ' <span class="cell-sub">realizado</span>' : ''}</td><td class="right num">${brl(m.contratual)}</td><td class="right num t-success">${brl(m.recebido)}</td><td class="right num">${brl(m.aberto)}</td><td class="right num">${brl(m.exito)}</td><td class="right num"><b>${brl(m.ajustado)}</b></td><td class="right num">${brl(m.comissao)}</td><td class="right num">${brl(m.liquido)}</td></tr>`).join('')}</tbody></table></div></div>
         <div class="card"><div class="card-h"><h2>Previsão por área</h2></div><div class="bars">${Object.entries(areas).sort((a, b) => b[1] - a[1]).map(([a, v]) => `<div class="bar-row"><span class="lbl" title="${esc(a)}">${esc(a)}</span><div class="bar"><span style="width:${v / maxA * 100}%"></span></div><span class="num">${brl(v)}</span></div>`).join('') || '<p class="hint">Sem previsão no período.</p>'}</div>
           <p class="hint" style="margin-top:16px">A previsão ajustada aplica a taxa de inadimplência dos últimos 12 meses sobre as parcelas a vencer. Os honorários de êxito entram no mês estimado, multiplicados pela probabilidade informada no contrato.</p></div>
       </div>`;
@@ -1521,7 +1612,7 @@ function imprimirExtrato(cid) {
 }
 function imprimirDemonstrativo(pid) {
   const pe = pessoa(pid), xs = comissoes().filter(x => x.pessoaId === pid);
-  printDoc('Demonstrativo de comissões', `<h1>Demonstrativo de comissões de captação</h1><p><b>Beneficiário:</b> ${esc(pe.nome)} (${esc(TIPO_PESSOA[pe.tipo] || '')})${pe.pix ? `<br><b>Dados para pagamento:</b> ${esc(pe.pix)}` : ''}<br><b>Emitido em:</b> ${fdate(today())}</p>
+  printDoc('Demonstrativo de comissões', `<div class="head"><img src="${LOGO_URL()}" alt="TPC Advogados" style="height:34px;display:block"></div><h1>Demonstrativo de comissões de captação</h1><p><b>Beneficiário:</b> ${esc(pe.nome)} (${esc(TIPO_PESSOA[pe.tipo] || '')})${pe.pix ? `<br><b>Dados para pagamento:</b> ${esc(pe.pix)}` : ''}<br><b>Emitido em:</b> ${fdate(today())}</p>
     <table><thead><tr><th>Recebido em</th><th>Cliente</th><th>Contrato</th><th>Parcela</th><th class="r">Base</th><th class="r">Comissão</th><th>Situação</th></tr></thead><tbody>${xs.map(x => `<tr><td>${fdate(x.p.pagoEm)}</td><td>${esc(x.c.cliente.nome)}</td><td>${esc(x.c.numero || '')}</td><td>${x.p.n}</td><td class="r">${brl(x.base)}</td><td class="r">${brl(x.valor)}</td><td>${x.pagoInfo ? 'Paga em ' + fdate(x.pagoInfo.em) : 'A pagar'}</td></tr>`).join('')}</tbody></table>
     <p style="margin-top:16px;font-family:Arial"><b>Total gerado:</b> ${brl(xs.reduce((s, x) => s + x.valor, 0))} · <b>Pago:</b> ${brl(xs.filter(x => x.pagoInfo).reduce((s, x) => s + x.valor, 0))} · <b>A pagar:</b> ${brl(xs.filter(x => !x.pagoInfo).reduce((s, x) => s + x.valor, 0))}</p>`);
 }
@@ -1591,9 +1682,14 @@ async function removerSenha() {
    ========================================================= */
 const ACT = {
   'nav-open': () => document.body.classList.add('nav-open'),
+  palette: () => openPalette(),
+  'painel-h': d => { ui.f.painelH = +d.h; rerender(); },
+  'ir-atraso': () => { ui.f.rec.aba = 'atrasadas'; location.hash = '#/recebiveis'; },
+  'area-filtro': d => { Object.assign(ui.f.ct, { area: d.a === 'Sem área' ? '' : d.a, status: '', q: '' }); location.hash = '#/contratos'; },
+  mes: d => detalheMes(d.k),
   'nav-close': () => document.body.classList.remove('nav-open'),
   'modal-close': () => closeModal(),
-  theme: () => { const cur = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark'; document.documentElement.setAttribute('data-theme', cur); try { localStorage.setItem('hon_theme', cur); } catch (e) { } rerender(); },
+  theme: () => { const cur = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark'; const f = () => { document.documentElement.setAttribute('data-theme', cur); rerender(); }; if (document.startViewTransition && !REDUZ()) document.startViewTransition(f); else f(); try { localStorage.setItem('hon_theme', cur); } catch (e) { } },
   'lock-now': () => location.reload(),
   'ct-new': () => formContrato(),
   'ct-edit': d => formContrato(d.id),
@@ -1679,7 +1775,11 @@ document.addEventListener('input', e => {
   const t = e.target;
   if (t.dataset.f && t.type === 'search') { const [g, k] = t.dataset.f.split('.'); ui.f[g][k] = t.value; clearTimeout(qTimer); qTimer = setTimeout(() => { const pos = t.selectionStart; rerender(); const n = $(`[data-f="${g}.${k}"]`); if (n) { n.focus(); n.setSelectionRange(pos, pos); } }, 220); }
 });
-document.addEventListener('keydown', e => { if (e.key === 'Escape' && $('#modal-root').innerHTML) closeModal(); });
+document.addEventListener('keydown', e => {
+  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') { e.preventDefault(); openPalette(); return; }
+  if (e.key === '/' && !/INPUT|TEXTAREA|SELECT/.test(document.activeElement?.tagName || '') && !$('#modal-root').innerHTML) { e.preventDefault(); openPalette(); return; }
+  if (e.key === 'Escape' && $('#modal-root').innerHTML) closeModal();
+});
 
 /* ---------- inicialização ---------- */
 let idleTimer = null;
