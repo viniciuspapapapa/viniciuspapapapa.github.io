@@ -1,0 +1,14 @@
+# Alternativa à configuração pelo painel: `npx wrangler deploy` nesta pasta.
+# Antes, crie o KV (`npx wrangler kv namespace create HON`) e cole o id abaixo,
+# e cadastre os segredos com `npx wrangler secret put ASAAS_API_KEY` (idem APP_TOKEN e WEBHOOK_TOKEN).
+name = "honorarios-asaas"
+main = "worker.js"
+compatibility_date = "2026-09-01"
+
+[vars]
+ASAAS_ENV = "production"
+ALLOWED_ORIGIN = "https://viniciuspapapapa.github.io"
+
+[[kv_namespaces]]
+binding = "HON"
+id = "COLE_AQUI_O_ID_DO_KV"
