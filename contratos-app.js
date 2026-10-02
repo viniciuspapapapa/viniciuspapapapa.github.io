@@ -260,7 +260,7 @@ Atenciosamente,
 {escritorio}`
   }
 };
-const PLACEHOLDERS = ['cliente', 'contato', 'contrato', 'escopo', 'area', 'parcela', 'valor', 'valor_atualizado', 'vencimento', 'dias_atraso', 'multa', 'juros', 'dados_pagamento', 'pix_copia_cola', 'escritorio', 'razao_social', 'cnpj', 'responsavel', 'remetente', 'cargo', 'data_pagamento', 'valor_pago', 'valor_pago_extenso'];
+const PLACEHOLDERS = ['boleto_link', 'linha_digitavel', 'cliente', 'contato', 'contrato', 'escopo', 'area', 'parcela', 'valor', 'valor_atualizado', 'vencimento', 'dias_atraso', 'multa', 'juros', 'dados_pagamento', 'pix_copia_cola', 'escritorio', 'razao_social', 'cnpj', 'responsavel', 'remetente', 'cargo', 'data_pagamento', 'valor_pago', 'valor_pago_extenso'];
 
 function defaultDB() {
   return {
@@ -271,7 +271,9 @@ function defaultDB() {
       emailMode: 'mailto', confirmarEnvio: false,
       emailjs: { serviceId: '', templateId: '', publicKey: '' },
       templates: structuredClone(TEMPLATES_PADRAO),
-      ultimoBackup: null
+      ultimoBackup: null,
+      asaas: { ativo: false, url: '', token: '', entidadeId: '', gerarAoCobrar: true, notificarPeloAsaas: false, nfAoPagar: true, ultimoEvento: '', ultimaSync: '',
+        nf: { servicoId: '', servicoCodigo: '', servicoNome: '', descricao: 'Honorários advocatícios referentes a {escopo}. Contrato {contrato}, parcela {parcela}.', observacoes: '', iss: 0, retemIss: false, pis: 0, cofins: 0, csll: 0, ir: 0, inss: 0, nbsCode: '', taxSituationCode: '', taxClassificationCode: '', operationIndicatorCode: '' } }
     },
     entidades: [], pessoas: [], areas: [...AREAS_PADRAO],
     contratos: [], parcelas: [], comissoesPagas: {}, log: []
@@ -284,6 +286,8 @@ function migrate(d) {
   out.settings.templates = { ...base.settings.templates, ...(d.settings?.templates || {}) };
   ['emailjs'].forEach(k => out.settings[k] = { ...base.settings[k], ...(d.settings?.[k] || {}) });
   if (!MODOS_EMAIL[out.settings.emailMode]) out.settings.emailMode = 'mailto';
+  out.settings.asaas = { ...base.settings.asaas, ...(d.settings?.asaas || {}) };
+  out.settings.asaas.nf = { ...base.settings.asaas.nf, ...(d.settings?.asaas?.nf || {}) };
   delete out.settings.ai; delete out.settings.webhook;
   return out;
 }
@@ -421,6 +425,11 @@ function verificar(c) {
   if (c.status === 'ativo' && c.fim && c.fim < today()) add('aviso', 'Vigência encerrada com contrato ainda ativo');
   if (c.tipo === 'mensal' && c.reajuste && c.reajuste !== 'Nenhum' && c.inicio && diffDays(c.ultimoReajuste || c.inicio, today()) > 365) add('aviso', 'Reajuste anual pendente', `Índice contratado: ${c.reajuste}.`);
   if (!c.arquivoId) add('info', 'Via assinada do contrato não anexada');
+  if (asaasOk()) {
+    const semNf = r.ps.filter(p => p.status === 'paga' && (!p.nf || ['ERRO', 'ERROR', 'CANCELED'].includes(p.nf.status))).length;
+    if (semNf) add('aviso', `${semNf} parcela(s) paga(s) sem nota fiscal emitida`, 'Emita a NFS-e pelo ícone de nota fiscal na parcela.');
+    if (db.settings.asaas.entidadeId && c.entidadeId && c.entidadeId !== db.settings.asaas.entidadeId) add('info', 'Faturamento por CNPJ diferente do vinculado ao Asaas', 'Boletos e notas deste contrato não podem ser emitidos pela conta Asaas configurada.');
+  }
   if (!c.dataAssinatura) add('info', 'Data de assinatura não informada');
   if (r.maxAtr > 60) add('erro', `Parcela em atraso há ${r.maxAtr} dias`, 'Avaliar notificação extrajudicial, renegociação ou suspensão dos serviços, conforme o contrato.');
   else if (r.maxAtr > 30) add('aviso', `Parcela em atraso há ${r.maxAtr} dias`);
@@ -437,6 +446,12 @@ function dadosPagamento(ent, p, c) {
   l.push(`Favorecido: ${ent.razao}`);
   if (ent.cnpj) l.push(`CNPJ: ${fmtDoc(ent.cnpj)}`);
   if (ent.banco) l.push(`Banco: ${ent.banco}${ent.agencia ? `, agência ${ent.agencia}` : ''}${ent.conta ? `, conta ${ent.conta}` : ''}`);
+  const bol = boletoAtivo(p);
+  if (bol) {
+    l.push(`Boleto (${brl(bol.valor)}, vencimento ${fdate(bol.vencimento)}): ${bol.url}`);
+    if (bol.linha) l.push(`Linha digitável: ${bol.linha}`);
+    if (bol.pix) { l.push(`PIX copia e cola: ${bol.pix}`); if (ent.instrucoes) l.push(ent.instrucoes); return l.join('\n'); }
+  }
   if (ent.pixChave) l.push(`Chave PIX (${ent.pixTipo || 'chave'}): ${ent.pixChave}`);
   const code = p ? pixPayload(ent, atualizado(p), `${c.numero || ''}P${p.n || ''}`) : '';
   if (code) l.push(`PIX copia e cola: ${code}`);
@@ -455,7 +470,8 @@ function varsParcela(p, c) {
     dados_pagamento: dadosPagamento(ent, p, c), pix_copia_cola: ent ? pixPayload(ent, atualizado(p), `${c.numero || ''}P${p.n || ''}`) : '',
     escritorio: ent?.fantasia || ent?.razao || '', razao_social: ent?.razao || '', cnpj: fmtDoc(ent?.cnpj),
     responsavel: resp?.nome || '', remetente: db.settings.remetente || '', cargo: db.settings.cargo || '',
-    data_pagamento: fdate(p.pagoEm), valor_pago: brl(pago(p)), valor_pago_extenso: extenso(pago(p))
+    data_pagamento: fdate(p.pagoEm), valor_pago: brl(pago(p)), valor_pago_extenso: extenso(pago(p)),
+    boleto_link: boletoAtivo(p)?.url || '', linha_digitavel: boletoAtivo(p)?.linha || ''
   };
 }
 function tipoCobranca(p) { const s = stP(p); return s === 'paga' ? 'recibo' : s === 'atrasada' ? 'atraso' : s === 'hoje' ? 'vencimento' : 'lembrete'; }
@@ -492,21 +508,28 @@ function registrar(p, tipo, canal, para) {
 }
 async function cobrar(pid, opts = {}) {
   const p = db.parcelas.find(x => x.id === pid); if (!p) return false;
-  const tipo = opts.tipo || tipoCobranca(p), msg = montar(p, tipo);
+  const tipo = opts.tipo || tipoCobranca(p);
+  let msg = montar(p, tipo);
   if (!msg.para) { toast('Cliente sem e-mail cadastrado. Edite o contrato para incluir.', 'err'); return false; }
-  if (!opts.semPreview && (db.settings.confirmarEnvio || opts.preview)) { previewMsg(p, tipo, msg); return false; }
+  const geraBoleto = tipo !== 'recibo' && p.status !== 'paga' && asaasOk() && db.settings.asaas.gerarAoCobrar && !boletoAtivo(p);
+  if (!opts.semPreview && (db.settings.confirmarEnvio || opts.preview)) { previewMsg(p, tipo, msg, geraBoleto); return false; }
+  // O boleto só é registrado no envio efetivo, nunca na pré-visualização.
+  if (geraBoleto) {
+    try { await emitirBoleto(p.id, { silencioso: true }); msg = montar(p, tipo); }
+    catch (e) { toast('Boleto não emitido (' + e.message + '). A cobrança seguirá com PIX e dados bancários.', 'err'); }
+  }
   try { await transporte(msg); } catch (e) { toast('Falha no envio: ' + e.message, 'err'); return false; }
   registrar(p, tipo, db.settings.emailMode, msg.para);
   if (!opts.lote) { toast(DIRETO(db.settings.emailMode) ? `E-mail enviado para ${msg.para}` : 'Mensagem pronta aberta no seu e-mail.', 'ok'); rerender(); }
   return true;
 }
-function previewMsg(p, tipo, msg) {
+function previewMsg(p, tipo, msg, geraBoleto) {
   openModal({
     title: 'Pré-visualização da mensagem', wide: false,
     body: `<div class="field"><label>Modelo</label><select id="pv-tipo">${Object.entries(db.settings.templates).map(([k, t]) => `<option value="${k}" ${k === tipo ? 'selected' : ''}>${esc(t.nome)}</option>`).join('')}</select></div>
       <dl class="dl" style="margin:14px 0"><dt>Para</dt><dd>${esc(msg.para)}</dd>${msg.cc ? `<dt>Cópia</dt><dd>${esc(msg.cc)}</dd>` : ''}<dt>Assunto</dt><dd id="pv-ass">${esc(msg.assunto)}</dd></dl>
       <div class="pre" id="pv-corpo">${esc(msg.corpo)}</div>
-      <p class="hint" style="margin-top:8px">Canal: ${esc(MODOS_EMAIL[db.settings.emailMode])}</p>`,
+      <p class="hint" style="margin-top:8px">Canal: ${esc(MODOS_EMAIL[db.settings.emailMode])}${geraBoleto ? '. Ao enviar, o boleto será registrado no Asaas e seus dados entrarão no texto.' : ''}</p>`,
     foot: `<button class="btn ghost" data-act="modal-close">Fechar</button><button class="btn" data-act="copy-msg">Copiar texto</button><button class="btn primary" data-act="pv-send" data-id="${p.id}">${icon('send')} Enviar agora</button>`,
     onMount: () => {
       $('#pv-tipo').onchange = e => { const m2 = montar(p, e.target.value); $('#pv-ass').textContent = m2.assunto; $('#pv-corpo').textContent = m2.corpo; };
@@ -792,12 +815,13 @@ function tabelaParcelas(ps, o = {}) {
       ${o.semCliente ? '' : `<td style="min-width:${o.compacta ? 170 : 200}px"><a href="#/contrato/${c.id}" class="cell-main" style="color:inherit">${esc(c.cliente.nome)}</a><div class="cell-sub">${esc(c.numero || '')}${c.area && !o.compacta ? ' · ' + esc(c.area) : ''}</div></td>`}
       <td style="white-space:nowrap">${esc(p.desc || 'Parcela')} ${p.n ? `<span class="muted">${p.n}</span>` : ''}</td>
       <td class="right num">${brl(p.valor)}${s === 'atrasada' && !o.compacta ? `<div class="cell-sub">${brl(atualizado(p))} atualiz.</div>` : ''}${s === 'paga' && pago(p) !== p.valor ? `<div class="cell-sub">pago ${brl(pago(p))}</div>` : ''}</td>
-      <td>${chipP(p)}${s === 'paga' && p.pagoEm ? `<div class="cell-sub">em ${fdate(p.pagoEm)}</div>` : ''}</td>
+      <td>${chipP(p)}${s === 'paga' && p.pagoEm ? `<div class="cell-sub">em ${fdate(p.pagoEm)}</div>` : ''}${boletoAtivo(p) && s !== 'paga' ? `<div class="cell-sub">boleto emitido</div>` : ''}${p.nf ? `<div class="cell-sub">${p.nf.numero ? 'NF nº ' + esc(p.nf.numero) : 'NF ' + esc(NF_ST[p.nf.status] || p.nf.status || '').toLowerCase()}</div>` : ''}</td>
       ${o.compacta ? '' : `<td class="cell-sub">${ult ? `${fdatetime(ult.em)}<br>${esc(ult.canal)} · ${(p.cobrancas || []).length}x` : '—'}</td>`}
       <td class="acts">
-        ${s === 'paga' ? `<button class="icon-btn" title="Imprimir recibo" data-act="recibo" data-id="${p.id}">${icon('printer')}</button><button class="icon-btn" title="Enviar recibo por e-mail" data-act="cobrar" data-tipo="recibo" data-id="${p.id}">${icon('mail')}</button>${o.compacta ? '' : `<button class="icon-btn" title="Desfazer baixa" data-act="estornar" data-id="${p.id}">${icon('undo')}</button>`}`
+        ${s === 'paga' ? `${asaasOk() ? `<button class="icon-btn" title="Nota fiscal" data-act="nota" data-id="${p.id}">${icon('receipt')}</button>` : ''}<button class="icon-btn" title="Imprimir recibo" data-act="recibo" data-id="${p.id}">${icon('printer')}</button><button class="icon-btn" title="Enviar recibo por e-mail" data-act="cobrar" data-tipo="recibo" data-id="${p.id}">${icon('mail')}</button>${o.compacta ? '' : `<button class="icon-btn" title="Desfazer baixa" data-act="estornar" data-id="${p.id}">${icon('undo')}</button>`}`
         : valida(p) ? `<button class="btn sm primary" title="Enviar e-mail de cobrança com um clique" data-act="cobrar" data-id="${p.id}">${icon('send', 'i-sm')} ${lbl}</button>
           <button class="icon-btn" title="Pré-visualizar mensagem" data-act="preview" data-id="${p.id}">${icon('eye')}</button>
+          ${asaasOk() ? `<button class="icon-btn" title="Boleto bancário" data-act="boleto" data-id="${p.id}">${icon('barcode')}</button>` : ''}
           ${o.compacta ? '' : `<button class="icon-btn" title="WhatsApp" data-act="whats" data-id="${p.id}">${icon('chat')}</button><button class="icon-btn" title="QR Code PIX" data-act="pix" data-id="${p.id}">${icon('qr')}</button>`}
           <button class="icon-btn" title="Registrar pagamento" data-act="pagar" data-id="${p.id}">${icon('check')}</button>` : ''}
         ${o.editar ? `<button class="icon-btn" title="Editar parcela" data-act="parc-edit" data-id="${p.id}">${icon('edit')}</button>` : ''}
@@ -912,7 +936,7 @@ VIEWS.recebiveis = {
       <div class="card"><div class="tabs">${Object.entries(abas).map(([k, [l, arr]]) => `<button class="tab ${f.aba === k ? 'active' : ''}" data-act="aba" data-k="${k}">${l}<span class="count ${k === 'atrasadas' && arr.length ? 'alert' : ''}">${arr.length || ''}</span></button>`).join('')}</div>
         <div class="toolbar"><div class="search">${icon('search')}<input type="search" placeholder="Filtrar por cliente ou contrato" value="${esc(f.q)}" data-f="rec.q"></div>
           <span class="hint">${ps.length} parcela(s) · <b>${brl(soma)}</b></span>
-          ${f.aba !== 'pagas' ? `<button class="btn sm" data-act="lote-sel" ${ui.sel.size ? '' : 'disabled'} id="btn-lote">${icon('send', 'i-sm')} Cobrar selecionadas${ui.sel.size ? ` (${ui.sel.size})` : ''}</button>` : ''}</div>
+          ${f.aba !== 'pagas' && asaasOk() ? `<button class="btn sm" data-act="lote-boletos" ${ui.sel.size ? '' : 'disabled'} id="btn-lote-bol">${icon('barcode', 'i-sm')} Emitir boletos</button>` : ''}${f.aba !== 'pagas' ? `<button class="btn sm" data-act="lote-sel" ${ui.sel.size ? '' : 'disabled'} id="btn-lote">${icon('send', 'i-sm')} Cobrar selecionadas${ui.sel.size ? ` (${ui.sel.size})` : ''}</button>` : ''}</div>
         ${ps.length ? tabelaParcelas(ps, { sel: f.aba !== 'pagas' }) : emptyBox('Nada por aqui', 'Nenhuma parcela nesta situação.')}</div>`;
   }
 };
@@ -1270,7 +1294,7 @@ async function gerarBackup() {
   const files = {};
   if (comArq) for (const id of await idbKeys('files')) { const f = await getFile(id); if (f) files[id] = { name: f.name, type: f.type, b64: await new Promise(res => { const fr = new FileReader(); fr.onload = () => res(fr.result.split(',')[1]); fr.readAsDataURL(f); }) }; }
   db.settings.ultimoBackup = new Date().toISOString(); await persist();
-  const copia = structuredClone(db);
+  const copia = structuredClone(db); copia.settings.asaas.token = '';
   download(`backup-honorarios-${today()}.json`, JSON.stringify({ app: 'honorarios-contratos', versao: 1, geradoEm: new Date().toISOString(), db: copia, files }), 'application/json');
   toast('Backup gerado. Guarde-o em local seguro, pois contém dados de clientes.', 'ok'); rerender();
 }
@@ -1278,7 +1302,7 @@ async function restaurarBackup(file) {
   const j = JSON.parse(await lerTexto(file));
   if (j.app !== 'honorarios-contratos' || !j.db) throw new Error('arquivo de backup não reconhecido');
   if (!await confirmBox(`Restaurar o backup de ${fdatetime(j.geradoEm)}? A base atual deste navegador (${db.contratos.length} contratos) será substituída.`, 'Substituir base', true)) return;
-  db = migrate(j.db);
+  const tokenAtual = db.settings.asaas?.token; db = migrate(j.db); if (!db.settings.asaas.token) db.settings.asaas.token = tokenAtual || '';
   for (const [id, f] of Object.entries(j.files || {})) { const bin = Uint8Array.from(atob(f.b64), ch => ch.charCodeAt(0)); await saveFile(id, new File([bin], f.name, { type: f.type })); }
   await persist(); toast('Backup restaurado.', 'ok'); location.hash = '#/painel'; rerender();
 }
@@ -1367,6 +1391,7 @@ VIEWS.config = {
 </div>
       <div class="card" style="grid-column:1/-1"><div class="card-h"><div><h2>Modelos de mensagem</h2><p class="hint">Variáveis disponíveis: ${PLACEHOLDERS.map(p => `<code>{${p}}</code>`).join(' ')}</p></div><button class="btn sm" data-act="tpl-reset">Restaurar textos padrão</button></div>
         <div class="grid g2">${Object.entries(s.templates).map(([k, t]) => `<div><div class="field"><label>${esc(t.nome)} · assunto</label><input type="text" data-s="templates.${k}.assunto" value="${esc(t.assunto)}"></div><div class="field" style="margin-top:8px"><label>Texto</label><textarea rows="12" data-s="templates.${k}.corpo">${esc(t.corpo)}</textarea></div></div>`).join('')}</div></div>
+      ${cardAsaas()}
       <div class="card"><div class="card-h"><div><h2>Segurança</h2><p class="hint">Criptografa a base e os arquivos anexos neste navegador (AES-256). Sem a senha não há como recuperar os dados; mantenha backups.</p></div></div>
         ${cryptoKey ? `<p class="t-success" style="margin-bottom:12px">${icon('lock')} Criptografia ativa.</p><div class="actions"><button class="btn sm" data-act="senha">Alterar senha</button><button class="btn sm" data-act="senha-off">Remover senha</button><button class="btn sm" data-act="lock-now">Bloquear agora</button></div>` : `<div class="actions"><button class="btn sm primary" data-act="senha">${icon('lock', 'i-sm')} Proteger com senha</button></div>`}</div>
       <div class="card"><div class="card-h"><div><h2>Dados</h2><p class="hint">Armazenados apenas neste navegador. ${db.settings.ultimoBackup ? `Último backup: ${fdatetime(db.settings.ultimoBackup)}.` : 'Nenhum backup realizado.'}</p></div></div>
@@ -1394,7 +1419,7 @@ function formContrato(id, draft, filaIdx) {
       <fieldset class="fs"><legend>Cliente</legend><div class="form-grid">
         ${inp('cl_nome', 'Nome ou razão social *', cl.nome, 'span2')}${inp('cl_doc', 'CPF/CNPJ', fmtDoc(cl.doc))}
         ${inp('cl_email', 'E-mail para cobrança', cl.email, '', 'text', 'placeholder="separe vários por vírgula"')}${inp('cl_emailCc', 'E-mail em cópia', cl.emailCc)}${inp('cl_tel', 'Telefone / WhatsApp', cl.telefone, '', 'tel')}
-        ${inp('cl_contato', 'Pessoa de contato', cl.contato)}${inp('cl_end', 'Endereço', cl.endereco, 'span2')}</div></fieldset>
+        ${inp('cl_contato', 'Pessoa de contato', cl.contato)}${inp('cl_cep', 'CEP', cl.cep, '', 'text', 'inputmode="numeric"')}${inp('cl_end', 'Endereço', cl.endereco)}</div></fieldset>
       <fieldset class="fs"><legend>Contrato</legend><div class="form-grid">
         ${inp('numero', 'Número', c.numero || (orig ? '' : proximoNumero()))}
         <div class="field"><label>Área de atuação</label><select name="area">${optList(db.areas.map(a => [a, a]), c.area, 'Selecione')}</select></div>
@@ -1484,7 +1509,7 @@ async function salvarContrato() {
     dataAssinatura: g('assinatura').value, inicio: g('inicio').value, fim: g('fim').value, entidadeId: g('entidadeId').value, responsavelId: g('responsavelId').value,
     tipo: g('tipo').value, valorTotal: round2(num(g('valorTotal').value)), reajuste: g('reajuste').value, multaPct: g('multaPct').value, jurosPct: g('jurosPct').value,
     pausarCobranca: g('pausar').checked, obs: g('obs').value,
-    cliente: { nome, doc: g('cl_doc').value.trim(), email: g('cl_email').value.trim(), emailCc: g('cl_emailCc').value.trim(), telefone: g('cl_tel').value.trim(), contato: g('cl_contato').value.trim(), endereco: g('cl_end').value.trim() }
+    cliente: { nome, doc: g('cl_doc').value.trim(), email: g('cl_email').value.trim(), emailCc: g('cl_emailCc').value.trim(), telefone: g('cl_tel').value.trim(), contato: g('cl_contato').value.trim(), endereco: g('cl_end').value.trim(), cep: g('cl_cep').value.trim() }
   });
   if (['exito', 'hibrido'].includes(c.tipo)) c.exito = { pct: num(g('ex_pct').value), base: num(g('ex_base').value), prob: num(g('ex_prob').value), data: g('ex_data').value, desc: g('ex_desc').value.trim() }; else c.exito = null;
   c.captacao = F.captacao.map(x => {
@@ -1617,6 +1642,219 @@ function imprimirDemonstrativo(pid) {
     <p style="margin-top:16px;font-family:Arial"><b>Total gerado:</b> ${brl(xs.reduce((s, x) => s + x.valor, 0))} · <b>Pago:</b> ${brl(xs.filter(x => x.pagoInfo).reduce((s, x) => s + x.valor, 0))} · <b>A pagar:</b> ${brl(xs.filter(x => !x.pagoInfo).reduce((s, x) => s + x.valor, 0))}</p>`);
 }
 
+
+/* =========================================================
+   BOLETO E NOTA FISCAL (Asaas, via serviço intermediário)
+   ========================================================= */
+const NF_ST = { SCHEDULED: 'Agendada', SYNCHRONIZED: 'Enviada à prefeitura', AUTHORIZED: 'Emitida', PROCESSING_CANCELLATION: 'Cancelando', CANCELED: 'Cancelada', CANCELLATION_DENIED: 'Cancelamento negado', ERROR: 'Erro', ERRO: 'Erro' };
+const BOL_ST = { PENDING: 'Aguardando pagamento', RECEIVED: 'Pago', CONFIRMED: 'Pago (compensando)', OVERDUE: 'Vencido', REFUNDED: 'Estornado', DELETED: 'Cancelado', RECEIVED_IN_CASH: 'Pago em dinheiro' };
+const asaasOk = () => { const a = db?.settings.asaas; return !!(a && a.ativo && a.url && a.token); };
+const boletoAtivo = p => p?.boleto && !['DELETED', 'REFUNDED'].includes(p.boleto.status) ? p.boleto : null;
+async function api(path, opt = {}) {
+  const a = db.settings.asaas;
+  let r;
+  try { r = await fetch(a.url.replace(/\/+$/, '') + path, { method: opt.method || 'GET', headers: { 'Content-Type': 'application/json', 'x-app-token': a.token }, body: opt.body ? JSON.stringify(opt.body) : undefined }); }
+  catch (e) { throw new Error('serviço do Asaas inacessível; confira a URL em Configurações'); }
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(j.erro || ('erro ' + r.status));
+  return j;
+}
+function conferirEntidade(c) {
+  const a = db.settings.asaas;
+  if (a.entidadeId && c.entidadeId && c.entidadeId !== a.entidadeId) throw new Error('o contrato fatura por CNPJ diferente do vinculado à conta Asaas');
+  if (!c.cliente.doc || !docOk(c.cliente.doc)) throw new Error('informe um CPF/CNPJ válido do cliente no contrato');
+}
+function nfPayload(p, c, valor) {
+  const n = db.settings.asaas.nf, v = varsParcela(p, c);
+  const impostos = { retainIss: !!n.retemIss, iss: +n.iss || 0, pis: +n.pis || 0, cofins: +n.cofins || 0, csll: +n.csll || 0, ir: +n.ir || 0, inss: +n.inss || 0 };
+  ['nbsCode', 'taxSituationCode', 'taxClassificationCode', 'operationIndicatorCode'].forEach(k => { if (String(n[k] || '').trim()) impostos[k] = String(n[k]).trim(); });
+  return { parcelaId: p.id, descricao: fill(n.descricao, v).slice(0, 2000), observacoes: fill(n.observacoes || '', v), valor: round2(valor), deducoes: 0, servico: { id: n.servicoId || '', codigo: n.servicoCodigo || '', nome: n.servicoNome || '' }, impostos };
+}
+function clienteAsaas(c) { return { nome: c.cliente.nome, doc: c.cliente.doc, email: c.cliente.email, emailCc: c.cliente.emailCc, telefone: c.cliente.telefone, endereco: c.cliente.endereco, cep: c.cliente.cep, ref: c.id, notificarPeloAsaas: !!db.settings.asaas.notificarPeloAsaas }; }
+async function emitirBoleto(pid, o = {}) {
+  const p = db.parcelas.find(x => x.id === pid), c = ctById(p.contratoId);
+  if (p.status === 'paga') throw new Error('parcela já paga');
+  conferirEntidade(c);
+  const atrasada = p.venc < today();
+  const venc = atrasada ? addDaysISO(today(), 3) : p.venc, valor = atrasada ? atualizado(p) : p.valor, { multa, juros } = encargos(c);
+  const nTot = parcelasDe(c.id).filter(valida).length;
+  if (!o.silencioso) toast('Registrando boleto…');
+  const r = await api('/boleto', { method: 'POST', body: {
+    cliente: clienteAsaas(c), parcelaId: p.id, valor: round2(valor), vencimento: venc, multaPct: multa, jurosPct: juros,
+    descricao: `Honorários advocatícios · contrato ${c.numero || 's/n'} · parcela ${p.n}/${nTot}${atrasada ? ` (vencida em ${fdate(p.venc)}, valor atualizado)` : ''}`,
+    notaAoPagar: db.settings.asaas.nfAoPagar ? nfPayload(p, c, valor) : null
+  } });
+  if (p.boleto) (p.boletosAnteriores ||= []).push(p.boleto);
+  p.boleto = { ...r, criadoEm: new Date().toISOString() }; delete p.boleto.pixImagem;
+  log('boleto', `${c.cliente.nome} · parcela ${p.n} · ${brl(r.valor)}`); save();
+  if (!o.silencioso) { toast('Boleto registrado no banco.', 'ok'); rerender(); }
+  return p.boleto;
+}
+async function loteBoletos(ids) {
+  const ps = ids.map(id => db.parcelas.find(p => p.id === id)).filter(p => p && p.status !== 'paga' && !boletoAtivo(p));
+  if (!ps.length) return toast('As parcelas selecionadas já têm boleto ou estão pagas.', 'err');
+  if (!await confirmBox(`Registrar ${ps.length} boleto(s) no Asaas?`)) return;
+  let ok = 0; const erros = [];
+  for (const p of ps) { try { await emitirBoleto(p.id, { silencioso: true }); ok++; } catch (e) { erros.push(`${ctById(p.contratoId).cliente.nome}: ${e.message}`); } }
+  toast(`${ok} boleto(s) registrados.${erros.length ? ' Falhas: ' + erros.join('; ') : ''}`, erros.length ? 'err' : 'ok'); rerender();
+}
+function modalBoleto(pid) {
+  const p = db.parcelas.find(x => x.id === pid), c = ctById(p.contratoId), b = boletoAtivo(p);
+  if (!b) {
+    openModal({ title: `Boleto · ${c.cliente.nome}`, body: `<p>Registrar boleto para a parcela ${p.n} (${brl(p.venc < today() ? atualizado(p) : p.valor)}, vencimento ${fdate(p.venc < today() ? addDaysISO(today(), 3) : p.venc)})?</p><p class="hint" style="margin-top:10px">O boleto é registrado no banco pelo Asaas, já com PIX. ${p.venc < today() ? 'Como a parcela está vencida, o boleto sai com o valor atualizado e novo vencimento em 3 dias. ' : ''}${db.settings.asaas.nfAoPagar ? 'A nota fiscal será emitida automaticamente quando o pagamento for confirmado.' : ''}</p>`,
+      foot: `<button class="btn ghost" data-act="modal-close">Cancelar</button><button class="btn primary" data-act="bol-emitir" data-id="${p.id}">${icon('barcode')} Registrar boleto</button>` });
+    return;
+  }
+  openModal({
+    title: `Boleto · ${c.cliente.nome}`,
+    body: `<dl class="dl"><dt>Situação</dt><dd><span class="chip ${['RECEIVED', 'CONFIRMED', 'RECEIVED_IN_CASH'].includes(b.status) ? 'ok' : b.status === 'OVERDUE' ? 'danger' : 'info'}">${esc(BOL_ST[b.status] || b.status)}</span></dd><dt>Valor</dt><dd>${brl(b.valor)}</dd><dt>Vencimento</dt><dd>${fdate(b.vencimento)}</dd><dt>Nosso número</dt><dd>${esc(b.nossoNumero || '—')}</dd><dt>Registrado em</dt><dd>${fdatetime(b.criadoEm)}</dd></dl>
+      ${b.linha ? `<div class="field" style="margin-top:16px"><label>Linha digitável</label><div class="code" style="white-space:pre-wrap;word-break:break-all">${esc(b.linha)}</div><button class="btn sm" style="margin-top:6px;align-self:flex-start" data-act="copiar" data-txt="${esc(b.linha)}">Copiar linha digitável</button></div>` : ''}
+      ${b.pix ? `<div class="field" style="margin-top:14px"><label>PIX copia e cola (baixa automática)</label><div class="code" style="white-space:pre-wrap;word-break:break-all;max-height:90px">${esc(b.pix)}</div><button class="btn sm" style="margin-top:6px;align-self:flex-start" data-act="copiar" data-txt="${esc(b.pix)}">Copiar PIX</button></div>` : ''}`,
+    foot: `<button class="btn ghost t-danger" data-act="bol-cancelar" data-id="${p.id}" style="margin-right:auto">Cancelar boleto</button><button class="btn" data-act="bol-atualizar" data-id="${p.id}">${icon('repeat', 'i-sm')} Atualizar situação</button>${b.fatura ? `<a class="btn" href="${esc(b.fatura)}" target="_blank" rel="noopener">Fatura online</a>` : ''}<a class="btn" href="${esc(b.url)}" target="_blank" rel="noopener">${icon('download', 'i-sm')} Abrir boleto</a><button class="btn primary" data-act="cobrar" data-id="${p.id}">${icon('send', 'i-sm')} Enviar ao cliente</button>`
+  });
+}
+async function atualizarBoleto(pid) {
+  const p = db.parcelas.find(x => x.id === pid);
+  try { const r = await api('/boleto/' + p.boleto.id); Object.assign(p.boleto, r); if (['RECEIVED', 'CONFIRMED', 'RECEIVED_IN_CASH'].includes(r.status) && p.status !== 'paga') darBaixa(p, r.pagoEm, r.valor); save(); toast('Situação: ' + (BOL_ST[r.status] || r.status), 'ok'); closeModal(); rerender(); }
+  catch (e) { toast(e.message, 'err'); }
+}
+async function cancelarBoleto(pid) {
+  const p = db.parcelas.find(x => x.id === pid);
+  if (!await confirmBox('Cancelar este boleto no banco? O cliente não conseguirá mais pagá-lo.', 'Cancelar boleto', true)) return;
+  try { await api('/boleto/' + p.boleto.id, { method: 'DELETE' }); p.boleto.status = 'DELETED'; save(); closeModal(); toast('Boleto cancelado.', 'ok'); rerender(); }
+  catch (e) { toast(e.message, 'err'); }
+}
+function darBaixa(p, data, valor) {
+  Object.assign(p, { status: 'paga', pagoEm: (data || today()).slice(0, 10), valorPago: round2(valor || p.valor), forma: 'Boleto/PIX (Asaas)' });
+  if (p.boleto) p.boleto.status = 'RECEIVED';
+  const c = ctById(p.contratoId); log('pagamento', `Baixa automática · ${c?.cliente.nome} · parcela ${p.n} · ${brl(p.valorPago)}`);
+}
+function modalNota(pid) {
+  const p = db.parcelas.find(x => x.id === pid), c = ctById(p.contratoId), nf = p.nf, n = db.settings.asaas.nf;
+  if (!nf || ['CANCELED', 'ERRO', 'ERROR'].includes(nf.status)) {
+    const pl = nfPayload(p, c, pago(p));
+    openModal({ title: `Nota fiscal · ${c.cliente.nome}`,
+      body: `${nf?.erro ? `<div class="notice danger">${icon('alert')}<div>Tentativa anterior falhou: ${esc(nf.erro)}</div></div>` : ''}<dl class="dl"><dt>Tomador</dt><dd>${esc(c.cliente.nome)} · ${esc(fmtDoc(c.cliente.doc))}</dd><dt>Valor</dt><dd>${brl(pago(p))}</dd><dt>Serviço municipal</dt><dd>${esc(n.servicoNome || n.servicoCodigo || 'não configurado')}</dd><dt>Discriminação</dt><dd>${esc(pl.descricao)}</dd><dt>ISS</dt><dd>${pct(n.iss)}${n.retemIss ? ' (retido pelo tomador)' : ''}</dd></dl>
+        ${!n.servicoNome && !n.servicoCodigo && !n.servicoId ? `<div class="notice warn" style="margin-top:14px">${icon('alert')}<div>Configure o serviço municipal e os tributos em Configurações antes de emitir.</div></div>` : ''}`,
+      foot: `<button class="btn ghost" data-act="modal-close">Cancelar</button><button class="btn primary" data-act="nf-emitir" data-id="${p.id}" ${!n.servicoNome && !n.servicoCodigo && !n.servicoId ? 'disabled' : ''}>${icon('receipt')} Emitir NFS-e</button>` });
+    return;
+  }
+  openModal({ title: `Nota fiscal · ${c.cliente.nome}`,
+    body: `<dl class="dl"><dt>Situação</dt><dd><span class="chip ${nf.status === 'AUTHORIZED' ? 'ok' : 'info'}">${esc(NF_ST[nf.status] || nf.status)}</span></dd><dt>Número</dt><dd>${esc(nf.numero || 'aguardando a prefeitura')}</dd><dt>Valor</dt><dd>${brl(pago(p))}</dd><dt>Solicitada em</dt><dd>${fdatetime(nf.em)}</dd></dl>`,
+    foot: `${nf.status === 'AUTHORIZED' ? `<button class="btn ghost t-danger" data-act="nf-cancelar" data-id="${p.id}" style="margin-right:auto">Cancelar nota</button>` : ''}<button class="btn" data-act="nf-atualizar" data-id="${p.id}">${icon('repeat', 'i-sm')} Atualizar</button>${nf.xml ? `<a class="btn" href="${esc(nf.xml)}" target="_blank" rel="noopener">XML</a>` : ''}${nf.pdf ? `<a class="btn primary" href="${esc(nf.pdf)}" target="_blank" rel="noopener">${icon('download', 'i-sm')} PDF da nota</a>` : ''}` });
+}
+async function emitirNota(pid) {
+  const p = db.parcelas.find(x => x.id === pid), c = ctById(p.contratoId);
+  try {
+    conferirEntidade(c);
+    const pagoPeloAsaas = p.boleto && p.forma === 'Boleto/PIX (Asaas)';
+    const body = { ...nfPayload(p, c, pago(p)), data: today(), paymentId: pagoPeloAsaas ? p.boleto.id : undefined, cliente: pagoPeloAsaas ? undefined : clienteAsaas(c) };
+    toast('Enviando a nota à prefeitura…');
+    const r = await api('/nota', { method: 'POST', body });
+    p.nf = { ...r, em: new Date().toISOString() }; log('nota-fiscal', `${c.cliente.nome} · parcela ${p.n}`); save();
+    closeModal(); toast(r.status === 'AUTHORIZED' ? 'Nota fiscal emitida.' : 'Nota enviada; o número chega quando a prefeitura autorizar.', 'ok'); rerender();
+  } catch (e) { toast('Nota não emitida: ' + e.message, 'err'); }
+}
+async function atualizarNota(pid) {
+  const p = db.parcelas.find(x => x.id === pid);
+  try { const r = await api('/nota/' + p.nf.id); Object.assign(p.nf, { status: r.status, numero: r.number || p.nf.numero, pdf: r.pdfUrl || p.nf.pdf, xml: r.xmlUrl || p.nf.xml }); save(); closeModal(); modalNota(pid); rerender(); }
+  catch (e) { toast(e.message, 'err'); }
+}
+async function cancelarNota(pid) {
+  const p = db.parcelas.find(x => x.id === pid);
+  if (!await confirmBox('Solicitar o cancelamento desta nota fiscal à prefeitura?', 'Cancelar nota', true)) return;
+  try { await api(`/nota/${p.nf.id}/cancelar`, { method: 'POST' }); p.nf.status = 'PROCESSING_CANCELLATION'; save(); closeModal(); toast('Cancelamento solicitado.', 'ok'); rerender(); }
+  catch (e) { toast(e.message, 'err'); }
+}
+let syncando = false;
+async function sincronizar(o = {}) {
+  if (!asaasOk() || syncando) return; syncando = true;
+  try {
+    const a = db.settings.asaas, r = await api('/eventos?desde=' + encodeURIComponent(a.ultimoEvento || ''));
+    let baixas = 0, notas = 0;
+    const porRef = ref => ref && db.parcelas.find(p => p.id === ref);
+    for (const ev of r.eventos || []) {
+      const pg = ev.pagamento, nt = ev.nota;
+      if (pg) {
+        const p = porRef(pg.ref) || db.parcelas.find(x => x.boleto?.id === pg.id); if (!p) continue;
+        if (p.boleto?.id === pg.id) p.boleto.status = pg.status;
+        if ((ev.evento === 'PAYMENT_RECEIVED' || ev.evento === 'PAYMENT_CONFIRMED') && p.status !== 'paga') { darBaixa(p, pg.pagoEm, pg.valor); baixas++; }
+      }
+      if (nt) {
+        const p = porRef(nt.ref) || db.parcelas.find(x => (x.nf && x.nf.id === nt.id) || (nt.pagamento && x.boleto?.id === nt.pagamento)); if (!p) continue;
+        if (ev.evento === 'NF_AUTO_ERRO') p.nf = { status: 'ERRO', erro: nt.erro, em: ev.recebidoEm };
+        else { p.nf = { ...(p.nf || {}), id: nt.id || p.nf?.id, status: ev.evento === 'NF_AUTO' ? nt.status : nt.status, numero: nt.numero || p.nf?.numero || null, pdf: nt.pdf || p.nf?.pdf || null, xml: nt.xml || p.nf?.xml || null, em: p.nf?.em || ev.recebidoEm }; if (ev.evento === 'INVOICE_AUTHORIZED' || nt.status === 'AUTHORIZED') notas++; }
+      }
+    }
+    a.ultimoEvento = r.agora || new Date().toISOString(); a.ultimaSync = new Date().toISOString();
+    save(); setAsaasState();
+    if (baixas || notas) { toast([baixas && `${baixas} pagamento(s) baixado(s) automaticamente`, notas && `${notas} nota(s) fiscal(is) emitida(s)`].filter(Boolean).join(' · '), 'ok'); rerender(); }
+    else if (!o.silencioso) toast('Sincronizado. Nenhuma novidade.', 'ok');
+  } catch (e) { if (!o.silencioso) toast('Sincronização falhou: ' + e.message, 'err'); setAsaasState(e.message); }
+  finally { syncando = false; }
+}
+function setAsaasState(erro) {
+  const el = $('#asaas-state'); if (!el) return;
+  el.hidden = !asaasOk();
+  el.classList.toggle('err', !!erro);
+  el.lastElementChild.textContent = erro ? 'Asaas: falha na conexão' : `Asaas sincronizado ${db.settings.asaas.ultimaSync ? 'às ' + fdatetime(db.settings.asaas.ultimaSync).slice(11) : ''}`;
+}
+async function testarAsaas() {
+  try { const r = await api('/status'); toast(`Conexão estabelecida com o Asaas (${r.ambiente === 'sandbox' ? 'ambiente de testes' : 'produção'}).`, 'ok'); }
+  catch (e) { toast('Falha: ' + e.message, 'err'); }
+}
+async function buscarFiscal(tipo) {
+  const termo = prompt(tipo === 'services' ? 'Buscar serviço municipal (ex.: 17.14 ou advocacia):' : 'Buscar código NBS (ex.: advocacia ou 1.1301):', tipo === 'services' ? 'advoc' : 'jurídic');
+  if (termo == null) return;
+  try {
+    const r = await api(`/fiscal/${tipo}?limit=50&description=${encodeURIComponent(termo)}`);
+    const itens = r.data || [];
+    openModal({ title: tipo === 'services' ? 'Serviços municipais' : 'Códigos NBS',
+      body: itens.length ? `<div class="bars">${itens.map((x, i) => `<button class="bar-row wide" data-pick="${i}"><span class="lbl" style="white-space:normal">${esc(x.description || x.name || x.code)}</span><span class="hint">${esc(x.code || x.id || '')}</span><span class="num">${x.issTax != null ? 'ISS ' + pct(x.issTax) : ''}</span></button>`).join('')}</div>` : '<p class="hint">Nenhum resultado. Para Belo Horizonte, caso a lista não esteja disponível, informe o código do serviço manualmente (advocacia: item 17.14 da lista da LC 116/2003).</p>',
+      foot: `<button class="btn ghost" data-act="modal-close">Fechar</button>`,
+      onMount: () => $$('[data-pick]').forEach(b => b.onclick = () => {
+        const x = itens[+b.dataset.pick], n = db.settings.asaas.nf;
+        if (tipo === 'services') { n.servicoId = x.id || ''; n.servicoNome = x.description || ''; if (x.issTax != null) n.iss = x.issTax; }
+        else n.nbsCode = x.code || x.id || '';
+        save(); closeModal(); rerender(); toast('Configuração preenchida.', 'ok');
+      })
+    });
+  } catch (e) { toast('Busca falhou: ' + e.message, 'err'); }
+}
+function cardAsaas() {
+  const a = db.settings.asaas, n = a.nf;
+  const f = (k, l, v, extra = '', cls = '') => `<div class="field ${cls}"><label>${l}</label><input ${extra} data-s="asaas.${k}" value="${esc(v ?? '')}"></div>`;
+  return `<div class="card" style="grid-column:1/-1"><div class="card-h"><div><h2>Boleto bancário e nota fiscal · Asaas</h2><p class="hint">Boletos registrados com PIX, NFS-e de Belo Horizonte e baixa automática dos pagamentos. A chave da API do Asaas fica no serviço intermediário, nunca neste navegador. <a href="https://github.com/viniciuspapapapa/viniciuspapapapa.github.io/blob/main/asaas-worker/LEIA-ME.md" target="_blank" rel="noopener">Guia de configuração</a></p></div>
+      <div class="actions"><button class="btn sm" data-act="asaas-teste">Testar conexão</button><button class="btn sm" data-act="asaas-sync">${icon('repeat', 'i-sm')} Sincronizar agora</button></div></div>
+    <div class="form-grid">
+      <label class="check span3"><input type="checkbox" data-s="asaas.ativo" ${a.ativo ? 'checked' : ''}> Ativar a integração com o Asaas</label>
+      ${f('url', 'URL do serviço intermediário', a.url, 'type="url" placeholder="https://honorarios-asaas.SEU-USUARIO.workers.dev"', 'span2')}
+      ${f('token', 'Senha do serviço (APP_TOKEN)', a.token, 'type="password" autocomplete="off"')}
+      <div class="field"><label>CNPJ da conta Asaas</label><select data-s="asaas.entidadeId">${optList(db.entidades.map(e => [e.id, e.fantasia || e.razao]), a.entidadeId, 'Qualquer entidade')}</select></div>
+      <label class="check"><input type="checkbox" data-s="asaas.gerarAoCobrar" ${a.gerarAoCobrar ? 'checked' : ''}> Gerar boleto automaticamente ao enviar cobrança</label>
+      <label class="check"><input type="checkbox" data-s="asaas.nfAoPagar" ${a.nfAoPagar ? 'checked' : ''}> Emitir NFS-e automaticamente ao confirmar o pagamento</label>
+      <label class="check span3"><input type="checkbox" data-s="asaas.notificarPeloAsaas" ${a.notificarPeloAsaas ? 'checked' : ''}> Permitir que o Asaas também envie lembretes próprios ao cliente (desmarcado, apenas o escritório se comunica)</label>
+    </div>
+    <h4 class="lbl-s" style="margin:22px 0 10px">Nota fiscal de serviço (padrão para todas as notas)</h4>
+    <div class="form-grid">
+      ${f('nf.servicoNome', 'Serviço municipal (descrição)', n.servicoNome, 'type="text" placeholder="17.14 · Advocacia"', 'span2')}
+      <div class="field"><label>&nbsp;</label><button class="btn" data-act="asaas-busca" data-k="services">${icon('search', 'i-sm')} Buscar na lista do município</button></div>
+      ${f('nf.servicoCodigo', 'Código do serviço (se a lista não estiver disponível)', n.servicoCodigo, 'type="text"')}
+      ${f('nf.iss', 'Alíquota de ISS (%)', n.iss, 'type="number" step="0.01"')}
+      <label class="check" style="align-self:end;min-height:40px"><input type="checkbox" data-s="asaas.nf.retemIss" ${n.retemIss ? 'checked' : ''}> ISS retido pelo tomador</label>
+      ${f('nf.pis', 'PIS (%)', n.pis, 'type="number" step="0.01"')}${f('nf.cofins', 'COFINS (%)', n.cofins, 'type="number" step="0.01"')}${f('nf.csll', 'CSLL (%)', n.csll, 'type="number" step="0.01"')}
+      ${f('nf.ir', 'IR (%)', n.ir, 'type="number" step="0.01"')}${f('nf.inss', 'INSS (%)', n.inss, 'type="number" step="0.01"')}<div></div>
+      <div class="field span3"><label>Discriminação do serviço (aceita as variáveis dos modelos de mensagem)</label><textarea rows="2" data-s="asaas.nf.descricao">${esc(n.descricao)}</textarea></div>
+      <div class="field span3"><label>Observações da nota</label><input type="text" data-s="asaas.nf.observacoes" value="${esc(n.observacoes)}" placeholder="Ex.: Sociedade uniprofissional, ISS recolhido na forma do regime fixo anual."></div>
+    </div>
+    <div class="notice warn" style="margin:18px 0 12px">${icon('alert')}<div><b>Reforma tributária (IBS/CBS).</b> Desde 1º de outubro de 2026, a NFS-e exige os campos abaixo para os contribuintes obrigados, sob pena de rejeição pela prefeitura. Os códigos corretos devem ser definidos pela contabilidade do escritório.</div></div>
+    <div class="form-grid">
+      ${f('nf.nbsCode', 'Código NBS', n.nbsCode, 'type="text"')}
+      <div class="field"><label>&nbsp;</label><button class="btn" data-act="asaas-busca" data-k="nbsCodes">${icon('search', 'i-sm')} Buscar código NBS</button></div><div></div>
+      ${f('nf.taxSituationCode', 'Situação tributária (CST IBS/CBS)', n.taxSituationCode, 'type="text"')}${f('nf.taxClassificationCode', 'Classificação tributária (cClassTrib)', n.taxClassificationCode, 'type="text"')}${f('nf.operationIndicatorCode', 'Indicador de operação', n.operationIndicatorCode, 'type="text"')}
+    </div></div>`;
+}
+
 /* ---------- exportações ---------- */
 function exportar(tipo) {
   if (tipo === 'contratos') download(`contratos-${today()}.csv`, csv([['Número', 'Cliente', 'CPF/CNPJ', 'E-mail', 'Telefone', 'Área', 'Escopo', 'Modalidade', 'Valor contratado', 'Recebido', 'Em aberto', 'Em atraso', 'Status', 'Captação', 'Responsável', 'Faturamento', 'Assinatura'], ...db.contratos.map(c => { const r = resumoCt(c); return [c.numero, c.cliente.nome, fmtDoc(c.cliente.doc), c.cliente.email, c.cliente.telefone, c.area, c.escopo, TIPOS[c.tipo], n2(c.valorTotal || r.total), n2(r.recebido), n2(r.aberto), n2(r.atrasado), STATUS_CT[c.status]?.[0], (c.captacao || []).map(x => `${pessoa(x.pessoaId)?.nome} (${x.tipo === 'pct' ? x.valor + '%' : 'R$ ' + x.valor})`).join(', '), pessoa(c.responsavelId)?.nome || '', entidade(c.entidadeId)?.razao || '', fdate(c.dataAssinatura)]; })]));
@@ -1683,6 +1921,19 @@ async function removerSenha() {
 const ACT = {
   'nav-open': () => document.body.classList.add('nav-open'),
   palette: () => openPalette(),
+  boleto: d => modalBoleto(d.id),
+  nota: d => modalNota(d.id),
+  'bol-cancelar': d => cancelarBoleto(d.id),
+  'bol-atualizar': d => atualizarBoleto(d.id),
+  'nf-atualizar': d => atualizarNota(d.id),
+  'nf-cancelar': d => cancelarNota(d.id),
+  'nf-emitir': d => emitirNota(d.id),
+  'bol-emitir': async d => { try { await emitirBoleto(d.id); modalBoleto(d.id); } catch (e) { toast(e.message, 'err'); } },
+  copiar: d => navigator.clipboard.writeText(d.txt).then(() => toast('Copiado.', 'ok')),
+  'lote-boletos': () => loteBoletos([...ui.sel]),
+  'asaas-teste': () => testarAsaas(),
+  'asaas-sync': () => sincronizar(),
+  'asaas-busca': d => buscarFiscal(d.k),
   'painel-h': d => { ui.f.painelH = +d.h; rerender(); },
   'ir-atraso': () => { ui.f.rec.aba = 'atrasadas'; location.hash = '#/recebiveis'; },
   'area-filtro': d => { Object.assign(ui.f.ct, { area: d.a === 'Sem área' ? '' : d.a, status: '', q: '' }); location.hash = '#/contratos'; },
@@ -1752,7 +2003,7 @@ const ACT = {
   senha: () => formSenha(),
   'senha-off': () => removerSenha()
 };
-function updLote() { const b = $('#btn-lote'); if (b) { b.disabled = !ui.sel.size; b.innerHTML = `${icon('send', 'i-sm')} Cobrar selecionadas${ui.sel.size ? ` (${ui.sel.size})` : ''}`; } }
+function updLote() { const bb = $('#btn-lote-bol'); if (bb) bb.disabled = !ui.sel.size; const b = $('#btn-lote'); if (b) { b.disabled = !ui.sel.size; b.innerHTML = `${icon('send', 'i-sm')} Cobrar selecionadas${ui.sel.size ? ` (${ui.sel.size})` : ''}`; } }
 document.addEventListener('click', e => {
   const go = e.target.closest('[data-go]');
   const a = e.target.closest('[data-act]');
@@ -1768,7 +2019,7 @@ document.addEventListener('change', e => {
   const t = e.target;
   if (t.dataset.sel) { t.checked ? ui.sel.add(t.dataset.sel) : ui.sel.delete(t.dataset.sel); updLote(); return; }
   if (t.dataset.f && t.tagName === 'SELECT') { const [g, k] = t.dataset.f.split('.'); ui.f[g][k] = t.tagName === 'SELECT' && k === 'h' ? +t.value : t.value; rerender(); return; }
-  if (t.dataset.s) { setPath(db.settings, t.dataset.s, t.type === 'checkbox' ? t.checked : t.type === 'number' ? num(t.value) : t.value); save(); if (t.dataset.s === 'emailMode') rerender(); }
+  if (t.dataset.s) { setPath(db.settings, t.dataset.s, t.type === 'checkbox' ? t.checked : t.type === 'number' ? num(t.value) : t.value); save(); if (t.dataset.s === 'emailMode' || t.dataset.s === 'asaas.ativo') rerender(); if (t.dataset.s.startsWith('asaas.')) setAsaasState(); }
 });
 let qTimer = null;
 document.addEventListener('input', e => {
@@ -1786,6 +2037,8 @@ let idleTimer = null;
 function armIdle() { clearTimeout(idleTimer); if (cryptoKey) idleTimer = setTimeout(() => location.reload(), 30 * 60 * 1000); }
 ['click', 'keydown'].forEach(ev => document.addEventListener(ev, armIdle, { passive: true }));
 function start() {
+  setAsaasState();
+  if (asaasOk()) { setTimeout(() => sincronizar({ silencioso: true }), 1500); setInterval(() => sincronizar({ silencioso: true }), 3 * 60 * 1000); }
   $('#lock').hidden = true; $('#app').hidden = false;
   window.addEventListener('hashchange', route); route(); armIdle();
   navigator.storage?.persist?.();
