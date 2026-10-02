@@ -175,13 +175,11 @@ const STATUS_CT = { ativo: ['Ativo', 'ok'], suspenso: ['Suspenso', 'warn'], ence
 const TIPO_PESSOA = { socio: 'Sócio', advogado: 'Advogado', parceiro: 'Parceiro externo' };
 const FORMAS = ['PIX', 'Transferência', 'Boleto', 'Cartão', 'Dinheiro', 'Cheque', 'Outro'];
 const MODOS_EMAIL = {
-  mailto: 'Aplicativo de e-mail do computador (Outlook, Apple Mail)',
-  gmail: 'Gmail na web (abre a mensagem pronta)',
+  mailto: 'Outlook instalado no computador (abre a mensagem pronta)',
   outlook: 'Outlook na web / Microsoft 365 (abre a mensagem pronta)',
-  webhook: 'Envio direto pelo Google Workspace (Apps Script), recomendado',
-  emailjs: 'Envio direto pelo EmailJS'
+  emailjs: 'Envio direto, sem abrir o Outlook (EmailJS conectado à conta Outlook)'
 };
-const DIRETO = m => m === 'webhook' || m === 'emailjs';
+const DIRETO = m => m === 'emailjs';
 const TEMPLATES_PADRAO = {
   lembrete: {
     nome: 'Lembrete antes do vencimento',
@@ -272,8 +270,6 @@ function defaultDB() {
       multaPct: 2, jurosPct: 1, diasLembrete: 3, intervaloReenvio: 7,
       emailMode: 'mailto', confirmarEnvio: false,
       emailjs: { serviceId: '', templateId: '', publicKey: '' },
-      webhook: { url: '', token: '' },
-      ai: { apiKey: '', model: 'claude-sonnet-5-5' },
       templates: structuredClone(TEMPLATES_PADRAO),
       ultimoBackup: null
     },
@@ -286,7 +282,9 @@ function migrate(d) {
   if (!d || typeof d !== 'object') return base;
   const out = { ...base, ...d, settings: { ...base.settings, ...(d.settings || {}) } };
   out.settings.templates = { ...base.settings.templates, ...(d.settings?.templates || {}) };
-  ['emailjs', 'webhook', 'ai'].forEach(k => out.settings[k] = { ...base.settings[k], ...(d.settings?.[k] || {}) });
+  ['emailjs'].forEach(k => out.settings[k] = { ...base.settings[k], ...(d.settings?.[k] || {}) });
+  if (!MODOS_EMAIL[out.settings.emailMode]) out.settings.emailMode = 'mailto';
+  delete out.settings.ai; delete out.settings.webhook;
   return out;
 }
 
@@ -427,7 +425,6 @@ function verificar(c) {
   if (r.maxAtr > 60) add('erro', `Parcela em atraso há ${r.maxAtr} dias`, 'Avaliar notificação extrajudicial, renegociação ou suspensão dos serviços, conforme o contrato.');
   else if (r.maxAtr > 30) add('aviso', `Parcela em atraso há ${r.maxAtr} dias`);
   if (c.status === 'ativo' && r.ps.length && r.aberto === 0 && c.tipo !== 'mensal' && !(+c.exito?.pct > 0)) add('info', 'Todas as parcelas quitadas; avaliar o encerramento do contrato');
-  (c.analiseIA?.alertas || []).forEach(a => add('ia', a));
   return out;
 }
 const NIVEL = { erro: ['Crítico', 'danger'], aviso: ['Atenção', 'warn'], info: ['Informativo', 'info'], ia: ['Análise do contrato', 'violet'] };
@@ -469,18 +466,23 @@ function montar(p, tipo) {
 const htmlEmail = t => `<div style="font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.6;color:#1a2130">${esc(t).replace(/\n/g, '<br>')}</div>`;
 async function transporte(msg) {
   const s = db.settings, m = s.emailMode, q = encodeURIComponent;
-  if (m === 'mailto') { location.href = `mailto:${msg.para}?${msg.cc ? `cc=${q(msg.cc)}&` : ''}subject=${q(msg.assunto)}&body=${q(msg.corpo)}`; return; }
-  if (m === 'gmail') { if (!window.open(`https://mail.google.com/mail/?view=cm&fs=1&to=${q(msg.para)}&cc=${q(msg.cc)}&su=${q(msg.assunto)}&body=${q(msg.corpo)}`, '_blank')) throw new Error('o navegador bloqueou a nova aba'); return; }
+  if (m === 'mailto') {
+    const head = `mailto:${msg.para}?${msg.cc ? `cc=${q(msg.cc)}&` : ''}subject=${q(msg.assunto)}`;
+    const full = `${head}&body=${q(msg.corpo)}`;
+    // O Outlook para Windows não aceita links mailto acima de ~2.000 caracteres.
+    if (full.length <= 2000) { location.href = full; return; }
+    let copiou = false;
+    try { await navigator.clipboard.writeText(msg.corpo); copiou = true; } catch (e) { }
+    location.href = `${head}&body=${q(copiou ? '' : 'Texto da cobrança: copie da pré-visualização do sistema.')}`;
+    if (copiou) toast('O texto completo foi copiado. No Outlook, clique no corpo da mensagem e cole com Ctrl+V.', 'ok');
+    return;
+  }
   if (m === 'outlook') { if (!window.open(`https://outlook.office.com/mail/deeplink/compose?to=${q(msg.para)}&cc=${q(msg.cc)}&subject=${q(msg.assunto)}&body=${q(msg.corpo)}`, '_blank')) throw new Error('o navegador bloqueou a nova aba'); return; }
   if (m === 'emailjs') {
     const e = s.emailjs; if (!e.serviceId || !e.templateId || !e.publicKey) throw new Error('configure o EmailJS em Configurações');
     const r = await fetch('https://api.emailjs.com/api/v1.0/email/send', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ service_id: e.serviceId, template_id: e.templateId, user_id: e.publicKey, template_params: { to_email: msg.para, cc_email: msg.cc, subject: msg.assunto, message: msg.corpo, message_html: htmlEmail(msg.corpo), from_name: s.remetente, reply_to: s.replyTo } }) });
     if (!r.ok) throw new Error(await r.text() || ('HTTP ' + r.status));
     return;
-  }
-  if (m === 'webhook') {
-    if (!s.webhook.url) throw new Error('configure a URL do Apps Script em Configurações');
-    await fetch(s.webhook.url, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ token: s.webhook.token, to: msg.para, cc: msg.cc, subject: msg.assunto, text: msg.corpo, html: htmlEmail(msg.corpo), fromName: s.remetente, replyTo: s.replyTo }) });
   }
 }
 function registrar(p, tipo, canal, para) {
@@ -785,7 +787,7 @@ VIEWS.contrato = {
       <div class="card" style="margin-top:16px"><div class="card-h"><div><h2>Cronograma de pagamento</h2><p class="hint">O botão de cobrança escolhe o modelo adequado: lembrete, vencimento ou atraso.</p></div><div class="actions">${c.tipo === 'mensal' ? `<button class="btn sm" data-act="renovar" data-id="${c.id}">${icon('repeat')} Gerar novas competências</button>` : ''}<button class="btn sm" data-act="parc-add" data-id="${c.id}">${icon('plus')} Parcela avulsa / êxito</button></div></div>
         ${ps.length ? tabelaParcelas(ps, { semCliente: true, editar: true }) : '<p class="hint">Nenhuma parcela cadastrada.</p>'}</div>
       <div class="grid g2" style="margin-top:16px">
-        <div class="card"><div class="card-h"><div><h2>Verificação automática</h2><p class="hint">Conferência de cadastro, cronograma, encargos e riscos</p></div>${c.arquivoId && db.settings.ai.apiKey ? `<button class="btn sm" data-act="ia-analisar" data-id="${c.id}">${icon('spark')} Analisar cláusulas com IA</button>` : ''}</div>
+        <div class="card"><div class="card-h"><div><h2>Verificação automática</h2><p class="hint">Conferência de cadastro, cronograma, encargos e riscos</p></div></div>
           ${v.length ? `<div class="alert-list">${v.map(x => `<div class="alert-item"><span class="dot ${x.nivel}"></span><div><b>${esc(x.msg)}</b> <span class="chip ${NIVEL[x.nivel][1]}">${NIVEL[x.nivel][0]}</span>${x.dica ? `<div class="hint">${esc(x.dica)}</div>` : ''}</div></div>`).join('')}</div>` : `<p class="t-success">${icon('check')} Nenhuma inconsistência encontrada.</p>`}</div>
         <div class="card"><div class="card-h"><h2>Histórico de cobranças</h2></div>${hist.length ? `<div class="timeline">${hist.slice(0, 40).map(h => `<div><time>${fdatetime(h.em)}</time><span>${esc(db.settings.templates[h.tipo]?.nome || h.tipo)} · parcela ${h.p.n} · ${esc(h.canal)}</span></div>`).join('')}</div>` : '<p class="hint">Nenhuma cobrança enviada.</p>'}
           ${c.obs ? `<div class="card-h" style="margin-top:20px"><h3>Observações</h3></div><p style="white-space:pre-wrap">${esc(c.obs)}</p>` : ''}</div>
@@ -886,7 +888,7 @@ VIEWS.verificacao = {
     const cont = k => todos.reduce((s, x) => s + x.v.filter(y => y.nivel === k).length, 0);
     const lista = todos.map(x => ({ ...x, v: x.v.filter(y => nivel === 'todos' || y.nivel === nivel) })).filter(x => x.v.length);
     return pageH('Verificação automática', 'Auditoria contínua dos contratos ativos: cadastro, faturamento, cronograma, encargos, reajustes e inadimplência') +
-      `<div class="card"><div class="tabs">${[['erro', 'Críticos'], ['aviso', 'Atenção'], ['info', 'Informativos'], ['ia', 'Análise de cláusulas'], ['todos', 'Todos']].map(([k, l]) => `<button class="tab ${nivel === k ? 'active' : ''}" data-act="ver-aba" data-k="${k}">${l}<span class="count ${k === 'erro' && cont('erro') ? 'alert' : ''}">${k === 'todos' ? '' : cont(k) || ''}</span></button>`).join('')}</div>
+      `<div class="card"><div class="tabs">${[['erro', 'Críticos'], ['aviso', 'Atenção'], ['info', 'Informativos'], ['todos', 'Todos']].map(([k, l]) => `<button class="tab ${nivel === k ? 'active' : ''}" data-act="ver-aba" data-k="${k}">${l}<span class="count ${k === 'erro' && cont('erro') ? 'alert' : ''}">${k === 'todos' ? '' : cont(k) || ''}</span></button>`).join('')}</div>
       ${lista.length ? lista.map(({ c, v }) => `<div style="padding:12px 0;border-bottom:1px solid var(--border)"><div class="card-h" style="margin-bottom:8px"><div><a href="#/contrato/${c.id}" class="cell-main" style="color:inherit">${esc(c.cliente.nome)}</a> <span class="cell-sub">${esc(c.numero || '')} · ${esc(c.area || '')}</span></div><button class="btn sm" data-act="ct-edit" data-id="${c.id}">${icon('edit', 'i-sm')} Corrigir</button></div><div class="alert-list">${v.map(x => `<div class="alert-item"><span class="dot ${x.nivel}"></span><div>${esc(x.msg)}${x.dica ? `<div class="hint">${esc(x.dica)}</div>` : ''}</div></div>`).join('')}</div></div>`).join('') : emptyBox('Tudo em ordem', 'Nenhuma ocorrência nesta categoria.')}</div>`;
   }
 };
@@ -922,7 +924,6 @@ const CAMPOS_IMP = [
 VIEWS.importar = {
   title: 'Importar',
   render() {
-    const ia = !!db.settings.ai.apiKey;
     return pageH('Importar contratos', 'Traga a carteira existente e cadastre novos contratos a partir dos próprios arquivos') +
       (ui.fila.length ? `<div class="card" style="margin-bottom:16px"><div class="card-h"><div><h2>Contratos aguardando revisão</h2><p class="hint">Confira os dados extraídos e salve cada contrato.</p></div></div><div class="table-wrap"><table class="tbl"><tbody>${ui.fila.map((x, i) => `<tr><td><div class="cell-main">${esc(x.contrato.cliente?.nome || x.file?.name)}</div><div class="cell-sub">${esc(x.file?.name || '')} · ${x.origem}${x.erro ? ' · <span class="t-danger">' + esc(x.erro) + '</span>' : ''}</div></td><td class="right num">${brl(x.contrato.valorTotal)}</td><td class="acts"><button class="btn sm primary" data-act="fila-rev" data-i="${i}">Revisar e salvar</button><button class="icon-btn" data-act="fila-del" data-i="${i}" title="Descartar">${icon('x')}</button></td></tr>`).join('')}</tbody></table></div></div>` : '') +
       `<div class="grid g3">
@@ -930,8 +931,8 @@ VIEWS.importar = {
           <p class="hint">Excel (.xlsx) ou CSV com um contrato por linha. As colunas são reconhecidas automaticamente e o cronograma de parcelas é gerado a partir do número de parcelas, valor e primeiro vencimento. Parcelas já quitadas podem ser informadas para baixa automática.</p>
           <div class="drop" data-drop="planilha" style="margin-top:14px">${icon('upload')}<p style="margin-top:6px">Arraste a planilha aqui</p><button class="btn sm" data-act="pick" data-k="planilha" style="margin-top:8px">Selecionar arquivo</button></div>
           <p style="margin-top:12px"><a href="#" data-act="modelo-csv">${icon('download', 'i-sm')} Baixar planilha modelo</a></p></div>
-        <div class="card"><div class="card-h"><h2>2. Arquivos dos contratos</h2>${ia ? '<span class="chip violet">IA ativa</span>' : ''}</div>
-          <p class="hint">PDF, Word (.docx) ou texto. Cada arquivo tem os dados extraídos automaticamente (cliente, CPF/CNPJ, e-mail, valores, parcelas, vencimentos, área e escopo) e segue para revisão, ficando anexado ao contrato. ${ia ? 'A leitura por IA também aponta cláusulas ausentes ou atípicas e lê PDFs digitalizados.' : 'Sem chave de IA, a extração usa reconhecimento de padrões; configure a IA para maior precisão e leitura de PDFs digitalizados.'}</p>
+        <div class="card"><div class="card-h"><h2>2. Arquivos dos contratos</h2></div>
+          <p class="hint">PDF, Word (.docx), imagem (JPG ou PNG) ou texto. Cada arquivo tem os dados extraídos automaticamente (cliente, CPF/CNPJ, e-mail, valores, parcelas, vencimentos, encargos, área e escopo) e segue para revisão, ficando anexado ao contrato. Contratos digitalizados são lidos por OCR no próprio navegador, sem envio do documento a terceiros.</p>
           <div class="drop" data-drop="contratos" style="margin-top:14px">${icon('file')}<p style="margin-top:6px">Arraste um ou vários contratos</p><button class="btn sm" data-act="pick" data-k="contratos" style="margin-top:8px">Selecionar arquivos</button></div>
           <p class="hint" id="imp-status" style="margin-top:10px"></p></div>
         <div class="card"><div class="card-h"><h2>3. Backup</h2></div>
@@ -949,7 +950,7 @@ VIEWS.importar = {
 };
 function pick(kind) {
   const inp = $('#file-any');
-  inp.accept = { planilha: '.xlsx,.xls,.csv', contratos: '.pdf,.docx,.txt', backup: '.json' }[kind];
+  inp.accept = { planilha: '.xlsx,.xls,.csv', contratos: '.pdf,.docx,.txt,.jpg,.jpeg,.png,.webp', backup: '.json' }[kind];
   inp.multiple = kind === 'contratos'; inp.value = '';
   inp.onchange = () => handleFiles(kind, [...inp.files]);
   inp.click();
@@ -1064,14 +1065,34 @@ function aplicarImport(x) {
   db.contratos.push(c);
   x.ps.forEach(p => db.parcelas.push({ id: uid(), contratoId: c.id, cobrancas: [], ...p }));
 }
-async function extrairTexto(file) {
+let ocrWorker = null;
+async function ocr(imagens, status) {
+  await loadScript('https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js');
+  if (!ocrWorker) { status?.('preparando o OCR (primeira vez pode levar alguns segundos)…'); ocrWorker = await Tesseract.createWorker('por'); }
+  let t = '';
+  for (const [i, img] of imagens.entries()) { status?.(`reconhecendo texto, página ${i + 1} de ${imagens.length}…`); t += (await ocrWorker.recognize(img)).data.text + '\n'; }
+  return t;
+}
+async function extrairTexto(file, status) {
   if (/\.pdf$/i.test(file.name) || file.type === 'application/pdf') {
     await loadScript('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js');
     pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
     const pdf = await pdfjsLib.getDocument({ data: await file.arrayBuffer() }).promise; let t = '';
     for (let i = 1; i <= pdf.numPages; i++) { const pg = await pdf.getPage(i); const tc = await pg.getTextContent(); t += tc.items.map(it => it.str + (it.hasEOL ? '\n' : ' ')).join('') + '\n'; }
+    // PDF digitalizado (sem camada de texto): renderiza as páginas e aplica OCR.
+    if (t.replace(/\s/g, '').length < 60 * pdf.numPages) {
+      const imgs = [];
+      for (let i = 1; i <= Math.min(pdf.numPages, 25); i++) {
+        status?.(`preparando página ${i} para OCR…`);
+        const pg = await pdf.getPage(i), vp = pg.getViewport({ scale: 2.2 });
+        const cv = document.createElement('canvas'); cv.width = vp.width; cv.height = vp.height;
+        await pg.render({ canvasContext: cv.getContext('2d'), viewport: vp }).promise; imgs.push(cv);
+      }
+      const o = await ocr(imgs, status); if (o.replace(/\s/g, '').length > t.replace(/\s/g, '').length) { t = o; file._ocr = true; }
+    }
     return t;
   }
+  if (/\.(jpe?g|png|webp|bmp|tiff?)$/i.test(file.name) || /^image\//.test(file.type)) { file._ocr = true; return ocr([file], status); }
   if (/\.docx$/i.test(file.name)) {
     await loadScript('https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js');
     return (await mammoth.extractRawText({ arrayBuffer: await file.arrayBuffer() })).value;
@@ -1080,9 +1101,13 @@ async function extrairTexto(file) {
 }
 const NUM_EXT = { uma: 1, um: 1, duas: 2, dois: 2, tres: 3, quatro: 4, cinco: 5, seis: 6, sete: 7, oito: 8, nove: 9, dez: 10, onze: 11, doze: 12, treze: 13, quatorze: 14, catorze: 14, quinze: 15, dezesseis: 16, dezoito: 18, vinte: 20, vinteequatro: 24, trinta: 30, trintaeseis: 36 };
 function heuristica(texto) {
-  const t = texto.replace(/ /g, ' '), flat = t.replace(/\s+/g, ' ');
+  const t = texto.replace(/ /g, ' '), flat = t.replace(/\s+/g, ' ').replace(/([\w.+-])\s*@\s*([\w-])/g, '$1@$2');
   const r = { cliente: {}, parcelas: {}, entrada: {}, exito: {} };
   r.cliente.email = (flat.match(/[\w.+-]+@[\w-]+\.[\w.-]+/g) || []).find(e => !db.entidades.some(en => norm(en.email) === norm(e))) || '';
+  if (!r.cliente.email) { // OCR costuma ler "@" como "(D", "©" ou "(a)"
+    const m = flat.match(/e-?mail[:\s]*([\w.+-]+)\s*(?:@|\(D|\(@|\(a\)|©|®)\s*([\w-]+\.[a-z]{2,}(?:\.[a-z]{2})?)/i);
+    if (m) r.cliente.email = `${m[1]}@${m[2]}`.toLowerCase();
+  }
   const docs = (flat.match(/\b\d{2}\.?\d{3}\.?\d{3}\/?\d{4}-?\d{2}\b|\b\d{3}\.?\d{3}\.?\d{3}-?\d{2}\b/g) || []).filter(d => !db.entidades.some(e => onlyDigits(e.cnpj) === onlyDigits(d)));
   r.cliente.doc = docs.find(docOk) || docs[0] || '';
   const mNome = flat.match(/CONTRATANTE[S]?\s*[:,]?\s*(?:a\s+empresa\s+|o\s+senhor\s+|a\s+senhora\s+|sr\.?\s+|sra\.?\s+)?([A-ZÀ-Ý][A-Za-zÀ-ÿ0-9&.\s'-]{3,90}?)(?:,|\s+-\s+|\s+pessoa|\s+inscrit|\s+brasileir|\s+com sede|\s+portador)/);
@@ -1112,25 +1137,6 @@ function heuristica(texto) {
   r.area = Object.keys(area).find(k => area[k].test(flat) && db.areas.includes(k)) || Object.keys(area).find(k => area[k].test(flat)) || '';
   return r;
 }
-async function extrairIA(file, texto) {
-  const s = db.settings.ai;
-  const prompt = `Você recebe um contrato de prestação de serviços advocatícios (honorários) de um escritório brasileiro. Extraia os dados e responda SOMENTE com um objeto JSON válido, sem comentários, no formato:
-{"cliente":{"nome":"","doc":"CPF ou CNPJ","email":"","telefone":"","endereco":"","contato":""},"numero":"","area":"uma destas: ${db.areas.join(' | ')}","escopo":"descrição objetiva do objeto em até 400 caracteres","tipo":"fixo|mensal|exito|hibrido|avulso","valorTotal":0,"entrada":{"valor":0,"data":"AAAA-MM-DD"},"parcelas":{"quantidade":0,"valor":0,"primeiroVencimento":"AAAA-MM-DD","diaVencimento":0},"exito":{"pct":0,"descricao":""},"multaPct":0,"jurosPct":0,"reajuste":"IPCA|IGP-M|INPC|Nenhum","dataAssinatura":"AAAA-MM-DD","vigenciaFim":"AAAA-MM-DD","captador":"nome de quem indicou ou captou o cliente, se constar","alertas":["até 6 observações objetivas sobre riscos para a cobrança: ausência de cláusula de multa, juros ou correção, ausência de título executivo (art. 784, III, do CPC ou art. 24 da Lei 8.906/94), vencimentos indefinidos, escopo amplo ou impreciso, ausência de assinatura de testemunhas, êxito sem base de cálculo definida, cláusula de rescisão desfavorável, etc."]}
-O CONTRATADO é o escritório; o CONTRATANTE é o cliente. Use 0 ou "" quando a informação não constar. Valores numéricos em reais, sem formatação.`;
-  let doc;
-  if (/\.pdf$/i.test(file.name) && file.size < 20e6) {
-    const b64 = await new Promise(res => { const fr = new FileReader(); fr.onload = () => res(fr.result.split(',')[1]); fr.readAsDataURL(file); });
-    doc = { type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: b64 } };
-  } else doc = { type: 'text', text: 'CONTRATO:\n' + texto.slice(0, 180000) };
-  const r = await fetch('https://api.anthropic.com/v1/messages', {
-    method: 'POST',
-    headers: { 'content-type': 'application/json', 'x-api-key': s.apiKey, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
-    body: JSON.stringify({ model: s.model || 'claude-sonnet-5-5', max_tokens: 2500, messages: [{ role: 'user', content: [doc, { type: 'text', text: prompt }] }] })
-  });
-  if (!r.ok) throw new Error('IA: ' + ((await r.json().catch(() => ({})))?.error?.message || 'HTTP ' + r.status));
-  const j = await r.json(); const out = j.content.filter(b => b.type === 'text').map(b => b.text).join('');
-  return JSON.parse(out.slice(out.indexOf('{'), out.lastIndexOf('}') + 1));
-}
 function extracaoParaRascunho(x, file, origem) {
   const c = novoContrato();
   c.cliente = { nome: x.cliente?.nome || '', doc: x.cliente?.doc || '', email: x.cliente?.email || '', telefone: x.cliente?.telefone || '', endereco: x.cliente?.endereco || '', contato: x.cliente?.contato || '', emailCc: '' };
@@ -1151,37 +1157,29 @@ function extracaoParaRascunho(x, file, origem) {
   return { contrato: c, parcelas: ps, file, origem };
 }
 async function importarArquivos(files) {
-  const st = $('#imp-status'), ia = !!db.settings.ai.apiKey;
+  const st = $('#imp-status');
   for (const [i, f] of files.entries()) {
-    if (st) st.textContent = `Lendo ${i + 1} de ${files.length}: ${f.name}…`;
-    let texto = '', item;
-    try { texto = await extrairTexto(f); } catch (e) { console.warn(e); }
-    try {
-      if (ia) item = extracaoParaRascunho(await extrairIA(f, texto), f, 'extraído por IA');
-      else { if (!texto.trim()) throw new Error('arquivo sem texto legível (possivelmente digitalizado); configure a IA para lê-lo'); item = extracaoParaRascunho(heuristica(texto), f, 'extração automática'); }
-    } catch (e) {
-      item = extracaoParaRascunho(texto ? heuristica(texto) : {}, f, 'revisão manual'); item.erro = e.message;
-    }
+    const status = msg => { const el = $('#imp-status'); if (el) el.textContent = `Arquivo ${i + 1} de ${files.length} · ${f.name} · ${msg}`; };
+    status('lendo…');
+    let texto = '', item, erro = '';
+    try { texto = await extrairTexto(f, status); } catch (e) { console.warn(e); erro = 'Não foi possível ler o arquivo: ' + e.message; }
+    if (!erro && texto.replace(/\s/g, '').length < 40) erro = 'Nenhum texto legível foi reconhecido; preencha os dados manualmente a partir do arquivo anexado.';
+    item = extracaoParaRascunho(texto ? heuristica(texto) : {}, f, erro ? 'revisão manual' : (f._ocr ? 'reconhecidos por OCR' : 'extraídos automaticamente'));
+    if (erro) item.erro = erro;
+    else if (f._ocr) item.erro = 'Contrato digitalizado lido por OCR: confira com atenção valores, datas e documentos.';
     if (!item.contrato.cliente.nome) item.contrato.cliente.nome = f.name.replace(/\.[^.]+$/, '');
     ui.fila.push(item);
   }
   if (st) st.textContent = '';
   toast(`${files.length} arquivo(s) prontos para revisão.`, 'ok'); rerender();
 }
-async function analisarIA(id) {
-  const c = ctById(id); const f = await getFile(c.arquivoId); if (!f) return toast('Arquivo não encontrado.', 'err');
-  toast('Analisando o contrato…');
-  try { const x = await extrairIA(f, await extrairTexto(f).catch(() => '')); c.analiseIA = { em: new Date().toISOString(), alertas: (x.alertas || []).filter(Boolean).slice(0, 8) }; save(); toast('Análise concluída.', 'ok'); rerender(); }
-  catch (e) { toast(e.message, 'err'); }
-}
-
 /* ---------- Backup ---------- */
 async function gerarBackup() {
   const comArq = await confirmBox('Incluir os arquivos dos contratos anexados no backup? O arquivo ficará maior.', 'Incluir arquivos');
   const files = {};
   if (comArq) for (const id of await idbKeys('files')) { const f = await getFile(id); if (f) files[id] = { name: f.name, type: f.type, b64: await new Promise(res => { const fr = new FileReader(); fr.onload = () => res(fr.result.split(',')[1]); fr.readAsDataURL(f); }) }; }
   db.settings.ultimoBackup = new Date().toISOString(); await persist();
-  const copia = structuredClone(db); copia.settings.ai.apiKey = ''; copia.settings.webhook.token = copia.settings.webhook.token ? '(removido)' : '';
+  const copia = structuredClone(db);
   download(`backup-honorarios-${today()}.json`, JSON.stringify({ app: 'honorarios-contratos', versao: 1, geradoEm: new Date().toISOString(), db: copia, files }), 'application/json');
   toast('Backup gerado. Guarde-o em local seguro, pois contém dados de clientes.', 'ok'); rerender();
 }
@@ -1189,8 +1187,7 @@ async function restaurarBackup(file) {
   const j = JSON.parse(await lerTexto(file));
   if (j.app !== 'honorarios-contratos' || !j.db) throw new Error('arquivo de backup não reconhecido');
   if (!await confirmBox(`Restaurar o backup de ${fdatetime(j.geradoEm)}? A base atual deste navegador (${db.contratos.length} contratos) será substituída.`, 'Substituir base', true)) return;
-  const keep = { ai: db.settings.ai, webhook: db.settings.webhook };
-  db = migrate(j.db); db.settings.ai = keep.ai; if (db.settings.webhook.token === '(removido)') db.settings.webhook.token = keep.webhook.token;
+  db = migrate(j.db);
   for (const [id, f] of Object.entries(j.files || {})) { const bin = Uint8Array.from(atob(f.b64), ch => ch.charCodeAt(0)); await saveFile(id, new File([bin], f.name, { type: f.type })); }
   await persist(); toast('Backup restaurado.', 'ok'); location.hash = '#/painel'; rerender();
 }
@@ -1249,22 +1246,6 @@ function formPessoa(id) {
 }
 
 /* ---------- Configurações ---------- */
-const APPS_SCRIPT = `// Google Apps Script: envio de cobranças pela conta Google Workspace do escritório
-// 1. Acesse script.google.com com a conta que enviará os e-mails (ex.: financeiro@escritorio.com.br)
-// 2. Cole este código, altere o TOKEN e clique em Implantar > Nova implantação > App da Web
-//    Executar como: Eu | Quem pode acessar: Qualquer pessoa
-// 3. Copie a URL gerada e cole no campo "URL do Apps Script" do sistema.
-const TOKEN = 'TROQUE-POR-UMA-SENHA-LONGA';
-
-function doPost(e) {
-  const d = JSON.parse(e.postData.contents);
-  if (d.token !== TOKEN) return ContentService.createTextOutput('negado');
-  const opts = { htmlBody: d.html, name: d.fromName || undefined };
-  if (d.cc) opts.cc = d.cc;
-  if (d.replyTo) opts.replyTo = d.replyTo;
-  GmailApp.sendEmail(d.to, d.subject, d.text, opts);
-  return ContentService.createTextOutput('ok');
-}`;
 VIEWS.config = {
   title: 'Configurações',
   render() {
@@ -1272,15 +1253,10 @@ VIEWS.config = {
     return pageH('Configurações') + `<div class="grid g2">
       <div class="card"><div class="card-h"><div><h2>Envio de e-mails</h2><p class="hint">Define o que acontece ao apertar o botão de cobrança.</p></div></div>
         <div class="field"><label>Canal de envio</label><select data-s="emailMode">${optList(Object.entries(MODOS_EMAIL), m)}</select></div>
-        <div ${m === 'webhook' ? '' : 'hidden'} style="margin-top:12px">
-          <div class="notice">${icon('mail')}<div>Envio direto, sem abrir nenhuma janela, a partir da conta Google Workspace ou Gmail do escritório, com o e-mail registrado na pasta de enviados. Gratuito.</div></div>
-          <div class="field"><label>URL do Apps Script</label><input type="url" data-s="webhook.url" value="${esc(s.webhook.url)}" placeholder="https://script.google.com/macros/s/.../exec"></div>
-          <div class="field" style="margin-top:10px"><label>Token (o mesmo definido no script)</label><input type="password" data-s="webhook.token" value="${esc(s.webhook.token)}"></div>
-          <details style="margin-top:10px"><summary class="hint" style="cursor:pointer">Ver código do Apps Script</summary><div class="code" style="margin-top:8px">${esc(APPS_SCRIPT)}</div><button class="btn sm" style="margin-top:8px" data-act="copy-script">Copiar código</button></details></div>
         <div ${m === 'emailjs' ? '' : 'hidden'} style="margin-top:12px">
-          <p class="hint" style="margin-bottom:10px">Crie conta em emailjs.com, conecte o e-mail do escritório e um modelo com as variáveis {{to_email}}, {{cc_email}}, {{subject}}, {{{message_html}}} e {{reply_to}}.</p>
+          <div class="notice">${icon('mail')}<div>Permite que o botão envie a cobrança sem abrir o Outlook, inclusive em lote. Crie uma conta gratuita em emailjs.com, adicione o serviço <b>Outlook</b> (ou Microsoft 365) com a conta do financeiro e crie um modelo cujo destinatário seja {{to_email}}, com cópia {{cc_email}}, assunto {{subject}}, corpo {{{message_html}}} e resposta para {{reply_to}}. As mensagens ficam registradas nos itens enviados.</div></div>
           <div class="form-grid"><div class="field"><label>Service ID</label><input type="text" data-s="emailjs.serviceId" value="${esc(s.emailjs.serviceId)}"></div><div class="field"><label>Template ID</label><input type="text" data-s="emailjs.templateId" value="${esc(s.emailjs.templateId)}"></div><div class="field"><label>Public key</label><input type="text" data-s="emailjs.publicKey" value="${esc(s.emailjs.publicKey)}"></div></div></div>
-        ${DIRETO(m) ? '' : '<p class="hint" style="margin-top:10px">Neste canal o botão abre a mensagem já preenchida (destinatário, assunto, texto, dados bancários e PIX); basta confirmar o envio. Para envio sem nenhuma confirmação, inclusive em lote, escolha o envio direto.</p>'}
+        ${DIRETO(m) ? '' : '<p class="hint" style="margin-top:10px">Neste canal o botão abre a mensagem já preenchida (destinatário, assunto, texto, dados bancários e PIX); basta confirmar o envio. Se a cobrança for longa demais para o Outlook instalado, o texto é copiado automaticamente e basta colá-lo (Ctrl+V). Para envio sem nenhuma confirmação, inclusive em lote, escolha o envio direto.</p>'}
         <div class="form-grid" style="margin-top:14px;grid-template-columns:repeat(2,minmax(0,1fr))">
           <div class="field"><label>Nome do remetente / assinatura</label><input type="text" data-s="remetente" value="${esc(s.remetente)}"></div>
           <div class="field"><label>Cargo ou setor</label><input type="text" data-s="cargo" value="${esc(s.cargo)}"></div>
@@ -1297,8 +1273,7 @@ VIEWS.config = {
           <div class="field"><label>Juros de mora (% ao mês)</label><input type="number" step="0.1" data-s="jurosPct" value="${s.jurosPct}"></div>
           <div class="field span2"><label>Cidade para recibos</label><input type="text" data-s="cidade" value="${esc(s.cidade)}"></div>
         </div>
-        <div class="card-h" style="margin-top:22px"><div><h2>Leitura de contratos por IA</h2><p class="hint">Opcional. Extrai dados de PDFs (inclusive digitalizados) e aponta riscos nas cláusulas. A chave fica somente neste navegador; o conteúdo do contrato é enviado à API da Anthropic.</p></div></div>
-        <div class="form-grid" style="grid-template-columns:repeat(2,minmax(0,1fr))"><div class="field"><label>Chave da API (Anthropic)</label><input type="password" data-s="ai.apiKey" value="${esc(s.ai.apiKey)}" placeholder="sk-ant-..."></div><div class="field"><label>Modelo</label><input type="text" data-s="ai.model" value="${esc(s.ai.model)}"></div></div></div>
+</div>
       <div class="card" style="grid-column:1/-1"><div class="card-h"><div><h2>Modelos de mensagem</h2><p class="hint">Variáveis disponíveis: ${PLACEHOLDERS.map(p => `<code>{${p}}</code>`).join(' ')}</p></div><button class="btn sm" data-act="tpl-reset">Restaurar textos padrão</button></div>
         <div class="grid g2">${Object.entries(s.templates).map(([k, t]) => `<div><div class="field"><label>${esc(t.nome)} · assunto</label><input type="text" data-s="templates.${k}.assunto" value="${esc(t.assunto)}"></div><div class="field" style="margin-top:8px"><label>Texto</label><textarea rows="12" data-s="templates.${k}.corpo">${esc(t.corpo)}</textarea></div></div>`).join('')}</div></div>
       <div class="card"><div class="card-h"><div><h2>Segurança</h2><p class="hint">Criptografa a base e os arquivos anexos neste navegador (AES-256). Sem a senha não há como recuperar os dados; mantenha backups.</p></div></div>
@@ -1421,7 +1396,6 @@ async function salvarContrato() {
     cliente: { nome, doc: g('cl_doc').value.trim(), email: g('cl_email').value.trim(), emailCc: g('cl_emailCc').value.trim(), telefone: g('cl_tel').value.trim(), contato: g('cl_contato').value.trim(), endereco: g('cl_end').value.trim() }
   });
   if (['exito', 'hibrido'].includes(c.tipo)) c.exito = { pct: num(g('ex_pct').value), base: num(g('ex_base').value), prob: num(g('ex_prob').value), data: g('ex_data').value, desc: g('ex_desc').value.trim() }; else c.exito = null;
-  if (!F.novo && orig.analiseIA) c.analiseIA = orig.analiseIA; else if (F.novo && F.filaIdx != null) c.analiseIA = ui.fila[F.filaIdx]?.contrato.analiseIA;
   c.captacao = F.captacao.map(x => {
     if (x.pessoaId === '__new') { if (!x.novoNome?.trim()) return null; const pe = pessoaPorNome(x.novoNome, x.novoTipo || 'parceiro', true); return { pessoaId: pe.id, tipo: 'pct', valor: num(x.valor) }; }
     return x.pessoaId ? { pessoaId: x.pessoaId, tipo: x.tipo || 'pct', valor: num(x.valor) } : null;
@@ -1645,7 +1619,6 @@ const ACT = {
   reneg: d => formReneg(d.id),
   renovar: d => formRenovar(d.id),
   'ver-arquivo': async d => { const f = await getFile(ctById(d.id).arquivoId); if (!f) return toast('Arquivo não encontrado neste navegador.', 'err'); window.open(URL.createObjectURL(f), '_blank'); },
-  'ia-analisar': d => analisarIA(d.id),
   'fila-send': () => enviarLote(filaHoje()),
   'lote-sel': () => enviarLote([...ui.sel].map(id => db.parcelas.find(p => p.id === id)).filter(Boolean).map(p => ({ p, tipo: tipoCobranca(p) }))),
   'sel-all': (d, el) => { $$('[data-sel]').forEach(c => { c.checked = el.checked; el.checked ? ui.sel.add(c.dataset.sel) : ui.sel.delete(c.dataset.sel); }); updLote(); },
@@ -1675,7 +1648,6 @@ const ACT = {
   'demo-off': () => removerDemo(),
   wipe: async () => { if (!await confirmBox('Apagar definitivamente todos os contratos, parcelas, cadastros e arquivos deste navegador?', 'Apagar tudo', true)) return; if (!await confirmBox('Confirma? Esta ação não pode ser desfeita.', 'Sim, apagar', true)) return; const s = db.settings; db = defaultDB(); db.settings = { ...db.settings, ...s }; for (const k of await idbKeys('files')) await idbDel('files', k); await persist(); rerender(); },
   'tpl-reset': async () => { if (!await confirmBox('Restaurar os textos padrão dos modelos de mensagem?')) return; db.settings.templates = structuredClone(TEMPLATES_PADRAO); save(); rerender(); },
-  'copy-script': () => navigator.clipboard.writeText(APPS_SCRIPT).then(() => toast('Código copiado.', 'ok')),
   'teste-email': async () => {
     const para = db.settings.replyTo || prompt('Enviar o teste para qual e-mail?'); if (!para) return;
     try { await transporte({ para, cc: '', assunto: 'Teste de envio · Honorários', corpo: 'Este é um e-mail de teste do sistema de gestão de honorários. Se você o recebeu, o canal de envio está configurado corretamente.' }); toast(DIRETO(db.settings.emailMode) ? `Teste enviado para ${para}. Confira a caixa de entrada.` : 'Mensagem de teste aberta.', 'ok'); }
