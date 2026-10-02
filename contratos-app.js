@@ -155,11 +155,13 @@ async function deriveKey(pass, salt) {
 async function encBuf(buf, key = cryptoKey) { const iv = crypto.getRandomValues(new Uint8Array(12)); return { iv, ct: await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, buf) }; }
 const decBuf = (rec, key = cryptoKey) => crypto.subtle.decrypt({ name: 'AES-GCM', iv: rec.iv }, key, rec.ct);
 async function saveFile(id, file, key = cryptoKey) {
+  if (REMOTO.ativo) return uploadArquivo(id, file);
   const buf = file instanceof ArrayBuffer ? file : await file.arrayBuffer();
   const rec = { name: file.name || 'arquivo', type: file.type || 'application/octet-stream', size: buf.byteLength, enc: !!key, data: key ? await encBuf(buf, key) : buf };
   await idbPut('files', id, rec);
 }
 async function getFile(id) {
+  if (REMOTO.ativo) return baixarArquivo(id);
   const rec = await idbGet('files', id); if (!rec) return null;
   const buf = rec.enc ? await decBuf(rec.data) : rec.data;
   return new File([buf], rec.name, { type: rec.type });
@@ -302,6 +304,7 @@ const ui = {
 let saveTimer = null;
 function save() { clearTimeout(saveTimer); setSave('Salvando…'); saveTimer = setTimeout(persist, 250); }
 async function persist() {
+  if (REMOTO.ativo) return persistRemoto();
   try {
     const json = JSON.stringify(db);
     if (cryptoKey) await idbPut('kv', 'db', { enc: 1, ...(await encBuf(new TextEncoder().encode(json))) });
@@ -649,7 +652,7 @@ function updateNav() {
   $('#n-fila').textContent = ui.fila.length || '';
   $('#btn-lock').hidden = !cryptoKey;
 }
-const EYEBROW = { painel: 'Visão geral', contratos: 'Carteira', contrato: 'Contrato', recebiveis: 'Régua de cobrança', prognostico: 'Planejamento', comissoes: 'Captação', verificacao: 'Conformidade', importar: 'Dados', cadastros: 'Administração', config: 'Administração' };
+const EYEBROW = { painel: 'Visão geral', contratos: 'Carteira', contrato: 'Contrato', recebiveis: 'Régua de cobrança', prognostico: 'Planejamento', comissoes: 'Captação', verificacao: 'Conformidade', importar: 'Dados', cadastros: 'Administração', config: 'Administração', usuarios: 'Administração' };
 const pageH = (t, sub, actions = '') => `<div class="page-h"><div><div class="eyebrow">${EYEBROW[ui.route] || 'Honorários'}</div><h1>${t}</h1>${sub ? `<p class="sub">${sub}</p>` : ''}</div><div class="actions">${actions}</div></div>`;
 const emptyBox = (t, d, a = '') => `<div class="empty"><h3>${t}</h3><p>${d}</p>${a ? `<div class="actions" style="margin-top:18px">${a}</div>` : ''}</div>`;
 function spark(vals) {
@@ -1292,7 +1295,8 @@ async function importarArquivos(files) {
 async function gerarBackup() {
   const comArq = await confirmBox('Incluir os arquivos dos contratos anexados no backup? O arquivo ficará maior.', 'Incluir arquivos');
   const files = {};
-  if (comArq) for (const id of await idbKeys('files')) { const f = await getFile(id); if (f) files[id] = { name: f.name, type: f.type, b64: await new Promise(res => { const fr = new FileReader(); fr.onload = () => res(fr.result.split(',')[1]); fr.readAsDataURL(f); }) }; }
+  const ids = REMOTO.ativo ? db.contratos.map(c => c.arquivoId).filter(Boolean) : await idbKeys('files');
+  if (comArq) for (const id of ids) { const f = await getFile(id); if (f) files[id] = { name: f.name, type: f.type, b64: await new Promise(res => { const fr = new FileReader(); fr.onload = () => res(fr.result.split(',')[1]); fr.readAsDataURL(f); }) }; }
   db.settings.ultimoBackup = new Date().toISOString(); await persist();
   const copia = structuredClone(db); copia.settings.asaas.token = '';
   download(`backup-honorarios-${today()}.json`, JSON.stringify({ app: 'honorarios-contratos', versao: 1, geradoEm: new Date().toISOString(), db: copia, files }), 'application/json');
@@ -1301,6 +1305,12 @@ async function gerarBackup() {
 async function restaurarBackup(file) {
   const j = JSON.parse(await lerTexto(file));
   if (j.app !== 'honorarios-contratos' || !j.db) throw new Error('arquivo de backup não reconhecido');
+  if (REMOTO.ativo) {
+    if (!await confirmBox(`Importar para o servidor o backup de ${fdatetime(j.geradoEm)} (${j.db.contratos?.length || 0} contratos)? A base atual do servidor será substituída para todos os usuários.`, 'Importar e substituir', true)) return;
+    toast('Enviando a base ao servidor…');
+    const r = await apiR('importar', { method: 'POST', body: { db: j.db, files: j.files || {} } });
+    await recarregar(); toast(`Importação concluída: ${r.contratos} contratos e ${r.arquivos} arquivo(s).`, 'ok'); location.hash = '#/painel'; return;
+  }
   if (!await confirmBox(`Restaurar o backup de ${fdatetime(j.geradoEm)}? A base atual deste navegador (${db.contratos.length} contratos) será substituída.`, 'Substituir base', true)) return;
   const tokenAtual = db.settings.asaas?.token; db = migrate(j.db); if (!db.settings.asaas.token) db.settings.asaas.token = tokenAtual || '';
   for (const [id, f] of Object.entries(j.files || {})) { const bin = Uint8Array.from(atob(f.b64), ch => ch.charCodeAt(0)); await saveFile(id, new File([bin], f.name, { type: f.type })); }
@@ -1392,10 +1402,11 @@ VIEWS.config = {
       <div class="card" style="grid-column:1/-1"><div class="card-h"><div><h2>Modelos de mensagem</h2><p class="hint">Variáveis disponíveis: ${PLACEHOLDERS.map(p => `<code>{${p}}</code>`).join(' ')}</p></div><button class="btn sm" data-act="tpl-reset">Restaurar textos padrão</button></div>
         <div class="grid g2">${Object.entries(s.templates).map(([k, t]) => `<div><div class="field"><label>${esc(t.nome)} · assunto</label><input type="text" data-s="templates.${k}.assunto" value="${esc(t.assunto)}"></div><div class="field" style="margin-top:8px"><label>Texto</label><textarea rows="12" data-s="templates.${k}.corpo">${esc(t.corpo)}</textarea></div></div>`).join('')}</div></div>
       ${cardAsaas()}
-      <div class="card"><div class="card-h"><div><h2>Segurança</h2><p class="hint">Criptografa a base e os arquivos anexos neste navegador (AES-256). Sem a senha não há como recuperar os dados; mantenha backups.</p></div></div>
+      ${REMOTO.ativo ? cardConta() : `      <div class="card"><div class="card-h"><div><h2>Segurança</h2><p class="hint">Criptografa a base e os arquivos anexos neste navegador (AES-256). Sem a senha não há como recuperar os dados; mantenha backups.</p></div></div>
         ${cryptoKey ? `<p class="t-success" style="margin-bottom:12px">${icon('lock')} Criptografia ativa.</p><div class="actions"><button class="btn sm" data-act="senha">Alterar senha</button><button class="btn sm" data-act="senha-off">Remover senha</button><button class="btn sm" data-act="lock-now">Bloquear agora</button></div>` : `<div class="actions"><button class="btn sm primary" data-act="senha">${icon('lock', 'i-sm')} Proteger com senha</button></div>`}</div>
       <div class="card"><div class="card-h"><div><h2>Dados</h2><p class="hint">Armazenados apenas neste navegador. ${db.settings.ultimoBackup ? `Último backup: ${fdatetime(db.settings.ultimoBackup)}.` : 'Nenhum backup realizado.'}</p></div></div>
         <div class="actions"><button class="btn sm" data-act="backup">${icon('download', 'i-sm')} Backup</button><button class="btn sm" data-act="pick" data-k="backup">${icon('upload', 'i-sm')} Restaurar</button>${db.contratos.some(c => c.demo) ? '<button class="btn sm" data-act="demo-off">Remover dados de exemplo</button>' : '<button class="btn sm" data-act="demo">Carregar dados de exemplo</button>'}<button class="btn sm danger" data-act="wipe">Apagar tudo</button></div></div>
+`}
     </div>`;
   }
 };
@@ -1518,7 +1529,7 @@ async function salvarContrato() {
   }).filter(Boolean);
   if (!c.valorTotal) c.valorTotal = round2(F.parcelas.filter(valida).reduce((s, p) => s + p.valor, 0));
   const file = g('arquivo').files[0] || F.file;
-  if (file) { const fid = uid(); await saveFile(fid, file); if (c.arquivoId) await idbDel('files', c.arquivoId); c.arquivoId = fid; c.arquivoNome = file.name; }
+  if (file) { const fid = uid(); await saveFile(fid, file); if (c.arquivoId) await delFile(c.arquivoId); c.arquivoId = fid; c.arquivoNome = file.name; }
   if (!orig) db.contratos.push(c);
   const ids = new Set(F.parcelas.filter(p => p.id).map(p => p.id));
   db.parcelas = db.parcelas.filter(p => p.contratoId !== c.id || ids.has(p.id) || p.status === 'paga');
@@ -1648,9 +1659,10 @@ function imprimirDemonstrativo(pid) {
    ========================================================= */
 const NF_ST = { SCHEDULED: 'Agendada', SYNCHRONIZED: 'Enviada à prefeitura', AUTHORIZED: 'Emitida', PROCESSING_CANCELLATION: 'Cancelando', CANCELED: 'Cancelada', CANCELLATION_DENIED: 'Cancelamento negado', ERROR: 'Erro', ERRO: 'Erro' };
 const BOL_ST = { PENDING: 'Aguardando pagamento', RECEIVED: 'Pago', CONFIRMED: 'Pago (compensando)', OVERDUE: 'Vencido', REFUNDED: 'Estornado', DELETED: 'Cancelado', RECEIVED_IN_CASH: 'Pago em dinheiro' };
-const asaasOk = () => { const a = db?.settings.asaas; return !!(a && a.ativo && a.url && a.token); };
+const asaasOk = () => { const a = db?.settings.asaas; if (!a || !a.ativo) return false; return REMOTO.ativo ? podeEscrever() : !!(a.url && a.token); };
 const boletoAtivo = p => p?.boleto && !['DELETED', 'REFUNDED'].includes(p.boleto.status) ? p.boleto : null;
 async function api(path, opt = {}) {
+  if (REMOTO.ativo) return apiR('asaas' + path, opt);
   const a = db.settings.asaas;
   let r;
   try { r = await fetch(a.url.replace(/\/+$/, '') + path, { method: opt.method || 'GET', headers: { 'Content-Type': 'application/json', 'x-app-token': a.token }, body: opt.body ? JSON.stringify(opt.body) : undefined }); }
@@ -1768,7 +1780,9 @@ async function cancelarNota(pid) {
 }
 let syncando = false;
 async function sincronizar(o = {}) {
-  if (!asaasOk() || syncando) return; syncando = true;
+  if (!asaasOk() || syncando) return;
+  if (REMOTO.ativo) return sincronizarRemoto(o);
+  syncando = true;
   try {
     const a = db.settings.asaas, r = await api('/eventos?desde=' + encodeURIComponent(a.ultimoEvento || ''));
     let baixas = 0, notas = 0;
@@ -1822,14 +1836,15 @@ async function buscarFiscal(tipo) {
   } catch (e) { toast('Busca falhou: ' + e.message, 'err'); }
 }
 function cardAsaas() {
+  if (!ehAdmin()) return '';
   const a = db.settings.asaas, n = a.nf;
   const f = (k, l, v, extra = '', cls = '') => `<div class="field ${cls}"><label>${l}</label><input ${extra} data-s="asaas.${k}" value="${esc(v ?? '')}"></div>`;
-  return `<div class="card" style="grid-column:1/-1"><div class="card-h"><div><h2>Boleto bancário e nota fiscal · Asaas</h2><p class="hint">Boletos registrados com PIX, NFS-e de Belo Horizonte e baixa automática dos pagamentos. A chave da API do Asaas fica no serviço intermediário, nunca neste navegador. <a href="https://github.com/viniciuspapapapa/viniciuspapapapa.github.io/blob/main/asaas-worker/LEIA-ME.md" target="_blank" rel="noopener">Guia de configuração</a></p></div>
+  return `<div class="card" style="grid-column:1/-1"><div class="card-h"><div><h2>Boleto bancário e nota fiscal · Asaas</h2><p class="hint">Boletos registrados com PIX, NFS-e de Belo Horizonte e baixa automática dos pagamentos. A chave da API do Asaas fica no serviço intermediário, nunca neste navegador. <a href="https://github.com/viniciuspapapapa/viniciuspapapapa.github.io/blob/main/${REMOTO.ativo ? 'servidor/LEIA-ME.md' : 'asaas-worker/LEIA-ME.md'}" target="_blank" rel="noopener">Guia de configuração</a></p></div>
       <div class="actions"><button class="btn sm" data-act="asaas-teste">Testar conexão</button><button class="btn sm" data-act="asaas-sync">${icon('repeat', 'i-sm')} Sincronizar agora</button></div></div>
     <div class="form-grid">
       <label class="check span3"><input type="checkbox" data-s="asaas.ativo" ${a.ativo ? 'checked' : ''}> Ativar a integração com o Asaas</label>
-      ${f('url', 'URL do serviço intermediário', a.url, 'type="url" placeholder="https://honorarios-asaas.SEU-USUARIO.workers.dev"', 'span2')}
-      ${f('token', 'Senha do serviço (APP_TOKEN)', a.token, 'type="password" autocomplete="off"')}
+      ${REMOTO.ativo ? `<div class="field span3"><label>Endereço do aviso de pagamento (cadastre em Asaas > Integrações > Webhooks)</label><div class="actions"><code class="code" style="padding:8px 12px">${esc(location.origin + location.pathname.replace(/[^/]*$/, '') + 'api/asaas/webhook')}</code><button class="btn sm" data-act="copiar" data-txt="${esc(location.origin + location.pathname.replace(/[^/]*$/, '') + 'api/asaas/webhook')}">Copiar</button></div><p class="hint">A chave da API e o token do webhook ficam no arquivo de configuração do servidor, nunca no navegador.</p></div>` : `${f('url', 'URL do serviço intermediário', a.url, 'type="url" placeholder="https://honorarios-asaas.SEU-USUARIO.workers.dev"', 'span2')}
+      ${f('token', 'Senha do serviço (APP_TOKEN)', a.token, 'type="password" autocomplete="off"')}`}
       <div class="field"><label>CNPJ da conta Asaas</label><select data-s="asaas.entidadeId">${optList(db.entidades.map(e => [e.id, e.fantasia || e.razao]), a.entidadeId, 'Qualquer entidade')}</select></div>
       <label class="check"><input type="checkbox" data-s="asaas.gerarAoCobrar" ${a.gerarAoCobrar ? 'checked' : ''}> Gerar boleto automaticamente ao enviar cobrança</label>
       <label class="check"><input type="checkbox" data-s="asaas.nfAoPagar" ${a.nfAoPagar ? 'checked' : ''}> Emitir NFS-e automaticamente ao confirmar o pagamento</label>
@@ -1921,6 +1936,10 @@ async function removerSenha() {
 const ACT = {
   'nav-open': () => document.body.classList.add('nav-open'),
   palette: () => openPalette(),
+  sair: () => sair(),
+  'minha-senha': () => formSenhaConta(false),
+  'usr-edit': d => formUsuario(d.id),
+  'usr-aba': d => { ui.f.usr = d.k; rerender(); },
   boleto: d => modalBoleto(d.id),
   nota: d => modalNota(d.id),
   'bol-cancelar': d => cancelarBoleto(d.id),
@@ -1945,7 +1964,7 @@ const ACT = {
   'ct-new': () => formContrato(),
   'ct-edit': d => formContrato(d.id),
   'ct-save': () => salvarContrato(),
-  'ct-del': async d => { const c = ctById(d.id); if (!await confirmBox(`Excluir o contrato de ${c.cliente.nome}, com todas as parcelas e o histórico de cobranças?`, 'Excluir', true)) return; db.contratos = db.contratos.filter(x => x.id !== d.id); db.parcelas = db.parcelas.filter(p => p.contratoId !== d.id); if (c.arquivoId) await idbDel('files', c.arquivoId); log('contrato-excluido', c.cliente.nome); save(); location.hash = '#/contratos'; },
+  'ct-del': async d => { const c = ctById(d.id); if (!await confirmBox(`Excluir o contrato de ${c.cliente.nome}, com todas as parcelas e o histórico de cobranças?`, 'Excluir', true)) return; db.contratos = db.contratos.filter(x => x.id !== d.id); db.parcelas = db.parcelas.filter(p => p.contratoId !== d.id); if (c.arquivoId) await delFile(c.arquivoId); log('contrato-excluido', c.cliente.nome); save(); location.hash = '#/contratos'; },
   'gerar-cron': () => gerarCronForm(),
   'cron-add': () => { const last = F.parcelas[F.parcelas.length - 1]; F.parcelas.push({ id: null, desc: 'Parcela', venc: last ? addMonthsISO(last.venc, 1) : addMonthsISO(today(), 1), valor: last?.valor || 0, status: 'aberta', cobrancas: [] }); renderCron(); },
   'cron-del': d => { F.parcelas.splice(+d.i, 1); renderCron(); },
@@ -2032,18 +2051,249 @@ document.addEventListener('keydown', e => {
   if (e.key === 'Escape' && $('#modal-root').innerHTML) closeModal();
 });
 
+
+/* =========================================================
+   MODO SERVIDOR (Hostinger): login, perfis e sincronização
+   ========================================================= */
+const REMOTO = { ativo: false, usuario: null, ver: {}, snap: null, rev: 0, gravando: null, pendente: false };
+const PERFIL_NOME = { admin: 'Administrador', financeiro: 'Financeiro', advogado: 'Advogado responsável', captador: 'Captador / parceiro' };
+const podeEscrever = () => !REMOTO.ativo || ['admin', 'financeiro'].includes(REMOTO.usuario?.perfil);
+const ehAdmin = () => !REMOTO.ativo || REMOTO.usuario?.perfil === 'admin';
+async function apiR(path, opt = {}) {
+  const form = opt.body instanceof FormData;
+  let r;
+  try {
+    r = await fetch('api/' + path, { method: opt.method || 'GET', credentials: 'same-origin', cache: 'no-store',
+      headers: { ...(opt.body && !form ? { 'Content-Type': 'application/json' } : {}), ...(opt.method && opt.method !== 'GET' ? { 'X-Honorarios': '1' } : {}) },
+      body: form ? opt.body : opt.body ? JSON.stringify(opt.body) : undefined });
+  } catch (e) { const er = new Error('sem conexão com o servidor'); er.status = 0; throw er; }
+  if (opt.blob && r.ok) return r.blob();
+  const j = await r.json().catch(() => ({}));
+  if (r.status === 401 && !opt.semLogin) { mostrarLogin('Sua sessão expirou. Entre novamente.'); }
+  if (!r.ok) { const e = new Error(j.erro || ('erro ' + r.status)); e.status = r.status; throw e; }
+  return j;
+}
+function tirarFoto() {
+  const f = {};
+  ['contratos', 'parcelas', 'pessoas', 'entidades'].forEach(c => f[c] = new Map(db[c].map(x => [x.id, JSON.stringify(x)])));
+  f.comissoes = new Map(Object.entries(db.comissoesPagas || {}).map(([k, v]) => [k, JSON.stringify(v)]));
+  f.settings = JSON.stringify(db.settings); f.areas = JSON.stringify(db.areas);
+  REMOTO.snap = f;
+}
+function aplicarDados(r) {
+  REMOTO.usuario = r.usuario; REMOTO.ver = r.versoes || {}; REMOTO.rev = r.rev;
+  const d = r.db; if (!d.areas) delete d.areas;
+  db = migrate(d); tirarFoto();
+}
+async function recarregar() { aplicarDados(await apiR('dados')); aplicarPerfil(); rerender(); }
+async function persistRemoto() {
+  if (!REMOTO.snap) return;
+  if (!podeEscrever()) { setSave('Somente consulta'); return; }
+  if (REMOTO.gravando) { REMOTO.pendente = true; return; }
+  const up = {}, del = {}, enviados = {}; let n = 0;
+  const dif = (col, itens, foto) => {
+    const vistos = new Set();
+    for (const [id, obj] of itens) {
+      vistos.add(id); const j = JSON.stringify(obj);
+      if (foto.get(id) !== j) { (up[col] ||= []).push({ id, dados: obj, versao: REMOTO.ver[col]?.[id] ?? null }); (enviados[col] ||= new Map()).set(id, j); n++; }
+    }
+    for (const id of foto.keys()) if (!vistos.has(id)) { (del[col] ||= []).push(id); n++; }
+  };
+  ['contratos', 'parcelas', 'pessoas', 'entidades'].forEach(c => dif(c, db[c].map(x => [x.id, x]), REMOTO.snap[c]));
+  dif('comissoes', Object.entries(db.comissoesPagas || {}), REMOTO.snap.comissoes);
+  const body = { upserts: up, deletes: del };
+  const st = JSON.stringify(db.settings), ar = JSON.stringify(db.areas);
+  if (st !== REMOTO.snap.settings) { body.settings = db.settings; n++; }
+  if (ar !== REMOTO.snap.areas) { body.areas = db.areas; n++; }
+  if (!n) { setSave('Salvo no servidor'); return; }
+  setSave('Salvando no servidor…');
+  REMOTO.gravando = apiR('sync', { method: 'POST', body });
+  try {
+    const r = await REMOTO.gravando;
+    for (const [c, vs] of Object.entries(r.versoes || {})) for (const [id, v] of Object.entries(vs)) (REMOTO.ver[c] ||= {})[id] = v;
+    for (const [c, m] of Object.entries(enviados)) for (const [id, j] of m) REMOTO.snap[c].set(id, j);
+    for (const [c, ids] of Object.entries(del)) for (const id of ids) { REMOTO.snap[c].delete(id); delete REMOTO.ver[c]?.[id]; }
+    if (body.settings) REMOTO.snap.settings = st;
+    if (body.areas) REMOTO.snap.areas = ar;
+    REMOTO.rev = r.rev; setSave('Salvo no servidor');
+  } catch (e) {
+    if (e.status === 409) { toast(e.message, 'err'); REMOTO.gravando = null; await recarregar(); return; }
+    if (e.status === 401) { setSave('Sessão expirada', true); return; }
+    setSave('Erro ao salvar; nova tentativa em instantes', true);
+    toast('Não foi possível salvar no servidor (' + e.message + '). A alteração será reenviada automaticamente.', 'err');
+    setTimeout(() => persistRemoto(), 15000);
+  } finally {
+    REMOTO.gravando = null;
+    if (REMOTO.pendente) { REMOTO.pendente = false; persistRemoto(); }
+  }
+}
+async function uploadArquivo(id, file) {
+  const fd = new FormData(); fd.append('id', id); fd.append('arquivo', file, file.name || 'arquivo');
+  await apiR('arquivos', { method: 'POST', body: fd });
+}
+async function baixarArquivo(id) {
+  try { const b = await apiR('arquivos/' + id, { blob: true }); const c = db.contratos.find(x => x.arquivoId === id); return new File([b], c?.arquivoNome || 'arquivo', { type: b.type }); }
+  catch (e) { return null; }
+}
+async function delFile(id) { if (REMOTO.ativo) { try { await apiR('arquivos/' + id, { method: 'DELETE' }); } catch (e) { } } else await idbDel('files', id); }
+async function sincronizarRemoto(o) {
+  syncando = true;
+  try {
+    const a = db.settings.asaas, r = await apiR('asaas/eventos?desde=' + encodeURIComponent(a.ultimoEvento || ''));
+    const baixas = (r.eventos || []).filter(e => e.evento === 'PAYMENT_RECEIVED' || e.evento === 'PAYMENT_CONFIRMED').length;
+    const notas = (r.eventos || []).filter(e => e.evento === 'INVOICE_AUTHORIZED' || (e.evento === 'NF_AUTO' && e.nota?.status === 'AUTHORIZED')).length;
+    a.ultimoEvento = r.agora; a.ultimaSync = new Date().toISOString(); REMOTO.snap.settings = JSON.stringify(db.settings);
+    if (baixas || notas) { await recarregar(); toast([baixas && `${baixas} pagamento(s) confirmado(s) pelo Asaas`, notas && `${notas} nota(s) fiscal(is) emitida(s)`].filter(Boolean).join(' · '), 'ok'); }
+    else if (!o.silencioso) toast('Sincronizado. Nenhuma novidade.', 'ok');
+    setAsaasState();
+  } catch (e) { if (!o.silencioso) toast('Sincronização falhou: ' + e.message, 'err'); setAsaasState(e.message); }
+  finally { syncando = false; }
+}
+// Atualiza a tela quando outro usuário altera dados (sem interromper quem está editando).
+async function verificarNovidades() {
+  if (!REMOTO.ativo || REMOTO.gravando || document.hidden || $('#modal-root').innerHTML) return;
+  try { const r = await apiR('rev'); if (r.rev > REMOTO.rev) { const y = scrollY; await recarregar(); scrollTo(0, y); } } catch (e) { }
+}
+
+/* ---------- login ---------- */
+function mostrarLogin(msg) {
+  $('#app').hidden = true; $('#lock').hidden = true; $('#login').hidden = false;
+  $('#login-etapa-codigo').hidden = true; $('#login-etapa-senha').hidden = false;
+  $('#login-err').hidden = !msg; $('#login-err').textContent = msg || '';
+  setTimeout(() => $('#login-email').focus(), 50);
+}
+function prepararLogin() {
+  let email = '';
+  $('#login-form').onsubmit = async e => {
+    e.preventDefault();
+    const btn = $('#login-form button[type=submit]:not([hidden])') || $('#login-form button'); btn.disabled = true;
+    const err = $('#login-err'); err.hidden = true;
+    try {
+      let r;
+      if ($('#login-etapa-codigo').hidden) {
+        email = $('#login-email').value.trim();
+        r = await apiR('login', { method: 'POST', body: { email, senha: $('#login-senha').value }, semLogin: true });
+        if (r.codigo) { $('#login-etapa-senha').hidden = true; $('#login-etapa-codigo').hidden = false; $('#login-dest').textContent = r.email; $('#login-codigo').value = ''; $('#login-codigo').focus(); return; }
+      } else r = await apiR('login/codigo', { method: 'POST', body: { email, codigo: $('#login-codigo').value }, semLogin: true });
+      $('#login-senha').value = ''; await entrarNoSistema();
+    } catch (x) { err.textContent = x.message; err.hidden = false; }
+    finally { btn.disabled = false; }
+  };
+  $('#login-voltar').onclick = () => mostrarLogin();
+}
+async function entrarNoSistema() {
+  aplicarDados(await apiR('dados'));
+  $('#login').hidden = true;
+  if (REMOTO.usuario.trocarSenha) { formSenhaConta(true); }
+  if (!entrarNoSistema.iniciado) { entrarNoSistema.iniciado = true; start(); setInterval(verificarNovidades, 45000); document.addEventListener('visibilitychange', verificarNovidades); }
+  else { $('#app').hidden = false; aplicarPerfil(); rerender(); }
+}
+async function sair() { try { await apiR('sair', { method: 'POST' }); } catch (e) { } location.reload(); }
+function formSenhaConta(obrigatoria) {
+  openModal({
+    title: obrigatoria ? 'Defina sua senha' : 'Alterar senha',
+    body: `${obrigatoria ? '<p class="hint" style="margin-bottom:14px">Você entrou com uma senha temporária. Defina uma senha pessoal para continuar.</p>' : ''}<div class="field"><label>Senha atual${obrigatoria ? ' (temporária)' : ''}</label><input type="password" id="sc-atual" autocomplete="current-password"></div><div class="field" style="margin-top:10px"><label>Nova senha (mínimo 10 caracteres)</label><input type="password" id="sc-nova" autocomplete="new-password"></div><div class="field" style="margin-top:10px"><label>Confirme a nova senha</label><input type="password" id="sc-conf" autocomplete="new-password"></div>`,
+    foot: `${obrigatoria ? '<button class="btn ghost" data-act="sair">Sair</button>' : '<button class="btn ghost" data-act="modal-close">Cancelar</button>'}<button class="btn primary" id="sc-ok">Salvar senha</button>`,
+    onClose: () => { if (obrigatoria && REMOTO.usuario?.trocarSenha) setTimeout(() => formSenhaConta(true), 0); },
+    onMount: () => {
+      if (obrigatoria) $$('#modal-root [data-act="modal-close"]').forEach(b => b.remove());
+      $('#sc-ok').onclick = async () => {
+        if ($('#sc-nova').value.length < 10) return toast('A nova senha deve ter ao menos 10 caracteres.', 'err');
+        if ($('#sc-nova').value !== $('#sc-conf').value) return toast('As senhas não coincidem.', 'err');
+        try { await apiR('senha', { method: 'POST', body: { atual: $('#sc-atual').value, nova: $('#sc-nova').value } }); REMOTO.usuario.trocarSenha = false; closeModal(true); toast('Senha alterada.', 'ok'); }
+        catch (e) { toast(e.message, 'err'); }
+      };
+    }
+  });
+}
+function cardConta() {
+  const u = REMOTO.usuario;
+  return `<div class="card"><div class="card-h"><div><h2>Sua conta</h2><p class="hint">${esc(u.nome)} · ${esc(u.email)} · ${esc(PERFIL_NOME[u.perfil])}</p></div></div>
+    <p class="hint">Os dados ficam no servidor do escritório e cada acesso exige senha e código enviado por e-mail. As alterações ficam registradas na auditoria.</p>
+    <div class="actions" style="margin-top:14px"><button class="btn sm" data-act="minha-senha">${icon('lock', 'i-sm')} Alterar senha</button><button class="btn sm" data-act="sair">Sair</button></div></div>
+    ${ehAdmin() ? `<div class="card"><div class="card-h"><div><h2>Dados do servidor</h2><p class="hint">Backup completo da base do servidor e importação da base que estava no navegador (migração inicial).</p></div></div>
+    <div class="actions"><button class="btn sm" data-act="backup">${icon('download', 'i-sm')} Gerar backup</button><button class="btn sm" data-act="pick" data-k="backup">${icon('upload', 'i-sm')} Importar backup para o servidor</button><a class="btn sm" href="#/usuarios">${icon('users', 'i-sm')} Usuários e auditoria</a></div></div>` : ''}`;
+}
+const ACOES_ESCRITA = ['ct-new', 'ct-edit', 'ct-del', 'cobrar', 'preview', 'whats', 'pix', 'pagar', 'estornar', 'parc-edit', 'parc-add', 'reneg', 'renovar', 'fila-send', 'lote-sel', 'lote-boletos', 'boleto', 'nota', 'com-toggle', 'com-pagar', 'ent-edit', 'ent-del', 'pes-edit', 'pes-del', 'area-add', 'area-del', 'demo', 'demo-off', 'wipe', 'tpl-reset', 'teste-email', 'sel-all', 'exp-contratos', 'exp-parcelas', 'exp-com', 'exp-prog', 'backup', 'pick'];
+function aplicarPerfil() {
+  if (!REMOTO.ativo) return;
+  const u = REMOTO.usuario, ro = !podeEscrever();
+  document.body.dataset.perfil = u.perfil;
+  let st = $('#estilo-perfil'); if (!st) { st = document.createElement('style'); st.id = 'estilo-perfil'; document.head.append(st); }
+  st.textContent = ro ? ACOES_ESCRITA.map(a => `[data-act="${a}"]`).join(',') + ',[data-sel],[data-nav="importar"],[data-nav="cadastros"],[data-nav="config"],.nav-section,#n-fila{display:none!important}' + (u.perfil === 'advogado' ? '[data-nav="comissoes"]{display:none!important}' : '') : '';
+  $('[data-nav="usuarios"]').hidden = u.perfil !== 'admin';
+  $('#conta').hidden = false;
+  $('#conta-nome').textContent = u.nome; $('#conta-perfil').textContent = PERFIL_NOME[u.perfil] + (ro ? ' · consulta' : '');
+  $('[data-act="theme"]').hidden = false;
+}
+
+/* ---------- usuários e auditoria (administrador) ---------- */
+VIEWS.usuarios = {
+  title: 'Usuários',
+  render() {
+    if (!REMOTO.ativo || !ehAdmin()) return emptyBox('Acesso restrito', 'Disponível apenas para administradores no servidor.');
+    const aba = ui.f.usr || 'lista';
+    return pageH('Usuários e auditoria', 'Quem acessa o sistema, com qual perfil, e o registro de tudo o que foi feito', aba === 'lista' ? `<button class="btn primary" data-act="usr-edit">${icon('plus')} Novo usuário</button>` : '') +
+      `<div class="tabs">${[['lista', 'Usuários'], ['auditoria', 'Auditoria']].map(([k, l]) => `<button class="tab ${aba === k ? 'active' : ''}" data-act="usr-aba" data-k="${k}">${l}</button>`).join('')}</div><div class="card" id="usr-corpo"><p class="hint">Carregando…</p></div>`;
+  },
+  async mount() {
+    if (!REMOTO.ativo || !ehAdmin()) return;
+    const el = $('#usr-corpo');
+    try {
+      if ((ui.f.usr || 'lista') === 'lista') {
+        const { usuarios } = await apiR('usuarios'); ui.usuarios = usuarios;
+        el.innerHTML = `<div class="table-wrap"><table class="tbl"><thead><tr><th>Nome</th><th>E-mail</th><th>Perfil</th><th>Vinculado a</th><th>Último acesso</th><th>Situação</th><th></th></tr></thead><tbody>${usuarios.map(u => `<tr><td class="cell-main">${esc(u.nome)}</td><td>${esc(u.email)}</td><td>${esc(PERFIL_NOME[u.perfil])}</td><td>${esc(pessoa(u.pessoaId)?.nome || '—')}</td><td class="cell-sub">${u.ultimoAcesso ? fdatetime(u.ultimoAcesso.replace(' ', 'T') + 'Z') : 'nunca'}</td><td>${u.ativo ? '<span class="chip ok">Ativo</span>' : '<span class="chip">Inativo</span>'}</td><td class="acts"><button class="icon-btn" data-act="usr-edit" data-id="${u.id}" title="Editar">${icon('edit')}</button></td></tr>`).join('')}</tbody></table></div>
+          <p class="hint" style="margin-top:14px"><b>Administrador</b>: acesso total. <b>Financeiro</b>: opera contratos, cobrança, boletos e notas, sem gerenciar usuários nem o Asaas. <b>Advogado responsável</b>: consulta apenas os contratos sob sua responsabilidade, sem comissões. <b>Captador / parceiro</b>: consulta apenas os contratos que captou e as próprias comissões.</p>`;
+      } else {
+        const { registros } = await apiR('auditoria');
+        el.innerHTML = registros.length ? `<div class="table-wrap"><table class="tbl"><thead><tr><th>Data</th><th>Usuário</th><th>Ação</th><th>Registro</th><th>IP</th></tr></thead><tbody>${registros.map(x => `<tr><td class="num cell-sub">${fdatetime(x.em.replace(' ', 'T') + 'Z')}</td><td>${esc(x.usuario_nome || '')}</td><td>${esc(x.acao)}${x.colecao ? ` <span class="cell-sub">${esc(x.colecao)}</span>` : ''}</td><td class="cell-sub">${esc(x.resumo || '')}</td><td class="cell-sub">${esc(x.ip || '')}</td></tr>`).join('')}</tbody></table></div>` : '<p class="hint">Sem registros.</p>';
+      }
+    } catch (e) { el.innerHTML = `<p class="t-danger">${esc(e.message)}</p>`; }
+  }
+};
+function formUsuario(id) {
+  const u = (ui.usuarios || []).find(x => x.id === id) || { perfil: 'financeiro', ativo: true };
+  openModal({
+    title: id ? `Editar usuário · ${u.nome}` : 'Novo usuário',
+    body: `<div class="form-grid" style="grid-template-columns:repeat(2,minmax(0,1fr))"><div class="field span2"><label>Nome</label><input type="text" id="us-nome" value="${esc(u.nome || '')}"></div><div class="field span2"><label>E-mail (usado no login)</label><input type="email" id="us-email" value="${esc(u.email || '')}"></div>
+      <div class="field"><label>Perfil</label><select id="us-perfil">${optList(Object.entries(PERFIL_NOME), u.perfil)}</select></div>
+      <div class="field"><label>Vinculado à pessoa (advogado ou captador)</label><select id="us-pessoa">${optList(db.pessoas.map(p => [p.id, `${p.nome} (${TIPO_PESSOA[p.tipo] || ''})`]), u.pessoaId, 'Nenhuma')}</select></div>
+      <label class="check"><input type="checkbox" id="us-ativo" ${u.ativo ? 'checked' : ''}> Ativo</label>${id ? '<label class="check"><input type="checkbox" id="us-reset"> Gerar nova senha temporária</label>' : ''}</div>
+      <p class="hint" style="margin-top:12px">Para advogados e captadores, o vínculo define quais contratos e comissões a pessoa enxerga. Cadastre-a antes em Cadastros, se necessário.</p>`,
+    foot: `<button class="btn ghost" data-act="modal-close">Cancelar</button><button class="btn primary" id="us-ok">Salvar</button>`,
+    onMount: () => $('#us-ok').onclick = async () => {
+      try {
+        const r = await apiR('usuarios', { method: 'POST', body: { id: id || '', nome: $('#us-nome').value, email: $('#us-email').value, perfil: $('#us-perfil').value, pessoaId: $('#us-pessoa').value, ativo: $('#us-ativo').checked, redefinirSenha: $('#us-reset')?.checked } });
+        closeModal(true);
+        if (r.senhaTemporaria) openModal({ title: 'Senha temporária', body: `<p>Envie ao usuário, por canal seguro, a senha temporária abaixo. Ela só aparece agora; no primeiro acesso será exigida uma senha pessoal.</p><div class="code" style="margin-top:12px;font-size:16px">${esc(r.senhaTemporaria)}</div>`, foot: `<button class="btn" data-act="copiar" data-txt="${esc(r.senhaTemporaria)}">Copiar</button><button class="btn primary" data-act="modal-close">Concluir</button>` });
+        rerender();
+      } catch (e) { toast(e.message, 'err'); }
+    }
+  });
+}
+
 /* ---------- inicialização ---------- */
 let idleTimer = null;
 function armIdle() { clearTimeout(idleTimer); if (cryptoKey) idleTimer = setTimeout(() => location.reload(), 30 * 60 * 1000); }
 ['click', 'keydown'].forEach(ev => document.addEventListener(ev, armIdle, { passive: true }));
 function start() {
-  setAsaasState();
+  setAsaasState(); aplicarPerfil();
+  if (REMOTO.ativo) setSave('Salvo no servidor');
   if (asaasOk()) { setTimeout(() => sincronizar({ silencioso: true }), 1500); setInterval(() => sincronizar({ silencioso: true }), 3 * 60 * 1000); }
   $('#lock').hidden = true; $('#app').hidden = false;
   window.addEventListener('hashchange', route); route(); armIdle();
   navigator.storage?.persist?.();
 }
 async function boot() {
+  try {
+    const r = await fetch('api/sessao', { credentials: 'same-origin', cache: 'no-store' });
+    const j = r.ok && (r.headers.get('content-type') || '').includes('json') ? await r.json() : null;
+    if (j && 'logado' in j) {
+      REMOTO.ativo = true; prepararLogin();
+      if (j.logado) { try { await entrarNoSistema(); return; } catch (e) { } }
+      mostrarLogin(); return;
+    }
+  } catch (e) { /* sem servidor: modo local */ }
   try { idb = await idbOpen(); }
   catch (e) { document.body.innerHTML = '<p style="padding:24px;font-family:sans-serif">Este navegador não permite armazenamento local (IndexedDB). Desative o modo anônimo ou use outro navegador.</p>'; return; }
   meta = await idbGet('kv', 'meta') || {};

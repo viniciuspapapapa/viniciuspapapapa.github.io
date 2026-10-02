@@ -402,6 +402,26 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--text);bo
   </form>
 </div>
 
+<div id="login" class="lock-screen" hidden>
+  <form class="lock-card" id="login-form" autocomplete="on">
+    <svg class="logo " viewBox="0 0 290 52" width="240" role="img" aria-label="TPC Advogados"><rect x="1.5" y="1.5" width="70" height="49" fill="none" stroke="#C8C3BE" stroke-width="3"/><text x="36.5" y="33.5" text-anchor="middle" font-family="Jost, Futura, sans-serif" font-weight="600" font-size="19" fill="currentColor">TPC</text><text x="90" y="33.5" font-family="Jost, Futura, sans-serif" font-weight="400" font-size="19" textLength="184" lengthAdjust="spacing" fill="currentColor">ADVOGADOS</text><circle cx="281" cy="32" r="2.4" fill="#C8C3BE"/></svg>
+    <h1>Honorários</h1>
+    <p class="hint">Acesso restrito à equipe do escritório.</p>
+    <div id="login-etapa-senha">
+      <div class="field" style="margin-top:20px"><label for="login-email" style="color:#CECCCB">E-mail</label><input type="email" id="login-email" autocomplete="username" required></div>
+      <div class="field" style="margin-top:12px"><label for="login-senha" style="color:#CECCCB">Senha</label><input type="password" id="login-senha" autocomplete="current-password"></div>
+    </div>
+    <div id="login-etapa-codigo" hidden>
+      <p class="hint" style="margin-top:20px">Enviamos um código de 6 dígitos para <b id="login-dest" style="color:#EDECEC"></b>. Ele vale por 10 minutos.</p>
+      <div class="field" style="margin-top:12px"><label for="login-codigo" style="color:#CECCCB">Código de acesso</label><input type="text" id="login-codigo" inputmode="numeric" autocomplete="one-time-code" maxlength="7" style="letter-spacing:.3em;font-size:20px"></div>
+      <button type="button" class="btn ghost sm" id="login-voltar" style="margin-top:8px;color:#B9B5B1">Voltar</button>
+    </div>
+    <p class="hint" id="login-err" hidden style="margin-top:10px;color:#F0948A"></p>
+    <button type="submit" class="btn primary" style="width:100%;margin-top:18px">Entrar</button>
+    <p class="hint" style="margin-top:18px">Esqueceu a senha? Peça ao administrador uma senha temporária.</p>
+  </form>
+</div>
+
 <div class="app" id="app" hidden>
   <aside class="sidebar" id="sidebar">
     <a class="brand" href="#/painel" aria-label="TPC Advogados, ir para o painel"><svg class="logo " viewBox="0 0 290 52" width="196" role="img" aria-label="TPC Advogados"><rect x="1.5" y="1.5" width="70" height="49" fill="none" stroke="#C8C3BE" stroke-width="3"/><text x="36.5" y="33.5" text-anchor="middle" font-family="Jost, Futura, sans-serif" font-weight="600" font-size="19" fill="currentColor">TPC</text><text x="90" y="33.5" font-family="Jost, Futura, sans-serif" font-weight="400" font-size="19" textLength="184" lengthAdjust="spacing" fill="currentColor">ADVOGADOS</text><circle cx="281" cy="32" r="2.4" fill="#C8C3BE"/></svg></a>
@@ -417,9 +437,11 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--text);bo
       <div class="nav-section">Administração</div>
       <a class="nav-item" href="#/importar" data-nav="importar"><svg class="i"><use href="#i-upload"/></svg><span>Importar</span><span class="count" id="n-fila"></span></a>
       <a class="nav-item" href="#/cadastros" data-nav="cadastros"><svg class="i"><use href="#i-building"/></svg><span>Cadastros</span></a>
+      <a class="nav-item" href="#/usuarios" data-nav="usuarios" hidden><svg class="i"><use href="#i-users"/></svg><span>Usuários</span></a>
       <a class="nav-item" href="#/config" data-nav="config"><svg class="i"><use href="#i-gear"/></svg><span>Configurações</span></a>
     </nav>
     <div class="sidebar-foot">
+      <div id="conta" hidden style="padding:10px 12px 8px"><div style="color:#fff;font-weight:600;font-size:13.5px" id="conta-nome"></div><div style="font-size:11.5px;color:#8E8A86" id="conta-perfil"></div><div style="display:flex;gap:6px;margin-top:8px"><button class="btn sm ghost" data-act="minha-senha" style="color:#B9B5B1;padding:4px 8px">Senha</button><button class="btn sm ghost" data-act="sair" style="color:#B9B5B1;padding:4px 8px">Sair</button></div></div>
       <button class="nav-item" data-act="theme"><svg class="i"><use href="#i-sun"/></svg><span>Alternar tema</span></button>
       <button class="nav-item" data-act="lock-now" id="btn-lock" hidden><svg class="i"><use href="#i-lock"/></svg><span>Bloquear</span></button>
       <div class="save-state" id="asaas-state" hidden><svg class="i i-sm"><use href="#i-repeat"/></svg><span></span></div>

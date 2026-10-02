@@ -1,0 +1,11 @@
+# Honorários · regras do servidor web (Hostinger / LiteSpeed / Apache)
+Options -Indexes
+<FilesMatch "^(lib|asaas|config|cron)\.php$">
+  Require all denied
+</FilesMatch>
+<FilesMatch "\.(sql|log|md)$">
+  Require all denied
+</FilesMatch>
+RewriteEngine On
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteRule ^(.*)$ index.php?r=$1 [QSA,L]
