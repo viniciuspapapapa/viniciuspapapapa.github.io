@@ -1,0 +1,232 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Restaurantes de SP</title>
+<meta name="description" content="Os melhores restaurantes de São Paulo, reunidos por região, com link direto para o Google Maps.">
+<meta property="og:title" content="Os melhores restaurantes de SP">
+<meta property="og:description" content="Os restaurantes premiados e os clássicos de São Paulo, por região, com link direto para o Google Maps.">
+<meta property="og:type" content="website">
+<meta name="theme-color" content="#0b0d13">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0b0d13;
+    --surface: #151821;
+    --surface-2: #1d212d;
+    --line: #2a2f3d;
+    --text: #f4f1ea;
+    --muted: #a3a7b3;
+    --gold: #ffc45c;
+    --red: #ea4335;
+    --red-ink: #ffffff;
+    --r1: #ffc45c;
+    --r2: #ff7a59;
+    --r3: #5cc8ff;
+    --r4: #8be08b;
+    --r5: #c9a2ff;
+  }
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    margin: 0; background: var(--bg); color: var(--text);
+    font-family: Inter, system-ui, -apple-system, "Segoe UI", sans-serif;
+    line-height: 1.45;
+  }
+  a { color: inherit; }
+  .wrap { max-width: 720px; margin: 0 auto; padding: 0 16px; }
+
+  header.hero {
+    position: relative; overflow: hidden;
+    padding: 56px 0 28px;
+    background:
+      radial-gradient(120% 80% at 50% 0%, rgba(255,196,92,.16), transparent 60%),
+      radial-gradient(80% 60% at 100% 100%, rgba(234,67,53,.14), transparent 70%);
+    border-bottom: 1px solid var(--line);
+  }
+  .pill {
+    display: inline-flex; align-items: center; gap: 10px;
+    background: #fff; color: #14161c; border-radius: 999px;
+    padding: 8px 16px; font-size: 12px; font-weight: 700; letter-spacing: .14em;
+  }
+  .pill::before { content: ""; width: 9px; height: 9px; border-radius: 50%; background: var(--red); }
+  h1 {
+    font-size: clamp(38px, 11vw, 64px); line-height: .98; letter-spacing: -.03em;
+    font-weight: 900; margin: 18px 0 12px;
+  }
+  h1 em { font-style: normal; color: var(--gold); }
+  .lead { color: var(--muted); font-size: 17px; margin: 0 0 20px; max-width: 34ch; }
+  .stats { display: flex; gap: 22px; flex-wrap: wrap; }
+  .stats div { font-size: 13px; color: var(--muted); }
+  .stats b { display: block; font-size: 26px; color: var(--text); font-weight: 800; letter-spacing: -.02em; }
+  .map-cta {
+    display: none; margin-top: 22px; align-items: center; justify-content: center; gap: 10px;
+    background: var(--red); color: var(--red-ink); text-decoration: none; font-weight: 800;
+    padding: 14px 22px; border-radius: 999px; font-size: 16px;
+  }
+  .map-cta.on { display: inline-flex; }
+
+  .controls {
+    position: sticky; top: 0; z-index: 5;
+    background: rgba(11,13,19,.92); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--line); padding: 12px 0;
+  }
+  .search {
+    width: 100%; background: var(--surface); border: 1px solid var(--line); color: var(--text);
+    border-radius: 12px; padding: 12px 14px; font: inherit; font-size: 16px;
+  }
+  .search::placeholder { color: #737887; }
+  .search:focus { outline: 2px solid var(--gold); outline-offset: 1px; border-color: transparent; }
+  .chips { display: flex; gap: 8px; overflow-x: auto; margin-top: 10px; padding-bottom: 2px; scrollbar-width: none; }
+  .chips::-webkit-scrollbar { display: none; }
+  .chip {
+    flex: none; border: 1px solid var(--line); background: var(--surface); color: var(--text);
+    padding: 8px 14px; border-radius: 999px; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer;
+    display: inline-flex; align-items: center; gap: 8px; min-height: 40px;
+  }
+  .chip i { width: 8px; height: 8px; border-radius: 50%; background: var(--dot, var(--muted)); }
+  .chip[aria-pressed="true"] { background: var(--text); color: #12141a; border-color: var(--text); }
+  .chip[aria-pressed="true"] i { box-shadow: 0 0 0 2px #12141a inset; }
+
+  main { padding: 18px 0 40px; }
+  .count { color: var(--muted); font-size: 14px; margin: 4px 0 14px; }
+  h2.region {
+    font-size: 13px; letter-spacing: .14em; text-transform: uppercase; color: var(--muted);
+    margin: 26px 0 10px; display: flex; align-items: center; gap: 10px; font-weight: 700;
+  }
+  h2.region::before { content: ""; width: 4px; height: 16px; border-radius: 2px; background: var(--dot); }
+  .list { display: grid; gap: 10px; }
+  .card {
+    background: var(--surface); border: 1px solid var(--line); border-radius: 16px;
+    padding: 16px; display: grid; gap: 6px;
+  }
+  .card h3 { margin: 0; font-size: 19px; font-weight: 800; letter-spacing: -.01em; }
+  .meta { font-size: 14px; color: var(--muted); }
+  .meta b { color: var(--text); font-weight: 600; }
+  .hl { font-size: 14px; color: var(--gold); }
+  .fav {
+    justify-self: start; font-size: 12px; font-weight: 700; letter-spacing: .04em;
+    color: #12141a; background: var(--gold); border-radius: 999px; padding: 3px 10px;
+  }
+  .chip.fav-chip { --dot: var(--gold); }
+  .addr { font-size: 13px; color: var(--muted); }
+  .go {
+    margin-top: 6px; justify-self: start; display: inline-flex; align-items: center; gap: 8px;
+    text-decoration: none; background: var(--surface-2); border: 1px solid var(--line);
+    padding: 10px 14px; border-radius: 10px; font-size: 14px; font-weight: 700; min-height: 44px;
+  }
+  .go:hover, .go:focus-visible { border-color: var(--gold); }
+  .go svg { width: 16px; height: 16px; flex: none; }
+  .empty { color: var(--muted); text-align: center; padding: 40px 0; display: none; }
+
+  footer { border-top: 1px solid var(--line); padding: 24px 0 48px; color: var(--muted); font-size: 13px; }
+  footer p { margin: 0 0 10px; }
+</style>
+</head>
+<body>
+<header class="hero">
+  <div class="wrap">
+    <span class="pill">LISTA NO GOOGLE MAPS</span>
+    <h1>Os melhores<br><em>restaurantes</em><br>de SP</h1>
+    <p class="lead">Uma seleção por região, dos estrelados do Guia Michelin aos clássicos da cidade. Toque em um restaurante para abrir no Google Maps.</p>
+    <div class="stats">
+      <div><b id="s-total">64</b>restaurantes</div>
+      <div><b id="s-reg">5</b>regiões</div>
+      <div><b id="s-star">0</b>com estrela Michelin</div>
+    </div>
+    <a class="map-cta" id="map-cta" href="#" target="_blank" rel="noopener">Ver todos no mapa →</a>
+  </div>
+</header>
+
+<div class="controls">
+  <div class="wrap">
+    <input class="search" id="q" type="search" placeholder="Buscar por nome, bairro ou cozinha" aria-label="Buscar restaurantes" autocomplete="off">
+    <div class="chips" id="chips" role="group" aria-label="Filtrar por região"></div>
+  </div>
+</div>
+
+<main class="wrap">
+  <p class="count" id="count" aria-live="polite"></p>
+  <div id="out"></div>
+  <p class="empty" id="empty">Nenhum restaurante encontrado. Tente outro termo.</p>
+</main>
+
+<footer>
+  <div class="wrap">
+    <p>Seleção atualizada em outubro de 2026, com base no Guia Michelin Rio de Janeiro &amp; São Paulo 2026, no prêmio Comer &amp; Beber 2026, no ranking Exame Casual 2026 e em guias gastronômicos de São Paulo.</p>
+    <p>Horários e funcionamento mudam com frequência: confirme no Google Maps antes de ir.</p>
+  </div>
+</footer>
+
+<script>
+  // Link público do mapa no Google My Maps (deixe vazio para ocultar o botão).
+  const MAP_URL = "";
+
+  const DATA = [{"n":"Tuju","r":"Jardins","b":"Jardim Paulistano","e":"Rua Frei Galvão, 135","c":"Alta gastronomia brasileira","d":"3 estrelas Michelin 2026 e Estrela Verde; nº 1 no Exame Casual 2026","u":"https://www.google.com/maps/search/?api=1&query=Tuju%20Jardim%20Paulistano%20S%C3%A3o%20Paulo"},{"n":"D.O.M.","r":"Jardins","b":"Jardins","e":"Rua Barão de Capanema, 549","c":"Alta gastronomia brasileira","d":"Chef Alex Atala; 2 estrelas Michelin 2026","u":"https://www.google.com/maps/search/?api=1&query=D.O.M.%20Jardins%20S%C3%A3o%20Paulo"},{"n":"Maní","r":"Jardins","b":"Jardim Paulistano","e":"Rua Joaquim Antunes, 210","c":"Contemporânea brasileira","d":"Chef Helena Rizzo; 1 estrela Michelin 2026","u":"https://www.google.com/maps/search/?api=1&query=Man%C3%AD%20Jardim%20Paulistano%20S%C3%A3o%20Paulo"},{"n":"Fame Osteria","r":"Jardins","b":"Cerqueira César","e":"Rua Oscar Freire, 216","c":"Italiana","d":"1 estrela Michelin 2026","u":"https://www.google.com/maps/search/?api=1&query=Fame%20Osteria%20Cerqueira%20C%C3%A9sar%20S%C3%A3o%20Paulo"},{"n":"Picchi","r":"Jardins","b":"Jardins","e":"Rua Oscar Freire, 533","c":"Italiana contemporânea","d":"1 estrela Michelin 2026","u":"https://www.google.com/maps/search/?api=1&query=Picchi%20Jardins%20S%C3%A3o%20Paulo"},{"n":"Murakami","r":"Jardins","b":"Jardins","e":"Alameda Lorena, 1186","c":"Japonesa","d":"1 estrela Michelin 2026","u":"https://www.google.com/maps/search/?api=1&query=Murakami%20Jardins%20S%C3%A3o%20Paulo"},{"n":"Kazuo","r":"Jardins","b":"Jardim Europa","e":"Rua Prudente Correia, 432","c":"Japonesa contemporânea","d":"1 estrela Michelin 2026","u":"https://www.google.com/maps/search/?api=1&query=Kazuo%20Jardim%20Europa%20S%C3%A3o%20Paulo"},{"n":"Chef Rouge","r":"Jardins","b":"Jardim Paulista","e":"Rua Bela Cintra, 2238","c":"Francesa","d":"Melhor francês no Comer & Beber 2026","u":"https://www.google.com/maps/search/?api=1&query=Chef%20Rouge%20Jardim%20Paulista%20S%C3%A3o%20Paulo"},{"n":"Cena","r":"Jardins","b":"Jardim Paulista","e":"Rua Oscar Freire, 384 (Hotel Emiliano)","c":"Variada","d":"1º em Variado no Comer & Beber 2026","u":"https://www.google.com/maps/search/?api=1&query=Cena%20Jardim%20Paulista%20S%C3%A3o%20Paulo"},{"n":"Dalva e Dito","r":"Jardins","b":"Cerqueira César","e":"Rua Padre João Manuel, 1115","c":"Brasileira","d":"Chef Alex Atala; 2º em Brasileiro no Comer & Beber 2026","u":"https://www.google.com/maps/search/?api=1&query=Dalva%20e%20Dito%20Cerqueira%20C%C3%A9sar%20S%C3%A3o%20Paulo"},{"n":"Amadeus","r":"Jardins","b":"Cerqueira César","e":"Rua Haddock Lobo, 807","c":"Peixes e frutos do mar","d":"Selecionado pelo Guia Michelin 2026","u":"https://www.google.com/maps/search/?api=1&query=Amadeus%20Cerqueira%20C%C3%A9sar%20S%C3%A3o%20Paulo"},{"n":"QT Pizza Bar","r":"Jardins","b":"Cerqueira César","e":"Alameda Ministro Rocha Azevedo, 1096","c":"Pizza","d":"2º em Pizzaria no Comer & Beber 2026","u":"https://www.google.com/maps/search/?api=1&query=QT%20Pizza%20Bar%20Cerqueira%20C%C3%A9sar%20S%C3%A3o%20Paulo"},{"n":"Tanit","r":"Jardins","b":"Jardim Paulista","e":"Rua Oscar Freire, 145","c":"Mediterrânea","d":"Bib Gourmand Michelin 2026 (novidade)","u":"https://www.google.com/maps/search/?api=1&query=Tanit%20Jardim%20Paulista%20S%C3%A3o%20Paulo"},{"n":"Ping Yang Thai","r":"Jardins","b":"Jardim Paulista","e":"Rua Doutor Melo Alves, 767","c":"Tailandesa","d":"Bib Gourmand Michelin 2026 (novidade)","u":"https://www.google.com/maps/search/?api=1&query=Ping%20Yang%20Thai%20Jardim%20Paulista%20S%C3%A3o%20Paulo"},{"n":"Barú Marisquería","r":"Jardins","b":"Cerqueira César","e":"Rua Augusta, 2542","c":"Frutos do mar","d":"Bib Gourmand Michelin 2026","u":"https://www.google.com/maps/search/?api=1&query=Bar%C3%BA%20Marisquer%C3%ADa%20Cerqueira%20C%C3%A9sar%20S%C3%A3o%20Paulo"},{"n":"A Figueira Rubaiyat","r":"Jardins","b":"Jardim Paulista","e":"Rua Haddock Lobo, 1738","c":"Carnes e frutos do mar","d":"Sob uma figueira centenária; selecionado pelo Guia Michelin 2026","u":"https://www.google.com/maps/search/?api=1&query=A%20Figueira%20Rubaiyat%20Jardim%20Paulista%20S%C3%A3o%20Paulo"},{"n":"Capim Santo","r":"Jardins","b":"Jardins","e":"Rua Ministro Rocha Azevedo, 471","c":"Brasileira","d":"Bib Gourmand Michelin 2026","u":"https://www.google.com/maps/search/?api=1&query=Capim%20Santo%20Jardins%20S%C3%A3o%20Paulo"},{"n":"Tordesilhas","r":"Jardins","b":"Jardins","e":"Alameda Tietê, 489","c":"Brasileira regional","d":"Chef Mara Salles; Bib Gourmand Michelin 2026","u":"https://www.google.com/maps/search/?api=1&query=Tordesilhas%20Jardins%20S%C3%A3o%20Paulo"},{"n":"Fasano","r":"Jardins","b":"Jardins","e":"Rua Vittorio Fasano, 88","c":"Italiana clássica","d":"Selecionado pelo Guia Michelin 2026","u":"https://www.google.com/maps/search/?api=1&query=Fasano%20Jardins%20S%C3%A3o%20Paulo"},{"n":"Evvai","r":"Pinheiros e Vila Madalena","b":"Pinheiros","e":"Rua Joaquim Antunes, 108","c":"Oriundi (ítalo-brasileira)","d":"Chef Luiz Filipe Souza; 3 estrelas Michelin 2026; Chef do Ano no Comer & Beber 2026","u":"https://www.google.com/maps/search/?api=1&query=Evvai%20Pinheiros%20S%C3%A3o%20Paulo"},{"n":"Jun Sakamoto","r":"Pinheiros e Vila Madalena","b":"Pinheiros","e":"Rua Lisboa, 55","c":"Japonesa","d":"1 estrela Michelin 2026","u":"https://www.google.com/maps/search/?api=1&query=Jun%20Sakamoto%20Pinheiros%20S%C3%A3o%20Paulo"},{"n":"Nelita","r":"Pinheiros e Vila Madalena","b":"Pinheiros","e":"Rua Ferreira de Araújo, 330","c":"Contemporânea","d":"2º lugar no Exame Casual 2026","u":"https://www.google.com/maps/search/?api=1&query=Nelita%20Pinheiros%20S%C3%A3o%20Paulo"},{"n":"Più Pinheiros","r":"Pinheiros e Vila Madalena","b":"Pinheiros","e":"Rua Ferreira de Araújo, 314","c":"Italiana","d":"Bib Gourmand Michelin 2026","u":"https://www.google.com/maps/search/?api=1&query=Pi%C3%B9%20Pinheiros%20Pinheiros%20S%C3%A3o%20Paulo"},{"n":"Corrutela","r":"Pinheiros e Vila Madalena","b":"Pinheiros","e":"Rua Medeiros de Albuquerque, 256","c":"Brasileira sustentável","d":"Bib Gourmand e Estrela Verde Michelin 2026","u":"https://www.google.com/maps/search/?api=1&query=Corrutela%20Pinheiros%20S%C3%A3o%20Paulo"},{"n":"Cepa","r":"Pinheiros e Vila Madalena","b":"Pinheiros","e":"Praça dos Omaguás, 110","c":"Contemporânea","d":"Bib Gourmand Michelin 2026","u":"https://www.google.com/maps/search/?api=1&query=Cepa%20Pinheiros%20S%C3%A3o%20Paulo"},{"n":"Fitó","r":"Pinheiros e Vila Madalena","b":"Pinheiros","e":"Rua Cardeal Arcoverde, 2773","c":"Brasileira","d":"Bib Gourmand Michelin 2026","u":"https://www.google.com/maps/search/?api=1&query=Fit%C3%B3%20Pinheiros%20S%C3%A3o%20Paulo"},{"n":"Metzi","r":"Pinheiros e Vila Madalena","b":"Pinheiros","e":"","c":"Mexicana contemporânea","d":"Selecionado pelo Guia Michelin 2026","u":"https://www.google.com/maps/search/?api=1&query=Metzi%20Pinheiros%20S%C3%A3o%20Paulo"},{"n":"Vinheria Percussi","r":"Pinheiros e Vila Madalena","b":"Pinheiros","e":"","c":"Italiana","d":"Selecionado pelo Guia Michelin 2026","u":"https://www.google.com/maps/search/?api=1&query=Vinheria%20Percussi%20Pinheiros%20S%C3%A3o%20Paulo"},{"n":"Tabōa Cozinha Artesanal","r":"Pinheiros e Vila Madalena","b":"Vila Madalena","e":"Rua Medeiros de Albuquerque, 313","c":"Brasileira artesanal","d":"Bib Gourmand Michelin 2026 (novidade)","u":"https://www.google.com/maps/search/?api=1&query=Tab%C5%8Da%20Cozinha%20Artesanal%20Vila%20Madalena%20S%C3%A3o%20Paulo"},{"n":"Shihoma Pasta Fresca","r":"Pinheiros e Vila Madalena","b":"Vila Madalena","e":"Rua Medeiros de Albuquerque, 431","c":"Massas frescas","d":"Bib Gourmand Michelin 2026","u":"https://www.google.com/maps/search/?api=1&query=Shihoma%20Pasta%20Fresca%20Vila%20Madalena%20S%C3%A3o%20Paulo"},{"n":"Ryo Gastronomia","r":"Itaim Bibi e Vila Nova Conceição","b":"Itaim Bibi","e":"Rua Pedroso Alvarenga, 667","c":"Japonesa (omakase)","d":"1 estrela Michelin 2026","u":"https://www.google.com/maps/search/?api=1&query=Ryo%20Gastronomia%20Itaim%20Bibi%20S%C3%A3o%20Paulo"},{"n":"Le Bife","r":"Itaim Bibi e Vila Nova Conceição","b":"Itaim Bibi","e":"Rua Pedroso Alvarenga, 1088","c":"Carnes e grelhados","d":"Bib Gourmand Michelin 2026","u":"https://www.google.com/maps/search/?api=1&query=Le%20Bife%20Itaim%20Bibi%20S%C3%A3o%20Paulo"},{"n":"Banzeiro","r":"Itaim Bibi e Vila Nova Conceição","b":"Itaim Bibi","e":"Rua Tabapuã, 830","c":"Amazônica","d":"Bib Gourmand Michelin 2026","u":"https://www.google.com/maps/search/?api=1&query=Banzeiro%20Itaim%20Bibi%20S%C3%A3o%20Paulo"},{"n":"El Tranvia","r":"Itaim Bibi e Vila Nova Conceição","b":"Itaim Bibi","e":"","c":"Espanhola","d":"Selecionado pelo Guia Michelin 2026","u":"https://www.google.com/maps/search/?api=1&query=El%20Tranvia%20Itaim%20Bibi%20S%C3%A3o%20Paulo"},{"n":"Kinoshita","r":"Itaim Bibi e Vila Nova Conceição","b":"Vila Nova Conceição","e":"Rua Jacques Félix, 405","c":"Japonesa","d":"1 estrela Michelin 2026","u":"https://www.google.com/maps/search/?api=1&query=Kinoshita%20Vila%20Nova%20Concei%C3%A7%C3%A3o%20S%C3%A3o%20Paulo"},{"n":"Oizumi Sushi","r":"Itaim Bibi e Vila Nova Conceição","b":"Brooklin","e":"Rua Califórnia, 785","c":"Japonesa (sushi)","d":"1 estrela Michelin 2026","u":"https://www.google.com/maps/search/?api=1&query=Oizumi%20Sushi%20Brooklin%20S%C3%A3o%20Paulo"},{"n":"A Casa do Porco","r":"Centro, Paulista e Higienópolis","b":"República","e":"Rua Araújo, 124","c":"Brasileira (porco)","d":"Bib Gourmand e Estrela Verde Michelin 2026; top 10 no Exame Casual 2026","u":"https://www.google.com/maps/search/?api=1&query=A%20Casa%20do%20Porco%20Rep%C3%BAblica%20S%C3%A3o%20Paulo"},{"n":"Bar da Dona Onça","r":"Centro, Paulista e Higienópolis","b":"Centro","e":"Avenida Ipiranga, 200 (Edifício Copan)","c":"Brasileira de boteco","d":"Selecionado pelo Guia Michelin 2026 (novidade)","u":"https://www.google.com/maps/search/?api=1&query=Bar%20da%20Dona%20On%C3%A7a%20Centro%20S%C3%A3o%20Paulo"},{"n":"La Casserole","r":"Centro, Paulista e Higienópolis","b":"Centro","e":"Largo do Arouche, 346","c":"Francesa clássica","d":"Marie France Henry, Personalidade Gastronômica do Comer & Beber 2026","u":"https://www.google.com/maps/search/?api=1&query=La%20Casserole%20Centro%20S%C3%A3o%20Paulo"},{"n":"Mercado Municipal","r":"Centro, Paulista e Higienópolis","b":"Centro","e":"Rua da Cantareira, 306","c":"Mercado e lanches","d":"Famoso pelo sanduíche de mortadela","u":"https://www.google.com/maps/search/?api=1&query=Mercado%20Municipal%20Centro%20S%C3%A3o%20Paulo"},{"n":"Kan Suke","r":"Centro, Paulista e Higienópolis","b":"Paraíso","e":"Rua Manoel da Nóbrega, 76, loja 12","c":"Japonesa (sushi)","d":"1 estrela Michelin 2026; perto da Avenida Paulista","u":"https://www.google.com/maps/search/?api=1&query=Kan%20Suke%20Para%C3%ADso%20S%C3%A3o%20Paulo"},{"n":"Jiquitaia","r":"Centro, Paulista e Higienópolis","b":"Paraíso","e":"Rua Coronel Oscar Porto, 808","c":"Brasileira","d":"Bib Gourmand Michelin 2026 (novidade)","u":"https://www.google.com/maps/search/?api=1&query=Jiquitaia%20Para%C3%ADso%20S%C3%A3o%20Paulo"},{"n":"A Baianeira","r":"Centro, Paulista e Higienópolis","b":"Bela Vista","e":"Avenida Paulista, 1578 (MASP)","c":"Baiana","d":"No MASP; Bib Gourmand Michelin 2026","u":"https://www.google.com/maps/search/?api=1&query=A%20Baianeira%20Bela%20Vista%20S%C3%A3o%20Paulo"},{"n":"Balaio IMS","r":"Centro, Paulista e Higienópolis","b":"Bela Vista","e":"Avenida Paulista, 2424 (IMS Paulista)","c":"Brasileira","d":"No Instituto Moreira Salles; Bib Gourmand Michelin 2026","u":"https://www.google.com/maps/search/?api=1&query=Balaio%20IMS%20Bela%20Vista%20S%C3%A3o%20Paulo"},{"n":"Più Higienópolis","r":"Centro, Paulista e Higienópolis","b":"Higienópolis","e":"Avenida Higienópolis, 618","c":"Italiana","d":"Bib Gourmand Michelin 2026","u":"https://www.google.com/maps/search/?api=1&query=Pi%C3%B9%20Higien%C3%B3polis%20Higien%C3%B3polis%20S%C3%A3o%20Paulo"},{"n":"Mocotó","r":"Outros bairros","b":"Vila Medeiros","e":"Avenida Nossa Senhora do Loreto, 1100","c":"Sertaneja","d":"Chef Rodrigo Oliveira; Bib Gourmand Michelin 2026","u":"https://www.google.com/maps/search/?api=1&query=Mocot%C3%B3%20Vila%20Medeiros%20S%C3%A3o%20Paulo"},{"n":"Tangará Jean-Georges","r":"Outros bairros","b":"Panamby","e":"Rua Deputado Laércio Corte, 1501 (Palácio Tangará)","c":"Contemporânea","d":"1 estrela Michelin 2026","u":"https://www.google.com/maps/search/?api=1&query=Tangar%C3%A1%20Jean-Georges%20Panamby%20S%C3%A3o%20Paulo"},{"n":"Komah","r":"Outros bairros","b":"Barra Funda","e":"","c":"Coreana contemporânea","d":"Bib Gourmand Michelin 2026","u":"https://www.google.com/maps/search/?api=1&query=Komah%20Barra%20Funda%20S%C3%A3o%20Paulo"},{"n":"Borgo Mooca","r":"Outros bairros","b":"Mooca","e":"","c":"Italiana","d":"Selecionado pelo Guia Michelin 2026","u":"https://www.google.com/maps/search/?api=1&query=Borgo%20Mooca%20Mooca%20S%C3%A3o%20Paulo"}];
+  const REGIONS = [
+    { name: "Jardins", color: "var(--r1)" },
+    { name: "Pinheiros e Vila Madalena", color: "var(--r2)" },
+    { name: "Itaim Bibi e Vila Nova Conceição", color: "var(--r3)" },
+    { name: "Centro, Paulista e Higienópolis", color: "var(--r4)" },
+    { name: "Outros bairros", color: "var(--r5)" },
+  ];
+  const pin = '<svg viewBox="0 0 24 24" fill="#ea4335" aria-hidden="true"><path d="M12 2a7 7 0 0 0-7 7c0 5.2 7 13 7 13s7-7.8 7-13a7 7 0 0 0-7-7Zm0 9.5A2.5 2.5 0 1 1 12 6.5a2.5 2.5 0 0 1 0 5Z"/></svg>';
+
+  const state = { region: "", q: "", fav: false };
+  const $ = (id) => document.getElementById(id);
+  const norm = (s) => s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
+  const esc = (s) => s.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+
+  if (MAP_URL) { const a = $("map-cta"); a.href = MAP_URL; a.classList.add("on"); }
+
+  function chips() {
+    const all = [{ name: "", label: "Todas", color: "var(--muted)" }, ...REGIONS.map((r) => ({ ...r, label: r.name }))];
+    $("chips").innerHTML = all.map((r) =>
+      `<button class="chip" type="button" data-r="${esc(r.name)}" aria-pressed="${state.region === r.name}" style="--dot:${r.color}"><i></i>${esc(r.label)}</button>`
+    ).join("") + (!DATA.some((d) => d.f) ? "" :
+      `<button class="chip fav-chip" type="button" data-fav="1" aria-pressed="${state.fav}"><i></i>★ Indicações pessoais</button>`);
+  }
+
+  function render() {
+    const q = norm(state.q.trim());
+    const hits = DATA.filter((d) =>
+      (!state.region || d.r === state.region) &&
+      (!state.fav || d.f) &&
+      (!q || norm(`${d.n} ${d.b} ${d.c} ${d.d}`).includes(q))
+    );
+    $("count").textContent = `${hits.length} ${hits.length === 1 ? "restaurante" : "restaurantes"}`;
+    $("empty").style.display = hits.length ? "none" : "block";
+    $("out").innerHTML = REGIONS.map((reg) => {
+      const items = hits.filter((d) => d.r === reg.name);
+      if (!items.length) return "";
+      return `<h2 class="region" style="--dot:${reg.color}">${esc(reg.name)}</h2><div class="list">` +
+        items.map((d) => `
+          <article class="card">
+            ${d.f ? `<span class="fav">★ Indicação pessoal</span>` : ""}
+            <h3>${esc(d.n)}</h3>
+            <div class="meta"><b>${esc(d.b)}</b> · ${esc(d.c)}</div>
+            <div class="hl">${esc(d.d)}</div>
+            ${d.e ? `<div class="addr">${esc(d.e)}</div>` : ""}
+            <a class="go" href="${esc(d.u)}" target="_blank" rel="noopener">${pin}Abrir no Google Maps</a>
+          </article>`).join("") + "</div>";
+    }).join("");
+  }
+
+  $("chips").addEventListener("click", (e) => {
+    const b = e.target.closest(".chip"); if (!b) return;
+    if (b.dataset.fav) state.fav = !state.fav; else state.region = b.dataset.r;
+    chips(); render();
+    $("chips").querySelector('[aria-pressed="true"]').scrollIntoView({ inline: "center", block: "nearest", behavior: "smooth" });
+  });
+  $("q").addEventListener("input", (e) => { state.q = e.target.value; render(); });
+
+  $("s-total").textContent = DATA.length;
+  $("s-reg").textContent = REGIONS.length;
+  $("s-star").textContent = DATA.filter((d) => /\d estrelas? Michelin/.test(d.d)).length;
+  chips(); render();
+</script>
+</body>
+</html>

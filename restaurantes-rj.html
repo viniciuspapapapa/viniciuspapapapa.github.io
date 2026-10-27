@@ -1,0 +1,232 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Restaurantes do Rio</title>
+<meta name="description" content="Os melhores restaurantes de Rio de Janeiro, reunidos por região, com link direto para o Google Maps.">
+<meta property="og:title" content="Os melhores restaurantes do Rio">
+<meta property="og:description" content="Os restaurantes premiados e os clássicos de Rio de Janeiro, por região, com link direto para o Google Maps.">
+<meta property="og:type" content="website">
+<meta name="theme-color" content="#0b0d13">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0b0d13;
+    --surface: #151821;
+    --surface-2: #1d212d;
+    --line: #2a2f3d;
+    --text: #f4f1ea;
+    --muted: #a3a7b3;
+    --gold: #ffc45c;
+    --red: #ea4335;
+    --red-ink: #ffffff;
+    --r1: #ffc45c;
+    --r2: #ff7a59;
+    --r3: #5cc8ff;
+    --r4: #8be08b;
+    --r5: #c9a2ff;
+  }
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    margin: 0; background: var(--bg); color: var(--text);
+    font-family: Inter, system-ui, -apple-system, "Segoe UI", sans-serif;
+    line-height: 1.45;
+  }
+  a { color: inherit; }
+  .wrap { max-width: 720px; margin: 0 auto; padding: 0 16px; }
+
+  header.hero {
+    position: relative; overflow: hidden;
+    padding: 56px 0 28px;
+    background:
+      radial-gradient(120% 80% at 50% 0%, rgba(255,196,92,.16), transparent 60%),
+      radial-gradient(80% 60% at 100% 100%, rgba(234,67,53,.14), transparent 70%);
+    border-bottom: 1px solid var(--line);
+  }
+  .pill {
+    display: inline-flex; align-items: center; gap: 10px;
+    background: #fff; color: #14161c; border-radius: 999px;
+    padding: 8px 16px; font-size: 12px; font-weight: 700; letter-spacing: .14em;
+  }
+  .pill::before { content: ""; width: 9px; height: 9px; border-radius: 50%; background: var(--red); }
+  h1 {
+    font-size: clamp(38px, 11vw, 64px); line-height: .98; letter-spacing: -.03em;
+    font-weight: 900; margin: 18px 0 12px;
+  }
+  h1 em { font-style: normal; color: var(--gold); }
+  .lead { color: var(--muted); font-size: 17px; margin: 0 0 20px; max-width: 34ch; }
+  .stats { display: flex; gap: 22px; flex-wrap: wrap; }
+  .stats div { font-size: 13px; color: var(--muted); }
+  .stats b { display: block; font-size: 26px; color: var(--text); font-weight: 800; letter-spacing: -.02em; }
+  .map-cta {
+    display: none; margin-top: 22px; align-items: center; justify-content: center; gap: 10px;
+    background: var(--red); color: var(--red-ink); text-decoration: none; font-weight: 800;
+    padding: 14px 22px; border-radius: 999px; font-size: 16px;
+  }
+  .map-cta.on { display: inline-flex; }
+
+  .controls {
+    position: sticky; top: 0; z-index: 5;
+    background: rgba(11,13,19,.92); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--line); padding: 12px 0;
+  }
+  .search {
+    width: 100%; background: var(--surface); border: 1px solid var(--line); color: var(--text);
+    border-radius: 12px; padding: 12px 14px; font: inherit; font-size: 16px;
+  }
+  .search::placeholder { color: #737887; }
+  .search:focus { outline: 2px solid var(--gold); outline-offset: 1px; border-color: transparent; }
+  .chips { display: flex; gap: 8px; overflow-x: auto; margin-top: 10px; padding-bottom: 2px; scrollbar-width: none; }
+  .chips::-webkit-scrollbar { display: none; }
+  .chip {
+    flex: none; border: 1px solid var(--line); background: var(--surface); color: var(--text);
+    padding: 8px 14px; border-radius: 999px; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer;
+    display: inline-flex; align-items: center; gap: 8px; min-height: 40px;
+  }
+  .chip i { width: 8px; height: 8px; border-radius: 50%; background: var(--dot, var(--muted)); }
+  .chip[aria-pressed="true"] { background: var(--text); color: #12141a; border-color: var(--text); }
+  .chip[aria-pressed="true"] i { box-shadow: 0 0 0 2px #12141a inset; }
+
+  main { padding: 18px 0 40px; }
+  .count { color: var(--muted); font-size: 14px; margin: 4px 0 14px; }
+  h2.region {
+    font-size: 13px; letter-spacing: .14em; text-transform: uppercase; color: var(--muted);
+    margin: 26px 0 10px; display: flex; align-items: center; gap: 10px; font-weight: 700;
+  }
+  h2.region::before { content: ""; width: 4px; height: 16px; border-radius: 2px; background: var(--dot); }
+  .list { display: grid; gap: 10px; }
+  .card {
+    background: var(--surface); border: 1px solid var(--line); border-radius: 16px;
+    padding: 16px; display: grid; gap: 6px;
+  }
+  .card h3 { margin: 0; font-size: 19px; font-weight: 800; letter-spacing: -.01em; }
+  .meta { font-size: 14px; color: var(--muted); }
+  .meta b { color: var(--text); font-weight: 600; }
+  .hl { font-size: 14px; color: var(--gold); }
+  .fav {
+    justify-self: start; font-size: 12px; font-weight: 700; letter-spacing: .04em;
+    color: #12141a; background: var(--gold); border-radius: 999px; padding: 3px 10px;
+  }
+  .chip.fav-chip { --dot: var(--gold); }
+  .addr { font-size: 13px; color: var(--muted); }
+  .go {
+    margin-top: 6px; justify-self: start; display: inline-flex; align-items: center; gap: 8px;
+    text-decoration: none; background: var(--surface-2); border: 1px solid var(--line);
+    padding: 10px 14px; border-radius: 10px; font-size: 14px; font-weight: 700; min-height: 44px;
+  }
+  .go:hover, .go:focus-visible { border-color: var(--gold); }
+  .go svg { width: 16px; height: 16px; flex: none; }
+  .empty { color: var(--muted); text-align: center; padding: 40px 0; display: none; }
+
+  footer { border-top: 1px solid var(--line); padding: 24px 0 48px; color: var(--muted); font-size: 13px; }
+  footer p { margin: 0 0 10px; }
+</style>
+</head>
+<body>
+<header class="hero">
+  <div class="wrap">
+    <span class="pill">LISTA NO GOOGLE MAPS</span>
+    <h1>Os melhores<br><em>restaurantes</em><br>do Rio</h1>
+    <p class="lead">Uma seleção por região, dos estrelados do Guia Michelin aos clássicos da cidade. Toque em um restaurante para abrir no Google Maps.</p>
+    <div class="stats">
+      <div><b id="s-total">64</b>restaurantes</div>
+      <div><b id="s-reg">5</b>regiões</div>
+      <div><b id="s-star">0</b>com estrela Michelin</div>
+    </div>
+    <a class="map-cta" id="map-cta" href="#" target="_blank" rel="noopener">Ver todos no mapa →</a>
+  </div>
+</header>
+
+<div class="controls">
+  <div class="wrap">
+    <input class="search" id="q" type="search" placeholder="Buscar por nome, bairro ou cozinha" aria-label="Buscar restaurantes" autocomplete="off">
+    <div class="chips" id="chips" role="group" aria-label="Filtrar por região"></div>
+  </div>
+</div>
+
+<main class="wrap">
+  <p class="count" id="count" aria-live="polite"></p>
+  <div id="out"></div>
+  <p class="empty" id="empty">Nenhum restaurante encontrado. Tente outro termo.</p>
+</main>
+
+<footer>
+  <div class="wrap">
+    <p>Seleção atualizada em outubro de 2026, com base no Guia Michelin Rio de Janeiro &amp; São Paulo 2026, no prêmio Comer &amp; Beber 2026, no ranking Exame Casual 2026 e em guias gastronômicos de Rio de Janeiro.</p>
+    <p>Horários e funcionamento mudam com frequência: confirme no Google Maps antes de ir.</p>
+  </div>
+</footer>
+
+<script>
+  // Link público do mapa no Google My Maps (deixe vazio para ocultar o botão).
+  const MAP_URL = "";
+
+  const DATA = [{"n":"Oro","r":"Leblon e Ipanema","b":"Leblon","e":"Rua General San Martin, 889","c":"Alta gastronomia brasileira","d":"Chef Felipe Bronze; 2 estrelas Michelin 2026","u":"https://www.google.com/maps/search/?api=1&query=Oro%20Leblon%20Rio%20de%20Janeiro"},{"n":"Madame Olympe","r":"Leblon e Ipanema","b":"Leblon","e":"Rua Conde de Bernadotte, 26, loja 101","c":"Francesa contemporânea","d":"Chef Claude Troisgros; 1 estrela Michelin 2026 (novidade)","u":"https://www.google.com/maps/search/?api=1&query=Madame%20Olympe%20Leblon%20Rio%20de%20Janeiro"},{"n":"San Omakase","r":"Leblon e Ipanema","b":"Leblon","e":"Rua Conde de Bernadotte, 26, loja 103","c":"Japonesa (omakase)","d":"1 estrela Michelin 2026; melhor japonês no Comer & Beber 2026","u":"https://www.google.com/maps/search/?api=1&query=San%20Omakase%20Leblon%20Rio%20de%20Janeiro"},{"n":"Chez Claude","r":"Leblon e Ipanema","b":"Leblon","e":"Rua Conde de Bernadotte, 26","c":"Francesa","d":"Selecionado pelo Guia Michelin 2026","u":"https://www.google.com/maps/search/?api=1&query=Chez%20Claude%20Leblon%20Rio%20de%20Janeiro"},{"n":"Sushi Vaz","r":"Leblon e Ipanema","b":"Leblon","e":"Rua Rita Ludolf, 87, loja A","c":"Japonesa (omakase)","d":"Selecionado pelo Guia Michelin 2026 (novidade)","u":"https://www.google.com/maps/search/?api=1&query=Sushi%20Vaz%20Leblon%20Rio%20de%20Janeiro"},{"n":"Rufino Parrilla","r":"Leblon e Ipanema","b":"Leblon","e":"Rua Tubira, 43","c":"Parrilla","d":"Melhor carne no Comer & Beber 2026","u":"https://www.google.com/maps/search/?api=1&query=Rufino%20Parrilla%20Leblon%20Rio%20de%20Janeiro"},{"n":"Henriqueta","r":"Leblon e Ipanema","b":"Leblon","e":"Rua Aristides Espínola, 121","c":"Portuguesa","d":"Selecionado pelo Guia Michelin 2026","u":"https://www.google.com/maps/search/?api=1&query=Henriqueta%20Leblon%20Rio%20de%20Janeiro"},{"n":"Bracarense","r":"Leblon e Ipanema","b":"Leblon","e":"Rua José Linhares, 85","c":"Boteco","d":"Clássico do Leblon","u":"https://www.google.com/maps/search/?api=1&query=Bracarense%20Leblon%20Rio%20de%20Janeiro"},{"n":"OCYÁ Leblon","r":"Leblon e Ipanema","b":"Leblon","e":"","c":"Frutos do mar","d":"Selecionado pelo Guia Michelin 2026","u":"https://www.google.com/maps/search/?api=1&query=OCY%C3%81%20Leblon%20Leblon%20Rio%20de%20Janeiro"},{"n":"Oseille","r":"Leblon e Ipanema","b":"Ipanema","e":"Rua Joana Angélica, 155","c":"Contemporânea (menu degustação)","d":"Chef Thomas Troisgros; 1 estrela Michelin 2026","u":"https://www.google.com/maps/search/?api=1&query=Oseille%20Ipanema%20Rio%20de%20Janeiro"},{"n":"Didier","r":"Leblon e Ipanema","b":"Ipanema","e":"Rua Vinicius de Moraes, 124","c":"Francesa de bistrô","d":"Bib Gourmand Michelin 2026","u":"https://www.google.com/maps/search/?api=1&query=Didier%20Ipanema%20Rio%20de%20Janeiro"},{"n":"Artigiano","r":"Leblon e Ipanema","b":"Ipanema","e":"Avenida Epitácio Pessoa, 204","c":"Italiana","d":"Bib Gourmand Michelin 2026","u":"https://www.google.com/maps/search/?api=1&query=Artigiano%20Ipanema%20Rio%20de%20Janeiro"},{"n":"Maria e o Boi","r":"Leblon e Ipanema","b":"Ipanema","e":"Rua Maria Quitéria, 111","c":"Brasileira","d":"Bib Gourmand Michelin 2026","u":"https://www.google.com/maps/search/?api=1&query=Maria%20e%20o%20Boi%20Ipanema%20Rio%20de%20Janeiro"},{"n":"Pici Trattoria","r":"Leblon e Ipanema","b":"Ipanema","e":"Rua Barão da Torre, 348","c":"Italiana (trattoria)","d":"Bib Gourmand Michelin 2026","u":"https://www.google.com/maps/search/?api=1&query=Pici%20Trattoria%20Ipanema%20Rio%20de%20Janeiro"},{"n":"Koral","r":"Leblon e Ipanema","b":"Ipanema","e":"Rua Barão da Torre, 446","c":"Brasileira contemporânea","d":"Bib Gourmand Michelin 2026 (novidade)","u":"https://www.google.com/maps/search/?api=1&query=Koral%20Ipanema%20Rio%20de%20Janeiro"},{"n":"Rudä","r":"Leblon e Ipanema","b":"Ipanema","e":"Rua Garcia d'Ávila, 118","c":"Brasileira","d":"Melhor brasileiro no Comer & Beber 2026","u":"https://www.google.com/maps/search/?api=1&query=Rud%C3%A4%20Ipanema%20Rio%20de%20Janeiro"},{"n":"Satyricon","r":"Leblon e Ipanema","b":"Ipanema","e":"Rua Barão da Torre, 192","c":"Peixes e frutos do mar","d":"Melhor frutos do mar no Comer & Beber 2026","u":"https://www.google.com/maps/search/?api=1&query=Satyricon%20Ipanema%20Rio%20de%20Janeiro"},{"n":"Gero Rio","r":"Leblon e Ipanema","b":"Ipanema","e":"Avenida Vieira Souto, 80 (Hotel Fasano)","c":"Italiana","d":"Melhor italiano no Comer & Beber 2026","u":"https://www.google.com/maps/search/?api=1&query=Gero%20Rio%20Ipanema%20Rio%20de%20Janeiro"},{"n":"Nosso","r":"Leblon e Ipanema","b":"Ipanema","e":"","c":"Brasileira contemporânea","d":"Selecionado pelo Guia Michelin 2026","u":"https://www.google.com/maps/search/?api=1&query=Nosso%20Ipanema%20Rio%20de%20Janeiro"},{"n":"Babbo Osteria","r":"Leblon e Ipanema","b":"Ipanema","e":"","c":"Italiana","d":"Selecionado pelo Guia Michelin 2026","u":"https://www.google.com/maps/search/?api=1&query=Babbo%20Osteria%20Ipanema%20Rio%20de%20Janeiro"},{"n":"Nôa Ipanema","r":"Leblon e Ipanema","b":"Ipanema","e":"","c":"Contemporânea","d":"Selecionado pelo Guia Michelin 2026","u":"https://www.google.com/maps/search/?api=1&query=N%C3%B4a%20Ipanema%20Ipanema%20Rio%20de%20Janeiro"},{"n":"Lasai","r":"Botafogo, Copacabana e Urca","b":"Botafogo","e":"Rua Conde de Irajá, 191","c":"Alta gastronomia autoral","d":"Chef Rafa Costa e Silva; 2 estrelas Michelin 2026","u":"https://www.google.com/maps/search/?api=1&query=Lasai%20Botafogo%20Rio%20de%20Janeiro"},{"n":"Oteque","r":"Botafogo, Copacabana e Urca","b":"Botafogo","e":"Rua Conde de Irajá, 581","c":"Alta gastronomia autoral","d":"Chef Alberto Landgraf; 1 estrela Michelin 2026","u":"https://www.google.com/maps/search/?api=1&query=Oteque%20Botafogo%20Rio%20de%20Janeiro"},{"n":"Brota","r":"Botafogo, Copacabana e Urca","b":"Botafogo","e":"Rua Conde de Irajá, 98","c":"Brasileira contemporânea","d":"Bib Gourmand Michelin 2026","u":"https://www.google.com/maps/search/?api=1&query=Brota%20Botafogo%20Rio%20de%20Janeiro"},{"n":"Sult","r":"Botafogo, Copacabana e Urca","b":"Botafogo","e":"Rua Fernandes Guimarães, 77","c":"Contemporânea","d":"Bib Gourmand Michelin 2026","u":"https://www.google.com/maps/search/?api=1&query=Sult%20Botafogo%20Rio%20de%20Janeiro"},{"n":"Miam Miam","r":"Botafogo, Copacabana e Urca","b":"Botafogo","e":"Rua General Góis Monteiro, 34","c":"Contemporânea","d":"Bib Gourmand Michelin 2026","u":"https://www.google.com/maps/search/?api=1&query=Miam%20Miam%20Botafogo%20Rio%20de%20Janeiro"},{"n":"Ferro e Farinha","r":"Botafogo, Copacabana e Urca","b":"Botafogo","e":"Rua Arnaldo Quintela, 23","c":"Pizza","d":"Melhor pizza no Comer & Beber 2026","u":"https://www.google.com/maps/search/?api=1&query=Ferro%20e%20Farinha%20Botafogo%20Rio%20de%20Janeiro"},{"n":"Clan BBQ","r":"Botafogo, Copacabana e Urca","b":"Botafogo","e":"","c":"Churrasco americano","d":"Selecionado pelo Guia Michelin 2026","u":"https://www.google.com/maps/search/?api=1&query=Clan%20BBQ%20Botafogo%20Rio%20de%20Janeiro"},{"n":"MEE","r":"Botafogo, Copacabana e Urca","b":"Copacabana","e":"Avenida Atlântica, 1702 (Copacabana Palace)","c":"Pan-asiática","d":"1 estrela Michelin 2026","u":"https://www.google.com/maps/search/?api=1&query=MEE%20Copacabana%20Rio%20de%20Janeiro"},{"n":"Adega Pérola","r":"Botafogo, Copacabana e Urca","b":"Copacabana","e":"Rua Siqueira Campos, 138","c":"Boteco e petiscos","d":"Clássico de Copacabana","u":"https://www.google.com/maps/search/?api=1&query=Adega%20P%C3%A9rola%20Copacabana%20Rio%20de%20Janeiro"},{"n":"Cervantes","r":"Botafogo, Copacabana e Urca","b":"Copacabana","e":"Avenida Prado Júnior, 335","c":"Sanduíches e boteco","d":"Famoso pelo sanduíche de abacaxi, aberto de madrugada","u":"https://www.google.com/maps/search/?api=1&query=Cervantes%20Copacabana%20Rio%20de%20Janeiro"},{"n":"Bar Urca","r":"Botafogo, Copacabana e Urca","b":"Urca","e":"Rua Cândido Gaffrée, 205","c":"Boteco","d":"Desde 1939, com vista para a Baía de Guanabara","u":"https://www.google.com/maps/search/?api=1&query=Bar%20Urca%20Urca%20Rio%20de%20Janeiro"},{"n":"Corrientes 348","r":"Botafogo, Copacabana e Urca","b":"Glória","e":"Marina da Glória","c":"Parrilla argentina","d":"Selecionado pelo Guia Michelin 2026","u":"https://www.google.com/maps/search/?api=1&query=Corrientes%20348%20Gl%C3%B3ria%20Rio%20de%20Janeiro"},{"n":"Casa 201","r":"Jardim Botânico e Lagoa","b":"Jardim Botânico","e":"Rua Lopes Quintas, 201","c":"Francesa","d":"1 estrela Michelin 2026","u":"https://www.google.com/maps/search/?api=1&query=Casa%20201%20Jardim%20Bot%C3%A2nico%20Rio%20de%20Janeiro"},{"n":"Sud, O Pássaro Verde","r":"Jardim Botânico e Lagoa","b":"Jardim Botânico","e":"Rua Visconde de Carandaí, 35","c":"Contemporânea","d":"Chef Roberta Sudbrack; selecionado pelo Guia Michelin 2026","u":"https://www.google.com/maps/search/?api=1&query=Sud%2C%20O%20P%C3%A1ssaro%20Verde%20Jardim%20Bot%C3%A2nico%20Rio%20de%20Janeiro"},{"n":"Escama","r":"Jardim Botânico e Lagoa","b":"Jardim Botânico","e":"Rua Visconde de Carandaí, 5","c":"Peixes e frutos do mar","d":"Selecionado pelo Guia Michelin 2026","u":"https://www.google.com/maps/search/?api=1&query=Escama%20Jardim%20Bot%C3%A2nico%20Rio%20de%20Janeiro"},{"n":"Quinta da Henriqueta","r":"Jardim Botânico e Lagoa","b":"Jardim Botânico","e":"Rua Lopes Quintas, 165","c":"Portuguesa","d":"Selecionado pelo Guia Michelin 2026","u":"https://www.google.com/maps/search/?api=1&query=Quinta%20da%20Henriqueta%20Jardim%20Bot%C3%A2nico%20Rio%20de%20Janeiro"},{"n":"Elena","r":"Jardim Botânico e Lagoa","b":"Jardim Botânico","e":"Rua Pacheco Leão, 758","c":"Asiática e coquetelaria","d":"Destaque em coquetelaria","u":"https://www.google.com/maps/search/?api=1&query=Elena%20Jardim%20Bot%C3%A2nico%20Rio%20de%20Janeiro"},{"n":"Rubaiyat Rio","r":"Jardim Botânico e Lagoa","b":"Jardim Botânico","e":"","c":"Carnes","d":"No Jockey Club; selecionado pelo Guia Michelin 2026","u":"https://www.google.com/maps/search/?api=1&query=Rubaiyat%20Rio%20Jardim%20Bot%C3%A2nico%20Rio%20de%20Janeiro"},{"n":"Mr. Lam","r":"Jardim Botânico e Lagoa","b":"Lagoa","e":"Rua Maria Angélica, 21","c":"Chinesa","d":"Melhor asiático no Comer & Beber 2026","u":"https://www.google.com/maps/search/?api=1&query=Mr.%20Lam%20Lagoa%20Rio%20de%20Janeiro"},{"n":"Lilia","r":"Centro, Lapa e Santa Teresa","b":"Centro","e":"Rua do Senado, 45","c":"Contemporânea","d":"Selecionado pelo Guia Michelin 2026","u":"https://www.google.com/maps/search/?api=1&query=Lilia%20Centro%20Rio%20de%20Janeiro"},{"n":"Confeitaria Colombo","r":"Centro, Lapa e Santa Teresa","b":"Centro","e":"Rua Gonçalves Dias, 32","c":"Confeitaria e restaurante","d":"Fundada em 1894","u":"https://www.google.com/maps/search/?api=1&query=Confeitaria%20Colombo%20Centro%20Rio%20de%20Janeiro"},{"n":"Rio Scenarium","r":"Centro, Lapa e Santa Teresa","b":"Centro","e":"Rua do Lavradio, 20","c":"Bar e restaurante com música","d":"Samba ao vivo em casarão antigo","u":"https://www.google.com/maps/search/?api=1&query=Rio%20Scenarium%20Centro%20Rio%20de%20Janeiro"},{"n":"Bar Luiz","r":"Centro, Lapa e Santa Teresa","b":"Centro","e":"","c":"Boteco alemão","d":"Clássico do Centro","u":"https://www.google.com/maps/search/?api=1&query=Bar%20Luiz%20Centro%20Rio%20de%20Janeiro"},{"n":"Casa da Cachaça","r":"Centro, Lapa e Santa Teresa","b":"Lapa","e":"Avenida Mem de Sá, 110","c":"Bar de cachaças","d":"Tradição da Lapa","u":"https://www.google.com/maps/search/?api=1&query=Casa%20da%20Cacha%C3%A7a%20Lapa%20Rio%20de%20Janeiro"},{"n":"Bar Ernesto","r":"Centro, Lapa e Santa Teresa","b":"Lapa","e":"Rua Riachuelo, 49","c":"Alemã e brasileira","d":"Clássico da Lapa","u":"https://www.google.com/maps/search/?api=1&query=Bar%20Ernesto%20Lapa%20Rio%20de%20Janeiro"},{"n":"Aprazível","r":"Centro, Lapa e Santa Teresa","b":"Santa Teresa","e":"Rua Aprazível, 62","c":"Brasileira","d":"Vista para a cidade; selecionado pelo Guia Michelin 2026","u":"https://www.google.com/maps/search/?api=1&query=Apraz%C3%ADvel%20Santa%20Teresa%20Rio%20de%20Janeiro"},{"n":"Térèze","r":"Centro, Lapa e Santa Teresa","b":"Santa Teresa","e":"","c":"Contemporânea","d":"No Hotel Santa Teresa; selecionado pelo Guia Michelin 2026","u":"https://www.google.com/maps/search/?api=1&query=T%C3%A9r%C3%A8ze%20Santa%20Teresa%20Rio%20de%20Janeiro"},{"n":"Bar dos Descasados","r":"Centro, Lapa e Santa Teresa","b":"Santa Teresa","e":"Rua Felício dos Santos, 15","c":"Bar e petiscos","d":"Vista para a Baía de Guanabara","u":"https://www.google.com/maps/search/?api=1&query=Bar%20dos%20Descasados%20Santa%20Teresa%20Rio%20de%20Janeiro"},{"n":"Bar do Arnaudo","r":"Centro, Lapa e Santa Teresa","b":"Santa Teresa","e":"Rua Almirante Alexandrino, 316B","c":"Nordestina","d":"Clássico de Santa Teresa","u":"https://www.google.com/maps/search/?api=1&query=Bar%20do%20Arnaudo%20Santa%20Teresa%20Rio%20de%20Janeiro"},{"n":"Shiso","r":"Barra da Tijuca","b":"Barra da Tijuca","e":"Avenida Lúcio Costa, 9600 (Grand Hyatt)","c":"Japonesa contemporânea","d":"No Grand Hyatt Rio","u":"https://www.google.com/maps/search/?api=1&query=Shiso%20Barra%20da%20Tijuca%20Rio%20de%20Janeiro"},{"n":"Giuseppe Mar","r":"Barra da Tijuca","b":"Barra da Tijuca","e":"Avenida das Américas, 3900 (VillageMall)","c":"Peixes e frutos do mar","d":"No VillageMall","u":"https://www.google.com/maps/search/?api=1&query=Giuseppe%20Mar%20Barra%20da%20Tijuca%20Rio%20de%20Janeiro"},{"n":"Adega Santiago","r":"Barra da Tijuca","b":"Barra da Tijuca","e":"Avenida das Américas, 3900, loja 310 (VillageMall)","c":"Ibérica","d":"No VillageMall","u":"https://www.google.com/maps/search/?api=1&query=Adega%20Santiago%20Barra%20da%20Tijuca%20Rio%20de%20Janeiro"},{"n":"Casa Tua","r":"Barra da Tijuca","b":"Barra da Tijuca","e":"Avenida Olegário Maciel, 144","c":"Italiana contemporânea","d":"No Jardim Oceânico","u":"https://www.google.com/maps/search/?api=1&query=Casa%20Tua%20Barra%20da%20Tijuca%20Rio%20de%20Janeiro"},{"n":"OCYÁ Ilha","r":"Barra da Tijuca","b":"Barra da Tijuca","e":"","c":"Frutos do mar","d":"Na Ilha Primeira; selecionado pelo Guia Michelin 2026","u":"https://www.google.com/maps/search/?api=1&query=OCY%C3%81%20Ilha%20Barra%20da%20Tijuca%20Rio%20de%20Janeiro"}];
+  const REGIONS = [
+    { name: "Leblon e Ipanema", color: "var(--r1)" },
+    { name: "Botafogo, Copacabana e Urca", color: "var(--r2)" },
+    { name: "Jardim Botânico e Lagoa", color: "var(--r3)" },
+    { name: "Centro, Lapa e Santa Teresa", color: "var(--r4)" },
+    { name: "Barra da Tijuca", color: "var(--r5)" },
+  ];
+  const pin = '<svg viewBox="0 0 24 24" fill="#ea4335" aria-hidden="true"><path d="M12 2a7 7 0 0 0-7 7c0 5.2 7 13 7 13s7-7.8 7-13a7 7 0 0 0-7-7Zm0 9.5A2.5 2.5 0 1 1 12 6.5a2.5 2.5 0 0 1 0 5Z"/></svg>';
+
+  const state = { region: "", q: "", fav: false };
+  const $ = (id) => document.getElementById(id);
+  const norm = (s) => s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
+  const esc = (s) => s.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+
+  if (MAP_URL) { const a = $("map-cta"); a.href = MAP_URL; a.classList.add("on"); }
+
+  function chips() {
+    const all = [{ name: "", label: "Todas", color: "var(--muted)" }, ...REGIONS.map((r) => ({ ...r, label: r.name }))];
+    $("chips").innerHTML = all.map((r) =>
+      `<button class="chip" type="button" data-r="${esc(r.name)}" aria-pressed="${state.region === r.name}" style="--dot:${r.color}"><i></i>${esc(r.label)}</button>`
+    ).join("") + (!DATA.some((d) => d.f) ? "" :
+      `<button class="chip fav-chip" type="button" data-fav="1" aria-pressed="${state.fav}"><i></i>★ Indicações pessoais</button>`);
+  }
+
+  function render() {
+    const q = norm(state.q.trim());
+    const hits = DATA.filter((d) =>
+      (!state.region || d.r === state.region) &&
+      (!state.fav || d.f) &&
+      (!q || norm(`${d.n} ${d.b} ${d.c} ${d.d}`).includes(q))
+    );
+    $("count").textContent = `${hits.length} ${hits.length === 1 ? "restaurante" : "restaurantes"}`;
+    $("empty").style.display = hits.length ? "none" : "block";
+    $("out").innerHTML = REGIONS.map((reg) => {
+      const items = hits.filter((d) => d.r === reg.name);
+      if (!items.length) return "";
+      return `<h2 class="region" style="--dot:${reg.color}">${esc(reg.name)}</h2><div class="list">` +
+        items.map((d) => `
+          <article class="card">
+            ${d.f ? `<span class="fav">★ Indicação pessoal</span>` : ""}
+            <h3>${esc(d.n)}</h3>
+            <div class="meta"><b>${esc(d.b)}</b> · ${esc(d.c)}</div>
+            <div class="hl">${esc(d.d)}</div>
+            ${d.e ? `<div class="addr">${esc(d.e)}</div>` : ""}
+            <a class="go" href="${esc(d.u)}" target="_blank" rel="noopener">${pin}Abrir no Google Maps</a>
+          </article>`).join("") + "</div>";
+    }).join("");
+  }
+
+  $("chips").addEventListener("click", (e) => {
+    const b = e.target.closest(".chip"); if (!b) return;
+    if (b.dataset.fav) state.fav = !state.fav; else state.region = b.dataset.r;
+    chips(); render();
+    $("chips").querySelector('[aria-pressed="true"]').scrollIntoView({ inline: "center", block: "nearest", behavior: "smooth" });
+  });
+  $("q").addEventListener("input", (e) => { state.q = e.target.value; render(); });
+
+  $("s-total").textContent = DATA.length;
+  $("s-reg").textContent = REGIONS.length;
+  $("s-star").textContent = DATA.filter((d) => /\d estrelas? Michelin/.test(d.d)).length;
+  chips(); render();
+</script>
+</body>
+</html>
