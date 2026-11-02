@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0c0a1a">
+<title>Jogos</title>
+<meta name="description" content="Quatro jogos de celular feitos em HTML: Órbita, Sombra, Fatia e Lume.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800;900&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#f1efff;--mute:#9b97bd}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{min-height:100vh;background:radial-gradient(ellipse at 50% -10%,#2b2160,#0c0a1a 60%);color:var(--ink);font-family:Outfit,system-ui,sans-serif;padding:calc(env(safe-area-inset-top) + 34px) 16px calc(env(safe-area-inset-bottom) + 34px)}
+h1{font-size:44px;font-weight:900;text-align:center;letter-spacing:-.02em}
+.sub{text-align:center;color:var(--mute);margin-top:4px;font-size:15px}
+.list{display:grid;gap:14px;max-width:520px;margin:28px auto 0}
+a.g{display:flex;gap:14px;align-items:center;padding:16px;border-radius:22px;text-decoration:none;color:inherit;border:1px solid rgba(255,255,255,.1);position:relative;overflow:hidden;transition:transform .15s}
+a.g:active{transform:scale(.98)}
+.ic{width:72px;height:72px;border-radius:18px;flex:0 0 72px;display:grid;place-items:center;font-size:34px}
+.t{font-size:22px;font-weight:800}
+.d{font-size:13.5px;color:#d6d3ef;margin-top:2px;line-height:1.35}
+.k{display:inline-block;margin-top:7px;font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;padding:3px 9px;border-radius:999px;background:rgba(255,255,255,.12)}
+.best{font-size:12px;color:var(--mute);margin-top:4px;font-weight:600}
+.o{background:linear-gradient(135deg,#132a5e,#3b1a63)}.o .ic{background:radial-gradient(circle at 35% 35%,#bffcff,#38a8ff 60%,#16206b)}
+.s{background:linear-gradient(135deg,#1c1f38,#2c1a48)}.s .ic{background:#07060e;box-shadow:inset 0 0 0 2px #9d6bff}
+.f{background:linear-gradient(135deg,#ff7a95,#ffb35c)}.f .ic{background:#fff4e6;color:#2a1b3d}
+.l{background:linear-gradient(135deg,#0f1f3d,#3d2a10)}.l .ic{background:radial-gradient(circle at 50% 30%,#ffe2a0,#b07528 60%,#1a1206)}
+.f .d{color:#3a1730}.f .best{color:#5a2a45}.f .k{background:rgba(42,27,61,.15);color:#2a1b3d}.f .t{color:#2a1b3d}
+</style>
+</head>
+<body>
+<h1>Jogos</h1>
+<div class="sub">Toque para jogar. Funcionam melhor no celular.</div>
+<div class="list">
+  <a class="g o" href="orbita.html"><div class="ic">☄️</div><div><div class="t">Órbita</div><div class="d">Segure para orbitar um planeta, solte para se lançar. Suba antes que o vazio te alcance.</div><span class="k">Arcade · um toque</span><div class="best" data-k="orbita_v1" data-f="best" data-s=" m de recorde"></div></div></a>
+  <a class="g s" href="sombra.html"><div class="ic">🐾</div><div><div class="t">Sombra</div><div class="d">Deslize pelo museu, roube as joias e fuja pela janela sem parar na luz dos guardas.</div><span class="k">Puzzle · furtividade</span><div class="best" data-k="sombra_v1" data-f="max" data-p="Nível "></div></div></a>
+  <a class="g f" href="fatia.html"><div class="ic">✂️</div><div><div class="t">Fatia</div><div class="d">Corte as formas no ar na proporção exata: metade, um terço, um quarto. Nunca corte as minas.</div><span class="k">Precisão · reflexo</span><div class="best" data-k="fatia_v1" data-f="best" data-s=" pontos de recorde"></div></div></a>
+  <a class="g l" href="lume.html"><div class="ic">🗼</div><div><div class="t">Lume</div><div class="d">Guie navios com o feixe do farol à noite e construa a vila da ilha durante o dia.</div><span class="k">Estratégia · gestão</span><div class="best" data-k="lume_meta_v1" data-f="best" data-p="Recorde: noite "></div></div></a>
+</div>
+<script>
+document.querySelectorAll('.best').forEach(el=>{try{const v=JSON.parse(localStorage.getItem(el.dataset.k)||'{}')[el.dataset.f];if(v&&v>(el.dataset.f==='max'?1:0))el.textContent=(el.dataset.p||'')+v+(el.dataset.s||'');}catch(e){}});
+</script>
+</body>
+</html>
