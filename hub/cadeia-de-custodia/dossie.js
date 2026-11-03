@@ -411,5 +411,106 @@
     return h.join("\n");
   }
 
-  window.CC_DOSSIE = { gerar, falhas, aplicabilidade };
+  /* ---------------------------------------------------------------- relatório resumido */
+  function resumo(est) {
+    const pg = est.paginas, res = est.res, caso = est.caso || {};
+    const ativos = res.categorias.filter(c => c.ativo);
+    const fs = falhas(est);
+    const aplic = aplicabilidade(est, fs).filter(m => m.explicito || m.score >= 8);
+    const h = [];
+    const P = t => h.push("<p>" + esc(semTrav(t)) + "</p>");
+    const listaPt = a => a.length > 1 ? a.slice(0, -1).join(", ") + " e " + a[a.length - 1] : (a[0] || "");
+    const cita = e => {
+      const p = pg[e.gid];
+      if (p && M.limitesFrase) {
+        const [a, b] = M.limitesFrase(p.norm, e.ini, e.fim); const base = p.alinhado ? p.texto : p.norm;
+        let t = base.slice(a, b).trim(); if (t.length > 280) { t = t.slice(0, 280); t = t.slice(0, t.lastIndexOf(" ")) + " (…)"; }
+        return "“" + t + "”";
+      }
+      return "“" + (e.antes + e.alvo + e.depois).replace(/^…\s*|\s*…$/g, "").trim() + "”";
+    };
+    let n = 0; const H = t => { n++; h.push("<h3>" + n + ". " + esc(t) + "</h3>"); };
+    const hoje = new Date();
+
+    h.push('<div class="rel-cab"><div class="rel-marca"><span class="marca-tpc">TPC</span> <span>ADVOGADOS · HUB CRIMINAL</span></div><div class="mudo pequeno">Documento sigiloso. Uso exclusivo da defesa.</div></div>');
+    h.push('<h2 style="margin-bottom:4px">Relatório resumido da cadeia de custódia</h2><p class="mudo" style="margin-top:0">' + esc([caso.autos ? "Autos " + caso.autos : "", caso.assistido, "gerado em " + hoje.toLocaleDateString("pt-BR")].filter(Boolean).join(" · ")) + "</p>");
+
+    /* 1. conclusão */
+    H("Conclusão");
+    const niveis = ativos.map(c => ({ c, cat: CAT(c.id), k: M.classificar(res.criterios[c.id] || {}) }));
+    const quebra = niveis.filter(x => x.k.nivel === "quebra"), frageis = niveis.filter(x => x.k.nivel === "fragil" || x.k.nivel === "formal");
+    const decisivos = fs.filter(f => f.cr.peso === "critico" && f.st === "irregular");
+    if (!ativos.length) P("Nenhum vestígio sujeito à cadeia de custódia teve sua apreensão, coleta, exame ou juntada confirmada nos autos analisados.");
+    else if (quebra.length) {
+      P("A análise indica a quebra da cadeia de custódia relativa " + listaPt(quebra.map(x => REL.contrair("a", x.cat.artigo))) + (decisivos.length ? ", sobretudo em razão de " + listaPt([...new Set(decisivos.slice(0, 4).map(f => minus(f.cr.titulo)))]) : ", pela ausência de documentação de elos críticos da cadeia") + "." + (frageis.length ? " Há, ainda, fragilidades relevantes quanto " + listaPt(frageis.map(x => REL.contrair("a", x.cat.artigo))) + "." : ""));
+      P("Recomenda-se arguir a inadmissibilidade dos elementos assim obtidos e das provas deles derivadas (art. 157, caput e § 1º, do CPP), com fundamento no ônus estatal de demonstrar a integridade da fonte de prova (AgRg no RHC 143.169/RJ), e requerer, subsidiariamente, as providências indicadas no item 5.");
+    } else if (frageis.length) {
+      P("A análise não revela, por ora, vício documentado de natureza crítica, mas aponta fragilidades relevantes quanto " + listaPt(frageis.map(x => REL.contrair("a", x.cat.artigo))) + ". Recomenda-se requerer as providências indicadas no item 5, para compelir o Estado a documentar os elos faltantes, sob pena de inadmissibilidade, sem prejuízo da valoração das fragilidades.");
+    } else P("Não foram identificadas falhas relevantes nas etapas verificadas. Recomenda-se conferir manualmente as páginas de baixa legibilidade e as peças eventualmente não anexadas.");
+
+    /* 2. vestígios */
+    H("Vestígios analisados");
+    if (niveis.length) h.push(tabela(["Vestígio", "Classificação", "Conformidade", "Ponto central"], niveis.map(x => {
+      const f = fs.find(y => y.cat.id === x.c.id);
+      return "<tr><td>" + x.cat.icone + " " + esc(x.cat.nome) + "</td><td><b>" + esc(x.k.rot) + "</b></td><td>" + x.k.conformidade + "%</td><td>" + (f ? esc(f.cr.titulo + " (" + REL.STATUS[f.st].rot.toLowerCase() + (f.gids.length ? "; " + REL.refs(f.gids.slice(0, 2), pg) : "") + ")") : "sem falhas relevantes") + "</td></tr>";
+    })));
+    const descartados = res.categorias.filter(c => !c.ativo && (c.mencoes || 0) > 0 && c.veredito !== "confirmado");
+    if (descartados.length) P("Não integram a análise, por terem sido apenas mencionados nos autos, sem registro de apreensão, coleta, exame ou juntada: " + listaPt(descartados.map(c => minus(CAT(c.id).nome) + " (" + ((c.negacoes || [])[0] || (c.descartes || [])[0] || { motivo: "menção sem registro" }).motivo + ")")) + ".");
+
+    /* 3. pontos decisivos */
+    H("Pontos decisivos");
+    const ordem = f => (f.cr.peso === "critico" ? 0 : 3) + (f.st === "irregular" ? 0 : f.st === "controverso" ? 1 : 2);
+    const pontos = fs.filter(f => f.cr.peso !== "formal").slice().sort((a, b) => ordem(a) - ordem(b) || a.num - b.num);
+    const incs = res.inconsistencias.filter(x => x.grav === "critico");
+    const itens = [];
+    /* agrupa a mesma falha verificada em vestígios distintos, com a mesma prova */
+    const grupos = [];
+    for (const f of pontos) {
+      const chave = f.cr.id + "|" + f.st + "|" + [...new Set(f.gids)].sort().join(",");
+      const g = grupos.find(x => x.chave === chave);
+      if (g) g.fs.push(f); else grupos.push({ chave, fs: [f], f });
+    }
+    for (const g of grupos.filter(g => ordem(g.f) <= 1).slice(0, 5)) itens.push({ g });
+    for (const x of incs.slice(0, 3)) itens.push({ x });
+    for (const g of grupos.filter(g => ordem(g.f) > 1)) { if (itens.length >= 8) break; itens.push({ g }); }
+    if (!itens.length) P("Não há pontos decisivos a destacar.");
+    itens.forEach((it, i) => {
+      if (it.g) {
+        const f = it.g.f; const e = f.ev[0]; const fsg = it.g.fs;
+        P((i + 1) + ". " + f.cr.titulo + " (" + listaPt(fsg.map(x => x.cat.curto.toLowerCase())) + "; " + (fsg.length > 1 ? "falhas nº " + listaPt(fsg.map(x => String(x.num))) : "falha nº " + f.num) + " do dossiê). " + (f.st === "ausente" ? "Não se localiza nos autos documentação relativa a esta etapa, exigida pelo " + f.cr.fund.replace(/^CPP, /, "CPP, ") + "." : (f.st === "irregular" ? "Há registro de vício nos próprios autos" : "Há indícios contraditórios nos autos") + (e ? ": " + cita(e) + " (" + REL.refs([e.gid], pg) + ")." : ".")) + (f.r.nota ? " Anotação: " + f.r.nota : ""));
+      } else {
+        const x = it.x;
+        P((i + 1) + ". " + x.titulo + ". " + x.texto.replace(/\.\s*$/, "") + (x.gids.length ? " (" + REL.refs([...new Set(x.gids)].slice(0, 3), pg) + ")." : "."));
+      }
+    });
+
+    /* 4. precedentes */
+    H("Precedentes-chave");
+    if (!aplic.length) P("Nenhum precedente da base guarda correspondência direta com as falhas apontadas.");
+    aplic.slice(0, 4).forEach(m => {
+      const p = m.p;
+      P(p.proc + " (" + p.turma + ", " + p.dje + "): " + REL.tesePrincipal(p) + ". Aplica-se, no caso, " + (m.fs.length ? "às falhas nº " + m.fs.slice(0, 5).map(f => f.num).join(", ") : "às inconsistências documentais apontadas") + "." + (CAUTELA[p.n] ? " Cautela: " + CAUTELA[p.n] : ""));
+    });
+
+    /* 5. providências */
+    H("Providências prioritárias");
+    const dil = new Map();
+    for (const f of pontos) {
+      const k = DILIG[f.cr.id] ? f.cr.id : DILIG_ALIAS[f.cr.id]; if (!k) continue;
+      const atual = dil.get(k) || { k, cats: [], nums: [] }; if (!atual.cats.includes(f.cat)) atual.cats.push(f.cat); atual.nums.push(f.num); dil.set(k, atual);
+    }
+    const dl = [...dil.values()].slice(0, 5);
+    if (!dl.length) P("Não há providências específicas a recomendar.");
+    dl.forEach((d, i) => P((i + 1) + ". " + DILIG[d.k].replace(/relativo \{v\}/, "relativo " + listaPt(d.cats.map(c => REL.contrair("a", c.artigo)))).replace(/\{v\}/g, d.cats[0].artigo)));
+
+    /* 6. atenção */
+    H("Pontos de atenção");
+    P("A acusação poderá sustentar que a irregularidade não gera, por si só, a inadmissibilidade da prova (HC 653.515/RJ) e que há provas independentes aptas a sustentar a imputação (art. 157, §§ 1º e 2º, do CPP). Convém demonstrar desde logo que os demais elementos derivam da prova viciada ou dela dependem.");
+    if (fs.some(f => f.cr.id === "D01" && f.st !== "ausente")) P("Quanto ao acesso aos dados sem ordem judicial, é previsível a alegação de consentimento ou de fornecimento da senha; o STJ afastou esses fatores de convalidação quando evidenciado o nexo com o ato ilícito (AgRg no HC 1.041.047/GO).");
+    if (res.paginasBaixaConf.length) P("Há " + res.paginasBaixaConf.length + " página(s) de baixa legibilidade que devem ser conferidas manualmente antes da utilização processual.");
+    h.push('<p class="pequeno mudo">Este resumo sintetiza a análise. A fundamentação integral, os trechos dos autos, a jurisprudência completa e a minuta constam do dossiê completo.</p>');
+    return h.join("\n");
+  }
+
+  window.CC_DOSSIE = { gerar, resumo, falhas, aplicabilidade };
 })();
