@@ -163,6 +163,10 @@
     linhas.push('<table class="rel-t"><tr><th>Arquivo</th><th>Páginas</th><th>OCR</th><th>SHA-256</th></tr>' + est.docs.map((d, i) => "<tr><td>" + (est.docs.length > 1 ? "Arq. " + (i + 1) + ": " : "") + esc(d.nome) + "</td><td>" + d.paginas.length + "</td><td>" + d.paginas.filter(p => p.ocr).length + '</td><td class="mono">' + esc(d.sha256 || "não calculado") + "</td></tr>").join("") + "</table>");
     linhas.push('<p class="pequeno mudo">Os valores SHA-256 identificam univocamente a cópia dos autos submetida à análise e permitem demonstrar, a qualquer tempo, que o relatório se refere exatamente a esse material. Total de ' + res.totalPaginas + " páginas, das quais " + res.paginasOCR + " lidas por reconhecimento óptico de caracteres" + (res.paginasBaixaConf.length ? " (" + res.paginasBaixaConf.length + " com baixa legibilidade, a conferir manualmente)" : "") + ".</p>");
 
+    const lidas = res.categorias.filter(c => c.mencoes || (c.confirmacoes && c.confirmacoes.length) || c.ativo);
+    if (lidas.length) {
+      linhas.push('<p class="pequeno"><b>Leitura crítica dos vestígios.</b> Somente integram a análise os tipos de vestígio cuja apreensão, coleta, exame ou juntada está registrada nos autos. ' + esc(lidas.map(c => R.CATEGORIAS.find(x => x.id === c.id).nome + ": " + (c.ativo ? (c.veredito === "confirmado" ? "incluído" : "incluído manualmente") : c.veredito === "negado" ? "descartado (apreensão negada)" : c.veredito === "confirmado" ? "excluído manualmente" : "descartado (apenas mencionado)")).join("; ")) + ".</p>");
+    }
     linhas.push("<h3>2. Síntese por tipo de vestígio</h3>");
     linhas.push('<table class="rel-t"><tr><th>Vestígio</th><th>Classificação</th><th>Conformidade documental</th><th>Críticos irregulares</th><th>Críticos não localizados</th></tr>' + ativos.map(c => {
       const cat = R.CATEGORIAS.find(x => x.id === c.id); const k = M.classificar(res.criterios[c.id] || {});

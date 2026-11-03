@@ -267,24 +267,84 @@
     }
   }
 
+  /* Delimita a frase em que o termo aparece, ignorando abreviações (art., fls., nº, Dr. etc.). */
+  const ABREV = /\b(art|arts|n|nº|no|nos|fl|fls|dr|dra|sr|sra|min|rel|p|pag|pags|inc|al|cf|ex|obs|av|esp|proc|ltda|cia|ss|pp)$/;
+  function limitesFrase(norm, ini, fim) {
+    let a = ini, b = fim;
+    while (a > 0 && ini - a < 320) {
+      const ch = norm[a - 1];
+      if ((ch === "." || ch === ";" || ch === "!" || ch === "?") && /\s/.test(norm[a] || " ") && !(ch === "." && ABREV.test(norm.slice(Math.max(0, a - 7), a - 1)))) break;
+      a--;
+    }
+    while (b < norm.length && b - fim < 320) {
+      const ch = norm[b];
+      if ((ch === "." || ch === ";" || ch === "!" || ch === "?") && /\s/.test(norm[b + 1] || " ") && !(ch === "." && ABREV.test(norm.slice(Math.max(0, b - 6), b)))) break;
+      b++;
+    }
+    return [a, b];
+  }
+  const MOTIVO_ANTES = {
+    celular: "o termo designa número ou meio de contato, e não aparelho apreendido",
+    informatica: "o termo designa o meio utilizado, e não equipamento apreendido",
+    drogas: "o termo integra o nome do crime ou referência genérica (por exemplo, tráfico de drogas), e não substância apreendida",
+    armas: "o termo integra o tipo penal ou a narrativa do emprego de arma, sem registro de apreensão",
+    documentos: "o termo integra o nome do crime, e não documento apreendido",
+    veiculos: "o veículo é mencionado como local do fato, meio de locomoção ou objeto da abordagem, e não como bem apreendido"
+  };
+  const MOTIVO_FRASE = { mensagens: "comunicação processual por aplicativo, e não mensagem juntada como prova", audiovisual: "registro audiovisual de ato processual, e não mídia juntada como prova" };
+  const PECAS_CADEIA = new Set(["apreensao", "custodia", "laudo", "constatacao", "flagrante", "bo", "requisicao"]);
+
   function detectarCategorias(paginas) {
     return R.CATEGORIAS.map(c => {
-      const pags = []; let mencoes = 0; const amostras = [];
+      const cfg = R.CRITICA[c.id] || {};
+      const todas = new Set(), validas = new Set(); let mencoes = 0;
+      const confirmacoes = [], descartes = [], negacoes = [];
+      const ev = (p, i, f, extra) => Object.assign({ gid: p.gid, ini: i, fim: f }, trecho(p, i, f, 120), extra || {});
       for (const p of paginas) {
-        const h = buscar(p, c.termos, 200);
-        if (h.length) {
-          pags.push(p.gid); mencoes += h.length;
-          if (amostras.length < 6) amostras.push(Object.assign({ gid: p.gid, ini: h[0].ini, fim: h[0].fim }, trecho(p, h[0].ini, h[0].fim, 110)));
+        const hs = buscar(p, c.termos, 200);
+        for (const h of hs) {
+          mencoes++; todas.add(p.gid);
+          const [a, b] = limitesFrase(p.norm, h.ini, h.fim);
+          const frase = p.norm.slice(a, b);
+          const antes = p.norm.slice(Math.max(a, h.ini - 70), h.ini);
+          const depois = p.norm.slice(h.fim, Math.min(b, h.fim + 40));
+          let motivo = null;
+          if (cfg.antes && re(cfg.antes).test(antes)) motivo = MOTIVO_ANTES[c.id] || "o termo é empregado em contexto que não indica apreensão";
+          else if (cfg.depois && re(cfg.depois).test(depois)) motivo = "o termo antecede número de telefone, e não designa aparelho apreendido";
+          else if (cfg.frase && re(cfg.frase).test(frase)) motivo = MOTIVO_FRASE[c.id] || "contexto que não indica vestígio";
+          if (motivo) { if (descartes.length < 12) descartes.push(ev(p, h.ini, h.fim, { motivo })); continue; }
+          if (re(R.NEGACAO).test(frase)) { if (negacoes.length < 8) negacoes.push(ev(p, h.ini, h.fim, { motivo: "negativa expressa de apreensão ou de localização" })); continue; }
+          validas.add(p.gid);
+          const porConfirma = cfg.confirma && re(cfg.confirma).test(frase);
+          const porVerbo = !cfg.soConfirma && re(R.APREENSAO).test(frase);
+          const porItem = !cfg.soConfirma && PECAS_CADEIA.has(p.peca) && re(R.ITEM).test(p.norm.slice(Math.max(a, h.ini - 45), h.ini));
+          if (porConfirma || porVerbo || porItem) {
+            if (confirmacoes.length < 12) confirmacoes.push(ev(p, h.ini, h.fim, { base: porConfirma ? "registro específico (laudo, exame ou juntada)" : porVerbo ? "registro de apreensão, coleta ou exame na mesma frase" : "item relacionado em peça de apreensão ou de exame" }));
+          } else if (descartes.length < 12) descartes.push(ev(p, h.ini, h.fim, { motivo: "menção sem registro de apreensão, coleta, exame ou juntada na mesma frase", solto: true }));
+        }
+        if (cfg.confirma) {
+          for (const h of buscar(p, cfg.confirma, 3)) {
+            const [a, b] = limitesFrase(p.norm, h.ini, h.fim);
+            const frase = p.norm.slice(a, b);
+            if (cfg.frase && re(cfg.frase).test(frase)) continue;
+            if (re(R.NEGACAO).test(frase)) continue;
+            if (confirmacoes.some(e => e.gid === p.gid && Math.abs(e.ini - h.ini) < 80)) continue;
+            validas.add(p.gid); todas.add(p.gid);
+            if (confirmacoes.length < 12) confirmacoes.push(ev(p, h.ini, h.fim, { base: "registro específico (laudo, exame ou juntada)" }));
+          }
         }
       }
-      const ativo = mencoes >= 3 || (mencoes >= 1 && pags.length >= 1 && c.familia === "fisico" && mencoes >= 2);
-      return { id: c.id, mencoes, paginas: pags, amostras, ativo: ativo || mencoes >= 3, sugerido: ativo };
+      const veredito = confirmacoes.length ? "confirmado" : negacoes.length ? "negado" : mencoes ? "mencionado" : "ausente";
+      const pags = [...validas].sort((x, y) => x - y);
+      const amostras = (confirmacoes.length ? confirmacoes : descartes).slice(0, 6);
+      return { id: c.id, mencoes, paginas: pags, paginasTodas: [...todas].sort((x, y) => x - y), amostras, confirmacoes, descartes, negacoes, veredito, ativo: veredito === "confirmado", sugerido: veredito === "confirmado" };
     });
   }
 
   function paginasContexto(cat, paginas) {
     const s = new Set();
-    for (const g of cat.paginas) { s.add(g); s.add(g - 1); s.add(g + 1); }
+    const base = cat.confirmacoes && cat.confirmacoes.length ? cat.paginas : (cat.paginasTodas || cat.paginas);
+    for (const g of base) { s.add(g); s.add(g - 1); s.add(g + 1); }
     return paginas.filter(p => s.has(p.gid) && paginas[p.gid] && paginas[p.gid].doc === p.doc);
   }
 
@@ -464,7 +524,15 @@
       for (const c of R.CRITERIOS) {
         if (c.cats && !c.cats.includes(cat.id)) continue;
         const pags = c.contexto ? ctx : paginas;
-        const pos = coletar(pags, c.pos, 8); const neg = coletar(pags, c.neg, 8);
+        const pos0 = coletar(pags, c.pos, 10); const neg = coletar(pags, c.neg, 8);
+        const pos = [];
+        for (const e of pos0) {
+          const pg = paginas[e.gid];
+          const [fa] = limitesFrase(pg.norm, e.ini, e.fim);
+          const antes = pg.norm.slice(Math.max(fa, e.ini - 60), e.ini);
+          if (re(R.NEGA_ANTES).test(antes)) { if (!neg.some(n => n.gid === e.gid && Math.abs(n.ini - e.ini) < 40)) neg.push(Object.assign({}, e, { negado: true })); }
+          else if (pos.length < 8) pos.push(e);
+        }
         let status;
         if (c.inverso) status = neg.length ? "irregular" : "sem_indicio";
         else if (neg.length && pos.length) status = "controverso";
@@ -519,7 +587,7 @@
     const paginas = indexar(docs);
     classificarPecas(paginas);
     const cats = detectarCategorias(paginas);
-    if (opcoes.ativos) for (const c of cats) c.ativo = opcoes.ativos.includes(c.id);
+    if (opcoes.ativos) for (const c of cats) { c.ativo = opcoes.ativos.includes(c.id); c.forcado = c.ativo && c.veredito !== "confirmado"; c.excluido = !c.ativo && c.veredito === "confirmado"; }
     const ids = extrairIdentificadores(paginas, cats);
     const conf = confrontos(ids, paginas);
     const crit = avaliar(paginas, cats, conf.calc);
@@ -546,5 +614,5 @@
     return { res: novo, paginas };
   }
 
-  root.CC_MOTOR = { rotuloID, indiceDocumentos, lerArquivo, analisar, reavaliar, indexar, classificar, statusFinal, prepararPagina, obterOCR, renderizarPagina, luhn, fmtData, encerrarOCR: async () => ocrPool && ocrPool.encerrar() };
+  root.CC_MOTOR = { limitesFrase, rotuloID, indiceDocumentos, lerArquivo, analisar, reavaliar, indexar, classificar, statusFinal, prepararPagina, obterOCR, renderizarPagina, luhn, fmtData, encerrarOCR: async () => ocrPool && ocrPool.encerrar() };
 })(typeof window !== "undefined" ? window : globalThis);
