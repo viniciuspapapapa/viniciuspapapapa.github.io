@@ -308,8 +308,9 @@
           const frase = p.norm.slice(a, b);
           const antes = p.norm.slice(Math.max(a, h.ini - 70), h.ini);
           const depois = p.norm.slice(h.fim, Math.min(b, h.fim + 40));
-          let motivo = null;
-          if (cfg.antes && re(cfg.antes).test(antes)) motivo = MOTIVO_ANTES[c.id] || "o termo é empregado em contexto que não indica apreensão";
+          let motivo = naoFatico(p, h.ini, h.fim);
+          if (motivo) motivo = "menção em " + motivo;
+          else if (cfg.antes && re(cfg.antes).test(antes)) motivo = MOTIVO_ANTES[c.id] || "o termo é empregado em contexto que não indica apreensão";
           else if (cfg.depois && re(cfg.depois).test(depois)) motivo = "o termo antecede número de telefone, e não designa aparelho apreendido";
           else if (cfg.frase && re(cfg.frase).test(frase)) motivo = MOTIVO_FRASE[c.id] || "contexto que não indica vestígio";
           if (motivo) { if (descartes.length < 12) descartes.push(ev(p, h.ini, h.fim, { motivo })); continue; }
@@ -328,6 +329,7 @@
             const frase = p.norm.slice(a, b);
             if (cfg.frase && re(cfg.frase).test(frase)) continue;
             if (re(R.NEGACAO).test(frase)) continue;
+            if (naoFatico(p, h.ini, h.fim)) continue;
             if (confirmacoes.some(e => e.gid === p.gid && Math.abs(e.ini - h.ini) < 80)) continue;
             validas.add(p.gid); todas.add(p.gid);
             if (confirmacoes.length < 12) confirmacoes.push(ev(p, h.ini, h.fim, { base: "registro específico (laudo, exame ou juntada)" }));
@@ -346,6 +348,68 @@
     const base = cat.confirmacoes && cat.confirmacoes.length ? cat.paginas : (cat.paginasTodas || cat.paginas);
     for (const g of base) { s.add(g); s.add(g - 1); s.add(g + 1); }
     return paginas.filter(p => s.has(p.gid) && paginas[p.gid] && paginas[p.gid].doc === p.doc);
+  }
+
+  /* ---------- contextualização: o trecho é registro fático do caso? ---------- */
+  function zonas(p) {
+    if (p._zonas) return p._zonas;
+    const z = [];
+    for (const h of buscar(p, R.ZONA_INTRO, 40)) {
+      const resto = p.norm.slice(h.fim, h.fim + 3500);
+      const m = re(R.ZONA_FIM).exec(resto);
+      z.push([h.ini, m ? h.fim + m.index + m[0].length + 2 : Math.min(p.norm.length, h.fim + 1200)]);
+    }
+    p._zonas = z;
+    return z;
+  }
+  const REG = new Set(R.PECAS_REGISTRO), ARG = new Set(R.PECAS_ARGUMENTO);
+  /* Retorna o motivo pelo qual o trecho NÃO é registro fático do caso, ou null. */
+  function naoFatico(p, ini, fim) {
+    if (zonas(p).some(([a, b]) => ini >= a && ini <= b)) return "transcrição de jurisprudência ou doutrina";
+    const [a, b] = limitesFrase(p.norm, ini, fim);
+    const frase = p.norm.slice(a, b);
+    if (re(R.MARC_JURIS).test(frase)) return "citação de jurisprudência ou doutrina";
+    if (re(R.LEI_REF).test(frase) && re(R.NORMATIVO).test(frase) && !re(R.CONCRETO).test(frase)) return "transcrição ou paráfrase de dispositivo legal";
+    if (p.peca && ARG.has(p.peca)) return "peça argumentativa (" + (p.peca === "denuncia" ? "denúncia" : "manifestação das partes") + "), e não registro do ato";
+    return null;
+  }
+  /* estrito: o vestígio deve constar da mesma frase; caso contrário, admite-se a passagem imediatamente vizinha. */
+  function ancorado(p, ini, fim, ancora, estrito) {
+    const [a, b] = limitesFrase(p.norm, ini, fim);
+    const folga = estrito ? 0 : 160;
+    return re(ancora).test(p.norm.slice(Math.max(0, a - folga), Math.min(p.norm.length, b + folga)));
+  }
+  const comLimite = src => /^[a-z(]/.test(src) ? "(?<![a-z0-9])(?:" + src + ")" : src;
+
+  /* Coleta indícios aplicando os filtros de contexto; os trechos rejeitados vão para "descartes" com o motivo. */
+  const PECAS_CADEIA_ANC = new Set(["apreensao", "flagrante", "laudo", "constatacao", "custodia", "requisicao"]);
+  function coletarFatico(pags, padroes, max, ancora, descartes, estrito, exclusivas, proprio, outros, confirmadas, porPagina) {
+    const ev = [];
+    for (const src of padroes) {
+      for (const p of pags) {
+        for (const h of buscar(p, comLimite(src), 6)) {
+          if (ev.length >= (max || 10)) return ev;
+          if (ev.some(e => e.gid === p.gid && Math.abs(e.ini - h.ini) < 40)) continue;
+          let motivo = naoFatico(p, h.ini, h.fim);
+          if (!motivo && !estrito && proprio && outros) {
+            const [fa, fb] = limitesFrase(p.norm, h.ini, h.fim); const fr = p.norm.slice(fa, fb);
+            if (re(outros).test(fr) && !re(proprio).test(fr) && !(exclusivas && exclusivas.has(p.gid))) motivo = "a frase refere-se a outro vestígio em análise";
+          }
+          const naPeca = confirmadas && confirmadas.has(p.gid) && PECAS_CADEIA_ANC.has(p.peca);
+          let semOutro = true;
+          if (estrito && naPeca && !porPagina && outros) { const [fa, fb] = limitesFrase(p.norm, h.ini, h.fim); semOutro = !re(outros).test(p.norm.slice(fa, fb)); }
+          const aceitoPelaPeca = estrito && naPeca && (porPagina || semOutro);
+          if (!motivo && ancora && !ancorado(p, h.ini, h.fim, ancora, estrito) && !(estrito && exclusivas && exclusivas.has(p.gid)) && !aceitoPelaPeca) motivo = estrito ? "a frase não se refere ao vestígio analisado" : "sem relação, na mesma passagem, com o vestígio ou com a cadeia de custódia";
+          if (!motivo && p.peca && !REG.has(p.peca) && p.peca !== "decisao" && !ancora) motivo = "peça que não registra o ato";
+          if (motivo) {
+            if (descartes && descartes.length < 8 && !descartes.some(e => e.gid === p.gid && Math.abs(e.ini - h.ini) < 40)) descartes.push(Object.assign({ gid: p.gid, ini: h.ini, fim: h.fim, motivo }, trecho(p, h.ini, h.fim)));
+            continue;
+          }
+          ev.push(Object.assign({ gid: p.gid, ini: h.ini, fim: h.fim }, trecho(p, h.ini, h.fim)));
+        }
+      }
+    }
+    return ev;
   }
 
   function coletar(pags, padroes, max) {
@@ -517,6 +581,10 @@
 
   function avaliar(paginas, cats, calc) {
     const res = {};
+    /* Páginas de laudo, constatação ou custódia dedicadas a um único vestígio: suas frases referem-se a ele. */
+    const exclusivas = {}; const donos = {};
+    for (const cat of cats) if (cat.ativo) for (const e of cat.confirmacoes || []) (donos[e.gid] = donos[e.gid] || new Set()).add(cat.id);
+    for (const cat of cats) exclusivas[cat.id] = new Set(Object.keys(donos).filter(g => donos[g].size === 1 && donos[g].has(cat.id) && paginas[g] && ["laudo", "constatacao", "custodia", "requisicao"].includes(paginas[g].peca)).map(Number));
     for (const cat of cats) {
       if (!cat.ativo) continue;
       const ctx = paginasContexto(cat, paginas);
@@ -524,7 +592,16 @@
       for (const c of R.CRITERIOS) {
         if (c.cats && !c.cats.includes(cat.id)) continue;
         const pags = c.contexto ? ctx : paginas;
-        const pos0 = coletar(pags, c.pos, 10); const neg = coletar(pags, c.neg, 8);
+        const cfgCat = R.CRITICA[cat.id] || {};
+        const catRe = R.CATEGORIAS.find(x => x.id === cat.id).termos;
+        const ancora = c.contexto ? "(?:" + catRe + ")" + (cfgCat.confirma ? "|(?:" + cfgCat.confirma + ")" : "") + (R.ANAFORA[cat.id] ? "|(?:" + R.ANAFORA[cat.id] + ")" : "") : "(?:" + R.ANCORA + ")|(?:" + catRe + ")";
+        const descartes = [];
+        const proprio = "(?:" + catRe + ")" + (R.ANAFORA[cat.id] ? "|(?:" + R.ANAFORA[cat.id] + ")" : "");
+        const outrosL = cats.filter(x => x.ativo && x.id !== cat.id).map(x => "(?:" + R.CATEGORIAS.find(y => y.id === x.id).termos + ")");
+        const outros = outrosL.length ? outrosL.join("|") : null;
+        const confirmadas = new Set((cat.confirmacoes || []).map(e => e.gid));
+        const padroesPos = c.posPorCat && c.posPorCat[cat.id] ? c.posPorCat[cat.id] : c.pos;
+        const pos0 = coletarFatico(pags, padroesPos, 10, ancora, descartes, !!c.contexto, exclusivas[cat.id], proprio, outros, confirmadas, !!c.pagina); const neg = coletarFatico(pags, c.neg, 8, ancora, descartes, !!c.contexto, exclusivas[cat.id], proprio, outros, confirmadas, !!c.pagina);
         const pos = [];
         for (const e of pos0) {
           const pg = paginas[e.gid];
@@ -543,7 +620,7 @@
           if (!(calc[c.id].status === "ausente" && pos.length)) status = calc[c.id].status;
         }
         if (c.id === "G12" && calc.G12 && calc.G12.status === "irregular") status = "irregular";
-        res[cat.id][c.id] = { auto: status, pos, neg, calcGids: calc[c.id] ? calc[c.id].gids : [] };
+        res[cat.id][c.id] = { auto: status, pos, neg, desc: descartes, calcGids: calc[c.id] ? calc[c.id].gids : [] };
       }
     }
     return res;
@@ -552,7 +629,7 @@
   function alertas(paginas) {
     return R.ALERTAS.map(a => {
       const ev = [];
-      for (const p of paginas) for (const h of buscar(p, a.re, 5)) { if (ev.length < 30) ev.push(Object.assign({ gid: p.gid, ini: h.ini, fim: h.fim }, trecho(p, h.ini, h.fim, 110))); }
+      for (const p of paginas) for (const h of buscar(p, comLimite(a.re), 5)) { if (ev.length < 30 && !naoFatico(p, h.ini, h.fim)) ev.push(Object.assign({ gid: p.gid, ini: h.ini, fim: h.fim }, trecho(p, h.ini, h.fim, 110))); }
       return Object.assign({}, a, { ev });
     }).filter(a => a.ev.length);
   }
@@ -614,5 +691,5 @@
     return { res: novo, paginas };
   }
 
-  root.CC_MOTOR = { limitesFrase, rotuloID, indiceDocumentos, lerArquivo, analisar, reavaliar, indexar, classificar, statusFinal, prepararPagina, obterOCR, renderizarPagina, luhn, fmtData, encerrarOCR: async () => ocrPool && ocrPool.encerrar() };
+  root.CC_MOTOR = { naoFatico, limitesFrase, rotuloID, indiceDocumentos, lerArquivo, analisar, reavaliar, indexar, classificar, statusFinal, prepararPagina, obterOCR, renderizarPagina, luhn, fmtData, encerrarOCR: async () => ocrPool && ocrPool.encerrar() };
 })(typeof window !== "undefined" ? window : globalThis);

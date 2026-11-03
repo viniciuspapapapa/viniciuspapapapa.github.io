@@ -10,7 +10,7 @@
 
   if (window.pdfjsLib) pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
 
-  const E = { arquivos: [], docs: [], paginas: [], res: null, caso: {}, sub: "painel", catSel: null, soProb: false, sinal: null, relModo: "dossie", base: "etapas", jurisFiltro: { q: "", tag: "", turma: "" } };
+  const E = { arquivos: [], docs: [], paginas: [], res: null, caso: {}, sub: "painel", catSel: null, soProb: false, sinal: null, relModo: "resumo", base: "etapas", jurisFiltro: { q: "", tag: "", turma: "" } };
   window.CC_ESTADO = E;
 
   /* ------------------------------------------------------------ abas principais */
@@ -222,9 +222,9 @@
         '<div><button type="button" class="btn sec peq" data-cat="' + c.id + '">' + (c.ativo ? "Excluir da análise" : "Incluir na análise") + "</button></div></div></details>";
     }).join("") + "</div>";
   }
-  function evCritico(e, rotulo, neg) {
+  function evCritico(e, rotulo, neg, neutro) {
     const p = E.paginas[e.gid];
-    return '<div class="ev' + (neg ? " neg" : "") + '" data-pg="' + e.gid + '" data-ini="' + e.ini + '" data-fim="' + e.fim + '" data-neg="' + (neg ? 1 : 0) + '" role="button" tabindex="0"><div class="pg">' + esc(p ? p.rot : "") + (rotulo ? " · " + esc(rotulo) : "") + "</div>" + esc(e.antes) + "<mark" + (neg ? ' class="mark-neg"' : "") + ">" + esc(e.alvo) + "</mark>" + esc(e.depois) + "</div>";
+    return '<div class="ev' + (neg ? " neg" : "") + (neutro ? " neutro" : "") + '" data-pg="' + e.gid + '" data-ini="' + e.ini + '" data-fim="' + e.fim + '" data-neg="' + (neg ? 1 : 0) + '" role="button" tabindex="0"><div class="pg">' + esc(p ? p.rot : "") + (rotulo ? " · " + esc(rotulo) : "") + "</div>" + esc(e.antes) + "<mark" + (neg ? ' class="mark-neg"' : "") + ">" + esc(e.alvo) + "</mark>" + esc(e.depois) + "</div>";
   }
   function renderPainel() {
     const r = E.res;
@@ -256,7 +256,7 @@
           '<div><button class="btn sec peq" data-abre="' + c.id + '">Abrir matriz</button></div></div>';
       }).join("") + "</div>";
     }
-    if (ativos.length) h += '<div class="card card-p" style="margin-top:18px;display:flex;gap:14px;align-items:center;flex-wrap:wrap;border-top:4px solid var(--accent)"><div style="flex:1;min-width:240px"><b>Dossiê completo da análise</b><div class="pequeno mudo">Todas as falhas com página e ID, jurisprudência aplicável e como utilizá-la, diligências, riscos e minuta em anexo, em documento único para Word ou PDF.</div></div><button class="btn" data-dossie="1">Gerar dossiê</button></div>';
+    if (ativos.length) h += '<div class="card card-p" style="margin-top:18px;display:flex;gap:14px;align-items:center;flex-wrap:wrap;border-top:4px solid var(--accent)"><div style="flex:1;min-width:240px"><b>Relatório resumido e dossiê completo</b><div class="pequeno mudo">O resumo traz, em poucas páginas, os pontos decisivos para análise e decisão; o dossiê reúne toda a análise, com todas as falhas, página e ID, jurisprudência aplicável e como utilizá-la, diligências, riscos e minuta. Ambos exportam para Word ou PDF.</div></div><div class="linha-btns"><button class="btn sec" data-resumo="1">Relatório resumido</button><button class="btn" data-dossie="1">Dossiê completo</button></div></div>';
     const top = r.inconsistencias.filter(i => i.grav === "critico").slice(0, 4);
     if (top.length) h += '<h3 style="margin-top:26px">Pontos de maior gravidade</h3><div class="grade">' + top.map(incHTML).join("") + '</div><p><button class="btn sec peq" data-ir="inconsistencias">Ver todas as inconsistências e alertas</button></p>';
     C().innerHTML = h;
@@ -264,6 +264,7 @@
     C().querySelectorAll("[data-abre]").forEach(b => b.onclick = () => { E.catSel = b.dataset.abre; abrirSub("matriz"); });
     C().querySelectorAll("[data-ir]").forEach(b => b.onclick = () => abrirSub(b.dataset.ir));
     C().querySelectorAll("[data-dossie]").forEach(b => b.onclick = () => { E.relModo = "dossie"; abrirSub("relatorio"); });
+    C().querySelectorAll("[data-resumo]").forEach(b => b.onclick = () => { E.relModo = "resumo"; abrirSub("relatorio"); });
     ligarPg(C());
   }
   function alternarCat(id) {
@@ -332,6 +333,7 @@
     if (r.auto !== st) h += '<div class="pequeno">Triagem automática: <span class="tag ' + REL.STATUS[r.auto].cls + '">' + REL.STATUS[r.auto].rot + "</span></div>";
     if (r.neg.length) h += '<div><div class="pequeno" style="font-weight:600;color:var(--bad);margin-bottom:6px">Indícios de vício</div><div class="grade" style="gap:6px">' + r.neg.map(e => evHTML(e, true)).join("") + "</div></div>";
     if (r.pos.length) h += '<div><div class="pequeno" style="font-weight:600;color:var(--ok);margin-bottom:6px">Indícios de cumprimento</div><div class="grade" style="gap:6px">' + r.pos.map(e => evHTML(e, false)).join("") + "</div></div>";
+    if (r.desc && r.desc.length) h += '<details class="dobra"><summary class="pequeno mudo">Trechos desconsiderados por não constituírem registro fático pertinente ao caso (' + r.desc.length + ')</summary><div class="grade" style="gap:6px;margin-top:8px">' + r.desc.map(e => evCritico(e, e.motivo, false, true)).join("") + "</div></details>";
     if (r.calcGids && r.calcGids.length) h += '<div class="pequeno">Confronto automático entre peças: ' + [...new Set(r.calcGids)].slice(0, 20).map(g => pgChip(g)).join("") + "</div>";
     if (!nEv && st === "ausente") h += '<div class="pequeno mudo">Nenhum registro correspondente foi localizado no texto dos autos. Verifique se a peça existe fora dos arquivos anexados ou em páginas de baixa legibilidade.</div>';
     if (c.prec && c.prec.length) h += '<div class="pequeno"><span class="mudo">Precedentes: </span>' + c.prec.map(precChip).join(" ") + "</div>";
@@ -535,11 +537,11 @@
     const est = { docs: E.docs, paginas: E.paginas, res: E.res, caso: E.caso };
     let html;
     try {
-      html = E.relModo === "dossie" ? window.CC_DOSSIE.gerar(est) : E.relModo === "minuta" ? '<div class="rel-cab"><div class="rel-marca"><span class="marca-tpc">TPC</span> <span>ADVOGADOS</span></div><div class="mudo pequeno">Minuta gerada a partir da verificação · revise antes de protocolar</div></div>' + REL.minutaHTML(est) : REL.relatorio(est);
+      html = E.relModo === "resumo" ? window.CC_DOSSIE.resumo(est) : E.relModo === "dossie" ? window.CC_DOSSIE.gerar(est) : E.relModo === "minuta" ? '<div class="rel-cab"><div class="rel-marca"><span class="marca-tpc">TPC</span> <span>ADVOGADOS</span></div><div class="mudo pequeno">Minuta gerada a partir da verificação · revise antes de protocolar</div></div>' + REL.minutaHTML(est) : REL.relatorio(est);
     } catch (err) { console.error(err); html = '<p>Não foi possível gerar o documento: ' + esc(err.message) + "</p>"; }
-    const nomeArq = { dossie: "dossie-cadeia-custodia", minuta: "minuta-cadeia-custodia", relatorio: "relatorio-cadeia-custodia" }[E.relModo];
-    C().innerHTML = '<div class="linha-btns nao-imprimir" style="margin-bottom:14px"><div class="sub" style="margin:0"><button data-rm="dossie" aria-selected="' + (E.relModo === "dossie") + '">Dossiê completo</button><button data-rm="minuta" aria-selected="' + (E.relModo === "minuta") + '">Minuta de tese</button><button data-rm="relatorio" aria-selected="' + (E.relModo === "relatorio") + '">Relatório técnico</button></div><div class="espaco"></div><button class="btn sec peq" id="rCopiar">Copiar texto</button><button class="btn sec peq" id="rDoc">Baixar .doc (Word)</button><button class="btn peq" id="rPrint">Imprimir / PDF</button></div>' +
-      (E.relModo === "dossie" ? '<div class="aviso info nao-imprimir" style="margin-bottom:14px">O dossiê reúne toda a análise: síntese, índice dos documentos por ID, quadro de todas as falhas, análise por vestígio com os trechos dos autos, inconsistências, alertas, identificadores, cronologia, jurisprudência aplicável com as possibilidades de utilização, precedentes de cautela, fundamentos legais, doutrina, diligências, riscos e a minuta em anexo. Reflete as suas revisões na Matriz por etapa.' + (E.paginas.some(p => p.rotID) ? "" : " Nenhum ID foi detectado nos arquivos: informe-o na aba Arquivos e imagens para que as referências o indiquem.") + "</div>" : E.relModo === "minuta" ? '<div class="aviso info nao-imprimir" style="margin-bottom:14px">A minuta reflete a triagem e as suas revisões na Matriz por etapa. As referências indicam a página do arquivo e o ID do documento no processo eletrônico, quando identificado.</div>' : "") +
+    const nomeArq = { resumo: "resumo-cadeia-custodia", dossie: "dossie-cadeia-custodia", minuta: "minuta-cadeia-custodia", relatorio: "relatorio-cadeia-custodia" }[E.relModo];
+    C().innerHTML = '<div class="linha-btns nao-imprimir" style="margin-bottom:14px"><div class="sub" style="margin:0"><button data-rm="resumo" aria-selected="' + (E.relModo === "resumo") + '">Relatório resumido</button><button data-rm="dossie" aria-selected="' + (E.relModo === "dossie") + '">Dossiê completo</button><button data-rm="minuta" aria-selected="' + (E.relModo === "minuta") + '">Minuta de tese</button><button data-rm="relatorio" aria-selected="' + (E.relModo === "relatorio") + '">Relatório técnico</button></div><div class="espaco"></div><button class="btn sec peq" id="rCopiar">Copiar texto</button><button class="btn sec peq" id="rDoc">Baixar .doc (Word)</button><button class="btn peq" id="rPrint">Imprimir / PDF</button></div>' +
+      (E.relModo === "resumo" ? '<div class="aviso info nao-imprimir" style="margin-bottom:14px">O relatório resumido reúne, em poucas páginas, a conclusão, os vestígios analisados, os pontos decisivos com página e ID, os precedentes-chave, as providências prioritárias e os pontos de atenção. A numeração das falhas corresponde à do dossiê completo.</div>' : E.relModo === "dossie" ? '<div class="aviso info nao-imprimir" style="margin-bottom:14px">O dossiê reúne toda a análise: síntese, índice dos documentos por ID, quadro de todas as falhas, análise por vestígio com os trechos dos autos, inconsistências, alertas, identificadores, cronologia, jurisprudência aplicável com as possibilidades de utilização, precedentes de cautela, fundamentos legais, doutrina, diligências, riscos e a minuta em anexo. Reflete as suas revisões na Matriz por etapa.' + (E.paginas.some(p => p.rotID) ? "" : " Nenhum ID foi detectado nos arquivos: informe-o na aba Arquivos e imagens para que as referências o indiquem.") + "</div>" : E.relModo === "minuta" ? '<div class="aviso info nao-imprimir" style="margin-bottom:14px">A minuta reflete a triagem e as suas revisões na Matriz por etapa. As referências indicam a página do arquivo e o ID do documento no processo eletrônico, quando identificado.</div>' : "") +
       '<article class="papel" id="relPreview">' + html + "</article>";
     C().querySelectorAll("[data-rm]").forEach(b => b.onclick = () => { E.relModo = b.dataset.rm; renderRelatorio(); });
     $("#rCopiar").onclick = () => copiar(E.relModo === "minuta" ? REL.minutaTexto(est) : $("#relPreview").innerText);

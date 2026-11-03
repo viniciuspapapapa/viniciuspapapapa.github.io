@@ -77,6 +77,7 @@
     { id: "requisicao", rot: "Requisição / ofício de encaminhamento", cor: "#6a5a8a", re: "requisicao de (exame|pericia)|oficio n.{0,20}(encaminh|requisit|remet)|guia de remessa" },
     { id: "custodia", rot: "Registro de cadeia de custódia", cor: "#a0761c", re: "ficha de acompanhamento|registro de cadeia de custodia|cadeia de custodia n|termo de recebimento|central de custodia|guia de entrega" },
     { id: "decisao", rot: "Decisão / mandado", cor: "#3a3a3a", re: "\\bdecisao\\b|\\bdespacho\\b|\\bvistos\\b|mandado de busca|\\bsentenca\\b|\\bdefiro\\b|\\bindefiro\\b" },
+    { id: "manifestacao", rot: "Manifestação das partes", cor: "#6b4a6b", re: "alegacoes finais|\\bmemoriais\\b|resposta a acusacao|razoes (de|do|da) (recurso|apelacao)|contrarrazoes|parecer (do ministerio publico|ministerial|da procuradoria)|pedido de (revogacao|relaxamento|liberdade)|requerimento de (revogacao|relaxamento|liberdade)|impetra\\w* (a presente ordem|habeas corpus)" },
     { id: "denuncia", rot: "Denúncia", cor: "#7a2f4f", re: "\\bdenuncia\\b|oferece (a presente )?denuncia" },
     { id: "relatorio", rot: "Relatório policial / inteligência", cor: "#5a6b3a", re: "relatorio (final|policial|de investigacao|de inteligencia|de analise|de missao)|informac(ao|oes) de policia judiciaria" },
     { id: "degravacao", rot: "Degravação / transcrição", cor: "#3a6b6b", re: "degravac(ao|oes)|transcric(ao|oes) d\\w+ (audios?|dialogos|conversas)" }
@@ -86,7 +87,7 @@
      contexto: exige que a página (ou as vizinhas) mencione o tipo de vestígio.
      falta / vicio: minutas usadas no relatório. {v} = artigo do vestígio; {p} = páginas. */
   const CRITERIOS = [
-    { id: "G01", etapa: "reconhecimento", peso: "critico", cats: TODOS_FIS, contexto: true,
+    { id: "G01", etapa: "reconhecimento", peso: "critico", cats: TODOS_FIS, contexto: true, pagina: true,
       titulo: "Registro formal da apreensão",
       pergunta: "Há registro formal do reconhecimento e da apreensão (auto de apreensão, auto de exibição e apreensão ou auto circunstanciado de busca)?",
       fund: "CPP, arts. 6º, II, 158-A, § 1º, 158-B, I, e 245, § 7º",
@@ -101,6 +102,15 @@
       pergunta: "O vestígio foi descrito de modo individualizado no momento da apreensão (quantidade, características e identificadores únicos, como IMEI, número de série, calibre, peso ou placa)?",
       fund: "CPP, arts. 158-A, 158-B, III, e 158-D, § 2º",
       pos: ["imei", "n(umero|[º°o.]) de serie", "\\bserie\\b", "calibre", "\\d+([.,]\\d+)? ?(g|gramas?|kg|quilos?)\\b", "placa", "chassi", "marca .{0,30}modelo", "modelo .{0,30}(cor|imei)"],
+      posPorCat: {
+        celular: ["imei", "n(umero|[º°o.]) de serie", "\\bserie\\b", "marca .{0,30}modelo", "modelo .{0,30}(cor|imei)", "(samsung|motorola|apple|iphone|xiaomi|redmi|lg|asus|nokia)\\b.{0,40}(modelo|cor|galaxy|moto|\\d)"],
+        informatica: ["n(umero|[º°o.]) de serie", "\\bserie\\b", "marca .{0,30}modelo", "\\d+ ?(gb|tb)\\b", "patrimonio"],
+        drogas: ["\\d+([.,]\\d+)? ?(g|gramas?|kg|quilos?)\\b", "\\d+ ?\\(?[a-z ]*\\)? ?(porc(ao|oes)|pinos?|buchas?|tabletes?|pedras?|involucros?|trouxinhas?)", "massa (bruta|liquida)"],
+        armas: ["calibre", "n(umero|[º°o.]) de serie", "\\bserie\\b", "marca .{0,30}modelo", "numerac\\w+ (suprimida|raspada)"],
+        biologico: ["codigo (da amostra|de identificacao)", "identificac\\w+ da amostra", "\\d+ ?(swabs?|frascos?|tubos?|amostras?)"],
+        documentos: ["\\d+ ?\\(?[a-z ]*\\)? ?cedulas?", "serie [a-z]{1,2}\\s?\\d", "valor (total )?de r\\$", "r\\$ ?\\d"],
+        veiculos: ["placa", "chassi", "renavam", "marca .{0,30}modelo", "\\bcor\\b"]
+      },
       neg: ["sem (a )?(devida )?(identificacao|individualizacao|descricao)", "nao (foi|foram) (devidamente )?(individualizad|identificad|descrit)\\w*"],
       prec: [19, 55],
       falta: "A apreensão de {v} não foi acompanhada de descrição individualizada, com os identificadores que permitiriam o juízo de mesmidade entre o objeto apreendido e o objeto examinado. Sem individualização, a correspondência entre vestígio e laudo passa a repousar em mera presunção, incompatível com a exigência de rastreabilidade do art. 158-A do CPP.",
@@ -186,7 +196,7 @@
       falta: "Não há documento que formalize o recebimento de {v} pelo órgão pericial com os dados mínimos exigidos pelo art. 158-B, VII, do CPP, como protocolo, origem, nome de quem realizou o transporte, código de rastreamento e identificação de quem o recebeu. A ausência impede fixar o momento em que a responsabilidade pela guarda migrou para a perícia.",
       vicio: "O recebimento de {v} pelo órgão pericial foi documentado de forma insuficiente ({p}), sem os elementos mínimos do art. 158-B, VII, do CPP." },
 
-    { id: "G11", etapa: "processamento", peso: "critico", cats: FIS_SUPORTE, contexto: true,
+    { id: "G11", etapa: "processamento", peso: "critico", cats: FIS_SUPORTE, contexto: true, pagina: true,
       titulo: "Laudo por perito oficial",
       pergunta: "O exame foi formalizado em laudo por perito oficial (ou por dois peritos não oficiais habilitados e compromissados), com descrição da metodologia e do material recebido?",
       fund: "CPP, arts. 158, 158-B, VIII, e 159, caput e §§ 1º e 2º",
@@ -514,7 +524,7 @@
   const CRITICA = {
     celular: {
       antes: "(ligou|ligaram|ligacao|ligacoes|contato|contatou|telefonou|mensagem) (para|ao|do|pelo|via|com)( seu| o| um)?\\s*$|(numero|n[º°o.]*) (de |do )?(telefone )?$|(pelo|via|por) (telefone )?$",
-      depois: "^\\s*(n[º°o.]*|numero|:|-)?\\s*\\(?\\d{2}\\)?\\s*9?\\s?\\d{4}[\\s.-]?\\d{4}",
+      depois: "^\\s*(n[º°o.]*|numero|:|-)?\\s*\\(?\\d{2}\\)?\\s*9?\\s?\\d{4}[\\s.-]?\\d{4}(?!\\d)",
       confirma: "exame (pericial )?em aparelhos? (celular|telefonico)|extracao (de dados )?(do|dos|de) (aparelhos?|celular)|laudo .{0,60}(aparelhos? celular|telefone celular|smartphone)|imei"
     },
     informatica: {
@@ -563,8 +573,33 @@
       confirma: "laudo (pericial )?(de )?(exame de |pericia de |levantamento de )?local|levantamento (pericial )?(de|do) local|exame (pericial )?(de|do) local|pericia (de|no) local|exame perinecroscopico|perinecroscop\\w+|necropsia|laudo (de )?necroscop\\w+|exame cadaverico|isolamento (do|da) (local|area)|preservac\\w+ do local"
     }
   };
+  /* Referências usuais a cada vestígio no texto ("o aparelho", "a substância"), aceitas como vínculo com ele. */
+  const ANAFORA = {
+    celular: "\\b(aparelhos?|telefones?|dispositivos? moveis?)\\b",
+    informatica: "\\b(equipamentos?|dispositivos?|midias?|discos?)\\b",
+    telematico: "\\b(dados|contas?|provedor(es)?)\\b",
+    mensagens: "\\b(conversas?|mensagens?|imagens?)\\b",
+    audiovisual: "\\b(midias?|arquivos?|imagens|gravac(ao|oes))\\b",
+    interceptacao: "\\b(audios?|gravac(ao|oes)|dialogos?)\\b",
+    drogas: "\\b(substancias?|porc(ao|oes)|entorpecentes?|materia(l|is) (entorpecente|apreendido|examinado|questionado))\\b",
+    armas: "\\b(armas?|armamentos?|artefatos?|municoes?)\\b",
+    biologico: "\\b(amostras?|materia(l|is) biologico)\\b",
+    documentos: "\\b(documentos?|cedulas?|papeis)\\b",
+    veiculos: "\\b(veiculos?|automove(l|is)|carros?)\\b",
+    local: "\\b(local|cena|area)\\b"
+  };
   /* Negação que antecede um indício de cumprimento: o trecho passa a ser lido como indício de vício. */
+  /* Contextualização: o que não é registro fático do caso. */
+  const ZONA_INTRO = "(a seguir|abaixo) (transcrit|colacionad|reproduzid|citad|ementad)\\w*|\\bin verbis\\b|confira-se|veja-se|vejamos|nesse (mesmo )?sentido|nessa (mesma )?linha|\\bementa\\b|eis o (teor|precedente|julgado)|transcrevo|trago a colacao|colaciono|como (ja )?(decidiu|assentou|entendeu)|(ja )?decidiu o (superior|supremo|stj|stf|egregio|e\\.)|leciona|na licao de|segundo a doutrina|ensina \\w+";
+  const ZONA_FIM = "\\b(dje|djen|dj)\\b[^)]{0,40}|julgado em\\s*[0-9/. ]{6,12}|data (do julgamento|de publicacao)[^)]{0,30}|publicad[oa] em\\s*[0-9/. ]{6,12}";
+  const MARC_JURIS = "\\b(stj|stf|superior tribunal de justica|supremo tribunal federal|rel\\.? (p\\/ acordao )?min|relator(a|es)?|julgado em|dje|djen|agrg|agint|edcl|(a?resp|rhc|hc|rms|ms|aresp|are) n?[º°o.]?\\s?\\d{2,3}\\.\\d{3}|ementa|sumula|precedentes?|jurisprudenci\\w+|doutrin\\w+|leciona|in verbis|apud|op\\. cit|quinta turma|sexta turma|terceira secao|camara criminal|tese fixada|tema repetitivo)\\b";
+  const LEI_REF = "\\b(arts?\\.?|artigos?)\\s*\\d|\\bcpp\\b|codigo de processo penal|\\blei (n[º°o.]*\\s*)?\\d|lei federal|constituicao|portaria|norma tecnica|iso\\/?iec";
+  const NORMATIVO = "\\b(devera|deverao|deve|devem|sera|serao|compreende|considera-se|dispoe|preve|estabelece|determina|exige|exigem|impoe|impoem|preceitua|reza|estatui|disciplina|preconiza|garante|assegura|veda|proibe)\\b";
+  const CONCRETO = "n[º°o.]\\s*\\d{3,}|\\b\\d{1,2}\\/\\d{1,2}\\/\\d{2,4}\\b|\\bfoi\\b|\\bforam\\b";
+  const ANCORA = "\\b(vestigios?|materia(l|is)|objetos?|lacres?|lacrad\\w*|apreendid\\w*|apreens(ao|oes)|pericia\\w*|perit[oa]s?|laudos?|exames?|amostras?|aparelhos?|substancias?|evidencias?|midias?|arquivos?|dados|extrac(ao|oes)|custodia|recipientes?|embalage\\w*|envelopes?|involucros?|acondicionad\\w*|coletad\\w*)\\b";
+  const PECAS_REGISTRO = ["apreensao", "flagrante", "bo", "depoimento", "constatacao", "laudo", "requisicao", "custodia", "relatorio", "degravacao"];
+  const PECAS_ARGUMENTO = ["denuncia", "manifestacao"];
   const NEGA_ANTES = "\\b(nao|nem|sem|ausencia de|ausente|inexistencia de|inexiste|deixou de|deixaram de|nenhum\\w*|tampouco|sequer|falta de|carece de|desacompanhad\\w+ de)\\b[^.;]{0,40}$";
 
-  window.CC_REGRAS = { ETAPAS, CATEGORIAS, PECAS, CRITERIOS, ALERTAS, DIG, TODOS_FIS, APREENSAO, NEGACAO, ITEM, CRITICA, NEGA_ANTES };
+  window.CC_REGRAS = { ETAPAS, CATEGORIAS, PECAS, CRITERIOS, ALERTAS, DIG, TODOS_FIS, APREENSAO, NEGACAO, ITEM, CRITICA, NEGA_ANTES, ANAFORA, ZONA_INTRO, ZONA_FIM, MARC_JURIS, LEI_REF, NORMATIVO, CONCRETO, ANCORA, PECAS_REGISTRO, PECAS_ARGUMENTO };
 })();

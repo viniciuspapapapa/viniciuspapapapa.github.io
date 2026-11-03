@@ -75,6 +75,8 @@
   .crit .corpo { padding: 14px; display: grid; gap: 12px; }
   .ev { border-left: 3px solid var(--ok); background: var(--surface-2); padding: 8px 10px; border-radius: 0 8px 8px 0; font-size: 13.5px; cursor: pointer; }
   .ev.neg { border-left-color: var(--bad); }
+  .ev.neutro { border-left-color: var(--line-2); color: var(--ink-2); }
+  .ev.neutro mark { background: var(--na-bg); color: var(--ink-2); }
   .ev:hover { background: color-mix(in srgb, var(--accent) 16%, var(--surface-2)); }
   .ev .pg { font-size: 11.5px; color: var(--ink-3); font-weight: 600; letter-spacing: .04em; margin-bottom: 2px; }
   .rev { display: flex; flex-wrap: wrap; gap: 6px; }
@@ -259,7 +261,7 @@
       <button data-sub="mapa">Mapa e busca nos autos</button>
       <button data-sub="arquivos">Arquivos e imagens</button>
       <button data-sub="ia">Análise por IA</button>
-      <button data-sub="relatorio">Dossiê, relatório e minuta</button>
+      <button data-sub="relatorio">Resumo, dossiê e minuta</button>
     </div>
     <div id="subconteudo"></div>
   </section>
@@ -288,6 +290,8 @@
         <p>Em seguida, cada página é classificada segundo a peça processual a que pertence (auto de apreensão, laudo de constatação, laudo pericial, requisição, registro de custódia, decisão, relatório policial, entre outras), e os vestígios mencionados são agrupados por tipo. Para cada tipo ativo, a ferramenta aplica os critérios correspondentes às etapas do art. 158-B do CPP e às garantias de legalidade do acesso, integridade e acesso da defesa, buscando, no texto, indícios de cumprimento e indícios de vício.</p>
         <p>Paralelamente, são extraídos identificadores objetivos e feitos confrontos entre as peças: IMEIs (com validação do dígito verificador), lacres registrados na apreensão e consignados no exame, valores hash, pesos de drogas, capacidades de mídias e datas. Divergências entre esses dados são apontadas como inconsistências documentais.</p>
         <p>A identificação dos vestígios é crítica, e não baseada em palavras soltas. Cada menção é lida na frase em que aparece, e o tipo de vestígio só entra na análise quando o texto registra sua apreensão, coleta, exame ou juntada, ou quando há peça específica, como laudo toxicológico ou exame em aparelho celular. São descartadas, com indicação do motivo, as menções em que o termo designa local do fato ou meio de locomoção (o veículo em que o acusado chegou), número de contato (o celular para o qual se ligou), nome do crime (tráfico de drogas, porte de arma), comunicação processual (intimação via WhatsApp) ou gravação de ato processual, bem como as negativas expressas de apreensão. Expressões negativas também invertem a leitura das etapas: "não foi lacrado" ou "sem registro fotográfico" contam como vício, e não como cumprimento.</p>
+        <p>A análise é contextualizada ao caso concreto. Um trecho só é aceito como indício, de cumprimento ou de vício, quando é registro fático do próprio processo e se refere ao vestígio analisado. São desconsiderados: os termos encontrados dentro de outras palavras; os trechos de jurisprudência ou doutrina transcrita (ementas, citações de precedentes, referências a relator, turma ou DJe); a transcrição ou paráfrase de dispositivos legais; a argumentação das partes (denúncia, alegações, memoriais e demais manifestações); e as passagens que não se referem ao vestígio ou à cadeia de custódia, inclusive quando a frase trata de outro vestígio em análise. Os trechos desconsiderados permanecem visíveis na Matriz por etapa, com o motivo, para conferência.</p>
+        <p>Além do dossiê completo, a ferramenta gera um relatório resumido, com a conclusão, os vestígios analisados, os pontos decisivos com página e ID, os precedentes-chave, as providências prioritárias e os pontos de atenção.</p>
         <p>Cada página é associada ao identificador do documento no processo eletrônico, lido do carimbo do sistema: o ID do PJe ("Num. 123456789 - Pág. 3"), o evento e o documento do eproc, as folhas do e-SAJ ou a movimentação do PROJUDI. Páginas sem carimbo legível recebem o ID por continuidade, com a indicação "inferido", e o ID pode ser informado manualmente por arquivo. Todas as referências da ferramenta indicam a página e o ID.</p>
         <p>O dossiê completo reúne, em documento único, a síntese executiva, o índice dos documentos por ID, o quadro de todas as falhas, a análise por vestígio com os trechos dos autos, as inconsistências, os alertas, os identificadores, a cronologia, a jurisprudência aplicável com a indicação de como utilizá-la no caso, os precedentes que exigem cautela, os fundamentos legais, a doutrina, as diligências recomendadas, os riscos previsíveis e a minuta de tese em anexo.</p>
         <p style="margin-bottom:0">O resultado é uma triagem orientada à revisão humana. Cada critério pode ser confirmado ou corrigido pelo advogado, com anotações, e o relatório e a minuta de tese refletem exatamente as revisões feitas.</p>
