@@ -205,6 +205,27 @@
   }
   const LEGENDA = '<div class="legenda"><span><i style="background:var(--ok)"></i>Documentado</span><span><i style="background:var(--warn)"></i>Controverso</span><span><i style="background:var(--miss-bg);border:2px solid var(--miss)"></i>Não localizado</span><span><i style="background:var(--bad)"></i>Irregular</span><span>I a X: etapas do art. 158-B · L, G, D: legalidade, integridade e acesso da defesa</span></div>';
 
+  const VEREDITO = {
+    confirmado: ["ok", "Apreensão ou juntada confirmada"], mencionado: ["na", "Apenas mencionado"], negado: ["bad", "Apreensão negada nos autos"], ausente: ["na", "Não mencionado"]
+  };
+  function blocoCritico(lista) {
+    if (!lista.length) return '<div class="card card-p">Nenhum vestígio foi identificado nos autos. Inclua manualmente os tipos que devam ser verificados.</div>';
+    return '<div class="grade" style="gap:10px">' + lista.map(c => {
+      const cat = CAT(c.id); const v = VEREDITO[c.veredito] || VEREDITO.ausente;
+      const estado = c.ativo ? (c.veredito === "confirmado" ? '<span class="tag ok">em análise</span>' : '<span class="tag warn">incluído manualmente</span>') : (c.veredito === "confirmado" ? '<span class="tag warn">excluído manualmente</span>' : '<span class="tag na">fora da análise</span>');
+      const evs = c.confirmacoes.length ? c.confirmacoes.slice(0, 4).map(e => evCritico(e, e.base, false)).join("") : c.negacoes.concat(c.descartes).slice(0, 4).map(e => evCritico(e, e.motivo, true)).join("");
+      const resumo = c.confirmacoes.length ? c.confirmacoes.length + " registro(s) de apreensão, coleta, exame ou juntada" + (c.descartes.length ? "; " + c.descartes.length + " menção(ões) descartada(s)" : "") : c.mencoes + " menção(ões), nenhuma acompanhada de registro de apreensão, coleta, exame ou juntada";
+      return '<details class="crit"' + (c.forcado || c.excluido ? " open" : "") + '><summary><span style="font-size:18px">' + cat.icone + '</span><span class="t">' + esc(cat.nome) + '<div class="pequeno mudo" style="font-weight:400">' + esc(resumo) + '</div></span><span class="tag ' + v[0] + '">' + v[1] + "</span>" + estado + '</summary><div class="corpo">' +
+        (c.forcado ? '<div class="aviso">Este tipo foi incluído manualmente, embora os autos não registrem sua apreensão, coleta, exame ou juntada. Os critérios serão aplicados, mas o resultado deve ser lido com essa ressalva.</div>' : "") +
+        '<div class="pequeno" style="font-weight:600">' + (c.confirmacoes.length ? "Fundamentos da inclusão" : "Motivos do descarte") + '</div><div class="grade" style="gap:6px">' + (evs || '<div class="pequeno mudo">Sem trechos a exibir.</div>') + "</div>" +
+        (c.confirmacoes.length && c.descartes.length ? '<details class="dobra"><summary class="pequeno">Menções descartadas (' + c.descartes.length + ')</summary><div class="grade" style="gap:6px;margin-top:8px">' + c.descartes.slice(0, 6).map(e => evCritico(e, e.motivo, true)).join("") + "</div></details>" : "") +
+        '<div><button type="button" class="btn sec peq" data-cat="' + c.id + '">' + (c.ativo ? "Excluir da análise" : "Incluir na análise") + "</button></div></div></details>";
+    }).join("") + "</div>";
+  }
+  function evCritico(e, rotulo, neg) {
+    const p = E.paginas[e.gid];
+    return '<div class="ev' + (neg ? " neg" : "") + '" data-pg="' + e.gid + '" data-ini="' + e.ini + '" data-fim="' + e.fim + '" data-neg="' + (neg ? 1 : 0) + '" role="button" tabindex="0"><div class="pg">' + esc(p ? p.rot : "") + (rotulo ? " · " + esc(rotulo) : "") + "</div>" + esc(e.antes) + "<mark" + (neg ? ' class="mark-neg"' : "") + ">" + esc(e.alvo) + "</mark>" + esc(e.depois) + "</div>";
+  }
   function renderPainel() {
     const r = E.res;
     const ativos = r.categorias.filter(c => c.ativo);
@@ -219,8 +240,9 @@
     if (r.paginasBaixaConf.length) h += '<div class="aviso" style="margin-top:14px">' + r.paginasBaixaConf.length + ' página(s) foram lidas por OCR com baixa confiança. Confira-as manualmente: ' + r.paginasBaixaConf.slice(0, 40).map(g => pgChip(g)).join("") + "</div>";
     if (r.paginasVazias.length && E.docs.length) h += '<div class="aviso info" style="margin-top:10px">' + r.paginasVazias.length + " página(s) sem texto legível" + (r.paginasOCR ? "" : " (o OCR está desativado ou não foi aplicado)") + ". " + r.paginasVazias.slice(0, 30).map(g => pgChip(g)).join("") + "</div>";
 
-    h += '<h3 style="margin-top:26px">Tipos de vestígio</h3><p class="pequeno mudo" style="margin-top:-4px">Os destacados foram identificados nos autos; os tracejados foram mencionados poucas vezes. Ative ou desative para refazer a verificação.</p><div class="chips" id="chipsCat">' +
-      r.categorias.map(c => { const cat = CAT(c.id); return '<button type="button" class="chip' + (c.mencoes && !c.ativo ? " sug" : "") + '" aria-pressed="' + c.ativo + '" data-cat="' + c.id + '">' + cat.icone + " " + esc(cat.curto) + (c.mencoes ? ' <span class="n">' + c.mencoes + "</span>" : "") + "</button>"; }).join("") + "</div>";
+    h += '<h3 style="margin-top:26px">Leitura crítica dos vestígios</h3><p class="pequeno mudo" style="margin-top:-4px">Um tipo de vestígio só entra na análise quando os autos registram sua apreensão, coleta, exame ou juntada. Menções soltas, como o veículo citado como local do fato, o celular citado como número de contato ou o tráfico de drogas citado como nome do crime, são descartadas, com a indicação do motivo. Você pode incluir ou excluir manualmente qualquer tipo.</p>' + blocoCritico(r.categorias.filter(c => c.mencoes || c.confirmacoes.length || c.ativo));
+    const outros = r.categorias.filter(c => !(c.mencoes || c.confirmacoes.length || c.ativo));
+    if (outros.length) h += '<div class="pequeno mudo" style="margin:12px 0 6px">Incluir manualmente outro tipo de vestígio, não mencionado nos autos:</div><div class="chips">' + outros.map(c => '<button type="button" class="chip" aria-pressed="false" data-cat="' + c.id + '">' + CAT(c.id).icone + " " + esc(CAT(c.id).curto) + "</button>").join("") + "</div>";
 
     if (!ativos.length) h += '<div class="card card-p" style="margin-top:16px">Nenhum tipo de vestígio ativo. Selecione acima os vestígios que devem ser verificados.</div>';
     else {
@@ -245,7 +267,9 @@
     ligarPg(C());
   }
   function alternarCat(id) {
-    const c = E.res.categorias.find(x => x.id === id); c.ativo = !c.ativo;
+    const c = E.res.categorias.find(x => x.id === id);
+    if (!c.ativo && c.veredito !== "confirmado" && E.docs.length && !confirm("Os autos não registram apreensão, coleta, exame ou juntada de " + CAT(id).nome.toLowerCase() + ". Deseja incluí-lo na análise mesmo assim?")) return;
+    c.ativo = !c.ativo;
     E.res = M.reavaliar(E.docs, E.res).res;
     E.paginas = todasPaginas();
     if (!E.res.categorias.find(x => x.id === E.catSel && x.ativo)) { const a = E.res.categorias.find(x => x.ativo); E.catSel = a ? a.id : null; }
@@ -322,11 +346,7 @@
   function renderVestigios() {
     const r = E.res; const ids = r.identificadores;
     let h = "";
-    const comMen = r.categorias.filter(c => c.mencoes);
-    h += '<div class="catcards">' + (comMen.length ? comMen.map(c => {
-      const cat = CAT(c.id);
-      return '<div class="card catcard"><div class="cab"><span class="ic">' + cat.icone + '</span><h3>' + esc(cat.nome) + "</h3>" + (c.ativo ? '<span class="tag ok">em análise</span>' : '<span class="tag na">inativo</span>') + '</div><div class="pequeno mudo">' + c.mencoes + " menções em " + c.paginas.length + " página(s)</div><div>" + c.paginas.slice(0, 24).map(g => pgChip(g)).join("") + (c.paginas.length > 24 ? ' <span class="pequeno mudo">e mais ' + (c.paginas.length - 24) + "</span>" : "") + '</div><div class="grade" style="gap:6px">' + c.amostras.slice(0, 3).map(e => evHTML(Object.assign({ ini: 0, fim: 0 }, e), false)).join("") + "</div></div>";
-    }).join("") : '<div class="card card-p">Nenhum vestígio identificado no texto.</div>') + "</div>";
+    h += '<p class="pequeno mudo" style="margin-top:0">Cada tipo de vestígio mencionado nos autos foi lido em sua frase de origem. A inclusão na análise exige registro de apreensão, coleta, exame ou juntada; as demais menções aparecem com o motivo do descarte.</p>' + blocoCritico(r.categorias.filter(c => c.mencoes || c.confirmacoes.length || c.ativo));
 
     const tabela = (tit, cols, linhas, nota) => linhas.length ? '<h3 style="margin-top:26px">' + tit + "</h3>" + (nota ? '<p class="pequeno mudo" style="margin-top:-4px">' + nota + "</p>" : "") + '<div class="card rolagem"><table class="tabela"><tr>' + cols.map(c => "<th>" + c + "</th>").join("") + "</tr>" + linhas.join("") + "</table></div>" : "";
     const grp = g => ({ apreensao: "Apreensão / ocorrência", constatacao: "Constatação", laudo: "Perícia", custodia: "Custódia / remessa", outros: "Outras peças" })[g] || g;
@@ -335,7 +355,7 @@
     h += tabela("Valores hash", ["Algoritmo", "Valor", "Peça", "Página"], ids.hashes.map(x => "<tr><td>" + x.alg + '</td><td class="mono">' + x.valor + "</td><td>" + grp(x.grupo) + "</td><td>" + pgChip(x.gid) + "</td></tr>"), "O mesmo valor deve reaparecer na coleta, no exame e na cópia entregue à defesa; um hash isolado não demonstra integridade.");
     h += tabela("Massas e pesos (drogas)", ["Valor", "Natureza", "Peça", "Página"], ids.pesos.map(x => "<tr><td>" + x.gramas.toLocaleString("pt-BR", { maximumFractionDigits: 3 }) + " g</td><td>" + (x.rotulo ? "massa " + x.rotulo : "não especificada") + "</td><td>" + grp(x.grupo) + "</td><td>" + pgChip(x.gid) + "</td></tr>"), "A diferença entre massa bruta (com embalagem) e líquida é esperada; a ausência de correspondência entre as peças deve ser explicada.");
     h += tabela("Capacidades de mídia", ["Valor", "Peça", "Página"], ids.capacidades.map(x => "<tr><td>" + esc(x.valor) + "</td><td>" + grp(x.grupo) + "</td><td>" + pgChip(x.gid) + "</td></tr>"));
-    C().innerHTML = h; ligarPg(C());
+    C().innerHTML = h; ligarPg(C()); C().querySelectorAll("[data-cat]").forEach(b => b.onclick = () => { alternarCat(b.dataset.cat); abrirSub("vestigios"); });
   }
 
   /* ---------- inconsistências ---------- */

@@ -497,5 +497,74 @@
     { id: "divergencia", rot: "Divergência expressamente apontada", grav: "relevante", re: "\\b(divergencia|discrepancia|inconsistencia|nao confere|nao corresponde)\\b" }
   ];
 
-  window.CC_REGRAS = { ETAPAS, CATEGORIAS, PECAS, CRITERIOS, ALERTAS, DIG, TODOS_FIS };
+  /* ---------------------------------------------------------------------------------------------
+     Leitura crítica: um tipo de vestígio só entra na análise quando o texto demonstra que ele foi
+     efetivamente apreendido, coletado, examinado ou juntado aos autos. Menções soltas (o veículo como
+     local do fato, o celular como número de contato, "tráfico de drogas" como nome do crime, intimação
+     por WhatsApp, gravação audiovisual da audiência) são descartadas, com a indicação do motivo.
+     Todas as expressões operam sobre texto minúsculo e sem acentos, na frase em que o termo aparece.
+     antes: contexto imediatamente anterior ao termo que indica mera menção.
+     depois: contexto imediatamente posterior ao termo que indica mera menção.
+     frase: expressão na frase que indica mera menção.
+     confirma: expressão que, por si só, demonstra que o vestígio integra a prova (ex.: laudo específico).
+     soConfirma: o tipo só é confirmado pela expressão "confirma" (vestígios não materiais). */
+  const APREENSAO = "apreend\\w*|apreens(ao|oes)|arrecad\\w*|recolhid\\w*|coletad\\w*|lacrad\\w*|acondicionad\\w*|periciad\\w*|submetid\\w* (a|ao) (exame|pericia)|encaminhad\\w* (ao|a|para) (o |a )?(instituto|ic\\b|iml|pericia|laborat\\w*|setor tecnico|nucleo|central de custodia)|restituid\\w*|restituicao|custodiad\\w*|depositad\\w*|acautelad\\w*|incinerad\\w*|examinad\\w*|exibid\\w* e apreendid\\w*";
+  const NEGACAO = "\\b(nao|nem) (foi|foram|houve|se procedeu|se logrou)\\b[^.;]{0,50}(apreen|arrecad|recolh|colet|localiz|encontr)|\\bnenhum\\w*\\b[^.;]{0,50}(foi|foram|restou) (apreendid|encontrad|localizad)|nada (de ilicito )?(foi|tendo sido) (encontrado|apreendido|localizado)|sem (a |qualquer )?apreensao|\\bnao (portava|possuia|havia)\\b";
+  const ITEM = "(\\b\\d{1,4}\\s*(\\([a-z ]{2,30}\\))?\\s*(unidades?|porc(ao|oes)|pinos?|buchas?|tabletes?|involucros?|pedras?|aparelhos?|cartuchos?|municoes|cedulas?)?\\s*(de\\s+)?)$";
+  const CRITICA = {
+    celular: {
+      antes: "(ligou|ligaram|ligacao|ligacoes|contato|contatou|telefonou|mensagem) (para|ao|do|pelo|via|com)( seu| o| um)?\\s*$|(numero|n[º°o.]*) (de |do )?(telefone )?$|(pelo|via|por) (telefone )?$",
+      depois: "^\\s*(n[º°o.]*|numero|:|-)?\\s*\\(?\\d{2}\\)?\\s*9?\\s?\\d{4}[\\s.-]?\\d{4}",
+      confirma: "exame (pericial )?em aparelhos? (celular|telefonico)|extracao (de dados )?(do|dos|de) (aparelhos?|celular)|laudo .{0,60}(aparelhos? celular|telefone celular|smartphone)|imei"
+    },
+    informatica: {
+      antes: "(via|pelo|por meio do|atraves do|acessou o|utilizou o) (seu )?$",
+      confirma: "laudo .{0,60}(computador|notebook|midia|disco rigido|pen ?drive|hd externo)|imagem forense|espelhamento|(pen ?drive|hd externo|cartao de memoria|dvd|cd|midia)s?\\b.{0,30}(contendo|com (os |as )?(arquivos|videos?|imagens|audios?|dados))"
+    },
+    telematico: {
+      soConfirma: true,
+      confirma: "(quebra|afastamento) (do |de )?sigilo (telematico|de dados|dos dados)|dados (fornecidos|encaminhados|disponibilizados) pel\\w* (provedor|google|apple|meta|microsoft|facebook|whatsapp)|relatorio (do|enviado pelo) provedor|geofenc\\w*|registros de (conexao|acesso) (fornecidos|encaminhados)|conta espelho|(e-?mails?|mensagens eletronicas) .{0,40}(apreendid|extraid|obtid|fornecid)\\w*"
+    },
+    mensagens: {
+      soConfirma: true,
+      frase: "(intimad\\w*|citad\\w*|notificad\\w*|cientificad\\w*|contato) (via|por|pelo) (aplicativo )?(whatsapp|telegram)",
+      confirma: "(prints?|printscreen|capturas? de tela|screenshots?)\\b.{0,80}(juntad|acostad|anexad|apresentad|extraid|entregue|fornecid|colacionad|reproduzid|abaixo|a seguir|em anexo)|(juntad|acostad|anexad|apresentad|entregue|fornecid|colacionad)\\w* .{0,60}(prints?|capturas? de tela|screenshots?)|(conversas?|mensagens?|dialogos?)\\b.{0,60}(extraid|juntad|transcrit|degravad|acostad|reproduzid|colacionad)\\w*|conforme (o |os )?(print|imagem|captura)|segue(m)? (o |os )?(prints?|capturas?)"
+    },
+    audiovisual: {
+      soConfirma: true,
+      frase: "(audiencia|depoimento|oitiva|interrogatorio|sessao|ato)\\w* .{0,60}(gravad|registrad|captad)\\w* .{0,30}(audiovisual|sistema|plataforma)|sistema (de gravacao )?audiovisual|pje ?midias|midias? (do|da) audiencia|registro audiovisual (do|da) (ato|audiencia)",
+      confirma: "(videos?|imagens|gravac(ao|oes)|filmage\\w+|audios?)\\b.{0,80}(juntad|acostad|anexad|extraid|requisitad|apresentad|degravad|transcrit|copiad|fornecid|apreendid|periciad|analisad|selecionad|assistid|visualizad)\\w*|(dvd|cd|pen ?drive|midia|hd externo|cartao de memoria)s?\\b.{0,30}(com|contendo) (as |os )?(imagens|videos?|gravac\\w+|audios?)|degravac\\w+ (do|da|dos|das) (video|audio|gravac)|cameras? de (seguranca|monitoramento)\\b.{0,80}(imagens|videos?|gravac)"
+    },
+    interceptacao: {
+      soConfirma: true,
+      confirma: "interceptac\\w+ (telefonica|telematica|das comunicacoes)?\\s?(foi |restou )?(deferida|autorizada|decretada|prorrogada|realizada)|(defiro|autorizo|decreto|deferiu|autorizou|decretou)\\w* .{0,50}interceptac|relatorio (de|da) interceptac|autos (de|da) interceptac|guardiao|auto circunstanciado .{0,50}interceptac|escuta ambiental .{0,40}(autorizada|deferida|realizada)"
+    },
+    drogas: {
+      antes: "(trafico|traficancia|lei|usuarios?|dependentes?|dependencia|consumo|uso|comercio|venda|mercancia|guerra|faccao|ponto de venda|associacao para o trafico|repressao|combate|politica|crimes? de) (ilicito )?(de |das |do |as |a )?$",
+      confirma: "laudo (preliminar )?(de constatacao|toxicologico|definitivo)|narcoteste|massa (bruta|liquida)|exame (quimico|toxicologico)"
+    },
+    armas: {
+      antes: "(porte (ilegal )?de|posse (ilegal )?de|disparo de|crimes? de|estatuto do desarmamento|grave ameaca (exercida )?com|emprego de|uso de|mediante|ameacou(-o|-a)? com|simulando|majorante|majorada pelo emprego de)\\s*(uma |um |a |o )?$",
+      confirma: "laudo (de )?(eficiencia|eficacia|exame em arma|balistic\\w*)|numero de serie|n[º°o.] de serie|numerac\\w+ (suprimida|raspada)"
+    },
+    biologico: {
+      confirma: "exame de dna|laudo (de )?(dna|sexologico|genetico|hematologico)|coleta (de )?material (biologico|genetico)|swab|perfil genetico|exame (de )?corpo de delito .{0,40}(coleta|material)"
+    },
+    documentos: {
+      antes: "(crimes? de|falsificacao de|uso de|tipo penal de)\\s*$",
+      confirma: "laudo (documentoscopico|grafotecnico|de exame (documental|em cedulas?|de moeda))|exame documentoscopico|exame grafotecnico"
+    },
+    veiculos: {
+      antes: "(\\bno|\\bna|\\bao|dentro d[oa]|interior d[oa]|a bordo d[oa]|bancos? (traseiro |dianteiro )?d[oa]|porta-?malas d[oa]|carona d[oa]|conduzindo|conduzia|dirigindo|dirigia|chegou (em|no|com)|chegaram (em|no|com)|fugiu (em|no|com)|fugiram (em|no|com)|evadiu-se (em|no)|evadiram-se (em|no)|embarcou (em|no)|desembarcou d[oa]|saiu d[oa]|sairam d[oa]|transitava (em|com)|trafegava (em|com)|estava (em|no)|estavam (em|no)|em um|em uma|a bordo de um|a bordo de uma|abordagem (a|ao)|abordaram (o|a)|abordado (o|a)|seguido por|perseguicao (a|ao)|proprietario d[oa]|condutor d[oa]|ocupantes d[oa])\\s*(seu |sua |um |uma |o |a )?$",
+      confirma: "laudo (de )?(vistoria|exame) (veicular|em veiculo|de identificacao veicular)|veiculos? (foi |foram )?(apreendid|recolhid|removid)\\w* (ao|para o) (patio|deposito)|termo de (restituicao|deposito|entrega) do veiculo|restituicao do veiculo"
+    },
+    local: {
+      soConfirma: true,
+      confirma: "laudo (pericial )?(de )?(exame de |pericia de |levantamento de )?local|levantamento (pericial )?(de|do) local|exame (pericial )?(de|do) local|pericia (de|no) local|exame perinecroscopico|perinecroscop\\w+|necropsia|laudo (de )?necroscop\\w+|exame cadaverico|isolamento (do|da) (local|area)|preservac\\w+ do local"
+    }
+  };
+  /* Negação que antecede um indício de cumprimento: o trecho passa a ser lido como indício de vício. */
+  const NEGA_ANTES = "\\b(nao|nem|sem|ausencia de|ausente|inexistencia de|inexiste|deixou de|deixaram de|nenhum\\w*|tampouco|sequer|falta de|carece de|desacompanhad\\w+ de)\\b[^.;]{0,40}$";
+
+  window.CC_REGRAS = { ETAPAS, CATEGORIAS, PECAS, CRITERIOS, ALERTAS, DIG, TODOS_FIS, APREENSAO, NEGACAO, ITEM, CRITICA, NEGA_ANTES };
 })();

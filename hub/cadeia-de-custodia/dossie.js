@@ -150,7 +150,7 @@
     h.push('<h2 style="margin-bottom:4px">Dossiê de análise da cadeia de custódia</h2><p class="mudo" style="margin-top:0">Gerado em ' + hoje.toLocaleDateString("pt-BR") + " às " + hoje.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" }) + "</p>");
     const dc = [["Autos", caso.autos], ["Assistido", caso.assistido], ["Juízo / órgão", caso.juizo], ["Responsável", caso.responsavel], ["Observações", caso.obs]].filter(x => x[1]);
     if (dc.length) h.push('<table class="rel-t">' + dc.map(x => "<tr><th style=\"width:180px\">" + x[0] + "</th><td>" + esc(x[1]) + "</td></tr>").join("") + "</table>");
-    const titulos = ["Síntese executiva", "Material analisado e registro de integridade", "Índice dos documentos dos autos", "Quadro geral de falhas", "Análise detalhada por vestígio", "Inconsistências documentais", "Alertas identificados no texto", "Identificadores localizados", "Cronologia", "Jurisprudência aplicável e possibilidades de utilização", "Precedentes que exigem cautela", "Fundamentos legais aplicáveis", "Doutrina de apoio", "Diligências e requerimentos recomendados", "Riscos e contra-argumentos previsíveis", "Limitações da análise"].concat(res.ia && res.ia.resultado ? ["Análise complementar por IA"] : []).concat(["Anexo: minuta de tese"]);
+    const titulos = ["Síntese executiva", "Material analisado e registro de integridade", "Verificação crítica dos vestígios", "Índice dos documentos dos autos", "Quadro geral de falhas", "Análise detalhada por vestígio", "Inconsistências documentais", "Alertas identificados no texto", "Identificadores localizados", "Cronologia", "Jurisprudência aplicável e possibilidades de utilização", "Precedentes que exigem cautela", "Fundamentos legais aplicáveis", "Doutrina de apoio", "Diligências e requerimentos recomendados", "Riscos e contra-argumentos previsíveis", "Limitações da análise"].concat(res.ia && res.ia.resultado ? ["Análise complementar por IA"] : []).concat(["Anexo: minuta de tese"]);
     h.push('<div class="dz-sumario"><b>Sumário</b><ol>' + titulos.map(t => "<li>" + esc(t) + "</li>").join("") + "</ol></div>");
 
     /* ---------- 1. síntese ---------- */
@@ -183,6 +183,30 @@
       return "<tr><td>" + (est.docs.length > 1 ? "Arq. " + (i + 1) + ": " : "") + esc(d.nome) + "</td><td>" + d.paginas.length + "</td><td>" + d.paginas.filter(p => p.ocr).length + "</td><td>" + esc(sis) + '</td><td class="mono">' + esc(d.sha256 || "não calculado") + "</td></tr>";
     })));
     P("Metodologia: o texto de cada página foi extraído e, nas páginas sem camada textual, obtido por OCR; as páginas foram classificadas segundo a peça processual e associadas ao identificador do documento no processo eletrônico (" + (temIDs ? "carimbo do sistema ou informação manual" : "não identificado nos arquivos; recomenda-se informá-lo manualmente na aba Arquivos") + "); os vestígios foram agrupados por tipo e confrontados com " + R.CRITERIOS.length + " critérios relativos às etapas do art. 158-B do CPP e às garantias de legalidade, integridade e acesso da defesa; e foram realizados confrontos objetivos entre peças. As situações refletem a triagem automática e as revisões feitas pelo advogado.");
+
+    /* ---------- verificação crítica ---------- */
+    S("Verificação crítica dos vestígios");
+    P("Antes da verificação das etapas, cada tipo de vestígio mencionado nos autos foi lido na frase em que aparece, para distinguir o vestígio efetivamente apreendido, coletado, examinado ou juntado da mera menção ao termo. Assim, o veículo citado como local do fato ou meio de locomoção, o celular citado como número de contato, a droga ou a arma citadas como nome do crime e a referência à gravação audiovisual de atos processuais não foram tratados como vestígios sujeitos à cadeia de custódia.");
+    const lidas = res.categorias.filter(c => c.mencoes || (c.confirmacoes && c.confirmacoes.length) || c.ativo);
+    const VER = { confirmado: "Apreensão, coleta, exame ou juntada confirmada", mencionado: "Apenas mencionado", negado: "Apreensão negada nos autos", ausente: "Não mencionado" };
+    h.push(tabela(["Vestígio", "Leitura crítica", "Situação na análise", "Fundamento", "Localização"], lidas.map(c => {
+      const cat = CAT(c.id); const conf = c.confirmacoes || []; const desc = (c.negacoes || []).concat(c.descartes || []);
+      const sit = c.ativo ? (c.veredito === "confirmado" ? "Incluído" : "Incluído manualmente pelo revisor") : (c.veredito === "confirmado" ? "Excluído manualmente pelo revisor" : "Descartado");
+      const fund = conf.length ? [...new Set(conf.map(e => e.base))].join("; ") : (desc[0] ? desc[0].motivo : "sem registro de apreensão, coleta, exame ou juntada");
+      return "<tr><td>" + cat.icone + " " + esc(cat.nome) + "</td><td>" + esc(VER[c.veredito] || c.veredito) + "</td><td>" + esc(sit) + "</td><td>" + esc(fund) + "</td><td>" + esc(REL.refs((conf.length ? conf : desc).map(e => e.gid).slice(0, 5), pg)) + "</td></tr>";
+    })));
+    for (const c of lidas) {
+      const cat = CAT(c.id); const conf = c.confirmacoes || []; const desc = (c.negacoes || []).concat(c.descartes || []);
+      if (conf.length) {
+        h.push("<h4>" + cat.icone + " " + esc(cat.nome) + ": fundamentos da inclusão</h4>");
+        for (const e of conf.slice(0, 3)) h.push(trechoHTML(e, pg, false).replace('<div class="dz-ref">', '<div class="dz-ref">' + esc(e.base) + " · "));
+        if (desc.length) P("Foram ainda descartadas " + desc.length + " menção(ões) a este tipo de vestígio, por não se referirem ao objeto apreendido (por exemplo: " + desc[0].motivo + "; " + REL.refs([desc[0].gid], pg) + ").");
+      } else if (desc.length) {
+        h.push("<h4>" + cat.icone + " " + esc(cat.nome) + ": motivos do descarte</h4>");
+        for (const e of desc.slice(0, 3)) h.push(trechoHTML(e, pg, true).replace('<div class="dz-ref">', '<div class="dz-ref">' + esc(e.motivo) + " · "));
+      }
+      if (c.forcado) P("Atenção: o tipo de vestígio \"" + cat.nome + "\" foi incluído na análise pelo revisor, embora os autos não registrem sua apreensão, coleta, exame ou juntada; as conclusões a seu respeito devem ser lidas com essa ressalva.");
+    }
 
     /* ---------- 3. índice ---------- */
     S("Índice dos documentos dos autos");
