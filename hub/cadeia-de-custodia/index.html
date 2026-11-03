@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Cadeia de Custódia · HUB Criminal TPC</title>
+<meta name="description" content="Verificador da cadeia de custódia (arts. 158-A a 158-F do CPP): leitura integral dos autos com OCR, identificação de vestígios, matriz de conformidade por etapa, inconsistências, jurisprudência do STJ e minuta de tese.">
+<meta name="theme-color" content="#f6f4ef">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=DM+Mono:wght@400;500&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/hub.css">
+<style>
+  .heroi { padding: 34px 0 10px; }
+  .heroi h1 { max-width: 880px; }
+  .cadeia-mini { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 18px; }
+  .cadeia-mini span { font-size: 12px; padding: 4px 10px; border: 1px solid var(--line-2); border-radius: 999px; background: var(--surface); color: var(--ink-2); }
+  .cadeia-mini span b { color: var(--ink-3); font-weight: 500; margin-right: 4px; }
+  .painel[hidden] { display: none !important; }
+  .zona { border: 2px dashed var(--line-2); border-radius: 12px; padding: 30px 16px; text-align: center; background: var(--surface-2); cursor: pointer; transition: border-color .15s, background .15s; }
+  .zona:hover, .zona.sobre { border-color: var(--ink-3); background: color-mix(in srgb, var(--accent) 18%, var(--surface)); }
+  .zona .ico { font-size: 34px; line-height: 1; }
+  .zona b { display: block; font-size: 17px; margin: 8px 0 2px; font-weight: 500; }
+  .lista-arq { display: grid; gap: 6px; margin-top: 12px; }
+  .arq { display: flex; gap: 10px; align-items: center; padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); font-size: 14px; }
+  .arq .nm { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .arq button { border: 0; background: none; cursor: pointer; color: var(--ink-3); font-size: 18px; line-height: 1; }
+  details.dobra > summary { cursor: pointer; font-weight: 500; list-style: none; display: flex; align-items: center; gap: 8px; }
+  details.dobra > summary::before { content: "▸"; color: var(--ink-3); transition: transform .15s; }
+  details.dobra[open] > summary::before { transform: rotate(90deg); }
+  details.dobra > summary::-webkit-details-marker { display: none; }
+  .barra { height: 8px; background: var(--na-bg); border-radius: 999px; overflow: hidden; }
+  .barra > i { display: block; height: 100%; background: var(--brand); border-radius: 999px; transition: width .25s; }
+  .log { font-family: var(--mono); font-size: 12px; color: var(--ink-3); max-height: 120px; overflow: auto; background: var(--surface-2); border-radius: 8px; padding: 8px 10px; margin-top: 10px; white-space: pre-wrap; }
+  .kpis { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px; }
+  @media (max-width: 900px) { .kpis { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+  @media (max-width: 520px) { .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  .kpi { padding: 14px; }
+  .kpi .v { font-family: var(--serif); font-size: 34px; font-weight: 600; line-height: 1; }
+  .kpi .r { font-size: 12px; color: var(--ink-3); text-transform: uppercase; letter-spacing: .08em; margin-top: 6px; }
+  .kpi.alerta .v { color: var(--bad); }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+  .chip { display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--line-2); background: var(--surface); padding: 6px 12px; border-radius: 999px; cursor: pointer; font-size: 13.5px; user-select: none; }
+  .chip[aria-pressed="true"] { background: var(--brand); color: var(--paper); border-color: var(--brand); }
+  .chip .n { font-size: 11px; opacity: .7; }
+  .chip.sug:not([aria-pressed="true"]) { border-style: dashed; }
+  .catcards { display: grid; grid-template-columns: repeat(auto-fill, minmax(330px, 1fr)); gap: 14px; }
+  @media (max-width: 420px) { .catcards { grid-template-columns: minmax(0, 1fr); } }
+  .catcard { padding: 16px; display: grid; gap: 10px; }
+  .catcard .cab { display: flex; align-items: center; gap: 10px; }
+  .catcard .cab .ic { font-size: 22px; }
+  .catcard .cab h3 { font-size: 19px; margin: 0; flex: 1; font-family: var(--sans); font-weight: 500; }
+  .elos { display: flex; align-items: center; gap: 6px 0; flex-wrap: wrap; padding: 4px 0 2px; }
+  .elo { flex: 0 0 auto; width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--line-2); background: var(--surface); display: grid; place-items: center; font-size: 10px; font-weight: 600; color: var(--ink-3); cursor: help; position: relative; }
+  .elo + .elo { margin-left: 8px; }
+  .elo + .elo::before { content: ""; position: absolute; right: 100%; top: 50%; width: 8px; height: 2px; background: var(--line-2); }
+  .elo.s-ok { background: var(--ok); border-color: var(--ok); color: #fff; }
+  .elo.s-bad { background: var(--bad); border-color: var(--bad); color: #fff; }
+  .elo.s-warn { background: var(--warn); border-color: var(--warn); color: #fff; }
+  .elo.s-miss { background: var(--miss-bg); border-color: var(--miss); color: var(--miss); }
+  .elo.s-na { border-style: dotted; }
+  .elo.sep { margin-left: 18px; }
+  .legenda { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 12.5px; color: var(--ink-3); }
+  .legenda i { display: inline-block; width: 11px; height: 11px; border-radius: 50%; margin-right: 5px; vertical-align: -1px; }
+  .sub { display: flex; gap: 6px; flex-wrap: wrap; margin: 18px 0 14px; }
+  .sub button { border: 1px solid var(--line-2); background: var(--surface); padding: 7px 13px; border-radius: 999px; cursor: pointer; font-size: 13.5px; }
+  .sub button[aria-selected="true"] { background: var(--brand); color: var(--paper); border-color: var(--brand); }
+  .etapa-grp { margin-top: 18px; }
+  .etapa-grp > h4 { margin: 0 0 8px; font-size: 13px; text-transform: uppercase; letter-spacing: .12em; color: var(--ink-3); font-weight: 500; display: flex; gap: 8px; align-items: baseline; }
+  .crit { border: 1px solid var(--line); border-radius: 10px; background: var(--surface); margin-bottom: 8px; }
+  .crit > summary { padding: 11px 14px; cursor: pointer; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; list-style: none; }
+  .crit > summary::-webkit-details-marker { display: none; }
+  .crit > summary .t { flex: 1; min-width: 200px; font-weight: 500; }
+  .crit[open] > summary { border-bottom: 1px solid var(--line); }
+  .crit .corpo { padding: 14px; display: grid; gap: 12px; }
+  .ev { border-left: 3px solid var(--ok); background: var(--surface-2); padding: 8px 10px; border-radius: 0 8px 8px 0; font-size: 13.5px; cursor: pointer; }
+  .ev.neg { border-left-color: var(--bad); }
+  .ev:hover { background: color-mix(in srgb, var(--accent) 16%, var(--surface-2)); }
+  .ev .pg { font-size: 11.5px; color: var(--ink-3); font-weight: 600; letter-spacing: .04em; margin-bottom: 2px; }
+  .rev { display: flex; flex-wrap: wrap; gap: 6px; }
+  .rev button { border: 1px solid var(--line-2); background: var(--surface); border-radius: 7px; padding: 5px 10px; font-size: 12.5px; cursor: pointer; }
+  .rev button.on { background: var(--brand); color: var(--paper); border-color: var(--brand); }
+  .pgchip { display: inline-block; font-size: 12px; padding: 1px 8px; border-radius: 6px; background: var(--na-bg); color: var(--ink-2); cursor: pointer; margin: 2px; border: 0; }
+  .pgchip:hover { background: var(--accent); color: #2b2b2b; }
+  .tabela { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+  .tabela th, .tabela td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  .tabela th { font-weight: 500; color: var(--ink-3); font-size: 12px; text-transform: uppercase; letter-spacing: .06em; }
+  .tabela tr.clic { cursor: pointer; }
+  .tabela tr.clic:hover td { background: var(--surface-2); }
+  .rolagem { overflow-x: auto; }
+  .inc { padding: 14px 16px; border-left: 4px solid var(--warn); }
+  .inc.critico { border-left-color: var(--bad); }
+  .inc.info { border-left-color: var(--info); }
+  .papel { background: #fff; color: #1d1d1d; border-radius: 6px; box-shadow: var(--shadow); padding: clamp(18px, 5vw, 56px); max-width: 860px; margin: 0 auto; font-family: Calibri, "Jost", Arial, sans-serif; font-size: 15px; line-height: 1.55; border: 1px solid var(--line); }
+  .papel h2 { font-family: var(--serif); color: #1d1d1d; }
+  .papel h3 { font-family: "Segoe UI", var(--sans); font-weight: 600; font-size: 15px; letter-spacing: .02em; margin-top: 22px; color: #1d1d1d; }
+  .papel h4 { font-family: var(--sans); font-weight: 600; font-size: 14px; margin: 16px 0 6px; }
+  .papel p { text-align: justify; margin: 0 0 12px; }
+  .papel .tag { font-size: 11px; }
+  .rel-t { width: 100%; border-collapse: collapse; margin: 8px 0 16px; font-size: 13px; }
+  .rel-t th, .rel-t td { border: 1px solid #d9d6cf; padding: 6px 8px; text-align: left; vertical-align: top; }
+  .rel-t th { background: #f4f2ed; font-weight: 600; }
+  .rel-cab { display: flex; justify-content: space-between; align-items: flex-end; gap: 10px; border-bottom: 4px solid var(--accent); padding-bottom: 10px; margin-bottom: 18px; flex-wrap: wrap; }
+  .rel-marca { letter-spacing: .22em; font-size: 12px; display: flex; gap: 8px; align-items: center; }
+  .papel .mudo { color: #6d6a64; }
+  .visor { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 14px; }
+  @media (max-width: 860px) { .visor { grid-template-columns: minmax(0, 1fr); } }
+  .visor-img { background: var(--surface-2); border: 1px solid var(--line); border-radius: 8px; min-height: 200px; display: grid; place-items: center; overflow: auto; max-height: 78vh; }
+  .visor-img canvas, .visor-img img { max-width: 100%; height: auto; display: block; }
+  .visor-txt { font-size: 13.5px; line-height: 1.6; max-height: 78vh; overflow: auto; background: var(--surface-2); border: 1px solid var(--line); border-radius: 8px; padding: 12px; white-space: pre-wrap; }
+  .prec { padding: 14px 16px; }
+  .prec .num { font-family: var(--serif); font-size: 26px; font-weight: 700; color: var(--accent-ink); line-height: 1; min-width: 36px; }
+  .prec h4 { margin: 0; font-size: 16px; font-weight: 500; font-family: var(--sans); }
+  .qa { border-left: 3px solid var(--accent); padding: 4px 0 4px 12px; margin: 10px 0; }
+  .qa .q { font-weight: 500; }
+  .lei-txt { white-space: pre-line; font-size: 14.5px; }
+  .aviso { background: var(--warn-bg); color: var(--ink); border: 1px solid color-mix(in srgb, var(--warn) 35%, transparent); border-radius: 10px; padding: 12px 14px; font-size: 14px; }
+  .aviso.info { background: var(--info-bg); border-color: color-mix(in srgb, var(--info) 30%, transparent); }
+  .exif-flag { margin: 4px 0; }
+  .etapas-exp { display: grid; gap: 10px; counter-reset: et; }
+  .etapa-exp { display: grid; grid-template-columns: 46px minmax(0, 1fr); gap: 12px; align-items: start; }
+  .etapa-exp .n { width: 46px; height: 46px; border-radius: 50%; display: grid; place-items: center; font-family: var(--serif); font-weight: 700; font-size: 19px; background: var(--surface); border: 2px solid var(--stone); }
+  .etapa-exp.int .n { border-color: var(--ink-3); background: var(--accent); color: #2b2b2b; }
+  @media (max-width: 900px) { #gradeAnalisar, #jFiltros { grid-template-columns: minmax(0, 1fr) !important; } }
+  @media print {
+    body.imprimindo-rel * { visibility: hidden; }
+    body.imprimindo-rel #relPreview, body.imprimindo-rel #relPreview * { visibility: visible; }
+    body.imprimindo-rel #relPreview { position: absolute; left: 0; top: 0; width: 100%; box-shadow: none; border: 0; padding: 0; }
+  }
+</style>
+</head>
+<body>
+<header class="topo">
+  <div class="topo-in">
+    <a class="marca" href="../" aria-label="HUB Criminal TPC, página inicial"><span class="marca-tpc">TPC</span><span class="marca-txt"><b>HUB</b> Criminal</span></a>
+    <nav class="migalha" aria-label="Você está em"><span>/</span><span>Cadeia de custódia</span></nav>
+    <div class="espaco"></div>
+    <button class="btn-icone" type="button" onclick="HUB.alternarTema()" aria-label="Alternar tema claro ou escuro" title="Tema"><span data-tema-icone>☾</span></button>
+  </div>
+</header>
+<div class="faixa"></div>
+
+<main class="wrap">
+  <section class="heroi">
+    <div class="sobretitulo">Ferramenta 01 · Arts. 158-A a 158-F do CPP</div>
+    <h1>Verificador da cadeia de custódia</h1>
+    <p class="lead">Anexe a cópia integral dos autos. A plataforma lê todas as páginas, inclusive as escaneadas (OCR), identifica os vestígios sujeitos à cadeia de custódia, confronta lacres, IMEIs, hashes, pesos e datas, e verifica, etapa por etapa, se o procedimento legal foi documentado, com fundamento na lei, na doutrina e em precedentes do STJ.</p>
+    <div class="cadeia-mini" aria-label="Etapas do art. 158-B">
+      <span><b>I</b>Reconhecimento</span><span><b>II</b>Isolamento</span><span><b>III</b>Fixação</span><span><b>IV</b>Coleta</span><span><b>V</b>Acondicionamento</span><span><b>VI</b>Transporte</span><span><b>VII</b>Recebimento</span><span><b>VIII</b>Processamento</span><span><b>IX</b>Armazenamento</span><span><b>X</b>Descarte</span>
+    </div>
+  </section>
+
+  <nav class="abas" role="tablist" aria-label="Seções" style="margin-top:22px">
+    <button class="aba" role="tab" data-aba="analisar" aria-selected="true">Analisar autos</button>
+    <button class="aba" role="tab" data-aba="resultado" aria-selected="false" disabled id="abaResultado">Resultado</button>
+    <button class="aba" role="tab" data-aba="base" aria-selected="false">Base jurídica</button>
+    <button class="aba" role="tab" data-aba="sobre" aria-selected="false">Como funciona</button>
+  </nav>
+
+  <!-- ===================== ANALISAR ===================== -->
+  <section class="painel secao" id="p-analisar">
+    <div class="grade" style="grid-template-columns:minmax(0,1.6fr) minmax(0,1fr);" id="gradeAnalisar">
+      <div class="card card-p">
+        <h2 style="font-size:24px">1. Anexe os autos</h2>
+        <div class="zona" id="zona" tabindex="0" role="button" aria-label="Selecionar arquivos">
+          <div class="ico">📂</div>
+          <b>Arraste os arquivos aqui ou toque para selecionar</b>
+          <div class="mudo pequeno">PDF (com ou sem texto), imagens (JPG, PNG, WEBP), DOCX e TXT. Áudios e vídeos são registrados com hash SHA-256.</div>
+          <input type="file" id="entrada" multiple hidden accept=".pdf,.jpg,.jpeg,.png,.webp,.bmp,.gif,.docx,.txt,.md,.mp4,.mov,.avi,.mkv,.webm,.mp3,.wav,.ogg,.m4a,.opus,.aac,.3gp,application/pdf,image/*,audio/*,video/*">
+        </div>
+        <div class="lista-arq" id="listaArq"></div>
+
+        <details class="dobra" style="margin-top:16px">
+          <summary>Dados do caso (opcional, aparecem no relatório)</summary>
+          <div class="grade g2" style="margin-top:12px">
+            <label class="campo">Autos nº<input type="text" id="cAutos" placeholder="0000000-00.0000.0.00.0000"></label>
+            <label class="campo">Assistido<input type="text" id="cAssistido" placeholder="Nome do cliente"></label>
+            <label class="campo">Juízo / órgão<input type="text" id="cJuizo" placeholder="Vara, tribunal ou delegacia"></label>
+            <label class="campo">Responsável<input type="text" id="cResp" placeholder="Advogado(a) responsável"></label>
+            <label class="campo" style="grid-column:1/-1">Observações<textarea id="cObs" placeholder="Contexto relevante, tese em construção, pontos a verificar"></textarea></label>
+          </div>
+        </details>
+
+        <details class="dobra" style="margin-top:12px">
+          <summary>Opções de leitura</summary>
+          <div class="grade" style="margin-top:12px;gap:8px">
+            <label class="check"><input type="checkbox" id="oOCR" checked> Aplicar OCR em páginas escaneadas e imagens</label>
+            <label class="check"><input type="checkbox" id="oForcar"> Forçar OCR em todas as páginas (mais lento; útil quando a camada de texto do PDF é defeituosa)</label>
+            <label class="campo" style="max-width:360px">Qualidade do OCR
+              <select id="oQual"><option value="1500">Rápida</option><option value="1900" selected>Equilibrada</option><option value="2500">Alta (documentos ruins ou manuscritos datilografados)</option></select>
+            </label>
+          </div>
+        </details>
+
+        <div class="linha-btns" style="margin-top:18px">
+          <button class="btn" id="btnAnalisar" disabled>Analisar autos</button>
+          <button class="btn sec" id="btnManual" type="button">Usar checklist manual</button>
+          <button class="btn sec" id="btnImportar" type="button">Importar análise salva</button>
+          <input type="file" id="entradaJSON" accept=".json,application/json" hidden>
+        </div>
+
+        <div class="card card-p" id="progresso" hidden style="margin-top:18px;box-shadow:none;background:var(--surface-2)">
+          <div style="display:flex;justify-content:space-between;gap:10px;align-items:center;margin-bottom:8px">
+            <b id="progTit">Processando…</b>
+            <button class="btn sec peq" id="btnCancelar" type="button">Cancelar</button>
+          </div>
+          <div class="barra"><i id="progBarra" style="width:0%"></i></div>
+          <div class="pequeno mudo" id="progTxt" style="margin-top:6px"></div>
+          <div class="log" id="progLog"></div>
+        </div>
+      </div>
+
+      <aside class="grade" style="align-content:start">
+        <div class="card card-p">
+          <div class="sobretitulo">Sigilo e LGPD</div>
+          <p style="margin:0 0 8px">Os arquivos <b>não saem do seu computador</b>. Leitura, OCR e análise acontecem inteiramente no navegador. Nenhum dado é enviado a servidores, salvo se você ativar, expressamente, a análise complementar por IA com sua própria chave.</p>
+          <p class="pequeno mudo" style="margin:0">Na primeira utilização do OCR, o navegador baixa o modelo de língua portuguesa (cerca de 2 MB), que fica em cache.</p>
+        </div>
+        <div class="card card-p">
+          <div class="sobretitulo">O que é verificado</div>
+          <p class="pequeno" style="margin:0 0 6px">Doze tipos de vestígio (celular, informática, nuvem, prints, áudio e vídeo, interceptação, drogas, armas, material biológico, documentos, veículos e local de crime) confrontados com 39 critérios distribuídos pelas dez etapas do art. 158-B e pelas garantias de legalidade, integridade e acesso da defesa.</p>
+          <p class="pequeno" style="margin:0">Além disso: validação de IMEI, confronto de lacres entre apreensão e laudo, rastreio de hashes, pesos de drogas, capacidades de mídia, cronologia, metadados EXIF de imagens e pesquisa textual em todos os autos.</p>
+        </div>
+      </aside>
+    </div>
+  </section>
+
+  <!-- ===================== RESULTADO ===================== -->
+  <section class="painel secao" id="p-resultado" hidden>
+    <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end;justify-content:space-between">
+      <div>
+        <div class="sobretitulo" id="resSobre">Resultado</div>
+        <h2 style="margin:0" id="resTitulo">Análise dos autos</h2>
+      </div>
+      <div class="linha-btns nao-imprimir">
+        <button class="btn sec peq" id="btnSalvar" type="button">Salvar análise (.json)</button>
+        <button class="btn sec peq" id="btnNova" type="button">Nova análise</button>
+      </div>
+    </div>
+    <div class="sub" role="tablist" id="subnav">
+      <button data-sub="painel" aria-selected="true">Painel</button>
+      <button data-sub="matriz">Matriz por etapa</button>
+      <button data-sub="vestigios">Vestígios e identificadores</button>
+      <button data-sub="inconsistencias">Inconsistências e alertas</button>
+      <button data-sub="mapa">Mapa e busca nos autos</button>
+      <button data-sub="arquivos">Arquivos e imagens</button>
+      <button data-sub="ia">Análise por IA</button>
+      <button data-sub="relatorio">Relatório e minuta</button>
+    </div>
+    <div id="subconteudo"></div>
+  </section>
+
+  <!-- ===================== BASE ===================== -->
+  <section class="painel secao" id="p-base" hidden>
+    <div class="sobretitulo">Fundamentos</div>
+    <h2>Base jurídica</h2>
+    <p class="lead" style="margin-bottom:6px">Legislação, jurisprudência e doutrina que alimentam a verificação. A base de precedentes reúne os 59 julgados em que o STJ reconheceu a quebra da cadeia de custódia da prova digital (dossiê IJCrim), além de precedentes complementares.</p>
+    <div class="sub" role="tablist" id="basenav">
+      <button data-base="etapas" aria-selected="true">Etapas do art. 158-B</button>
+      <button data-base="leis">Legislação</button>
+      <button data-base="juris">Jurisprudência</button>
+      <button data-base="doutrina">Doutrina e normas técnicas</button>
+    </div>
+    <div id="baseconteudo"></div>
+  </section>
+
+  <!-- ===================== SOBRE ===================== -->
+  <section class="painel secao" id="p-sobre" hidden>
+    <div class="grade g2" style="align-items:start">
+      <div class="card card-p">
+        <div class="sobretitulo">Metodologia</div>
+        <h2 style="font-size:26px">Como a verificação funciona</h2>
+        <p>A plataforma extrai o texto de cada página dos autos. Quando a página não possui camada de texto, como ocorre em documentos escaneados, ela é convertida em imagem e lida por reconhecimento óptico de caracteres em português. Imagens anexadas recebem o mesmo tratamento e têm seus metadados EXIF examinados.</p>
+        <p>Em seguida, cada página é classificada segundo a peça processual a que pertence (auto de apreensão, laudo de constatação, laudo pericial, requisição, registro de custódia, decisão, relatório policial, entre outras), e os vestígios mencionados são agrupados por tipo. Para cada tipo ativo, a ferramenta aplica os critérios correspondentes às etapas do art. 158-B do CPP e às garantias de legalidade do acesso, integridade e acesso da defesa, buscando, no texto, indícios de cumprimento e indícios de vício.</p>
+        <p>Paralelamente, são extraídos identificadores objetivos e feitos confrontos entre as peças: IMEIs (com validação do dígito verificador), lacres registrados na apreensão e consignados no exame, valores hash, pesos de drogas, capacidades de mídias e datas. Divergências entre esses dados são apontadas como inconsistências documentais.</p>
+        <p style="margin-bottom:0">O resultado é uma triagem orientada à revisão humana. Cada critério pode ser confirmado ou corrigido pelo advogado, com anotações, e o relatório e a minuta de tese refletem exatamente as revisões feitas.</p>
+      </div>
+      <div class="grade">
+        <div class="card card-p">
+          <div class="sobretitulo">Legenda das situações</div>
+          <p style="margin:0 0 6px"><span class="tag ok">Documentado</span> foram encontrados registros compatíveis com o cumprimento da etapa.</p>
+          <p style="margin:0 0 6px"><span class="tag bad">Irregular</span> há registro textual de vício (por exemplo, ausência de lacre, acesso sem ordem judicial, lacre divergente).</p>
+          <p style="margin:0 0 6px"><span class="tag warn">Controverso</span> há indícios simultâneos de cumprimento e de vício; exige leitura atenta.</p>
+          <p style="margin:0 0 6px"><span class="tag miss">Não localizado</span> nenhum registro foi encontrado no texto disponível; não significa, por si só, que o ato inexistiu.</p>
+          <p style="margin:0"><span class="tag na">Não se aplica</span> critério afastado pelo revisor.</p>
+        </div>
+        <div class="card card-p">
+          <div class="sobretitulo">Limites</div>
+          <p class="pequeno" style="margin:0 0 8px">A ferramenta não substitui a leitura técnica dos autos nem o exame por assistente técnico. A qualidade do OCR depende da digitalização; páginas com baixa legibilidade são sinalizadas. Manuscritos, carimbos e tabelas complexas podem não ser reconhecidos.</p>
+          <p class="pequeno" style="margin:0">O resultado não é laudo pericial nem parecer. A classificação expressa o grau de conformidade documental; a consequência processual depende do caso concreto e da orientação jurisprudencial aplicável.</p>
+        </div>
+        <div class="card card-p">
+          <div class="sobretitulo">Dicas</div>
+          <p class="pequeno" style="margin:0">Prefira a cópia integral em PDF pesquisável. Em processos muito extensos, anexe primeiro o inquérito e os laudos. Use a aba Mapa e busca nos autos para localizar termos específicos, como o número de um lacre. Salve a análise em JSON para retomar a revisão depois, sem refazer o OCR.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="rodape">
+  <div class="wrap"><b>TPC ADVOGADOS</b> · HUB Criminal · Cadeia de custódia. Processamento local no navegador. Ferramenta de apoio à análise jurídica; as conclusões dependem de revisão profissional.</div>
+</footer>
+
+<div class="modal-fundo" id="modal" aria-hidden="true">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTit">
+    <div class="modal-cab"><b id="modalTit" style="flex:1;min-width:0">Visualização</b><span id="modalAcoes" class="linha-btns"></span><button class="btn-icone" type="button" onclick="CC_APP.fecharModal()" aria-label="Fechar">✕</button></div>
+    <div class="modal-corpo" id="modalCorpo"></div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/exifr@7.1.3/dist/full.umd.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js" defer></script>
+<script src="../assets/hub.js"></script>
+<script src="../dados/legislacao.js"></script>
+<script src="../dados/doutrina.js"></script>
+<script src="../dados/precedentes.js"></script>
+<script src="regras.js"></script>
+<script src="motor.js"></script>
+<script src="relatorio.js"></script>
+<script src="ia.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
