@@ -185,15 +185,66 @@
   }
 
   /* ------------------------------------------------------------------ análise */
+  /* ---------- identificação do documento no processo eletrônico (ID) ---------- */
+  const MARCADORES = [
+    { sis: "PJe", re: "\\bnum\\.?\\s*(\\d{5,12})\\s*[-\u2013]\\s*pag\\.?\\s*(\\d{1,4})\\b", id: m => m[1], pag: m => +m[2] },
+    { sis: "eproc", re: "\\bevento\\s+(\\d{1,4}),?\\s+([a-z]{2,12}\\d{1,3}),?\\s+pagina\\s+(\\d{1,4})\\b", id: m => "Evento " + m[1] + ", " + m[2].toUpperCase(), pag: m => +m[3] },
+    { sis: "PROJUDI", re: "\\bref\\.?\\s*mov\\.?\\s*(\\d{1,4}\\.\\d{1,3})\\b", id: m => "mov. " + m[1], pag: () => null }
+  ];
+  function detectarIDs(docs) {
+    for (const d of docs) {
+      let ant = null;
+      const doArquivo = (/\bid[\s_.-]*(\d{5,12})\b/i.exec(d.nome || "") || [])[1];
+      for (const p of d.paginas) {
+        p.idProc = null;
+        for (const mk of MARCADORES) {
+          const hs = buscar(p, mk.re, 3);
+          if (hs.length) { const m = hs[hs.length - 1].m; p.idProc = { sis: mk.sis, id: mk.id(m), pag: mk.pag(m), inferido: false }; break; }
+        }
+        if (!p.idProc) {
+          const ponta = p.norm.slice(0, 70) + " " + p.norm.slice(-90);
+          const f = /\bfls?\.\s*(\d{1,5})\b/.exec(ponta);
+          if (f && /\b(sao paulo|tjsp|e-?saj|esaj|para conferir o original)\b/.test(p.norm.slice(-600) + " " + p.norm.slice(0, 300))) p.idProc = { sis: "e-SAJ", id: "fls. " + f[1], pag: null, inferido: false, fls: +f[1] };
+        }
+        if (!p.idProc && ant && ant.idProc) {
+          const a = ant.idProc;
+          p.idProc = a.sis === "e-SAJ" && a.fls ? { sis: a.sis, id: "fls. " + (a.fls + 1), fls: a.fls + 1, pag: null, inferido: true } : { sis: a.sis, id: a.id, pag: a.pag ? a.pag + 1 : null, inferido: true };
+        }
+        if (!p.idProc && (d.idManual || doArquivo)) p.idProc = { sis: "manual", id: String(d.idManual || doArquivo).trim(), pag: p.n, inferido: false, manual: true };
+        else if (p.idProc && d.idManual && p.idProc.inferido) p.idProc = { sis: "manual", id: String(d.idManual).trim(), pag: p.n, inferido: false, manual: true };
+        ant = p;
+      }
+    }
+  }
+  function rotuloID(p) {
+    const x = p && p.idProc; if (!x) return "";
+    const base = /^(fls\.|Evento|mov\.)/.test(x.id) ? x.id : "ID " + x.id;
+    return base + (x.pag && x.sis !== "manual" ? ", pág. " + x.pag : "") + (x.inferido ? ", inferido" : "");
+  }
   function indexar(docs) {
     const paginas = [];
     const multi = docs.filter(d => d.paginas.length).length > 1;
+    detectarIDs(docs);
     docs.forEach((d, di) => d.paginas.forEach(p => {
       p.gid = paginas.length; p.doc = d.id; p.di = di;
-      p.rot = (multi ? "Arq. " + (di + 1) + ", " : "") + "p. " + p.n;
+      p.rotPag = (multi ? "Arq. " + (di + 1) + ", " : "") + "p. " + p.n;
+      const r = rotuloID(p);
+      p.rotID = r;
+      p.rot = p.rotPag + (r ? " · " + r : "");
       paginas.push(p);
     }));
     return paginas;
+  }
+  /* Agrupa páginas consecutivas do mesmo documento (ID) para o índice dos autos. */
+  function indiceDocumentos(paginas) {
+    const out = []; let cur = null;
+    for (const p of paginas) {
+      const chave = p.doc + "|" + (p.idProc ? p.idProc.id : "sem-id:" + (p.peca || ""));
+      if (!cur || cur.chave !== chave) { cur = { chave, id: p.idProc ? p.idProc.id : null, sis: p.idProc ? p.idProc.sis : null, rotulo: p.rotID ? p.rotID.replace(/, pág\. \d+/, "").replace(", inferido", "") : "", doc: p.doc, di: p.di, gids: [], pecas: {} }; out.push(cur); }
+      cur.gids.push(p.gid); if (p.peca) cur.pecas[p.peca] = (cur.pecas[p.peca] || 0) + 1;
+    }
+    for (const g of out) g.peca = Object.keys(g.pecas).sort((a, b) => g.pecas[b] - g.pecas[a])[0] || null;
+    return out;
   }
 
   function classificarPecas(paginas) {
@@ -303,7 +354,7 @@
           out.capacidades.push({ valor: h.m[1].replace(",", ".") + " " + h.m[2].toUpperCase(), gid: p.gid, grupo: g, t: trecho(p, h.ini, h.fim, 60) });
         }
       }
-      const cab = p.norm.slice(0, 2500);
+      const cab = p.norm.slice(0, 2500).replace(/(assinado (eletronicamente|digitalmente)|num\.?\s*\d{5,12}\s*[-\u2013]\s*pag|documento assinado)[^\n]{0,140}/g, m => " ".repeat(m.length));
       const vistos = new Set();
       for (const h of buscar({ norm: cab }, "\\b(\\d{1,2})[/.](\\d{1,2})[/.](\\d{4}|\\d{2})\\b", 12)) {
         let [d, m, a] = [+h.m[1], +h.m[2], +h.m[3]]; if (a < 100) a += 2000;
@@ -495,5 +546,5 @@
     return { res: novo, paginas };
   }
 
-  root.CC_MOTOR = { lerArquivo, analisar, reavaliar, indexar, classificar, statusFinal, prepararPagina, obterOCR, renderizarPagina, luhn, fmtData, encerrarOCR: async () => ocrPool && ocrPool.encerrar() };
+  root.CC_MOTOR = { rotuloID, indiceDocumentos, lerArquivo, analisar, reavaliar, indexar, classificar, statusFinal, prepararPagina, obterOCR, renderizarPagina, luhn, fmtData, encerrarOCR: async () => ocrPool && ocrPool.encerrar() };
 })(typeof window !== "undefined" ? window : globalThis);

@@ -18,6 +18,7 @@ hub/
     regras.js                 Etapas, tipos de vestígio, peças processuais, 39 critérios e alertas (padrões editáveis)
     motor.js                  Leitura de PDF/OCR/imagens/DOCX, hash SHA-256 e análise
     relatorio.js              Relatório técnico e minuta de tese
+    dossie.js                 Dossiê completo (falhas, jurisprudência aplicável e como utilizá-la, diligências, riscos, minuta)
     ia.js                     Análise complementar opcional (API do Claude, chave do próprio usuário)
     app.js                    Controlador da interface
 ```

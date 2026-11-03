@@ -27,7 +27,7 @@
       termos: "\\b(celular(es)?|smartphones?|aparelhos? (de )?telefon\\w*|aparelhos? moveis?|iphone|samsung|motorola|xiaomi|redmi|galaxy|imei)\\b" },
     { id: "informatica", nome: "Computador e mídia de armazenamento", curto: "Informática", familia: "digital", icone: "💾",
       artigo: "o equipamento de informática apreendido",
-      termos: "\\b(computador(es)?|notebooks?|laptops?|desktop|cpu|gabinete|hd externo|discos? rigidos?|hard ?disk|ssd|pen ?drives?|cartao de memoria|micro ?sd|midias? (digita\\w+|de armazenamento)|tablets?|servidor(es)?)\\b" },
+      termos: "\\b(computador(es)?|notebooks?|laptops?|desktop|cpu|gabinete|hd externo|discos? rigidos?|hard ?disk|ssd|pen ?drives?|cartao de memoria|micro ?sd|midias? (digita\\w+|de armazenamento)|tablets?|servidor(es)? de (arquivos|dados|e-?mail|rede))\\b" },
     { id: "telematico", nome: "Dados telemáticos e nuvem", curto: "Nuvem / telemático", familia: "digital", icone: "☁️",
       artigo: "os dados telemáticos obtidos",
       termos: "\\b(e-?mails?|gmail|icloud|google drive|onedrive|armazenamento em nuvem|provedor(es)?( de aplicac\\w+)?|dados telematicos|sigilo telematico|geofenc\\w*|registros de (conexao|acesso)|conta espelho)\\b" },

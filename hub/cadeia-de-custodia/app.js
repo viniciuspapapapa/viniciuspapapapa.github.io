@@ -10,7 +10,7 @@
 
   if (window.pdfjsLib) pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
 
-  const E = { arquivos: [], docs: [], paginas: [], res: null, caso: {}, sub: "painel", catSel: null, soProb: false, sinal: null, relModo: "minuta", base: "etapas", jurisFiltro: { q: "", tag: "", turma: "" } };
+  const E = { arquivos: [], docs: [], paginas: [], res: null, caso: {}, sub: "painel", catSel: null, soProb: false, sinal: null, relModo: "dossie", base: "etapas", jurisFiltro: { q: "", tag: "", turma: "" } };
   window.CC_ESTADO = E;
 
   /* ------------------------------------------------------------ abas principais */
@@ -142,7 +142,7 @@
     const dados = {
       formato: "hub-cadeia-custodia", versao: 1, exportadoEm: new Date().toISOString(), caso: E.caso,
       ativos: E.res.categorias.filter(c => c.ativo).map(c => c.id), revs, ia: E.res.ia || null,
-      docs: E.docs.map(d => ({ id: d.id, nome: d.nome, tipo: d.tipo, tamanho: d.tamanho, sha256: d.sha256, especie: d.especie, modificado: d.modificado, meta: d.meta, dimensoes: d.dimensoes, paginas: d.paginas.map(p => ({ n: p.n, texto: p.texto, ocr: p.ocr, conf: p.conf })) }))
+      docs: E.docs.map(d => ({ idManual: d.idManual || "", id: d.id, nome: d.nome, tipo: d.tipo, tamanho: d.tamanho, sha256: d.sha256, especie: d.especie, modificado: d.modificado, meta: d.meta, dimensoes: d.dimensoes, paginas: d.paginas.map(p => ({ n: p.n, texto: p.texto, ocr: p.ocr, conf: p.conf })) }))
     };
     const blob = new Blob([JSON.stringify(dados)], { type: "application/json" });
     const a = document.createElement("a"); a.href = URL.createObjectURL(blob);
@@ -234,12 +234,14 @@
           '<div><button class="btn sec peq" data-abre="' + c.id + '">Abrir matriz</button></div></div>';
       }).join("") + "</div>";
     }
+    if (ativos.length) h += '<div class="card card-p" style="margin-top:18px;display:flex;gap:14px;align-items:center;flex-wrap:wrap;border-top:4px solid var(--accent)"><div style="flex:1;min-width:240px"><b>Dossiê completo da análise</b><div class="pequeno mudo">Todas as falhas com página e ID, jurisprudência aplicável e como utilizá-la, diligências, riscos e minuta em anexo, em documento único para Word ou PDF.</div></div><button class="btn" data-dossie="1">Gerar dossiê</button></div>';
     const top = r.inconsistencias.filter(i => i.grav === "critico").slice(0, 4);
     if (top.length) h += '<h3 style="margin-top:26px">Pontos de maior gravidade</h3><div class="grade">' + top.map(incHTML).join("") + '</div><p><button class="btn sec peq" data-ir="inconsistencias">Ver todas as inconsistências e alertas</button></p>';
     C().innerHTML = h;
     C().querySelectorAll("[data-cat]").forEach(b => b.onclick = () => alternarCat(b.dataset.cat));
     C().querySelectorAll("[data-abre]").forEach(b => b.onclick = () => { E.catSel = b.dataset.abre; abrirSub("matriz"); });
     C().querySelectorAll("[data-ir]").forEach(b => b.onclick = () => abrirSub(b.dataset.ir));
+    C().querySelectorAll("[data-dossie]").forEach(b => b.onclick = () => { E.relModo = "dossie"; abrirSub("relatorio"); });
     ligarPg(C());
   }
   function alternarCat(id) {
@@ -358,9 +360,12 @@
       const ev = r.linhaDoTempo.filter(d => { const k = d.iso + d.peca; if (vistos.has(k)) return false; vistos.add(k); return true; }).slice(0, 80);
       h += '<h3 style="margin-top:26px">Linha do tempo estimada</h3><p class="pequeno mudo" style="margin-top:-4px">Datas localizadas no início de cada peça. Trata-se de estimativa: confira se a data corresponde ao ato documentado.</p><div class="card rolagem"><table class="tabela"><tr><th>Data</th><th>Peça</th><th>Página</th><th>Trecho</th></tr>' + ev.map(d => "<tr><td>" + M.fmtData(d.iso) + "</td><td>" + esc(PECA(d.peca).rot) + "</td><td>" + pgChip(d.gid) + '</td><td class="pequeno">' + esc(d.t.antes.slice(-50)) + "<mark>" + esc(d.t.alvo) + "</mark>" + esc(d.t.depois.slice(0, 50)) + "</td></tr>").join("") + "</table></div>";
     }
+    const idx = M.indiceDocumentos(E.paginas).filter(g => g.id);
+    if (idx.length) h += '<h3 style="margin-top:26px">Índice por documento (ID)</h3><p class="pequeno mudo" style="margin-top:-4px">Documentos identificados pelo carimbo do processo eletrônico (PJe, eproc, e-SAJ ou PROJUDI) ou informados manualmente.</p><div class="card rolagem"><table class="tabela"><tr><th>Documento</th><th>Peça</th><th>Páginas</th></tr>' + idx.slice(0, 800).map(g => { const ps = g.gids.map(x => E.paginas[x]); return '<tr class="clic" data-pg="' + g.gids[0] + '"><td>' + esc(g.rotulo) + "</td><td>" + (g.peca ? esc(PECA(g.peca).rot) : '<span class="mudo">não classificada</span>') + "</td><td>" + esc(ps[0].rotPag + (ps.length > 1 ? " a " + ps[ps.length - 1].n : "")) + "</td></tr>"; }).join("") + "</table></div>";
     const opts = '<option value="">Todas as peças</option>' + R.PECAS.map(p => '<option value="' + p.id + '">' + esc(p.rot) + "</option>").join("") + '<option value="__">Não classificadas</option>';
     h += '<h3 style="margin-top:26px">Mapa dos autos</h3><div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px"><select id="filtroPeca" style="max-width:320px">' + opts + '</select></div><div class="card rolagem" id="mapaTab"></div>';
     C().innerHTML = h;
+    ligarPg(C());
     const desenhar = () => {
       const f = $("#filtroPeca").value;
       const ps = E.paginas.filter(p => !f || (f === "__" ? !p.peca : p.peca === f)).slice(0, 1500);
@@ -412,6 +417,11 @@
       const flags = analiseExif(d); const m = d.meta || {};
       let x = '<div class="card card-p"><div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"><span style="font-size:22px">' + iconeArq(d.nome) + '</span><b style="flex:1;min-width:0;word-break:break-word">' + (E.docs.length > 1 ? "Arq. " + (i + 1) + ": " : "") + esc(d.nome) + '</b><span class="pequeno mudo">' + tamanho(d.tamanho) + (d.paginas.length ? " · " + d.paginas.length + " pág. · " + d.paginas.filter(p => p.ocr).length + " por OCR" : "") + "</span></div>";
       x += '<div class="mono mudo" style="margin-top:6px">SHA-256 ' + esc(d.sha256 || "não calculado") + "</div>";
+      if (d.paginas.length) {
+        const sis = {}; d.paginas.forEach(p => { if (p.idProc && !p.idProc.manual) { const k = p.idProc.sis; (sis[k] = sis[k] || new Set()).add(p.idProc.id); } });
+        const det = Object.keys(sis).map(k => k + ": " + sis[k].size + " documento(s)").join("; ");
+        x += '<div class="grade" style="grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:end;margin-top:10px"><label class="campo">ID do documento no processo eletrônico' + (det ? " (detectado automaticamente: " + esc(det) + ")" : " (nenhum carimbo detectado)") + '<input type="text" data-idman="' + d.id + '" value="' + esc(d.idManual || "") + '" placeholder="' + (det ? "Opcional: substitui os IDs inferidos" : "Ex.: 123456789") + '"></label><button class="btn sec peq" data-idaplic="' + d.id + '" type="button">Aplicar ID</button></div>';
+      }
       if (d.especie === "imagem") {
         x += '<div class="grade g2" style="margin-top:12px;align-items:start">' + (d._url ? '<img src="' + d._url + '" alt="' + esc(d.nome) + '" style="max-width:100%;border-radius:8px;border:1px solid var(--line);cursor:zoom-in" data-pg="' + (d.paginas[0] ? d.paginas[0].gid : "") + '">' : '<div class="mudo pequeno">Reanexe a imagem para visualizá-la.</div>') + "<div>" + flags.map(f => '<div class="exif-flag"><span class="tag ' + f[0] + '">' + (f[0] === "bad" ? "atenção" : f[0] === "warn" ? "observação" : "dado") + "</span> " + esc(f[1]) + "</div>").join("") +
           '<table class="tabela" style="margin-top:8px">' + [["Dimensões", d.dimensoes], ["Fabricante", m.Make], ["Modelo", m.Model], ["Software", m.Software], ["Data de captura", m.DateTimeOriginal && new Date(m.DateTimeOriginal).toLocaleString("pt-BR")], ["Data de criação", m.CreateDate && new Date(m.CreateDate).toLocaleString("pt-BR")], ["Data de modificação", m.ModifyDate && new Date(m.ModifyDate).toLocaleString("pt-BR")], ["Arquivo modificado em", d.modificado && new Date(d.modificado).toLocaleString("pt-BR")]].filter(z => z[1]).map(z => "<tr><th>" + z[0] + "</th><td>" + esc(z[1]) + "</td></tr>").join("") + "</table></div></div>";
@@ -427,6 +437,11 @@
     }).join("") + "</div>";
     C().innerHTML = h;
     $("#copiaCert").onclick = () => copiar(cert);
+    C().querySelectorAll("[data-idaplic]").forEach(b => b.onclick = () => {
+      const d = E.docs.find(x => x.id === b.dataset.idaplic); const v = C().querySelector('[data-idman="' + d.id + '"]').value.trim();
+      d.idManual = v; E.res = M.reavaliar(E.docs, E.res).res; E.paginas = todasPaginas(); salvarRevisoes();
+      HUB.toast(v ? "ID aplicado às páginas sem carimbo identificável." : "ID manual removido."); renderArquivosRes();
+    });
     ligarPg(C());
   }
 
@@ -470,7 +485,8 @@
     ligarIA();
   }
   function rotPg(s) {
-    const p = E.paginas.find(x => x.rot.toLowerCase() === String(s).trim().toLowerCase());
+    const alvo = String(s).trim().toLowerCase();
+    const p = E.paginas.find(x => x.rot.toLowerCase() === alvo || (x.rotPag || "").toLowerCase() === alvo || alvo.startsWith((x.rotPag || "\u0000").toLowerCase() + " "));
     return p ? pgChip(p.gid) : '<span class="tag">' + esc(s) + "</span>";
   }
   function iaResHTML(ia) {
@@ -497,13 +513,17 @@
   /* ---------- relatório ---------- */
   function renderRelatorio() {
     const est = { docs: E.docs, paginas: E.paginas, res: E.res, caso: E.caso };
-    const html = E.relModo === "minuta" ? '<div class="rel-cab"><div class="rel-marca"><span class="marca-tpc">TPC</span> <span>ADVOGADOS</span></div><div class="mudo pequeno">Minuta gerada a partir da verificação · revise antes de protocolar</div></div>' + REL.minutaHTML(est) : REL.relatorio(est);
-    C().innerHTML = '<div class="linha-btns nao-imprimir" style="margin-bottom:14px"><div class="sub" style="margin:0"><button data-rm="minuta" aria-selected="' + (E.relModo === "minuta") + '">Minuta de tese</button><button data-rm="relatorio" aria-selected="' + (E.relModo === "relatorio") + '">Relatório técnico</button></div><div class="espaco"></div><button class="btn sec peq" id="rCopiar">Copiar texto</button><button class="btn sec peq" id="rDoc">Baixar .doc (Word)</button><button class="btn peq" id="rPrint">Imprimir / PDF</button></div>' +
-      (E.relModo === "minuta" ? '<div class="aviso info nao-imprimir" style="margin-bottom:14px">A minuta reflete a triagem e as suas revisões na Matriz por etapa. As referências de página correspondem às páginas dos arquivos anexados; ajuste-as para a numeração de folhas ou IDs do processo eletrônico.</div>' : "") +
+    let html;
+    try {
+      html = E.relModo === "dossie" ? window.CC_DOSSIE.gerar(est) : E.relModo === "minuta" ? '<div class="rel-cab"><div class="rel-marca"><span class="marca-tpc">TPC</span> <span>ADVOGADOS</span></div><div class="mudo pequeno">Minuta gerada a partir da verificação · revise antes de protocolar</div></div>' + REL.minutaHTML(est) : REL.relatorio(est);
+    } catch (err) { console.error(err); html = '<p>Não foi possível gerar o documento: ' + esc(err.message) + "</p>"; }
+    const nomeArq = { dossie: "dossie-cadeia-custodia", minuta: "minuta-cadeia-custodia", relatorio: "relatorio-cadeia-custodia" }[E.relModo];
+    C().innerHTML = '<div class="linha-btns nao-imprimir" style="margin-bottom:14px"><div class="sub" style="margin:0"><button data-rm="dossie" aria-selected="' + (E.relModo === "dossie") + '">Dossiê completo</button><button data-rm="minuta" aria-selected="' + (E.relModo === "minuta") + '">Minuta de tese</button><button data-rm="relatorio" aria-selected="' + (E.relModo === "relatorio") + '">Relatório técnico</button></div><div class="espaco"></div><button class="btn sec peq" id="rCopiar">Copiar texto</button><button class="btn sec peq" id="rDoc">Baixar .doc (Word)</button><button class="btn peq" id="rPrint">Imprimir / PDF</button></div>' +
+      (E.relModo === "dossie" ? '<div class="aviso info nao-imprimir" style="margin-bottom:14px">O dossiê reúne toda a análise: síntese, índice dos documentos por ID, quadro de todas as falhas, análise por vestígio com os trechos dos autos, inconsistências, alertas, identificadores, cronologia, jurisprudência aplicável com as possibilidades de utilização, precedentes de cautela, fundamentos legais, doutrina, diligências, riscos e a minuta em anexo. Reflete as suas revisões na Matriz por etapa.' + (E.paginas.some(p => p.rotID) ? "" : " Nenhum ID foi detectado nos arquivos: informe-o na aba Arquivos e imagens para que as referências o indiquem.") + "</div>" : E.relModo === "minuta" ? '<div class="aviso info nao-imprimir" style="margin-bottom:14px">A minuta reflete a triagem e as suas revisões na Matriz por etapa. As referências indicam a página do arquivo e o ID do documento no processo eletrônico, quando identificado.</div>' : "") +
       '<article class="papel" id="relPreview">' + html + "</article>";
     C().querySelectorAll("[data-rm]").forEach(b => b.onclick = () => { E.relModo = b.dataset.rm; renderRelatorio(); });
     $("#rCopiar").onclick = () => copiar(E.relModo === "minuta" ? REL.minutaTexto(est) : $("#relPreview").innerText);
-    $("#rDoc").onclick = () => REL.exportarDoc($("#relPreview").innerHTML, (E.relModo === "minuta" ? "minuta-cadeia-custodia" : "relatorio-cadeia-custodia") + (E.caso.autos ? "-" + E.caso.autos.replace(/[^\w.-]+/g, "_") : ""));
+    $("#rDoc").onclick = () => REL.exportarDoc($("#relPreview").innerHTML, nomeArq + (E.caso.autos ? "-" + E.caso.autos.replace(/[^\w.-]+/g, "_") : ""));
     $("#rPrint").onclick = () => { document.body.classList.add("imprimindo-rel"); window.print(); setTimeout(() => document.body.classList.remove("imprimindo-rel"), 500); };
   }
 
