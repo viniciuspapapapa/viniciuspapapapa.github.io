@@ -12,14 +12,18 @@
   };
   const NIVEL = { quebra: "bad", fragil: "warn", formal: "info", integra: "ok" };
 
+  /* Referência de páginas com o ID do processo eletrônico: "p. 4 (ID 123, pág. 2); p. 9 (ID 456, pág. 1)". */
   function refs(gids, paginas) {
     const u = [...new Set((gids || []).filter(g => paginas[g]))].sort((a, b) => a - b);
     if (!u.length) return "";
+    const multi = /^Arq\./.test(paginas[u[0]].rotPag || paginas[u[0]].rot);
+    const comID = u.some(g => paginas[g].rotID);
+    if (comID) return u.map(g => { const p = paginas[g]; return (p.rotPag || "p. " + p.n) + (p.rotID ? " (" + p.rotID + ")" : ""); }).join("; ");
     const porDoc = {};
     for (const g of u) { const p = paginas[g]; (porDoc[p.di] = porDoc[p.di] || []).push(p.n); }
     const docs = Object.keys(porDoc);
     const lista = ns => ns.length === 1 ? "p. " + ns[0] : "p. " + ns.slice(0, -1).join(", ") + " e " + ns[ns.length - 1];
-    if (docs.length === 1 && !/^Arq\./.test(paginas[u[0]].rot)) return lista(porDoc[docs[0]]);
+    if (docs.length === 1 && !multi) return lista(porDoc[docs[0]]);
     return docs.map(d => "Arq. " + (+d + 1) + ", " + lista(porDoc[d])).join("; ");
   }
   const CONTR = { de: { o: "do", a: "da", os: "dos", as: "das" }, em: { o: "no", a: "na", os: "nos", as: "nas" }, a: { o: "ao", a: "à", os: "aos", as: "às" }, por: { o: "pelo", a: "pela", os: "pelos", as: "pelas" } };
@@ -212,11 +216,11 @@
   }
 
   function exportarDoc(html, nome) {
-    const doc = '<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="utf-8"><title>' + esc(nome) + '</title><style>body{font-family:Calibri,Arial,sans-serif;font-size:11pt;line-height:1.4}h2{font-family:"Segoe UI Semibold",Calibri;font-size:14pt}h3{font-family:"Segoe UI Semibold",Calibri;font-size:12pt;margin-top:18pt}h4{font-size:11pt}p{text-align:justify;margin:0 0 10pt}table{border-collapse:collapse;width:100%;margin:6pt 0 12pt}td,th{border:1px solid #bbb;padding:4pt 6pt;font-size:9.5pt;vertical-align:top;text-align:left}th{background:#f2f2f2}.mono{font-family:Consolas,monospace;font-size:8.5pt}.tag{font-weight:bold}.mudo{color:#666}.pequeno{font-size:9pt}.rel-cab{border-bottom:3pt solid #F5EF90;padding-bottom:6pt;margin-bottom:12pt}.marca-tpc{border:1.5pt solid #C8C3BB;padding:0 4pt;font-weight:bold}</style></head><body>' + html + "</body></html>";
+    const doc = '<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="utf-8"><title>' + esc(nome) + '</title><style>body{font-family:Calibri,Arial,sans-serif;font-size:11pt;line-height:1.4}h2{font-family:"Segoe UI Semibold",Calibri;font-size:14pt}h3{font-family:"Segoe UI Semibold",Calibri;font-size:12pt;margin-top:18pt}h4{font-size:11pt}p{text-align:justify;margin:0 0 10pt}table{border-collapse:collapse;width:100%;margin:6pt 0 12pt}td,th{border:1px solid #bbb;padding:4pt 6pt;font-size:9.5pt;vertical-align:top;text-align:left}th{background:#f2f2f2}.mono{font-family:Consolas,monospace;font-size:8.5pt}.tag{font-weight:bold}.mudo{color:#666}.pequeno{font-size:9pt}.rel-cab{border-bottom:3pt solid #F5EF90;padding-bottom:6pt;margin-bottom:12pt}.marca-tpc{border:1.5pt solid #C8C3BB;padding:0 4pt;font-weight:bold}.dz-sumario{border:1px solid #ccc;padding:6pt 10pt;margin:8pt 0}.dz-trecho{border-left:3pt solid #2f7d4f;background:#f7f6f2;padding:3pt 7pt;margin:4pt 0;font-size:9.5pt}.dz-trecho.neg{border-left-color:#b23a2c}.dz-trecho b{background:#F5EF90}.dz-ref{font-size:8pt;color:#666;font-weight:bold}.dz-falha{border:1px solid #ddd;padding:6pt 8pt;margin:8pt 0}.dz-falha-cab{background:#f4f2ed;padding:3pt 5pt;margin-bottom:4pt}.dz-qa{border-left:3pt solid #F5EF90;padding:2pt 8pt;margin:4pt 0;font-size:10pt}.dz-lei{font-size:10pt}.dz-anexo{border-top:1.5pt solid #333;padding-top:8pt;margin-top:24pt}</style></head><body>' + html + "</body></html>";
     const blob = new Blob(["﻿", doc], { type: "application/msword" });
     const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = nome + ".doc"; document.body.appendChild(a); a.click();
     setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
   }
 
-  window.CC_RELATORIO = { contrair, relatorio, minutaHTML, minutaTexto, exportarDoc, refs, citacao, precedente, STATUS, NIVEL, tesePrincipal, problemas };
+  window.CC_RELATORIO = { preencherTexto: preencher, contrair, relatorio, minutaHTML, minutaTexto, exportarDoc, refs, citacao, precedente, STATUS, NIVEL, tesePrincipal, problemas };
 })();

@@ -80,7 +80,7 @@
   .rev { display: flex; flex-wrap: wrap; gap: 6px; }
   .rev button { border: 1px solid var(--line-2); background: var(--surface); border-radius: 7px; padding: 5px 10px; font-size: 12.5px; cursor: pointer; }
   .rev button.on { background: var(--brand); color: var(--paper); border-color: var(--brand); }
-  .pgchip { display: inline-block; font-size: 12px; padding: 1px 8px; border-radius: 6px; background: var(--na-bg); color: var(--ink-2); cursor: pointer; margin: 2px; border: 0; }
+  .pgchip { white-space: nowrap; display: inline-block; font-size: 12px; padding: 1px 8px; border-radius: 6px; background: var(--na-bg); color: var(--ink-2); cursor: pointer; margin: 2px; border: 0; }
   .pgchip:hover { background: var(--accent); color: #2b2b2b; }
   .tabela { width: 100%; border-collapse: collapse; font-size: 13.5px; }
   .tabela th, .tabela td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
@@ -121,6 +121,20 @@
   .etapa-exp { display: grid; grid-template-columns: 46px minmax(0, 1fr); gap: 12px; align-items: start; }
   .etapa-exp .n { width: 46px; height: 46px; border-radius: 50%; display: grid; place-items: center; font-family: var(--serif); font-weight: 700; font-size: 19px; background: var(--surface); border: 2px solid var(--stone); }
   .etapa-exp.int .n { border-color: var(--ink-3); background: var(--accent); color: #2b2b2b; }
+  .dz-sumario { border: 1px solid #d9d6cf; border-radius: 6px; padding: 10px 16px; margin: 12px 0 8px; background: #faf9f6; }
+  .dz-sumario ol { margin: 6px 0 0; padding-left: 22px; columns: 2; column-gap: 28px; font-size: 13.5px; }
+  @media (max-width: 620px) { .dz-sumario ol { columns: 1; } }
+  .dz-trecho { border-left: 3px solid #2f7d4f; background: #f7f6f2; padding: 6px 10px; margin: 6px 0; font-size: 13px; border-radius: 0 6px 6px 0; }
+  .dz-trecho.neg { border-left-color: #b23a2c; }
+  .dz-trecho b { background: #f5ef90; font-weight: 600; }
+  .dz-ref { font-size: 11px; font-weight: 600; color: #6d6a64; letter-spacing: .03em; margin-bottom: 2px; }
+  .dz-falha { border: 1px solid #e4e0d8; border-radius: 8px; padding: 10px 14px; margin: 12px 0; }
+  .dz-falha-cab { background: #f4f2ed; margin: -10px -14px 8px; padding: 7px 14px; border-radius: 8px 8px 0 0; font-size: 14px; }
+  .dz-prec { border-top: 1px solid #e4e0d8; padding-top: 6px; margin-top: 14px; }
+  .dz-qa { border-left: 3px solid #f5ef90; padding: 4px 0 4px 12px; margin: 8px 0; font-size: 14px; }
+  .dz-lei { font-size: 14px; }
+  .papel h3.dz-anexo { border-top: 2px solid #2b2b2b; padding-top: 14px; margin-top: 34px; }
+  .papel table.rel-t td, .papel table.rel-t th { word-break: break-word; }
   @media (max-width: 900px) { #gradeAnalisar, #jFiltros { grid-template-columns: minmax(0, 1fr) !important; } }
   @media print {
     body.imprimindo-rel * { visibility: hidden; }
@@ -245,7 +259,7 @@
       <button data-sub="mapa">Mapa e busca nos autos</button>
       <button data-sub="arquivos">Arquivos e imagens</button>
       <button data-sub="ia">Análise por IA</button>
-      <button data-sub="relatorio">Relatório e minuta</button>
+      <button data-sub="relatorio">Dossiê, relatório e minuta</button>
     </div>
     <div id="subconteudo"></div>
   </section>
@@ -273,6 +287,8 @@
         <p>A plataforma extrai o texto de cada página dos autos. Quando a página não possui camada de texto, como ocorre em documentos escaneados, ela é convertida em imagem e lida por reconhecimento óptico de caracteres em português. Imagens anexadas recebem o mesmo tratamento e têm seus metadados EXIF examinados.</p>
         <p>Em seguida, cada página é classificada segundo a peça processual a que pertence (auto de apreensão, laudo de constatação, laudo pericial, requisição, registro de custódia, decisão, relatório policial, entre outras), e os vestígios mencionados são agrupados por tipo. Para cada tipo ativo, a ferramenta aplica os critérios correspondentes às etapas do art. 158-B do CPP e às garantias de legalidade do acesso, integridade e acesso da defesa, buscando, no texto, indícios de cumprimento e indícios de vício.</p>
         <p>Paralelamente, são extraídos identificadores objetivos e feitos confrontos entre as peças: IMEIs (com validação do dígito verificador), lacres registrados na apreensão e consignados no exame, valores hash, pesos de drogas, capacidades de mídias e datas. Divergências entre esses dados são apontadas como inconsistências documentais.</p>
+        <p>Cada página é associada ao identificador do documento no processo eletrônico, lido do carimbo do sistema: o ID do PJe ("Num. 123456789 - Pág. 3"), o evento e o documento do eproc, as folhas do e-SAJ ou a movimentação do PROJUDI. Páginas sem carimbo legível recebem o ID por continuidade, com a indicação "inferido", e o ID pode ser informado manualmente por arquivo. Todas as referências da ferramenta indicam a página e o ID.</p>
+        <p>O dossiê completo reúne, em documento único, a síntese executiva, o índice dos documentos por ID, o quadro de todas as falhas, a análise por vestígio com os trechos dos autos, as inconsistências, os alertas, os identificadores, a cronologia, a jurisprudência aplicável com a indicação de como utilizá-la no caso, os precedentes que exigem cautela, os fundamentos legais, a doutrina, as diligências recomendadas, os riscos previsíveis e a minuta de tese em anexo.</p>
         <p style="margin-bottom:0">O resultado é uma triagem orientada à revisão humana. Cada critério pode ser confirmado ou corrigido pelo advogado, com anotações, e o relatório e a minuta de tese refletem exatamente as revisões feitas.</p>
       </div>
       <div class="grade">
@@ -320,6 +336,7 @@
 <script src="regras.js"></script>
 <script src="motor.js"></script>
 <script src="relatorio.js"></script>
+<script src="dossie.js"></script>
 <script src="ia.js"></script>
 <script src="app.js"></script>
 </body>
