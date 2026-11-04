@@ -72,6 +72,17 @@
         <label class="campo" id="cLivre" style="margin-top:12px" hidden>Forma de pagamento (redação livre)<textarea id="livre" rows="3" placeholder="a serem pagos em ..."></textarea><span class="dica">Completa a frase após o valor por extenso.</span></label>
         <label class="campo" style="margin-top:12px">Cláusula de honorários<textarea id="clausula" rows="6"></textarea><span class="dica">Gerada automaticamente a partir dos campos acima; pode ser ajustada antes de gerar o PDF. <a href="#" id="restaurar" hidden>Restaurar o texto automático</a></span></label>
       </div>
+      <div class="card bloco">
+        <h2>Sócio responsável</h2>
+        <p class="dica" style="margin:-4px 0 10px">Dados de contato que constam na última página da proposta. Ficam lembrados neste navegador.</p>
+        <div class="grade g2">
+          <label class="campo">Nome do sócio<input type="text" id="socioNome" autocomplete="name"></label>
+          <label class="campo">Cargo<input type="text" id="socioCargo" placeholder="Sócio"></label>
+          <label class="campo">Telefone<input type="tel" id="socioTelefone" autocomplete="tel" placeholder="(31) 90000-0000"></label>
+          <label class="campo">E-mail<input type="email" id="socioEmail" autocomplete="email" placeholder="nome@tpcadvogados.com.br"></label>
+        </div>
+        <div class="linha-btns" style="margin-top:8px"><button type="button" class="btn sec peq" id="socioPadrao">Restaurar o padrão</button></div>
+      </div>
       <div class="linha-btns" style="margin:4px 0 24px"><button type="button" class="btn" id="baixar">Baixar a proposta em PDF</button><button type="button" class="btn sec" id="limpar">Limpar</button></div>
     </div>
     <div class="previa">
