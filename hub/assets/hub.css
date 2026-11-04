@@ -146,3 +146,23 @@ textarea { resize: vertical; min-height: 70px; }
   body { background: #fff; color: #000; }
   .card { box-shadow: none; border: 0; }
 }
+
+/* Relatório em folha (ferramentas de prescrição e reconhecimento) */
+.papel { background: #fff; color: #1d1d1d; border: 1px solid var(--line); border-radius: 8px; padding: clamp(18px, 5vw, 52px); max-width: 900px; margin: 0 auto; font-family: "Segoe UI", Calibri, Arial, sans-serif; font-size: 14.5px; line-height: 1.6; }
+.papel h2 { font-family: "Segoe UI", Calibri, sans-serif; font-size: 19px; font-weight: 600; margin: 0 0 10px; }
+.papel h3 { font-family: "Segoe UI", Calibri, sans-serif; font-size: 14.5px; font-weight: 600; margin: 22px 0 8px; text-transform: uppercase; letter-spacing: .02em; }
+.papel h4 { font-size: 14px; margin: 14px 0 6px; }
+.papel p { text-align: justify; margin: 0 0 10px; }
+.papel blockquote { margin: 0 0 12px 25mm; color: #3d3d3d; font-size: 13.5px; text-align: justify; }
+@media (max-width: 640px) { .papel blockquote { margin-left: 20px; } .papel table { display: block; overflow-x: auto; } }
+.papel table { width: 100%; border-collapse: collapse; margin: 8px 0 14px; font-size: 12.5px; }
+.papel td, .papel th { border: 1px solid #cfd5dd; padding: 5px 7px; text-align: left; vertical-align: top; }
+.papel th { background: #f5f3f0; }
+.papel .rel-cab { border-bottom: 4px solid #F5EF90; padding-bottom: 8px; margin-bottom: 16px; font-size: 12px; letter-spacing: .16em; }
+.papel .marca-tpc { border: 2px solid #C8C3BB; padding: 0 6px; font-weight: 600; letter-spacing: .1em; }
+.papel .mudo { color: #666; } .papel .pequeno { font-size: 12.5px; }
+@media print {
+  body.imprimindo * { visibility: hidden; }
+  body.imprimindo .papel, body.imprimindo .papel * { visibility: visible; }
+  body.imprimindo .papel { position: absolute; left: 0; top: 0; width: 100%; border: 0; padding: 0; }
+}

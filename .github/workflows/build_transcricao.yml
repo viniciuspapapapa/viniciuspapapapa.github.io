@@ -9,6 +9,9 @@ on:
       - 'transcricao.html'
       - '.github/workflows/build_transcricao.yml'
 
+permissions:
+  contents: write
+
 jobs:
   build-windows:
     runs-on: windows-latest
@@ -52,3 +55,14 @@ jobs:
           name: Transcricao-Windows
           path: dist/Transcricao.exe
           retention-days: 30
+
+      - name: Publish release asset (download link used by the HUB)
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          if ! gh release view transcricao >/dev/null 2>&1; then
+            gh release create transcricao --target "${{ github.sha }}" --title "Degravação de audiências (Windows)" --notes "Executável para Windows da ferramenta de degravação de audiências do HUB Criminal TPC. Na primeira execução, o modelo de transcrição é baixado automaticamente (cerca de 1,5 GB)."
+          fi
+          gh release upload transcricao dist/Transcricao.exe --clobber

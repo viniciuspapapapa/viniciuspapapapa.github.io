@@ -23,6 +23,13 @@ hub/
     dossie.js                 Dossiê completo (falhas, jurisprudência aplicável e como utilizá-la, diligências, riscos, minuta)
     ia.js                     Análise complementar opcional (API do Claude, chave do próprio usuário)
     app.js                    Controlador da interface
+  assets/doc.js               Exportação comum de relatórios (.doc, cópia e impressão)
+  reconhecimento/
+    regras.js                 Quesitos (CPP, arts. 226 a 228; Res. CNJ 484/2022), variáveis de estimativa, avaliação e base jurídica
+    app.js                    Atos de reconhecimento, sugestões a partir do texto, contaminação em cadeia e relatório
+  prescricao/
+    motor.js                  Cálculo da prescrição (CP, arts. 109 a 119; Lei 810/1949; Súmula 415 do STJ; Tema 788)
+    app.js                    Formulário, linha do tempo e relatório
   rif/
     index.html                Interface (layout de painel analítico, abas e relatórios)
     md5.js                    MD5 para conferência do código de controle dos CSV do COAF
@@ -62,3 +69,10 @@ minúsculo e sem acentos, além das minutas `falta` e `vicio` usadas no relatór
 ## Bibliotecas (CDN, versões fixas)
 
 pdf.js 3.11.174 · tesseract.js 5.1.1 (modelo `por`) · exifr 7.1.3 · mammoth 1.6.0.
+
+## Degravação de audiências
+
+O programa de degravação (`transcricao.py`, na raiz do repositório) é distribuído como executável para Windows.
+O fluxo `.github/workflows/build_transcricao.yml` gera o `Transcricao.exe` a cada alteração e o publica na release
+`transcricao`; o botão do HUB aponta para
+`https://github.com/viniciuspapapapa/viniciuspapapapa.github.io/releases/download/transcricao/Transcricao.exe`.
