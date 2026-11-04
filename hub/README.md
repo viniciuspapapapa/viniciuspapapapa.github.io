@@ -9,6 +9,7 @@ Tudo roda no navegador: os documentos dos clientes não são enviados a servidor
 hub/
   index.html                  Página inicial do HUB (catálogo de ferramentas)
   assets/hub.css, hub.js      Identidade visual TPC, tema claro/escuro, utilidades
+  assets/tpc-cabecalho.png    Timbrado usado nos documentos Word; tpc-barra.png, barra amarela do rodapé
   dados/
     legislacao.js             CPP 158 a 158-F, 6º, 157, 159, 169-170, 245; CF; SV 14; Marco Civil; Leis 11.343 e 9.296; normas técnicas
     doutrina.js               Sínteses doutrinárias (Prado, Badaró, Aury Lopes Jr., Brasileiro, ISO 27037)
@@ -30,6 +31,8 @@ hub/
     comparador.js             Leitura do relatório policial em PDF (com OCR), reconstrução das tabelas e verificação
                               de cada transação contra o RIF
     relatorio.js              Controle de legalidade, relatório da defesa, relatório comparativo e exportação .doc
+    estudo.js                 Estudo de caso criminal no padrão TPC (prosa, seções romanas, parágrafos numerados,
+                              citações recuadas), gerado em .docx no navegador com timbrado e rodapé institucional
     app.js                    Controlador da interface
 ```
 

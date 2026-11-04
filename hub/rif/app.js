@@ -390,19 +390,25 @@
   function vRel() {
     const c = S.caso, h = [];
     if (S.tipoRel === "comparativo" && !S.cmp) S.tipoRel = "defesa";
-    h.push('<div class="hero"><div><h1>Relatórios</h1><p>O relatório da defesa reúne a natureza do RIF, a integridade dos arquivos, a reconciliação dos valores, a análise por titular, as inconsistências, a legalidade e, se inserido, o confronto com o relatório policial, com síntese e pedido ao final de cada tópico.</p></div>' +
-      '<div class="tools"><select id="tipo-rel" aria-label="Tipo de relatório"><option value="defesa"' + (S.tipoRel === "defesa" ? " selected" : "") + '>Relatório da defesa</option><option value="comparativo"' + (S.tipoRel === "comparativo" ? " selected" : "") + (S.cmp ? "" : " disabled") + ">Relatório comparativo" + (S.cmp ? "" : " (insira o relatório policial)") + '</option></select><button type="button" class="btn" id="r-cop">Copiar texto</button><button type="button" class="btn" id="r-doc">Baixar .doc</button><button type="button" class="btn pri" id="r-pdf">Imprimir ou salvar PDF</button></div></div>');
-    h.push('<div class="card" style="margin-bottom:14px"><div class="form"><label>Autos<input type="text" id="c-autos" value="' + esc(c.autos || "") + '" placeholder="Nº do processo ou inquérito"></label><label>Assistido<input type="text" id="c-assistido" value="' + esc(c.assistido || "") + '"></label><label>Juízo ou órgão<input type="text" id="c-juizo" value="' + esc(c.juizo || "") + '"></label></div>' + (Object.keys(S.legal).length ? "" : '<p class="tiny" style="margin:8px 0 0">O tópico de legalidade usa as informações da aba Legalidade; enquanto não preenchidas, o relatório indica o que requerer.</p>') + "</div>");
+    h.push('<div class="hero"><div><h1>Relatórios</h1><p>O estudo de caso segue o padrão TPC (timbrado, seções em algarismos romanos, parágrafos numerados, citações recuadas e rodapé institucional) e é gerado em Word. O relatório da defesa reúne a natureza do RIF, a integridade dos arquivos, a reconciliação dos valores, a análise por titular, as inconsistências, a legalidade e, se inserido, o confronto com o relatório policial, com síntese e pedido ao final de cada tópico.</p></div>' +
+      '<div class="tools"><select id="tipo-rel" aria-label="Tipo de relatório"><option value="defesa"' + (S.tipoRel === "defesa" ? " selected" : "") + '>Relatório da defesa</option><option value="comparativo"' + (S.tipoRel === "comparativo" ? " selected" : "") + (S.cmp ? "" : " disabled") + ">Relatório comparativo" + (S.cmp ? "" : " (insira o relatório policial)") + '</option><option value="estudo"' + (S.tipoRel === "estudo" ? " selected" : "") + '>Estudo de caso (padrão TPC)</option></select><button type="button" class="btn" id="r-cop">Copiar texto</button><button type="button" class="btn" id="r-doc">Baixar .doc</button><button type="button" class="btn pri" id="r-docx">Estudo de caso .docx</button><button type="button" class="btn pri" id="r-pdf">Imprimir ou salvar PDF</button></div></div>');
+    h.push('<div class="card" style="margin-bottom:14px"><div class="form"><label>Autos<input type="text" id="c-autos" value="' + esc(c.autos || "") + '" placeholder="Nº do processo ou inquérito"></label><label>Assistido<input type="text" id="c-assistido" value="' + esc(c.assistido || "") + '"></label><label>Juízo ou órgão<input type="text" id="c-juizo" value="' + esc(c.juizo || "") + '"></label><label>Tipo penal<input type="text" id="c-tipo" value="' + esc(c.tipo || "") + '" placeholder="Ex.: lavagem de dinheiro (Lei 9.613/1998, art. 1º)"></label></div>' + (Object.keys(S.legal).length ? "" : '<p class="tiny" style="margin:8px 0 0">O tópico de legalidade usa as informações da aba Legalidade; enquanto não preenchidas, o relatório indica o que requerer.</p>') + "</div>");
     h.push('<div class="papel" id="papel"></div>');
     return h.join("");
   }
-  function papel() { $("#papel").innerHTML = S.tipoRel === "comparativo" && S.cmp ? R.relatorioComparativo(S) : R.relatorioDefesa(S); }
+  function papel() { $("#papel").innerHTML = S.tipoRel === "estudo" ? window.RIF_ESTUDO.html(window.RIF_ESTUDO.blocos(S)) : S.tipoRel === "comparativo" && S.cmp ? R.relatorioComparativo(S) : R.relatorioDefesa(S); }
   function ligarRel() {
     papel();
     $("#tipo-rel").onchange = e => { S.tipoRel = e.target.value; papel(); };
-    for (const k of ["autos", "assistido", "juizo"]) $("#c-" + k).addEventListener("input", e => { S.caso[k] = e.target.value; clearTimeout(ligarRel._t); ligarRel._t = setTimeout(papel, 250); });
-    const nome = () => (S.tipoRel === "comparativo" ? "relatorio-comparativo-rif" : "relatorio-defesa-rif") + (S.rif ? "-" + S.rif : "") + (S.caso.autos ? "-" + S.caso.autos.replace(/[^\w.-]+/g, "_") : "");
+    for (const k of ["autos", "assistido", "juizo", "tipo"]) $("#c-" + k).addEventListener("input", e => { S.caso[k] = e.target.value; clearTimeout(ligarRel._t); ligarRel._t = setTimeout(papel, 250); });
+    const nome = () => (S.tipoRel === "estudo" ? "estudo-de-caso-rif" : S.tipoRel === "comparativo" ? "relatorio-comparativo-rif" : "relatorio-defesa-rif") + (S.rif ? "-" + S.rif : "") + (S.caso.autos ? "-" + S.caso.autos.replace(/[^\w.-]+/g, "_") : "");
     $("#r-doc").onclick = () => R.exportarDoc($("#papel").innerHTML, nome());
+    $("#r-docx").onclick = async () => {
+      const b = $("#r-docx"); b.disabled = true; status("Gerando o estudo de caso…");
+      try { const n0 = S.tipoRel; S.tipoRel = "estudo"; const nm = nome(); S.tipoRel = n0; await window.RIF_ESTUDO.baixar(S, nm); status("Estudo de caso gerado"); window.HUB.toast("Estudo de caso gerado em Word."); }
+      catch (e) { console.error(e); window.HUB.toast("Não foi possível gerar o .docx: " + (e.message || e), 5000); status("Erro ao gerar o estudo"); }
+      finally { b.disabled = false; }
+    };
     $("#r-pdf").onclick = () => { document.body.classList.add("imprimindo"); window.print(); setTimeout(() => document.body.classList.remove("imprimindo"), 500); };
     $("#r-cop").onclick = () => copiar($("#papel").innerText);
   }
