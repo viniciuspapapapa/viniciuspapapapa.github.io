@@ -75,7 +75,7 @@
   <section class="heroi">
     <div class="sobretitulo">Ferramenta 06 · Estratégia defensiva</div>
     <h1>Estudo de caso criminal</h1>
-    <p class="lead">Anexe a cópia integral do processo. A ferramenta lê todas as páginas, aplica OCR às digitalizadas e entrega o estudo de caso completo, com reconstrução fática, mapeamento probatório, tipicidade, teses da mais forte à mais fraca, riscos e observações estratégicas, ancorado nas páginas e nos IDs dos autos e gerado em Word no padrão do escritório.</p>
+    <p class="lead">Anexe a cópia integral do processo. A ferramenta lê todas as páginas, aplica OCR às digitalizadas e elabora o estudo de caso na própria plataforma, sem custo: mapa dos autos, cronologia, tipicidade, mapeamento probatório, nulidades, teses da mais forte à mais fraca e riscos, ancorados nas páginas e nos IDs dos autos e gerados em Word no padrão do escritório.</p>
     <div class="chips"><span>Leitura integral com OCR</span><span>Página e ID de cada afirmação</span><span>Provas favoráveis, desfavoráveis e neutras</span><span>Word no modelo TPC</span></div>
   </section>
 
@@ -114,17 +114,21 @@
 
     <div class="card bloco">
       <h2><span class="passo">Passo 3</span> Elaboração do estudo</h2>
-      <p class="mudo">A análise é feita pelo Claude, da Anthropic, com a chave de API do escritório. O texto extraído dos autos é enviado diretamente do seu navegador à API, sem passar por nenhum outro servidor.</p>
-      <div class="grade g3">
-        <label class="campo">Chave de API da Anthropic<input type="password" id="chave" autocomplete="off" placeholder="sk-ant-..."></label>
-        <label class="campo">Modelo<select id="modelo"><option value="claude-opus-5-5">Claude Opus 5.5 (recomendado)</option><option value="claude-fable-5-1">Claude Fable 5.1 (máxima capacidade, custo maior)</option><option value="claude-sonnet-5-5">Claude Sonnet 5.5 (mais econômico)</option></select></label>
-        <label class="campo">Profundidade da análise<select id="esforco"><option value="high">Alta</option><option value="xhigh" selected>Muito alta (recomendada)</option><option value="max">Máxima</option></select></label>
-      </div>
-      <label class="check" style="margin-top:10px"><input type="checkbox" id="lembrarChave"> Lembrar a chave neste navegador</label>
-      <div class="aviso info" id="custo" hidden></div>
-      <label class="check" style="margin-top:6px"><input type="checkbox" id="consentimento"> Autorizo o envio do texto dos autos à API da Anthropic para a elaboração deste estudo, ciente do sigilo profissional envolvido.</label>
-      <div class="linha-btns" style="margin-top:14px"><button type="button" class="btn" id="gerar" disabled>Gerar o estudo de caso</button><button type="button" class="btn sec" id="cancelarGeracao" hidden>Interromper</button></div>
-      <div id="progGeracao" hidden><div class="barra"><i id="barraGeracao"></i></div><div class="estado" id="estadoGeracao"></div><div class="pensando" id="pensando"></div></div>
+      <p class="mudo">O estudo é elaborado pela própria plataforma, por regras de análise jurídica, sem inteligência artificial e sem custo. Nada é enviado a servidores.</p>
+      <div class="linha-btns"><button type="button" class="btn" id="gerar" disabled>Gerar o estudo de caso</button></div>
+      <details style="margin-top:16px"><summary class="pequeno" style="cursor:pointer">Aprofundar com inteligência artificial (opcional, OpenAI)</summary>
+        <p class="pequeno mudo" style="margin:8px 0">Depois de gerado o estudo, é possível pedir à OpenAI uma redação mais aprofundada, que parte do estudo da plataforma e dos trechos relevantes dos autos. Esse uso é cobrado pela OpenAI, na conta do escritório, e envia o texto dos autos à API. A chave fica somente neste navegador.</p>
+        <div class="grade g3">
+          <label class="campo">Chave de API da OpenAI<input type="password" id="chave" autocomplete="off" placeholder="sk-..."></label>
+          <label class="campo">Modelo<select id="modelo"><option value="gpt-5.4-mini">GPT-5.4 mini (mais econômico)</option><option value="gpt-5.5">GPT-5.5 (mais capaz)</option></select></label>
+          <label class="campo">Profundidade<select id="esforco"><option value="low">Baixa</option><option value="medium" selected>Média</option><option value="high">Alta</option></select></label>
+        </div>
+        <label class="check" style="margin-top:8px"><input type="checkbox" id="lembrarChave"> Lembrar a chave neste navegador</label>
+        <label class="check" style="margin-top:6px"><input type="checkbox" id="consentimento"> Autorizo o envio do texto dos autos à API da OpenAI, ciente do sigilo profissional envolvido.</label>
+        <div class="aviso info" id="custo" hidden></div>
+        <div class="linha-btns" style="margin-top:10px"><button type="button" class="btn sec" id="aprofundar" disabled>Aprofundar o estudo com a OpenAI</button><button type="button" class="btn sec" id="cancelarGeracao" hidden>Interromper</button></div>
+      </details>
+      <div id="progGeracao" hidden><div class="barra"><i id="barraGeracao"></i></div><div class="estado" id="estadoGeracao"></div></div>
       <div id="avisoGeracao"></div>
     </div>
 
@@ -141,8 +145,8 @@
       <summary style="cursor:pointer;font-weight:500">Como a ferramenta trabalha</summary>
       <div class="base-lista" style="margin-top:12px">
         <p>Cada página dos autos recebe um marcador com o número da página do PDF e, quando identificado, o ID do PJe, o evento do eproc ou a folha, para que todas as afirmações do estudo sejam rastreáveis. As páginas digitalizadas passam por OCR em português, e as de leitura precária são informadas como limitação da análise.</p>
-        <p>Processos que cabem na janela de contexto do modelo são analisados de uma só vez. Processos maiores são lidos em blocos, cada um fichado com as referências de página, e o estudo é redigido a partir dos fichamentos.</p>
-        <p>O estudo segue as diretrizes do projeto Estudo de Caso Criminal do escritório: postura investigativa e honesta quanto aos riscos, classificação de cada prova como favorável, desfavorável ou neutra, teses da mais forte à mais fraca, prosa sem listas nem travessões e síntese com providência ao final de cada seção. Não há menção a nenhum advogado. As referências jurisprudenciais devem ser conferidas no inteiro teor antes de qualquer uso em peça.</p>
+        <p>O estudo é produzido pela própria plataforma, por regras: identifica as peças pelos cabeçalhos (boletim, flagrante, depoimentos, apreensão, laudos, reconhecimento, denúncia, decisões, sentença), extrai a cronologia, as pessoas e a tipificação, aplica o catálogo de crimes e de nulidades (busca pessoal, ingresso em domicílio, acesso a celular, reconhecimento, confissão informal, cadeia de custódia, materialidade, condições de procedibilidade, institutos despenalizadores e prescrição) e aponta contradições objetivas, como divergências de quantidade e de horário. Não há custo nem envio de dados. O aprofundamento com a OpenAI é opcional e cobrado à parte.</p>
+        <p>O estudo segue as diretrizes do projeto Estudo de Caso Criminal do escritório: análise orientada à defesa e honesta quanto aos riscos, classificação de cada prova como favorável, desfavorável ou neutra, teses da mais forte à mais fraca, prosa sem listas nem travessões e síntese com providência ao final de cada seção. Não há menção a nenhum advogado. As referências jurisprudenciais devem ser conferidas no inteiro teor antes de qualquer uso em peça.</p>
       </div>
     </details>
   </section>
@@ -158,8 +162,11 @@
 <script src="../assets/hub.js"></script>
 <script src="../assets/doc.js"></script>
 <script src="leitor.js"></script>
+<script src="../prescricao/motor.js"></script>
+<script src="catalogo.js"></script>
+<script src="analise.js"></script>
 <script src="prompt.js"></script>
 <script src="docx.js"></script>
-<script type="module" src="app.js"></script>
+<script src="app.js"></script>
 </body>
 </html>

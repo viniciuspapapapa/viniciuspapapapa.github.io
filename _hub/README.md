@@ -54,9 +54,11 @@ _hub/  (publicada cifrada em hub/)
   assets/fonts/               Inter e Lato (SIL Open Font License) para os PDFs gerados no navegador
   estudo-de-caso/
     leitor.js                 Leitura integral dos PDFs (pdf.js) com OCR (Tesseract) e marcadores de página e ID
-    prompt.js                 Instruções do projeto Estudo de Caso Criminal (sem identificação de advogados)
+    catalogo.js               Catálogo jurídico: tipos penais (elementos, penas, ação, teses), peças e sinais de nulidade
+    analise.js                Motor do estudo por regras, sem IA: peças, cronologia, pessoas, tipificação, provas, teses e redação
+    prompt.js                 Instruções do projeto Estudo de Caso Criminal, usadas apenas no aprofundamento opcional
     docx.js                   Texto marcado -> pré-visualização e Word sobre o modelo do escritório
-    app.js                    Fluxo da interface e chamadas à API do Claude (SDK oficial, chave do próprio usuário)
+    app.js                    Fluxo da interface; aprofundamento opcional pela API da OpenAI, com a chave do próprio usuário
     modelo-estudo.docx        Modelo Word (estilos, numeração, timbrado e rodapé do escritório, corpo vazio)
   reconhecimento/
     regras.js                 Quesitos (CPP, arts. 226 a 228; Res. CNJ 484/2022), variáveis de estimativa, avaliação e base jurídica
