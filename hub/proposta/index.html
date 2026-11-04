@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Proposta de Honorários · HUB Criminal TPC</title>
+<meta name="description" content="Elaboração da proposta de honorários de atuação criminal no modelo do escritório, com cliente, escopo, valor por extenso e forma de pagamento, em PDF.">
+<meta name="theme-color" content="#f6f4ef">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=DM+Mono:wght@400;500&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/hub.css">
+<style>
+  .heroi { padding: 34px 0 6px; }
+  .duas { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 18px; align-items: start; }
+  @media (max-width: 980px) { .duas { grid-template-columns: minmax(0, 1fr); } }
+  .bloco { padding: 18px; margin-bottom: 14px; }
+  .bloco > h2 { font-size: 22px; margin-bottom: 10px; }
+  input[type=date], input[type=number] { width: 100%; border: 1px solid var(--line-2); background: var(--surface); border-radius: 8px; padding: 8px 10px; font-size: 14.5px; min-width: 0; }
+  .dica { font-size: 12.5px; color: var(--ink-3); font-weight: 400; }
+  .extenso { font-size: 13px; color: var(--ink-2); margin-top: 4px; min-height: 18px; }
+  .previa { position: sticky; top: 70px; }
+  .paginas { display: grid; gap: 12px; max-height: calc(100vh - 150px); overflow: auto; padding: 4px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface-2); }
+  @media (max-width: 980px) { .previa { position: static; } .paginas { max-height: none; } }
+  .paginas canvas { width: 100%; height: auto; display: block; box-shadow: var(--shadow); border-radius: 2px; background: #fff; }
+  .aviso { border-left: 3px solid var(--warn); background: var(--warn-bg); padding: 9px 12px; border-radius: 0 8px 8px 0; font-size: 13.5px; margin: 8px 0; }
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body>
+<header class="topo">
+  <div class="topo-in">
+    <a class="marca" href="../" aria-label="HUB Criminal TPC, página inicial"><span class="marca-tpc">TPC</span><span class="marca-txt"><b>HUB</b> Criminal</span></a>
+    <nav class="migalha" aria-label="Você está em"><span>/</span><span>Proposta de honorários</span></nav>
+    <div class="espaco"></div>
+    <button class="btn-icone" type="button" onclick="HUB.alternarTema()" aria-label="Alternar tema claro ou escuro" title="Tema"><span data-tema-icone>☾</span></button>
+  </div>
+</header>
+<div class="faixa"></div>
+
+<main class="wrap">
+  <section class="heroi">
+    <div class="sobretitulo">Ferramenta 07 · Gestão do escritório</div>
+    <h1>Proposta de honorários</h1>
+    <p class="lead">Preencha o cliente, o escopo, os honorários e a forma de pagamento. A proposta é gerada em PDF no modelo do escritório, com o valor por extenso e a pré-visualização de cada página.</p>
+  </section>
+
+  <section class="secao duas" style="padding-top:18px">
+    <div>
+      <div class="card bloco">
+        <h2>Cliente</h2>
+        <div class="grade g2">
+          <label class="campo">Nome do cliente<input type="text" id="cliente" placeholder="Nome completo"></label>
+          <label class="campo">Data da proposta<input type="date" id="data"></label>
+        </div>
+      </div>
+      <div class="card bloco">
+        <h2>Escopo da proposta</h2>
+        <label class="campo">Escopo do trabalho<textarea id="escopo" rows="3"></textarea><span class="dica">Completa a frase “sendo escopo do trabalho…”</span></label>
+        <label class="campo" style="margin-top:12px">Serviços incluídos<textarea id="servicos" rows="8"></textarea><span class="dica">Um serviço por linha.</span></label>
+      </div>
+      <div class="card bloco">
+        <h2>Honorários e forma de pagamento</h2>
+        <div class="grade g2">
+          <label class="campo">Valor dos honorários (R$)<input type="text" id="valor" inputmode="decimal" placeholder="25.000,00"><span class="extenso" id="valorExt"></span></label>
+          <label class="campo">Forma de pagamento<select id="modo"><option value="parcelado">Parcelas mensais</option><option value="avista">À vista, na assinatura</option><option value="entrada">Entrada mais parcelas</option><option value="livre">Redação livre</option></select></label>
+          <label class="campo" id="cEntrada" hidden>Entrada (R$)<input type="text" id="entrada" inputmode="decimal" placeholder="10.000,00"></label>
+          <label class="campo" id="cParcelas">Número de parcelas<input type="number" id="parcelas" min="1" max="120" value="5"></label>
+          <label class="campo" id="cPrimeira">Vencimento da primeira parcela<select id="primeira"><option value="assinatura">Na data da assinatura do contrato</option><option value="data">Em data definida</option></select></label>
+          <label class="campo" id="cDataPrimeira" hidden>Data da primeira parcela<input type="date" id="dataPrimeira"></label>
+        </div>
+        <label class="campo" id="cLivre" style="margin-top:12px" hidden>Forma de pagamento (redação livre)<textarea id="livre" rows="3" placeholder="a serem pagos em ..."></textarea><span class="dica">Completa a frase após o valor por extenso.</span></label>
+        <label class="campo" style="margin-top:12px">Cláusula de honorários<textarea id="clausula" rows="6"></textarea><span class="dica">Gerada automaticamente a partir dos campos acima; pode ser ajustada antes de gerar o PDF. <a href="#" id="restaurar" hidden>Restaurar o texto automático</a></span></label>
+      </div>
+      <div class="linha-btns" style="margin:4px 0 24px"><button type="button" class="btn" id="baixar">Baixar a proposta em PDF</button><button type="button" class="btn sec" id="limpar">Limpar</button></div>
+    </div>
+    <div class="previa">
+      <div class="linha-btns" style="margin-bottom:8px"><b style="flex:1">Pré-visualização</b><span class="pequeno mudo" id="estado"></span></div>
+      <div id="avisos"></div>
+      <div class="paginas" id="paginas"></div>
+    </div>
+  </section>
+</main>
+
+<footer class="rodape">
+  <div class="wrap"><b>TPC ADVOGADOS</b> · HUB Criminal · Proposta de honorários. Geração local no navegador; nenhum dado é enviado a servidores.</div>
+</footer>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@pdf-lib/fontkit@1.1.1/dist/fontkit.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="../assets/hub.js"></script>
+<script src="proposta.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
