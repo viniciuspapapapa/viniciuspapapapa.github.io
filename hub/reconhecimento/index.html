@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Reconhecimento de Pessoas · HUB Criminal TPC</title>
+<meta name="description" content="Verificação do reconhecimento pessoal e fotográfico (CPP, arts. 226 a 228; Resolução CNJ 484/2022): matriz de conformidade, contaminação da memória, variáveis de estimativa, validade e relatório com teses e pedidos.">
+<meta name="theme-color" content="#f6f4ef">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=DM+Mono:wght@400;500&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/hub.css">
+<style>
+  .heroi { padding: 34px 0 6px; }
+  .heroi h1 { max-width: 900px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 14px; }
+  .chips span { font-size: 12px; padding: 4px 10px; border: 1px solid var(--line-2); border-radius: 999px; background: var(--surface); color: var(--ink-2); }
+  .bloco { padding: 18px; margin-bottom: 14px; }
+  .bloco > h2 { font-size: 23px; margin-bottom: 4px; }
+  .bloco > p.mudo { margin: 0 0 14px; font-size: 14px; }
+  input[type=date], input[type=number] { width: 100%; border: 1px solid var(--line-2); background: var(--surface); border-radius: 8px; padding: 8px 10px; font-size: 14.5px; min-width: 0; }
+  .rec { border: 1px solid var(--line); border-radius: 10px; padding: 16px; background: var(--surface-2); margin-bottom: 12px; }
+  .rec-cab { display: flex; gap: 10px; align-items: center; margin-bottom: 12px; }
+  .rec-cab h3 { margin: 0; flex: 1; font-size: 22px; }
+  .x { border: 1px solid var(--line-2); background: var(--surface); border-radius: 8px; width: 38px; height: 38px; cursor: pointer; color: var(--ink-3); font-size: 18px; }
+  .quesito { display: grid; grid-template-columns: minmax(0, 1fr) 190px; gap: 10px; align-items: center; padding: 9px 0; border-top: 1px dashed var(--line-2); font-size: 14.5px; }
+  .quesito:first-of-type { border-top: 0; }
+  .quesito .art { display: block; font-size: 12px; color: var(--ink-3); }
+  @media (max-width: 640px) { .quesito { grid-template-columns: minmax(0, 1fr); } }
+  .sub { font-family: var(--sans); font-size: 13px; text-transform: uppercase; letter-spacing: .12em; color: var(--ink-3); margin: 16px 0 4px; font-weight: 500; }
+  .pistas { margin-top: 10px; display: grid; gap: 6px; }
+  .pista { border: 1px solid var(--line); border-left: 3px solid var(--accent); border-radius: 0 8px 8px 0; padding: 8px 10px; background: var(--surface); font-size: 13.5px; display: flex; gap: 10px; align-items: flex-start; }
+  .pista div { flex: 1; min-width: 0; }
+  .pista q { color: var(--ink-2); font-style: italic; display: block; margin-top: 2px; }
+  .res { padding: 18px; margin-bottom: 14px; border-left: 6px solid var(--line-2); }
+  .res.invalido { border-left-color: var(--ok); }
+  .res.fragil { border-left-color: var(--warn); }
+  .res h3 { font-size: 23px; margin: 0; }
+  .tw { overflow-x: auto; border: 1px solid var(--line); border-radius: 8px; margin: 10px 0; }
+  table.t { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+  table.t th { text-align: left; background: var(--surface-2); color: var(--ink-2); font-weight: 500; padding: 8px 10px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+  table.t td { padding: 8px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  .risco { border-left: 3px solid var(--warn); background: var(--warn-bg); padding: 8px 12px; border-radius: 0 8px 8px 0; font-size: 13.5px; margin: 6px 0; }
+  details.base > summary { cursor: pointer; font-weight: 500; }
+  .base-lista p { margin: 0 0 10px; font-size: 14px; }
+</style>
+</head>
+<body>
+<header class="topo">
+  <div class="topo-in">
+    <a class="marca" href="../" aria-label="HUB Criminal TPC, página inicial"><span class="marca-tpc">TPC</span><span class="marca-txt"><b>HUB</b> Criminal</span></a>
+    <nav class="migalha" aria-label="Você está em"><span>/</span><span>Reconhecimento de pessoas</span></nav>
+    <div class="espaco"></div>
+    <button class="btn-icone" type="button" onclick="HUB.alternarTema()" aria-label="Alternar tema claro ou escuro" title="Tema"><span data-tema-icone>☾</span></button>
+  </div>
+</header>
+<div class="faixa"></div>
+
+<main class="wrap">
+  <section class="heroi">
+    <div class="sobretitulo">Ferramenta 04 · Prova de autoria</div>
+    <h1>Reconhecimento de pessoas</h1>
+    <p class="lead">Verificação do reconhecimento pessoal e fotográfico segundo os arts. 226 a 228 do CPP, a Resolução CNJ 484/2022 e a jurisprudência que qualifica o procedimento como garantia mínima do suspeito. A ferramenta aponta vícios, contaminações da memória e fatores de risco, avalia a validade de cada ato e gera relatório com as teses e os pedidos cabíveis na fase do processo.</p>
+    <div class="chips"><span>CPP, arts. 226 a 228</span><span>Resolução CNJ 484/2022</span><span>STJ, HC 598.886/SC</span><span>STF, RHC 206.846/SP</span><span>Falsas memórias</span></div>
+  </section>
+
+  <section class="secao" style="padding-top:18px">
+    <div class="card bloco">
+      <h2>Caso</h2>
+      <p class="mudo">A fase do processo define as teses e os pedidos do relatório. Nada é enviado a servidores.</p>
+      <div class="grade g4">
+        <label class="campo">Autos<input type="text" id="autos" placeholder="Nº do processo"></label>
+        <label class="campo">Assistido<input type="text" id="assistido"></label>
+        <label class="campo">Imputação<input type="text" id="imputacao" placeholder="Ex.: roubo majorado (CP, art. 157, § 2º)"></label>
+        <label class="campo">Fase do processo<select id="faseProc"></select></label>
+      </div>
+      <div class="grade g2" style="margin-top:12px">
+        <label class="campo">Há prova de autoria independente do reconhecimento?<select id="independente"><option value="">Não consta</option><option value="nao">Não, a autoria depende do reconhecimento</option><option value="sim">Sim</option></select></label>
+        <label class="campo">Quais (se houver)<input type="text" id="independenteTxt" placeholder="Ex.: apreensão da res em poder do acusado, imagens, confissão"></label>
+      </div>
+      <label class="check" style="margin-top:10px"><input type="checkbox" id="preso"> O assistido está preso cautelarmente com base no reconhecimento</label>
+    </div>
+
+    <div class="card bloco">
+      <h2>Atos de reconhecimento</h2>
+      <p class="mudo">Registre cada ato separadamente: cada reconhecedor e cada fase (delegacia e juízo) constituem atos distintos. Cole o trecho do auto ou do depoimento para receber sugestões de resposta, que só são aplicadas com a sua confirmação.</p>
+      <div id="atos"></div>
+      <button type="button" class="btn sec peq" id="addAto">+ Adicionar ato de reconhecimento</button>
+    </div>
+
+    <div class="linha-btns" style="margin:6px 0 20px">
+      <button type="button" class="btn" id="analisar">Analisar o reconhecimento</button>
+      <button type="button" class="btn sec" id="exemplo">Preencher exemplo</button>
+      <button type="button" class="btn sec" id="limpar">Limpar</button>
+    </div>
+
+    <div id="resultado"></div>
+
+    <div id="relatorioBox" hidden>
+      <div class="linha-btns" style="margin:20px 0 10px">
+        <h2 style="margin:0;flex:1">Relatório</h2>
+        <button type="button" class="btn sec peq" id="rCopiar">Copiar texto</button>
+        <button type="button" class="btn sec peq" id="rDoc">Baixar .doc</button>
+        <button type="button" class="btn peq" id="rPdf">Imprimir ou salvar PDF</button>
+      </div>
+      <div class="papel" id="papel"></div>
+    </div>
+
+    <details class="card bloco base" style="margin-top:20px">
+      <summary>Base normativa, jurisprudencial e doutrinária</summary>
+      <div class="base-lista" id="base" style="margin-top:12px"></div>
+    </details>
+  </section>
+</main>
+
+<footer class="rodape">
+  <div class="wrap"><b>TPC ADVOGADOS</b> · HUB Criminal · Reconhecimento de pessoas. Processamento local no navegador. Ferramenta de apoio; as conclusões dependem de revisão profissional e do exame dos autos.</div>
+</footer>
+<script src="../assets/hub.js"></script>
+<script src="../assets/doc.js"></script>
+<script src="regras.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
