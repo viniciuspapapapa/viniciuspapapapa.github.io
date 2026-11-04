@@ -175,6 +175,13 @@
     fluxo(p3, [{ txt: TRIBUTOS }], 33.7, topoTit + 72.3, 530, reg, S, a3.lh);
     if (!a3.cabe) avisos.push("A cláusula de honorários excede o espaço da página 3. Reduza o texto para manter o layout.");
 
+    /* contato do sócio responsável (última página): Inter Bold 15, entrelinha de 22,4, ajustado à largura disponível */
+    const so = d.socio || {}, p5 = pgs[4];
+    [so.nome, so.cargo, so.telefone, so.email].map(x => String(x || "").trim()).forEach((txt, i) => {
+      if (!txt) return;
+      let t = 14.99; while (t > 9 && bold.widthOfTextAtSize(txt, t) > 274) t -= 0.25;
+      p5.drawText(txt, { x: 308.7, y: H - (140.3 + i * 22.4 + ASC * 14.99), size: t, font: bold, color: rgb(0, 0, 0) });
+    });
     pdf.setTitle("Proposta Atuação Criminal" + (nome ? " · " + nome : ""));
     pdf.setAuthor("TPC Advogados"); pdf.setCreator("HUB Criminal TPC"); pdf.setProducer("HUB Criminal TPC");
     return { bytes: await pdf.save(), avisos };
@@ -186,5 +193,6 @@
     return "Proposta_" + sob + "_" + dd + "_" + mm + "_" + aa + ".pdf";
   }
 
-  root.PROPOSTA = { gerar, clausulaHonorarios, paragrafoEscopo, reais, inteiro, brl, comExtenso, dataExtenso, nomeArquivo, SERVICOS_PADRAO, ESCOPO_EXEMPLO };
+  const SOCIO_PADRAO = { nome: "Renato Dilly Campos", cargo: "Sócio", telefone: "(31) 99762-5732", email: "renato.campos@tpcadvogados.com.br" };
+  root.PROPOSTA = { SOCIO_PADRAO, gerar, clausulaHonorarios, paragrafoEscopo, reais, inteiro, brl, comExtenso, dataExtenso, nomeArquivo, SERVICOS_PADRAO, ESCOPO_EXEMPLO };
 })(typeof window !== "undefined" ? window : globalThis);

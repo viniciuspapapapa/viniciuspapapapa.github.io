@@ -30,7 +30,7 @@
     $("#restaurar").hidden = !clausulaEditada;
   }
   function dados() {
-    return { cliente: $("#cliente").value.trim(), data: D($("#data").value) || D(hojeISO()), escopo: $("#escopo").value, servicos: $("#servicos").value.split("\n").map(s => s.replace(/^\s*[•\-*]\s*/, "")), clausula: $("#clausula").value.trim() };
+    return { socio: { nome: $("#socioNome").value.trim(), cargo: $("#socioCargo").value.trim(), telefone: $("#socioTelefone").value.trim(), email: $("#socioEmail").value.trim() }, cliente: $("#cliente").value.trim(), data: D($("#data").value) || D(hojeISO()), escopo: $("#escopo").value, servicos: $("#servicos").value.split("\n").map(s => s.replace(/^\s*[•\-*]\s*/, "")), clausula: $("#clausula").value.trim() };
   }
   function agendar() { clearTimeout(timer); timer = setTimeout(previa, 450); }
   async function previa() {
@@ -56,6 +56,16 @@
   }
 
   ["#cliente", "#data", "#escopo", "#servicos", "#clausula"].forEach(s => $(s).addEventListener("input", agendar));
+  /* sócio responsável: lembrado neste navegador */
+  const K_SOCIO = "proposta_socio";
+  const CAMPOS_SOCIO = { nome: "#socioNome", cargo: "#socioCargo", telefone: "#socioTelefone", email: "#socioEmail" };
+  function preencherSocio(v) { for (const k in CAMPOS_SOCIO) $(CAMPOS_SOCIO[k]).value = v[k] || ""; }
+  let socioSalvo = null; try { socioSalvo = JSON.parse(localStorage.getItem(K_SOCIO) || "null"); } catch (e) { /* ignora */ }
+  preencherSocio(socioSalvo || P.SOCIO_PADRAO);
+  function telefone(v) { const d = v.replace(/\D/g, "").slice(0, 11); if (d.length < 3) return d ? "(" + d : ""; const ddd = "(" + d.slice(0, 2) + ") ", r = d.slice(2); return ddd + (r.length > 8 ? r.slice(0, 5) + "-" + r.slice(5) : r.length > 4 ? r.slice(0, 4) + "-" + r.slice(4) : r); }
+  $("#socioTelefone").addEventListener("blur", () => { $("#socioTelefone").value = telefone($("#socioTelefone").value); agendar(); });
+  Object.values(CAMPOS_SOCIO).forEach(s => $(s).addEventListener("input", () => { try { localStorage.setItem(K_SOCIO, JSON.stringify(dados().socio)); } catch (e) { /* ignora */ } agendar(); }));
+  $("#socioPadrao").onclick = () => { preencherSocio(P.SOCIO_PADRAO); try { localStorage.removeItem(K_SOCIO); } catch (e) { /* ignora */ } agendar(); };
   ["#valor", "#modo", "#parcelas", "#primeira", "#dataPrimeira", "#entrada", "#livre"].forEach(s => $(s).addEventListener("input", () => { camposModo(); atualizarClausula(); agendar(); }));
   $("#modo").addEventListener("change", () => { camposModo(); atualizarClausula(); agendar(); });
   $("#primeira").addEventListener("change", () => { camposModo(); atualizarClausula(); agendar(); });
@@ -64,6 +74,8 @@
   $("#baixar").onclick = async () => {
     const d = dados();
     if (!d.cliente) { window.HUB.toast("Informe o nome do cliente."); $("#cliente").focus(); return; }
+    if (!d.socio.nome) { window.HUB.toast("Informe o nome do sócio responsável."); $("#socioNome").focus(); return; }
+    if (d.socio.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(d.socio.email)) { window.HUB.toast("Confira o e-mail do sócio."); $("#socioEmail").focus(); return; }
     if (!num($("#valor").value) && $("#modo").value !== "livre") { window.HUB.toast("Informe o valor dos honorários."); $("#valor").focus(); return; }
     try {
       const r = await P.gerar(d, recursos);
