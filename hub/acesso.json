@@ -2,6 +2,6 @@
   "versao": 1,
   "algoritmo": "PBKDF2-SHA256/AES-256-GCM",
   "iteracoes": 600000,
-  "sal": "MnsmwEVfH82XtOY00L2vng==",
-  "verificador": "RkRbfpQfzd0Kv/t2VesQ7VqWFDDRWTncEeshzye2wIFmB69NmDgrdwCSQZ4="
+  "sal": "rKZ/KNsASj4sT8/Xx/z41w==",
+  "verificador": "cFk3J046Cl5dkW1ItomPQ1h4YvVbrXqXa/hEkw2b0aLmQ+edrySnFPr8y68="
 }
