@@ -23,6 +23,10 @@
     esc(s) {
       return String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
     },
+    sair() {
+      try { sessionStorage.removeItem("hub_chave"); localStorage.removeItem("hub_chave"); } catch (e) { /* ignora */ }
+      location.href = "/hub/login/";
+    },
     toast(msg, ms) {
       let el = document.getElementById("hub-toast");
       if (!el) { el = document.createElement("div"); el.id = "hub-toast"; el.className = "toast"; el.setAttribute("role", "status"); document.body.appendChild(el); }

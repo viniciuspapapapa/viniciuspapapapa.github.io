@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>HUB Criminal · TPC Advogados</title>
+<meta name="description" content="HUB de soluções para a advocacia criminal: cadeia de custódia, análise de RIF, degravação de audiências, reconhecimento de pessoas, prescrição penal e outras ferramentas de apoio à defesa.">
+<meta name="theme-color" content="#f6f4ef">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=DM+Mono:wght@400;500&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/hub.css">
+<style>
+  .heroi { padding: clamp(36px, 8vw, 84px) 0 26px; display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: 34px; align-items: center; }
+  @media (max-width: 860px) { .heroi { grid-template-columns: minmax(0, 1fr); } }
+  .heroi h1 { font-size: clamp(40px, 7vw, 74px); line-height: 1.02; }
+  .heroi h1 em { font-style: italic; font-weight: 500; }
+  .selo { border: 1px solid var(--line); background: var(--surface); border-radius: 14px; padding: 22px; box-shadow: var(--shadow); }
+  .selo .linha { display: flex; justify-content: space-between; gap: 12px; padding: 9px 0; border-bottom: 1px solid var(--line); font-size: 14px; }
+  .selo .linha:last-child { border-bottom: 0; }
+  .selo .linha b { font-family: var(--serif); font-size: 24px; line-height: 1; }
+  .ferramentas { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px; }
+  @media (max-width: 380px) { .ferramentas { grid-template-columns: minmax(0, 1fr); } }
+  .ferr { position: relative; display: flex; flex-direction: column; gap: 10px; padding: 22px; text-decoration: none; color: inherit; transition: transform .15s, border-color .15s; min-height: 230px; }
+  a.ferr:hover { transform: translateY(-2px); border-color: var(--ink-3); }
+  .ferr .num { font-family: var(--serif); font-size: 15px; color: var(--ink-3); letter-spacing: .1em; }
+  .ferr h3 { font-size: 25px; margin: 0; }
+  .ferr p { margin: 0; color: var(--ink-2); font-size: 14.5px; flex: 1; }
+  .ferr .rodape-f { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+  .ferr.ativa { border-top: 5px solid var(--accent); }
+  .ferr.breve { background: var(--surface-2); box-shadow: none; }
+  .ferr .seta { font-size: 20px; }
+  .principios { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+  @media (max-width: 760px) { .principios { grid-template-columns: minmax(0, 1fr); } }
+  .principios h3 { font-family: var(--sans); font-weight: 500; font-size: 18px; }
+</style>
+</head>
+<body>
+<header class="topo">
+  <div class="topo-in">
+    <a class="marca" href="./" aria-label="HUB Criminal TPC"><span class="marca-tpc">TPC</span><span class="marca-txt"><b>HUB</b> Criminal</span></a>
+    <div class="espaco"></div>
+    <button class="btn-icone" type="button" onclick="HUB.alternarTema()" aria-label="Alternar tema claro ou escuro" title="Tema"><span data-tema-icone>☾</span></button>
+    <button class="btn sec peq" type="button" onclick="HUB.sair()" title="Encerrar a sessão neste navegador">Sair</button>
+  </div>
+</header>
+<div class="faixa"></div>
+
+<main class="wrap">
+  <section class="heroi">
+    <div>
+      <div class="sobretitulo">TPC Advogados · Advocacia criminal</div>
+      <h1>Ferramentas para a <em>defesa técnica</em> do dia a dia</h1>
+      <p class="lead">Um conjunto de soluções para análise de provas, investigações e processos criminais, construído sobre a legislação processual penal, a doutrina e a jurisprudência dos tribunais superiores. Os documentos são processados no próprio navegador, preservando o sigilo profissional.</p>
+      <div class="linha-btns" style="margin-top:20px">
+        <a class="btn" href="cadeia-de-custodia/">Verificar cadeia de custódia</a>
+        <a class="btn sec" href="#ferramentas">Ver todas as ferramentas</a>
+      </div>
+    </div>
+    <div class="selo" aria-label="Base da ferramenta de cadeia de custódia">
+      <div class="sobretitulo">Base da primeira ferramenta</div>
+      <div class="linha"><span>Precedentes do STJ</span><b>61</b></div>
+      <div class="linha"><span>Critérios de verificação</span><b>39</b></div>
+      <div class="linha"><span>Tipos de vestígio</span><b>12</b></div>
+      <div class="linha"><span>Etapas do art. 158-B</span><b>10</b></div>
+      <div class="linha"><span>Dados enviados a servidores</span><b>0</b></div>
+    </div>
+  </section>
+
+  <section class="secao" id="ferramentas">
+    <div class="sobretitulo">Ferramentas</div>
+    <h2>O que o HUB oferece</h2>
+    <div class="ferramentas" style="margin-top:18px">
+      <a class="card ferr ativa" href="cadeia-de-custodia/">
+        <span class="num">01</span>
+        <h3>Cadeia de custódia</h3>
+        <p>Leitura integral dos autos com OCR, identificação dos vestígios, matriz de conformidade por etapa do art. 158-B, confronto de lacres, IMEIs, hashes e pesos, metadados de imagens, precedentes do STJ, referências por página e ID do processo eletrônico, dossiê completo e minuta de tese.</p>
+        <div class="rodape-f"><span class="tag ok">Disponível</span><span class="seta">→</span></div>
+      </a>
+      <a class="card ferr ativa" href="rif/">
+        <span class="num">02</span>
+        <h3>Análise de RIF</h3>
+        <p>Análise defensiva dos CSV do COAF: reconciliação dos valores, dupla contagem, comunicações automáticas, recursos próprios, inconsistências e integridade dos arquivos, controle de legalidade (Temas 990 e 1.404) e confronto, transação por transação, com o relatório policial em PDF.</p>
+        <div class="rodape-f"><span class="tag ok">Disponível</span><span class="seta">→</span></div>
+      </a>
+      <div class="card ferr ativa">
+        <span class="num">03</span>
+        <h3>Degravação de audiências e mídias</h3>
+        <p>Programa para Windows, instalado no computador do usuário, que transcreve áudios e vídeos de audiências, interceptações e depoimentos com marcação de tempo e identificação de interlocutores, sem enviar as mídias a servidores.</p>
+        <div class="rodape-f"><a class="btn acc" href="https://github.com/viniciuspapapapa/viniciuspapapapa.github.io/releases/download/transcricao/Transcricao.exe" download>Baixar o programa (.exe)</a></div>
+        <p class="pequeno mudo" style="flex:0">Na primeira execução, o modelo de transcrição é baixado uma única vez (cerca de 1,5 GB). O Windows pode exibir um aviso de segurança por se tratar de programa sem assinatura digital.</p>
+      </div>
+      <a class="card ferr ativa" href="reconhecimento/">
+        <span class="num">04</span>
+        <h3>Reconhecimento de pessoas</h3>
+        <p>Verificação do reconhecimento pessoal e fotográfico (CPP, arts. 226 a 228; Resolução CNJ 484/2022): matriz de conformidade por ato, contaminação da memória e ratificação em juízo, fatores de risco à exatidão, validade segundo o HC 598.886/SC e relatório com as teses e os pedidos da fase processual.</p>
+        <div class="rodape-f"><span class="tag ok">Disponível</span><span class="seta">→</span></div>
+      </a>
+      <a class="card ferr ativa" href="prescricao/">
+        <span class="num">05</span>
+        <h3>Prescrição penal</h3>
+        <p>Cálculo da prescrição pela pena em abstrato, retroativa, superveniente e executória, com marcos interruptivos, suspensões (inclusive a limitação da Súmula 415 do STJ), redução do art. 115, linha do tempo e relatório com síntese e pedido.</p>
+        <div class="rodape-f"><span class="tag ok">Disponível</span><span class="seta">→</span></div>
+      </a>
+      <a class="card ferr ativa" href="estudo-de-caso/">
+        <span class="num">06</span>
+        <h3>Estudo de caso criminal</h3>
+        <p>Anexe a cópia integral do processo: leitura de todas as páginas com OCR e estudo completo, com reconstrução fática, mapeamento probatório, tipicidade, teses da mais forte à mais fraca, riscos e observações estratégicas, ancorado nas páginas e IDs dos autos e gerado em Word no padrão do escritório.</p>
+        <div class="rodape-f"><span class="tag ok">Disponível</span><span class="seta">→</span></div>
+      </a>
+      <a class="card ferr ativa" href="proposta/">
+        <span class="num">07</span>
+        <h3>Proposta de honorários</h3>
+        <p>Proposta de atuação criminal em PDF no modelo do escritório: nome do cliente, escopo, serviços, valor dos honorários por extenso e forma de pagamento (à vista, parcelas ou entrada mais parcelas), com pré-visualização de cada página.</p>
+        <div class="rodape-f"><span class="tag ok">Disponível</span><span class="seta">→</span></div>
+      </a>
+      <a class="card ferr ativa" href="organizador/">
+        <span class="num">08</span>
+        <h3>Organizador de documentos</h3>
+        <p>Documentos anexados ou em pastas do Google Drive reunidos em PDF único com capas numeradas na identidade TPC, classificação e ementas por IA, agrupamento de frente e verso e correção de orientação, além da refação das capas de um PDF já montado.</p>
+        <div class="rodape-f"><span class="tag ok">Disponível</span><span class="seta">→</span></div>
+      </a>
+    </div>
+  </section>
+
+  <section class="secao">
+    <div class="principios">
+      <div class="card card-p"><div class="sobretitulo">Sigilo</div><h3>Processamento local</h3><p class="pequeno mudo" style="margin:0">Os arquivos são lidos e analisados no próprio navegador. Recursos que dependam de serviços externos são sempre opcionais, sinalizados e acionados apenas por decisão expressa do usuário.</p></div>
+      <div class="card card-p"><div class="sobretitulo">Fundamentação</div><h3>Lei, doutrina e precedentes</h3><p class="pequeno mudo" style="margin:0">Cada verificação indica o dispositivo legal, a lição doutrinária e os precedentes pertinentes, com acesso ao inteiro teor quando disponível.</p></div>
+      <div class="card card-p"><div class="sobretitulo">Revisão humana</div><h3>Apoio, não substituição</h3><p class="pequeno mudo" style="margin:0">As ferramentas fazem triagem e organização; a conclusão é sempre do profissional, que pode revisar cada ponto antes de gerar relatórios e minutas.</p></div>
+    </div>
+  </section>
+</main>
+
+<footer class="rodape">
+  <div class="wrap"><b>TPC ADVOGADOS</b> · HUB Criminal. Ferramentas de apoio à análise jurídica; não constituem parecer nem laudo pericial.</div>
+</footer>
+<script src="assets/hub.js"></script>
+</body>
+</html>
