@@ -185,6 +185,16 @@ mark.doc{background:var(--mod-bg);color:var(--mod-fg);padding:0 2px;border-radiu
 .papel .mudo{color:#5b6573} .papel .pequeno{font-size:12.5px}
 .papel h4{text-transform:none}
 .papel td{overflow-wrap:anywhere}
+.estudo-capa{text-align:center;margin-bottom:28px;padding-bottom:20px;border-bottom:4px solid #F5EF90}
+.estudo-logo{max-width:min(380px,100%);height:auto;display:block;margin:0 0 36px}
+.estudo-tit{font-family:'Segoe UI',Calibri,sans-serif;font-weight:600;letter-spacing:.2em;text-align:center!important;margin:0 0 6px!important}
+.estudo-sub{text-align:center!important}
+.estudo-capa table{max-width:560px;margin:16px auto 0;text-align:left}
+.papel p.estudo-p{text-indent:0}
+.estudo-n{display:inline-block;min-width:2.6em;font-variant-numeric:tabular-nums}
+.estudo-q{margin:0 0 12px 25mm;color:#3d3d3d;font-size:13.5px;text-align:justify}
+.estudo-q span{font-style:italic}
+@media (max-width:640px){.estudo-q{margin-left:24px}}
 @media (max-width:640px){.papel table{display:block;overflow-x:auto}.papel td,.papel th{min-width:90px}}
 .toast{position:fixed;left:50%;bottom:40px;transform:translateX(-50%) translateY(20px);background:var(--fg);color:var(--bg);padding:8px 14px;border-radius:6px;font-size:13px;opacity:0;pointer-events:none;transition:.2s;z-index:120;max-width:calc(100% - 32px)}
 .toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
@@ -253,12 +263,14 @@ mark.doc{background:var(--mod-bg);color:var(--mod-fg);padding:0 2px;border-radiu
 <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js" defer></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <script src="../assets/hub.js"></script>
 <script src="../dados/rif-juridico.js"></script>
 <script src="md5.js"></script>
 <script src="motor.js"></script>
 <script src="comparador.js"></script>
 <script src="relatorio.js"></script>
+<script src="estudo.js"></script>
 <script src="app.js"></script>
 </body>
 </html>
