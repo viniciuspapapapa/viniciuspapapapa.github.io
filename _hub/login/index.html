@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>Acesso · HUB Criminal TPC</title>
+<meta name="theme-color" content="#f6f4ef">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root { --paper:#f6f4ef; --surface:#fff; --ink:#2b2b2b; --ink-2:#57544f; --ink-3:#8a867f; --line:#e4e0d8; --line-2:#d6d1c7; --stone:#c8c3bb; --accent:#f5ef90; --bad:#b23a2c; --brand:#3d3d3d; color-scheme: light; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --paper:#131312; --surface:#1b1b1a; --ink:#ece9e2; --ink-2:#bdb8ae; --ink-3:#8c877e; --line:#2d2c29; --line-2:#3a3935; --stone:#5b5852; --bad:#ef8a7c; --brand:#ece9e2; color-scheme: dark; } }
+  :root[data-theme="dark"] { --paper:#131312; --surface:#1b1b1a; --ink:#ece9e2; --ink-2:#bdb8ae; --ink-3:#8c877e; --line:#2d2c29; --line-2:#3a3935; --stone:#5b5852; --bad:#ef8a7c; --brand:#ece9e2; color-scheme: dark; }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; margin: 0; }
+  body { background: var(--paper); color: var(--ink); font-family: "Jost", system-ui, -apple-system, "Segoe UI", sans-serif; font-size: 15.5px; line-height: 1.55; display: grid; grid-template-rows: 6px 1fr auto; }
+  .faixa { background: var(--accent); }
+  main { display: grid; place-items: center; padding: 32px 16px; }
+  .caixa { width: min(420px, 100%); background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 34px 28px 28px; box-shadow: 0 1px 2px rgba(30,28,24,.06), 0 10px 30px rgba(30,28,24,.08); }
+  .marca { display: flex; align-items: center; gap: 10px; color: var(--brand); margin-bottom: 26px; }
+  .marca-tpc { border: 2px solid var(--stone); padding: 2px 8px; font-weight: 600; letter-spacing: .12em; font-size: 14px; }
+  .marca-txt { letter-spacing: .32em; font-size: 12.5px; text-transform: uppercase; }
+  .marca-txt b { font-weight: 600; }
+  h1 { font-family: "Cormorant Garamond", Georgia, serif; font-weight: 600; font-size: 34px; line-height: 1.1; margin: 0 0 6px; }
+  p.sub { margin: 0 0 22px; color: var(--ink-2); font-size: 14.5px; }
+  label { display: grid; gap: 6px; font-size: 13px; color: var(--ink-2); font-weight: 500; }
+  input[type=password] { width: 100%; border: 1px solid var(--line-2); background: var(--surface); color: var(--ink); border-radius: 8px; padding: 11px 12px; font: inherit; outline: none; }
+  input[type=password]:focus { border-color: var(--ink-3); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 55%, transparent); }
+  .lembrar { display: flex; gap: 8px; align-items: center; margin: 14px 0 18px; font-size: 14px; color: var(--ink-2); cursor: pointer; }
+  button { width: 100%; border: 1px solid var(--brand); background: var(--brand); color: var(--paper); border-radius: 8px; padding: 11px 16px; font: inherit; font-weight: 500; cursor: pointer; }
+  button:disabled { opacity: .55; cursor: progress; }
+  .erro { color: var(--bad); font-size: 13.5px; min-height: 20px; margin-top: 10px; }
+  footer { text-align: center; color: var(--ink-3); font-size: 12.5px; padding: 0 16px 22px; }
+  footer b { letter-spacing: .1em; font-weight: 600; color: var(--ink-2); }
+</style>
+</head>
+<body>
+<div class="faixa"></div>
+<main>
+  <form class="caixa" id="form" autocomplete="on">
+    <div class="marca"><span class="marca-tpc">TPC</span><span class="marca-txt"><b>HUB</b> Criminal</span></div>
+    <h1>Acesso restrito</h1>
+    <p class="sub">Ferramentas de uso interno da equipe criminal. Informe a senha do escritório para continuar.</p>
+    <input type="text" name="username" value="HUB Criminal TPC" autocomplete="username" hidden>
+    <label>Senha<input type="password" id="senha" name="password" autocomplete="current-password" required autofocus></label>
+    <label class="lembrar"><input type="checkbox" id="lembrar"> Manter conectado neste dispositivo por 30 dias</label>
+    <button type="submit" id="entrar">Entrar</button>
+    <div class="erro" id="erro" role="alert"></div>
+  </form>
+</main>
+<footer><b>TPC ADVOGADOS</b> · HUB Criminal. As páginas do HUB são publicadas criptografadas e só podem ser abertas com a senha.</footer>
+<script>
+(function () {
+  "use strict";
+  try { const t = localStorage.getItem("hub_tema"); if (t === "light" || t === "dark") document.documentElement.setAttribute("data-theme", t); } catch (e) { /* ignora */ }
+  const $ = s => document.getElementById(s);
+  const b64 = s => Uint8Array.from(atob(s), c => c.charCodeAt(0));
+  const para64 = u => { let s = ""; const a = new Uint8Array(u); for (let i = 0; i < a.length; i++) s += String.fromCharCode(a[i]); return btoa(s); };
+  function destino() {
+    const v = new URLSearchParams(location.search).get("volta") || "";
+    return /^\/hub\/(?!login\/)[\w\-\/.%]*([?#].*)?$/.test(v) ? v : "/hub/";
+  }
+  async function entrar(senha) {
+    const r = await fetch("/hub/acesso.json", { cache: "no-store" });
+    if (!r.ok) throw new Error("Configuração de acesso indisponível.");
+    const cfg = await r.json();
+    const base = await crypto.subtle.importKey("raw", new TextEncoder().encode(senha), "PBKDF2", false, ["deriveKey"]);
+    const chave = await crypto.subtle.deriveKey({ name: "PBKDF2", salt: b64(cfg.sal), iterations: cfg.iteracoes, hash: "SHA-256" }, base, { name: "AES-GCM", length: 256 }, true, ["decrypt"]);
+    const v = b64(cfg.verificador);
+    try { await crypto.subtle.decrypt({ name: "AES-GCM", iv: v.slice(0, 12) }, chave, v.slice(12)); } catch (e) { return null; }
+    return para64(await crypto.subtle.exportKey("raw", chave));
+  }
+  $("form").addEventListener("submit", async ev => {
+    ev.preventDefault();
+    const senha = $("senha").value; if (!senha) return;
+    $("entrar").disabled = true; $("erro").textContent = ""; $("entrar").textContent = "Verificando…";
+    try {
+      const k = await entrar(senha);
+      if (!k) { $("erro").textContent = "Senha incorreta."; $("senha").select(); return; }
+      sessionStorage.setItem("hub_chave", k);
+      if ($("lembrar").checked) localStorage.setItem("hub_chave", JSON.stringify({ k, ate: Date.now() + 30 * 864e5 }));
+      else localStorage.removeItem("hub_chave");
+      location.replace(destino());
+    } catch (e) { $("erro").textContent = e.message || "Não foi possível entrar."; }
+    finally { $("entrar").disabled = false; $("entrar").textContent = "Entrar"; }
+  });
+})();
+</script>
+</body>
+</html>

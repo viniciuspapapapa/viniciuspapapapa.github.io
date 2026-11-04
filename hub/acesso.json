@@ -1,0 +1,7 @@
+{
+  "versao": 1,
+  "algoritmo": "PBKDF2-SHA256/AES-256-GCM",
+  "iteracoes": 600000,
+  "sal": "MnsmwEVfH82XtOY00L2vng==",
+  "verificador": "RkRbfpQfzd0Kv/t2VesQ7VqWFDDRWTncEeshzye2wIFmB69NmDgrdwCSQZ4="
+}

@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Prescrição Penal · HUB Criminal TPC</title>
+<meta name="description" content="Cálculo da prescrição penal em todas as modalidades (pena em abstrato, retroativa, superveniente e executória), com marcos interruptivos, suspensões, redução etária, linha do tempo e relatório.">
+<meta name="theme-color" content="#f6f4ef">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=DM+Mono:wght@400;500&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/hub.css">
+<style>
+  .heroi { padding: 34px 0 6px; }
+  .heroi h1 { max-width: 900px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 14px; }
+  .chips span { font-size: 12px; padding: 4px 10px; border: 1px solid var(--line-2); border-radius: 999px; background: var(--surface); color: var(--ink-2); }
+  .bloco { padding: 18px; margin-bottom: 14px; }
+  .bloco > h2 { font-size: 23px; margin-bottom: 4px; }
+  .bloco > p.mudo { margin: 0 0 14px; font-size: 14px; }
+  input[type=date], input[type=number] { width: 100%; border: 1px solid var(--line-2); background: var(--surface); border-radius: 8px; padding: 8px 10px; font-size: 14.5px; min-width: 0; }
+  .pena { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+  .pena input { text-align: center; }
+  .crime { border: 1px solid var(--line); border-radius: 10px; padding: 14px; background: var(--surface-2); margin-bottom: 10px; }
+  .crime-cab { display: flex; gap: 8px; align-items: center; margin-bottom: 10px; }
+  .crime-cab input { flex: 1; }
+  .linha-susp { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) minmax(0, 1fr) auto; gap: 8px; align-items: end; margin-bottom: 8px; }
+  @media (max-width: 720px) { .linha-susp { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } .linha-susp select { grid-column: 1 / -1; } }
+  .x { border: 1px solid var(--line-2); background: var(--surface); border-radius: 8px; width: 38px; height: 38px; cursor: pointer; color: var(--ink-3); font-size: 18px; }
+  .dica { font-size: 12.5px; color: var(--ink-3); font-weight: 400; }
+  .res { padding: 18px; margin-bottom: 14px; border-left: 6px solid var(--line-2); }
+  .res.prescrita { border-left-color: var(--ok); }
+  .res.viva { border-left-color: var(--warn); }
+  .res h3 { font-size: 24px; margin: 0 0 6px; }
+  .veredito { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 10px; }
+  .kp { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin: 12px 0; }
+  @media (max-width: 760px) { .kp { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  .kp > div { border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; background: var(--surface-2); min-width: 0; }
+  .kp span { display: block; font-size: 12px; color: var(--ink-3); text-transform: uppercase; letter-spacing: .06em; }
+  .kp b { display: block; font-family: var(--serif); font-size: 22px; line-height: 1.15; margin-top: 4px; }
+  .tw { overflow-x: auto; border: 1px solid var(--line); border-radius: 8px; margin: 8px 0 14px; }
+  table.t { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+  table.t th { text-align: left; background: var(--surface-2); color: var(--ink-2); font-weight: 500; padding: 8px 10px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+  table.t td { padding: 8px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  .mod-h { display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; align-items: baseline; margin-top: 14px; }
+  .mod-h h4 { margin: 0; font-size: 16px; font-weight: 600; }
+  .aviso { border-left: 3px solid var(--warn); background: var(--warn-bg); padding: 8px 12px; border-radius: 0 8px 8px 0; font-size: 13.5px; margin: 6px 0; }
+  .linha-tempo { overflow-x: auto; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); margin: 10px 0; }
+  .linha-tempo svg { display: block; min-width: 680px; width: 100%; }
+  details.base > summary { cursor: pointer; font-weight: 500; }
+  .base-lista p { margin: 0 0 8px; font-size: 14px; }
+  .base-lista b { font-weight: 600; }
+</style>
+</head>
+<body>
+<header class="topo">
+  <div class="topo-in">
+    <a class="marca" href="../" aria-label="HUB Criminal TPC, página inicial"><span class="marca-tpc">TPC</span><span class="marca-txt"><b>HUB</b> Criminal</span></a>
+    <nav class="migalha" aria-label="Você está em"><span>/</span><span>Prescrição penal</span></nav>
+    <div class="espaco"></div>
+    <button class="btn-icone" type="button" onclick="HUB.alternarTema()" aria-label="Alternar tema claro ou escuro" title="Tema"><span data-tema-icone>☾</span></button>
+  </div>
+</header>
+<div class="faixa"></div>
+
+<main class="wrap">
+  <section class="heroi">
+    <div class="sobretitulo">Ferramenta 05 · Extinção da punibilidade</div>
+    <h1>Prescrição penal</h1>
+    <p class="lead">Cálculo da prescrição da pretensão punitiva (pela pena em abstrato, retroativa e superveniente) e da pretensão executória, com os marcos interruptivos do art. 117, as suspensões do art. 116, a redução do art. 115 e a contagem do art. 10 do Código Penal. O resultado é acompanhado da linha do tempo e de relatório com síntese e pedido.</p>
+    <div class="chips"><span>CP, arts. 109 a 119</span><span>Lei 12.234/2010</span><span>Súmulas 146 e 497 do STF</span><span>Súmulas 191, 220, 415 e 438 do STJ</span><span>STF, HC 176.473</span><span>STF, Tema 788</span></div>
+  </section>
+
+  <section class="secao" style="padding-top:18px">
+    <div class="card bloco">
+      <h2>Caso e agente</h2>
+      <p class="mudo">Os dados de identificação são usados apenas no relatório. Nada é enviado a servidores.</p>
+      <div class="grade g4">
+        <label class="campo">Autos<input type="text" id="autos" placeholder="Nº do processo"></label>
+        <label class="campo">Assistido<input type="text" id="assistido"></label>
+        <label class="campo">Nascimento do agente<input type="date" id="nascimento"><span class="dica">Para a redução do art. 115</span></label>
+        <label class="campo">Data de referência<input type="date" id="dataBase"><span class="dica">Padrão: hoje</span></label>
+      </div>
+      <div class="linha-btns" style="margin-top:12px;gap:18px">
+        <label class="check"><input type="checkbox" id="reincidente"> Reincidente (aumenta em 1/3 só a pretensão executória)</label>
+        <label class="check"><input type="checkbox" id="imprescritivel"> Crime imprescritível (racismo, injúria racial, ação de grupos armados)</label>
+      </div>
+    </div>
+
+    <div class="card bloco">
+      <h2>Termo inicial</h2>
+      <p class="mudo">Código Penal, art. 111.</p>
+      <div class="grade g4">
+        <label class="campo">Hipótese<select id="tipoTermo">
+          <option value="consumacao">Crime consumado (data da consumação)</option>
+          <option value="tentativa">Tentativa (cessação da atividade)</option>
+          <option value="permanente">Crime permanente (cessação da permanência)</option>
+          <option value="conhecimento">Bigamia ou falsificação de registro civil</option>
+          <option value="dignidade">Dignidade sexual ou violência contra criança ou adolescente</option>
+        </select></label>
+        <label class="campo"><span id="rotFato">Data do fato</span><input type="date" id="fato"></label>
+        <label class="campo" id="campoConhecimento" hidden>Data em que o fato se tornou conhecido<input type="date" id="termoEspecial"></label>
+        <label class="campo" id="campoVitima" hidden>Nascimento da vítima<input type="date" id="vitimaNascimento"></label>
+      </div>
+    </div>
+
+    <div class="card bloco">
+      <h2>Crimes</h2>
+      <p class="mudo">Cada crime prescreve isoladamente (CP, art. 119). Para a pena em abstrato, considere a causa de aumento na fração máxima e a de diminuição na fração mínima. A pena aplicada deve excluir o acréscimo da continuidade delitiva (Súmula 497 do STF) e do concurso formal.</p>
+      <div id="crimes"></div>
+      <button type="button" class="btn sec peq" id="addCrime">+ Adicionar crime</button>
+    </div>
+
+    <div class="card bloco">
+      <h2>Marcos processuais</h2>
+      <p class="mudo">Causas interruptivas do art. 117 e datas que definem as modalidades pela pena aplicada e a executória.</p>
+      <div class="grade g4">
+        <label class="campo">Recebimento da denúncia ou queixa<input type="date" id="recebimento"></label>
+        <label class="campo">Pronúncia<input type="date" id="pronuncia"></label>
+        <label class="campo">Acórdão confirmatório da pronúncia<input type="date" id="confirmacaoPronuncia"></label>
+        <label class="campo">Publicação da sentença condenatória<input type="date" id="sentenca"></label>
+        <label class="campo">Acórdão condenatório (2º grau)<input type="date" id="acordao1"></label>
+        <label class="campo">Acórdão condenatório (tribunal superior)<input type="date" id="acordao2"></label>
+        <label class="campo">Trânsito em julgado para a acusação<input type="date" id="transitoAcusacao"></label>
+        <label class="campo">Trânsito em julgado para ambas as partes<input type="date" id="transitoFinal"></label>
+        <label class="campo">Início do cumprimento da pena<input type="date" id="inicioCumprimento"></label>
+        <label class="campo">Evasão ou revogação (livramento, sursis)<input type="date" id="evasao"></label>
+        <label class="campo">Pena restante após a evasão<span class="pena"><input type="number" min="0" id="prA" placeholder="anos" aria-label="Anos"><input type="number" min="0" id="prM" placeholder="meses" aria-label="Meses"><input type="number" min="0" id="prD" placeholder="dias" aria-label="Dias"></span></label>
+      </div>
+      <label class="check" style="margin-top:12px"><input type="checkbox" id="acusacaoSemRecurso"> A acusação não recorreu da pena, ou o seu recurso foi improvido</label>
+    </div>
+
+    <div class="card bloco">
+      <h2>Suspensões do prazo</h2>
+      <p class="mudo">Deixe o fim em branco se a suspensão ainda estiver em curso. A suspensão do art. 366 do CPP é limitada automaticamente pela pena máxima (Súmula 415 do STJ).</p>
+      <div id="suspensoes"></div>
+      <button type="button" class="btn sec peq" id="addSusp">+ Adicionar suspensão</button>
+    </div>
+
+    <div class="linha-btns" style="margin:6px 0 20px">
+      <button type="button" class="btn" id="calcular">Calcular a prescrição</button>
+      <button type="button" class="btn sec" id="exemplo">Preencher exemplo</button>
+      <button type="button" class="btn sec" id="limpar">Limpar</button>
+    </div>
+
+    <div id="resultado"></div>
+
+    <div id="relatorioBox" hidden>
+      <div class="linha-btns" style="margin:20px 0 10px">
+        <h2 style="margin:0;flex:1">Relatório</h2>
+        <button type="button" class="btn sec peq" id="rCopiar">Copiar texto</button>
+        <button type="button" class="btn sec peq" id="rDoc">Baixar .doc</button>
+        <button type="button" class="btn peq" id="rPdf">Imprimir ou salvar PDF</button>
+      </div>
+      <div class="papel" id="papel"></div>
+    </div>
+
+    <details class="card bloco base" style="margin-top:20px">
+      <summary>Base normativa e jurisprudencial utilizada</summary>
+      <div class="base-lista" id="base" style="margin-top:12px"></div>
+    </details>
+  </section>
+</main>
+
+<footer class="rodape">
+  <div class="wrap"><b>TPC ADVOGADOS</b> · HUB Criminal · Prescrição penal. Processamento local no navegador. Ferramenta de apoio; confira os marcos nos autos e o inteiro teor dos precedentes antes de peticionar.</div>
+</footer>
+<script src="../assets/hub.js"></script>
+<script src="../assets/doc.js"></script>
+<script src="motor.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

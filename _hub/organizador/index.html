@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Organizador de Documentos · HUB Criminal TPC</title>
+<meta name="description" content="Organização de documentos de clientes em PDF único com capas numeradas (Doc. 1, Doc. 2...) na identidade TPC, a partir de anexos e do Google Drive, com classificação e ementas e refação de capas de PDFs já montados.">
+<meta name="theme-color" content="#f6f4ef">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=DM+Mono:wght@400;500&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/hub.css">
+<style>
+  .heroi { padding: 34px 0 6px; }
+  .bloco { padding: 18px; margin-bottom: 14px; }
+  .bloco > h2 { font-size: 23px; margin-bottom: 4px; display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap; }
+  .bloco > h2 .passo { font-family: var(--sans); font-size: 12px; letter-spacing: .14em; text-transform: uppercase; color: var(--ink-3); font-weight: 500; }
+  .bloco > p.mudo { margin: 0 0 14px; font-size: 14px; }
+  .modos { display: flex; gap: 8px; flex-wrap: wrap; margin: 6px 0 16px; }
+  .modos button[aria-pressed="true"] { background: var(--brand); color: var(--paper); border-color: var(--brand); }
+  .zona { border: 2px dashed var(--line-2); border-radius: 12px; padding: 24px 16px; text-align: center; background: var(--surface-2); cursor: pointer; }
+  .zona.sobre { border-color: var(--ink-3); background: color-mix(in srgb, var(--accent) 18%, var(--surface)); }
+  .zona b { display: block; font-size: 17px; font-weight: 500; }
+  .doc { display: grid; grid-template-columns: 92px minmax(0, 1fr); gap: 14px; border: 1px solid var(--line); border-radius: 10px; padding: 12px; background: var(--surface); margin-bottom: 10px; }
+  .doc.excluido { opacity: .45; }
+  .doc .thumb { width: 92px; height: 120px; border: 1px solid var(--line); border-radius: 4px; background: #fff; display: grid; place-items: center; overflow: hidden; }
+  .doc .thumb canvas, .doc .thumb img { max-width: 100%; max-height: 100%; }
+  .doc-cab { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 8px; }
+  .doc-cab b { font-family: var(--serif); font-size: 20px; }
+  .doc-cab .arqs { font-size: 12.5px; color: var(--ink-3); flex: 1; min-width: 160px; overflow-wrap: anywhere; }
+  .acoes { display: flex; gap: 4px; flex-wrap: wrap; }
+  .acoes button { border: 1px solid var(--line-2); background: var(--surface); border-radius: 7px; padding: 4px 8px; cursor: pointer; font-size: 12.5px; }
+  .acoes button:hover { border-color: var(--ink-3); }
+  @media (max-width: 560px) { .doc { grid-template-columns: minmax(0, 1fr); } .doc .thumb { width: 100%; height: 160px; } }
+  .grade-pg { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 10px; }
+  .pg { border: 2px solid var(--line); border-radius: 6px; padding: 4px; background: var(--surface); cursor: pointer; text-align: center; font-size: 12px; }
+  .pg.capa { border-color: var(--warn); background: var(--warn-bg); }
+  .pg canvas { width: 100%; height: auto; display: block; background: #fff; }
+  .barra { height: 8px; background: var(--na-bg); border-radius: 999px; overflow: hidden; margin-top: 10px; }
+  .barra > i { display: block; height: 100%; width: 0; background: var(--brand); transition: width .25s; }
+  .estado { font-size: 13.5px; color: var(--ink-2); margin-top: 6px; min-height: 20px; }
+  .aviso { border-left: 3px solid var(--warn); background: var(--warn-bg); padding: 9px 12px; border-radius: 0 8px 8px 0; font-size: 13.5px; margin: 8px 0; }
+  .aviso.info { border-left-color: var(--info); background: var(--info-bg); }
+  .folha-contato { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 10px; margin-top: 12px; }
+  .folha-contato canvas { width: 100%; height: auto; border: 1px solid var(--line); background: #fff; box-shadow: var(--shadow); }
+  input[type=password] { width: 100%; border: 1px solid var(--line-2); background: var(--surface); border-radius: 8px; padding: 9px 11px; font-size: 14.5px; }
+  details summary { cursor: pointer; }
+  .guia p { margin: 0 0 8px; font-size: 13.5px; }
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body>
+<header class="topo">
+  <div class="topo-in">
+    <a class="marca" href="../" aria-label="HUB Criminal TPC, página inicial"><span class="marca-tpc">TPC</span><span class="marca-txt"><b>HUB</b> Criminal</span></a>
+    <nav class="migalha" aria-label="Você está em"><span>/</span><span>Organizador de documentos</span></nav>
+    <div class="espaco"></div>
+    <button class="btn-icone" type="button" onclick="HUB.alternarTema()" aria-label="Alternar tema claro ou escuro" title="Tema"><span data-tema-icone>☾</span></button>
+  </div>
+</header>
+<div class="faixa"></div>
+
+<main class="wrap">
+  <section class="heroi">
+    <div class="sobretitulo">Ferramenta 08 · Instrução de peças</div>
+    <h1>Organizador de documentos</h1>
+    <p class="lead">Reúna os documentos do cliente, anexados ou em pastas do Google Drive, em um único PDF, com capas numeradas (Doc. 1, Doc. 2…) na identidade do escritório, ementas descritivas e a correção de orientação das imagens. Também refaz as capas de um PDF de anexos já montado, sem tocar no conteúdo.</p>
+    <div class="modos" role="group" aria-label="Modo de operação">
+      <button type="button" class="btn sec" data-modo="montagem" aria-pressed="true">Montar PDF com capas</button>
+      <button type="button" class="btn sec" data-modo="recapa" aria-pressed="false">Refazer capas de um PDF montado</button>
+    </div>
+  </section>
+
+  <section class="secao" style="padding-top:6px">
+    <div class="card bloco">
+      <h2><span class="passo">Passo 1</span> Documentos</h2>
+      <p class="mudo" id="dicaArquivos">PDFs e imagens (JPG, PNG). Cada arquivo começa como um documento; depois você pode agrupar frente e verso ou partes de um mesmo ato sob uma única capa.</p>
+      <div class="zona" id="zona" tabindex="0" role="button" aria-label="Selecionar arquivos"><b>Arraste os arquivos aqui ou clique para selecionar</b><span class="pequeno mudo">PDF, JPG ou PNG</span></div>
+      <input type="file" id="arquivos" accept="application/pdf,.pdf,image/jpeg,image/png,image/webp" multiple hidden>
+      <label class="campo" style="margin-top:14px">Links do Google Drive (arquivos ou pastas, um por linha)<textarea id="links" rows="3" placeholder="https://drive.google.com/drive/folders/..."></textarea></label>
+      <div class="linha-btns" style="margin-top:8px"><button type="button" class="btn sec" id="buscarDrive">Buscar no Google Drive</button><span class="pequeno mudo" id="statusDrive"></span></div>
+      <details style="margin-top:10px"><summary class="pequeno">Configuração do acesso ao Google Drive</summary>
+        <div class="grade g2" style="margin-top:10px">
+          <label class="campo">Chave de API do Google<input type="password" id="gKey" autocomplete="off" placeholder="AIza..."><span class="pequeno mudo">Para arquivos e pastas compartilhados com “qualquer pessoa com o link”.</span></label>
+          <label class="campo">ID do cliente OAuth do Google<input type="text" id="gClient" placeholder="....apps.googleusercontent.com"><span class="pequeno mudo">Para arquivos privados, com login na conta Google.</span></label>
+        </div>
+        <div class="linha-btns" style="margin-top:8px"><button type="button" class="btn sec peq" id="gEntrar">Entrar com a conta Google</button><button type="button" class="btn sec peq" id="gSair" hidden>Sair</button><span class="pequeno mudo" id="gStatus"></span></div>
+        <div class="guia" style="margin-top:12px">
+          <p>O navegador só consegue ler o Drive com uma credencial do Google. No Google Cloud Console, crie um projeto, ative a Google Drive API e, em Credenciais, gere uma chave de API restrita ao site viniciuspapapapa.github.io e à Drive API. Para arquivos privados, crie também um ID do cliente OAuth do tipo “Aplicativo da Web”, com a origem https://viniciuspapapapa.github.io, e configure a tela de consentimento como interna ao domínio do escritório (ou inclua os usuários como testadores).</p>
+          <p>As credenciais ficam somente neste navegador. Os arquivos são baixados do Google diretamente para o navegador, sem passar por outro servidor.</p>
+        </div>
+      </details>
+      <div id="avisoArquivos"></div>
+    </div>
+
+    <div class="card bloco" id="blocoDocs">
+      <h2><span class="passo">Passo 2</span> Classificação e ordem <span class="pequeno mudo" id="contagem"></span></h2>
+      <p class="mudo">Confira a ordem, os títulos, os complementos e as ementas antes de gerar. A classificação automática preenche esses campos a partir do conteúdo de cada documento.</p>
+      <div class="linha-btns" style="margin-bottom:12px"><button type="button" class="btn sec" id="classificar">Classificar com IA</button><span class="pequeno mudo" id="statusIA"></span></div>
+      <div id="docs"><p class="pequeno mudo">Nenhum documento ainda.</p></div>
+    </div>
+
+    <div class="card bloco" id="blocoRecapa" hidden>
+      <h2><span class="passo">Passo 2</span> Capas do PDF montado</h2>
+      <p class="mudo">Marque as páginas que são capas (as prováveis são marcadas automaticamente). Somente essas páginas serão substituídas pelo padrão institucional; todas as demais permanecem intactas.</p>
+      <div class="linha-btns" style="margin-bottom:10px"><button type="button" class="btn sec" id="lerCapasIA">Ler as capas com IA</button><span class="pequeno mudo" id="statusRecapa"></span></div>
+      <div class="grade-pg" id="paginas"></div>
+      <div id="capas" style="margin-top:14px"></div>
+    </div>
+
+    <div class="card bloco">
+      <h2><span class="passo">Passo 3</span> Rodapé e arquivo</h2>
+      <p class="mudo">O rodapé segue o padrão “Cliente · Peça e número do feito · Cidade/UF, mês de ano”.</p>
+      <div class="grade g4">
+        <label class="campo">Cliente<input type="text" id="rCliente"></label>
+        <label class="campo">Peça e número do feito<input type="text" id="rPeca" placeholder="Ex.: Resposta à Acusação · Autos nº ..."></label>
+        <label class="campo">Cidade/UF<input type="text" id="rCidade" value="Belo Horizonte/MG"></label>
+        <label class="campo">Mês de ano<input type="text" id="rMes"></label>
+      </div>
+      <label class="campo" style="margin-top:12px">Nome do arquivo de saída<input type="text" id="nomeSaida" placeholder="Ex.: Anexos_Resposta_Acusacao_Fulano"></label>
+      <p class="pequeno mudo" style="margin:8px 0 0">Rodapé: <span id="rodapePrevia"></span></p>
+    </div>
+
+    <details class="card bloco">
+      <summary><b>Classificação automática com IA (opcional)</b></summary>
+      <p class="pequeno mudo" style="margin:10px 0">A classificação usa o Claude, da Anthropic, com a chave de API do escritório. O conteúdo de cada documento (texto e imagens das primeiras páginas) é enviado do navegador diretamente à API.</p>
+      <div class="grade g2">
+        <label class="campo">Chave de API da Anthropic<input type="password" id="chave" autocomplete="off" placeholder="sk-ant-..."></label>
+        <label class="campo">Modelo<select id="modelo"><option value="claude-opus-5-5">Claude Opus 5.5 (recomendado)</option><option value="claude-sonnet-5-5">Claude Sonnet 5.5 (mais econômico)</option></select></label>
+      </div>
+      <label class="check" style="margin-top:8px"><input type="checkbox" id="lembrarChave"> Lembrar a chave neste navegador</label>
+      <label class="check" style="margin-top:6px"><input type="checkbox" id="consentimento"> Autorizo o envio do conteúdo dos documentos à API da Anthropic para a classificação, ciente do sigilo profissional envolvido.</label>
+    </details>
+
+    <div class="linha-btns" style="margin:6px 0 10px"><button type="button" class="btn" id="gerar">Gerar o PDF</button><button type="button" class="btn sec" id="limpar">Recomeçar</button></div>
+    <div id="progGeracao" hidden><div class="barra"><i id="barra"></i></div><div class="estado" id="estado"></div></div>
+    <div id="resultado" hidden class="card bloco" style="margin-top:12px">
+      <h2>PDF pronto</h2>
+      <p class="mudo" id="resumo"></p>
+      <div id="avisosFinais"></div>
+      <div class="linha-btns"><button type="button" class="btn" id="baixar">Baixar o PDF</button></div>
+      <h3 style="font-family:var(--sans);font-size:15px;font-weight:600;margin:18px 0 0">Folha de contato das capas</h3>
+      <div class="folha-contato" id="contato"></div>
+    </div>
+  </section>
+</main>
+
+<footer class="rodape">
+  <div class="wrap"><b>TPC ADVOGADOS</b> · HUB Criminal · Organizador de documentos. Montagem local no navegador; o conteúdo das páginas dos documentos não é reamostrado.</div>
+</footer>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@pdf-lib/fontkit@1.1.1/dist/fontkit.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://accounts.google.com/gsi/client" async></script>
+<script src="../assets/hub.js"></script>
+<script src="capa.js"></script>
+<script src="drive.js"></script>
+<script type="module" src="app.js"></script>
+</body>
+</html>

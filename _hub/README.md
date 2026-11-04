@@ -3,11 +3,26 @@
 Conjunto de ferramentas web para a advocacia criminal, publicado no GitHub Pages em `/hub/`.
 Tudo roda no navegador: os documentos dos clientes não são enviados a servidores.
 
+## Acesso protegido
+
+As fontes ficam em `_hub/`, pasta que o GitHub Pages não publica. A pasta `hub/` contém apenas a versão protegida,
+gerada por `_ferramentas/proteger-hub.mjs`: cada página tem os scripts e estilos locais incorporados e é cifrada com
+AES-256-GCM; os modelos (.pdf, .docx) são cifrados à parte. A chave deriva da senha do escritório (PBKDF2-SHA256,
+600 mil iterações). Sem a senha, `/hub/` redireciona para `/hub/login/`; a sessão dura até fechar a aba ou, com
+"manter conectado", 30 dias. Fontes e imagens da marca permanecem públicas.
+
+O fluxo `.github/workflows/proteger_hub.yml` refaz a publicação a cada alteração em `_hub/`, usando a senha guardada no
+segredo `HUB_SENHA` do repositório. Para trocar a senha: atualize o segredo e execute o fluxo "Proteger HUB" em Actions.
+Como o repositório é público, o código-fonte continua visível no GitHub; para ocultá-lo, torne o repositório privado.
+
+Edite sempre os arquivos em `_hub/`; não edite `hub/`, que é sobrescrita a cada publicação.
+
 ## Estrutura
 
 ```
-hub/
+_hub/  (publicada cifrada em hub/)
   index.html                  Página inicial do HUB (catálogo de ferramentas)
+  login/index.html            Página de login (pública)
   assets/hub.css, hub.js      Identidade visual TPC, tema claro/escuro, utilidades
   assets/tpc-cabecalho.png    Timbrado usado nos documentos Word; tpc-barra.png, barra amarela do rodapé
   dados/
