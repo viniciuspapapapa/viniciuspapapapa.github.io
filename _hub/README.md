@@ -39,6 +39,10 @@ _hub/  (publicada cifrada em hub/)
     ia.js                     Análise complementar opcional (API do Claude, chave do próprio usuário)
     app.js                    Controlador da interface
   assets/doc.js               Exportação comum de relatórios (.doc, cópia e impressão)
+  procuracao/
+    procuracao.js             Texto e concordância (skill procuracao-tpc), validação sem lacunas e .docx sobre o arquivo-base
+    app.js                    Formulário e pré-visualização
+    modelo-procuracao.docx    Arquivo-base institucional da procuração (cabeçalho, rodapé e faixa amarela; corpo {{BODY}})
   proposta/
     proposta.js               Valores por extenso, cláusula de honorários e diagramação sobre o modelo (pdf-lib, fontes Inter)
     app.js                    Formulário e pré-visualização

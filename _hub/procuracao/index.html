@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Procurações · HUB Criminal TPC</title>
+<meta name="description" content="Geração de procurações no padrão institucional TPC: defesa nos autos, cópia dos autos, representação criminal ou notícia-crime e queixa-crime (art. 44 do CPP), em Word pronto para assinatura.">
+<meta name="theme-color" content="#f6f4ef">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=DM+Mono:wght@400;500&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/hub.css">
+<style>
+  .heroi { padding: 34px 0 6px; }
+  .duas { display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); gap: 18px; align-items: start; }
+  @media (max-width: 1020px) { .duas { grid-template-columns: minmax(0, 1fr); } }
+  .bloco { padding: 18px; margin-bottom: 14px; }
+  .bloco > h2 { font-size: 22px; margin-bottom: 10px; }
+  .dica { font-size: 12.5px; color: var(--ink-3); font-weight: 400; }
+  input[type=date] { width: 100%; border: 1px solid var(--line-2); background: var(--surface); border-radius: 8px; padding: 8px 10px; font-size: 14.5px; }
+  .modalidades { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+  @media (max-width: 560px) { .modalidades { grid-template-columns: minmax(0, 1fr); } }
+  .modalidades label { border: 1px solid var(--line-2); border-radius: 10px; padding: 10px 12px; cursor: pointer; display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 4px 10px; align-items: start; background: var(--surface); }
+  .modalidades label:has(input:checked) { border-color: var(--brand); box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 70%, transparent); }
+  .modalidades input { margin-top: 4px; }
+  .modalidades b { font-weight: 600; font-size: 14.5px; }
+  .modalidades span { grid-column: 2; font-size: 12.5px; color: var(--ink-3); }
+  .item { border: 1px solid var(--line); border-radius: 10px; padding: 12px; background: var(--surface-2); margin-bottom: 10px; }
+  .item-cab { display: flex; gap: 8px; align-items: center; margin-bottom: 8px; }
+  .item-cab b { flex: 1; font-size: 14px; }
+  .x { border: 1px solid var(--line-2); background: var(--surface); border-radius: 8px; width: 34px; height: 34px; cursor: pointer; color: var(--ink-3); font-size: 17px; }
+  .advs { display: grid; gap: 6px; }
+  .falta { border-left: 3px solid var(--warn); background: var(--warn-bg); padding: 9px 12px; border-radius: 0 8px 8px 0; font-size: 13.5px; margin: 0 0 10px; }
+  .previa { position: sticky; top: 70px; }
+  @media (max-width: 1020px) { .previa { position: static; } }
+  .folha { background: #fff; color: #111; border: 1px solid var(--line); border-radius: 6px; padding: clamp(18px, 6vw, 60px) clamp(16px, 7vw, 66px) 24px; font-family: "Segoe UI", "Open Sans", Arial, sans-serif; font-size: 14px; line-height: 1.55; max-height: calc(100vh - 170px); overflow: auto; }
+  @media (max-width: 1020px) { .folha { max-height: none; } }
+  .folha p { text-align: justify; margin: 0 0 12px; }
+  .folha .vs { font-variant: small-caps; font-weight: 700; }
+  .folha .pv-logo { width: min(300px, 75%); display: block; margin-bottom: 26px; }
+  .folha .pv-tit { font-family: "Segoe UI", "Open Sans", Arial, sans-serif; font-variant: small-caps; text-align: center; font-size: 22px; font-weight: 700; margin: 10px 0 24px; }
+  .folha .pv-data { margin: 18px 0 46px; text-align: left; }
+  .folha .pv-ass { text-align: center; margin-bottom: 40px; overflow-wrap: anywhere; }
+  .folha .pv-rod { border-top: 6px solid #F5EF90; padding-top: 10px; margin-top: 26px; text-align: center; font-size: 11px; color: #9a9a9a; display: grid; gap: 4px; }
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body>
+<header class="topo">
+  <div class="topo-in">
+    <a class="marca" href="../" aria-label="HUB Criminal TPC, página inicial"><span class="marca-tpc">TPC</span><span class="marca-txt"><b>HUB</b> Criminal</span></a>
+    <nav class="migalha" aria-label="Você está em"><span>/</span><span>Procurações</span></nav>
+    <div class="espaco"></div>
+    <button class="btn-icone" type="button" onclick="HUB.alternarTema()" aria-label="Alternar tema claro ou escuro" title="Tema"><span data-tema-icone>☾</span></button>
+  </div>
+</header>
+<div class="faixa"></div>
+
+<main class="wrap">
+  <section class="heroi">
+    <div class="sobretitulo">Ferramenta 09 · Gestão do escritório</div>
+    <h1>Procurações</h1>
+    <p class="lead">Procuração no padrão institucional do escritório, com logotipo, título em versalete, corpo em Segoe UI e rodapé com a faixa amarela, em Word pronto para assinatura. O texto se ajusta à modalidade, ao gênero e ao número de outorgantes e procuradores.</p>
+  </section>
+
+  <section class="secao duas" style="padding-top:18px">
+    <div>
+      <div class="card bloco">
+        <h2>Modalidade</h2>
+        <div class="modalidades" id="modalidades">
+          <label><input type="radio" name="mod" value="defesa" checked><b>Defesa nos autos</b><span>Para defender os interesses jurídicos do outorgante nos autos indicados.</span></label>
+          <label><input type="radio" name="mod" value="copia"><b>Cópia dos autos</b><span>Exclusiva para obter cópia dos autos.</span></label>
+          <label><input type="radio" name="mod" value="representacao"><b>Representação ou notícia-crime</b><span>Poderes específicos para representação criminal e/ou notícia-crime.</span></label>
+          <label><input type="radio" name="mod" value="queixa"><b>Queixa-crime (art. 44 do CPP)</b><span>Poderes especiais, com o nome do querelado e a menção ao fato.</span></label>
+        </div>
+      </div>
+
+      <div class="card bloco" id="blocoFato" hidden>
+        <h2 id="tituloFato">Fato</h2>
+        <div class="grade g2">
+          <label class="campo" id="cEspecie">Poderes para<select id="especie"><option value="ambas">Notícia-crime e representação criminal</option><option value="representacao">Representação criminal</option><option value="noticia">Notícia-crime</option></select></label>
+          <label class="campo" id="cRepresentado">Em face de (opcional)<input type="text" id="representado" placeholder="Nome do noticiado ou representado"></label>
+          <label class="campo" id="cQuerelado" hidden>Querelado<input type="text" id="querelado" placeholder="Nome completo do querelado"></label>
+          <label class="campo">Tipificação (opcional)<input type="text" id="tipificacao" placeholder="Ex.: tipificado como injúria (art. 140 do Código Penal)"></label>
+        </div>
+        <label class="campo" style="margin-top:10px">Descrição sucinta do fato<textarea id="fato" rows="3" placeholder="Ex.: ofensas à honra publicadas em rede social em 10/10/2026"></textarea><span class="dica">Completa a frase “em razão do fato consistente em…”.</span></label>
+        <label class="check" id="cAssistente" style="margin-top:8px"><input type="checkbox" id="assistente"> Incluir a habilitação como assistente de acusação (arts. 268 e seguintes do CPP)</label>
+      </div>
+
+      <div class="card bloco">
+        <h2>Outorgantes</h2>
+        <div id="outorgantes"></div>
+        <div class="linha-btns"><button type="button" class="btn sec peq" id="addPF">+ Pessoa física</button><button type="button" class="btn sec peq" id="addPJ">+ Pessoa jurídica</button></div>
+      </div>
+
+      <div class="card bloco">
+        <h2>Advogados constituídos</h2>
+        <div class="advs" id="advs"></div>
+        <div id="outrosAdv" style="margin-top:8px"></div>
+        <button type="button" class="btn sec peq" id="addAdv">+ Outro advogado</button>
+      </div>
+
+      <div class="card bloco">
+        <h2 id="tituloProc">Processo ou procedimento</h2>
+        <p class="dica" id="dicaProc" style="margin:-4px 0 10px">Informe o órgão como deve constar no texto, com o artigo: “a 1ª Vara Criminal da Comarca de Belo Horizonte/MG”, “o Tribunal de Justiça do Estado de Minas Gerais”.</p>
+        <div id="procs"></div>
+        <button type="button" class="btn sec peq" id="addProc">+ Outro procedimento</button>
+      </div>
+
+      <div class="card bloco">
+        <h2>Poderes e fecho</h2>
+        <div class="advs">
+          <label class="check" id="cSuperiores"><input type="checkbox" id="superiores"> Incluir atuação perante o STJ e o STF (habeas corpus, revisão criminal, apelação)</label>
+          <label class="check" id="cAcordos"><input type="checkbox" id="acordos"> Poderes especiais para ANPP, transação penal e suspensão condicional do processo</label>
+          <label class="check" id="cValores"><input type="checkbox" id="valores"> Poderes para receber e dar quitação, levantar alvarás e requerer a restituição de bens</label>
+          <label class="check" id="cCopiaCompleta" hidden><input type="checkbox" id="copiaCompleta"> Usar a cláusula <i>ad judicia et extra</i> completa, em vez dos poderes restritos à cópia</label>
+        </div>
+        <div class="grade g2" style="margin-top:12px">
+          <label class="campo">Local<input type="text" id="local" value="Belo Horizonte/MG"></label>
+          <label class="campo">Data<input type="date" id="data"></label>
+        </div>
+      </div>
+    </div>
+
+    <div class="previa">
+      <div class="linha-btns" style="margin-bottom:8px"><b style="flex:1">Pré-visualização</b><button type="button" class="btn sec peq" id="copiar">Copiar texto</button><button type="button" class="btn peq" id="baixar">Baixar em Word</button></div>
+      <div id="faltas"></div>
+      <div class="folha" id="folha"></div>
+    </div>
+  </section>
+</main>
+
+<footer class="rodape">
+  <div class="wrap"><b>TPC ADVOGADOS</b> · HUB Criminal · Procurações. Geração local no navegador; confira CPF, CNPJ, OAB e números dos processos antes de enviar para assinatura.</div>
+</footer>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="../assets/hub.js"></script>
+<script src="../assets/doc.js"></script>
+<script src="procuracao.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
