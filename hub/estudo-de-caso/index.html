@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Estudo de Caso Criminal · HUB Criminal TPC</title>
+<meta name="description" content="Estudo de caso criminal a partir da cópia integral do processo: leitura com OCR, reconstrução fática, mapeamento probatório, tipicidade, teses defensivas da mais forte à mais fraca, riscos e observações estratégicas, em Word no padrão do escritório.">
+<meta name="theme-color" content="#f6f4ef">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=DM+Mono:wght@400;500&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/hub.css">
+<style>
+  .heroi { padding: 34px 0 6px; }
+  .heroi h1 { max-width: 900px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 14px; }
+  .chips span { font-size: 12px; padding: 4px 10px; border: 1px solid var(--line-2); border-radius: 999px; background: var(--surface); color: var(--ink-2); }
+  .bloco { padding: 18px; margin-bottom: 14px; }
+  .bloco > h2 { font-size: 23px; margin-bottom: 4px; display: flex; align-items: baseline; gap: 10px; }
+  .bloco > h2 .passo { font-family: var(--sans); font-size: 12px; letter-spacing: .14em; text-transform: uppercase; color: var(--ink-3); font-weight: 500; }
+  .bloco > p.mudo { margin: 0 0 14px; font-size: 14px; }
+  .zona { border: 2px dashed var(--line-2); border-radius: 12px; padding: 26px 16px; text-align: center; background: var(--surface-2); cursor: pointer; }
+  .zona.sobre { border-color: var(--ink-3); background: color-mix(in srgb, var(--accent) 18%, var(--surface)); }
+  .zona b { display: block; font-size: 17px; font-weight: 500; margin-bottom: 2px; }
+  .lista-arq { display: grid; gap: 6px; margin-top: 10px; }
+  .arq { display: flex; gap: 10px; align-items: center; padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); font-size: 14px; }
+  .arq .nm { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .arq button { border: 0; background: none; cursor: pointer; color: var(--ink-3); font-size: 18px; }
+  .barra { height: 8px; background: var(--na-bg); border-radius: 999px; overflow: hidden; margin-top: 10px; }
+  .barra > i { display: block; height: 100%; width: 0; background: var(--brand); transition: width .25s; }
+  .estado { font-size: 13.5px; color: var(--ink-2); margin-top: 6px; min-height: 20px; }
+  .kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin-top: 12px; }
+  @media (max-width: 720px) { .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  .kpis > div { border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; background: var(--surface-2); }
+  .kpis span { display: block; font-size: 12px; color: var(--ink-3); text-transform: uppercase; letter-spacing: .06em; }
+  .kpis b { display: block; font-family: var(--serif); font-size: 24px; line-height: 1.15; }
+  .aviso { border-left: 3px solid var(--warn); background: var(--warn-bg); padding: 9px 12px; border-radius: 0 8px 8px 0; font-size: 13.5px; margin: 10px 0; }
+  .aviso.info { border-left-color: var(--info); background: var(--info-bg); }
+  input[type=password] { width: 100%; border: 1px solid var(--line-2); background: var(--surface); border-radius: 8px; padding: 9px 11px; font-size: 14.5px; }
+  .pensando { font-size: 13px; color: var(--ink-3); font-style: italic; max-height: 70px; overflow: hidden; margin-top: 8px; }
+  [hidden] { display: none !important; }
+
+  /* pré-visualização no padrão do modelo do escritório */
+  .folha { background: #fff; color: #000; border: 1px solid var(--line); border-radius: 6px; max-width: 860px; margin: 0 auto; padding: clamp(18px, 6vw, 64px) clamp(16px, 7vw, 76px); font-family: Calibri, Carlito, "Segoe UI", Arial, sans-serif; font-size: 15px; line-height: 1.32; }
+  .folha p { margin: 0 0 13px; text-align: justify; }
+  .folha .ec-logo { display: block; width: min(330px, 70%); margin: 0 0 26px; }
+  .folha .ec-normal { text-align: left; }
+  .folha .ec-vazio { height: 18px; margin: 0; }
+  .folha .ec-normal b { font-family: "Segoe UI", sans-serif; font-variant: small-caps; }
+  .folha .ec-h1 { font-family: "Segoe UI Semibold", "Segoe UI", sans-serif; font-weight: 600; font-size: 16px; letter-spacing: .02em; margin: 30px 0 22px; display: flex; }
+  .folha .ec-h2 { font-family: "Segoe UI Semibold", "Segoe UI", sans-serif; font-weight: 600; font-size: 16px; margin: 22px 0 14px 48px; display: flex; }
+  .folha .ec-h1 span, .folha .ec-h2 span { min-width: 48px; }
+  .folha .ec-n { display: inline-block; min-width: 48px; }
+  .folha .ec-q { margin-left: 25mm; font-size: 12px; line-height: 1.2; }
+  @media (max-width: 640px) { .folha .ec-q { margin-left: 28px; } .folha .ec-h2 { margin-left: 16px; } }
+  .folha .ec-tab { width: 100%; border-collapse: collapse; font-size: 11px; margin: 0 0 14px; }
+  .folha .ec-tab th, .folha .ec-tab td { border: 1px solid #000; padding: 3px 5px; vertical-align: middle; }
+  .folha .ec-tab th { background: #efefef; text-align: center; }
+  .rolagem { overflow-x: auto; }
+  .base-lista p { margin: 0 0 8px; font-size: 14px; }
+</style>
+</head>
+<body>
+<header class="topo">
+  <div class="topo-in">
+    <a class="marca" href="../" aria-label="HUB Criminal TPC, página inicial"><span class="marca-tpc">TPC</span><span class="marca-txt"><b>HUB</b> Criminal</span></a>
+    <nav class="migalha" aria-label="Você está em"><span>/</span><span>Estudo de caso criminal</span></nav>
+    <div class="espaco"></div>
+    <button class="btn-icone" type="button" onclick="HUB.alternarTema()" aria-label="Alternar tema claro ou escuro" title="Tema"><span data-tema-icone>☾</span></button>
+  </div>
+</header>
+<div class="faixa"></div>
+
+<main class="wrap">
+  <section class="heroi">
+    <div class="sobretitulo">Ferramenta 06 · Estratégia defensiva</div>
+    <h1>Estudo de caso criminal</h1>
+    <p class="lead">Anexe a cópia integral do processo. A ferramenta lê todas as páginas, aplica OCR às digitalizadas e entrega o estudo de caso completo, com reconstrução fática, mapeamento probatório, tipicidade, teses da mais forte à mais fraca, riscos e observações estratégicas, ancorado nas páginas e nos IDs dos autos e gerado em Word no padrão do escritório.</p>
+    <div class="chips"><span>Leitura integral com OCR</span><span>Página e ID de cada afirmação</span><span>Provas favoráveis, desfavoráveis e neutras</span><span>Word no modelo TPC</span></div>
+  </section>
+
+  <section class="secao" style="padding-top:18px">
+    <div class="card bloco">
+      <h2><span class="passo">Passo 1</span> Cópia do processo</h2>
+      <p class="mudo">PDF da cópia integral (um ou mais arquivos). A leitura e o OCR ocorrem no seu navegador; processos longos podem levar alguns minutos.</p>
+      <div class="zona" id="zona" tabindex="0" role="button" aria-label="Selecionar os PDFs do processo"><b>Arraste os PDFs aqui ou clique para selecionar</b><span class="pequeno mudo">Somente arquivos PDF</span></div>
+      <input type="file" id="arquivos" accept="application/pdf,.pdf" multiple hidden>
+      <div class="lista-arq" id="listaArq"></div>
+      <div class="linha-btns" style="margin-top:12px"><button type="button" class="btn" id="ler" disabled>Ler os autos</button><button type="button" class="btn sec" id="cancelarLeitura" hidden>Cancelar</button><button type="button" class="btn sec" id="baixarTexto" hidden>Baixar o texto extraído</button></div>
+      <div id="progLeitura" hidden><div class="barra"><i id="barraLeitura"></i></div><div class="estado" id="estadoLeitura"></div></div>
+      <div class="kpis" id="kpisLeitura" hidden></div>
+      <div id="avisoLeitura"></div>
+    </div>
+
+    <div class="card bloco">
+      <h2><span class="passo">Passo 2</span> Dados e orientações</h2>
+      <p class="mudo">Os dados do caso entram no cabeçalho do estudo. As orientações direcionam a análise, que sempre as confronta com os autos.</p>
+      <div class="grade g4">
+        <label class="campo">Autos<input type="text" id="autos" placeholder="Nº do processo ou inquérito"></label>
+        <label class="campo">Assistido<input type="text" id="assistido" placeholder="Nome do cliente"></label>
+        <label class="campo">Condição<select id="condicao"><option value="investigado">Investigado</option><option value="investigada">Investigada</option><option value="indiciado">Indiciado</option><option value="indiciada">Indiciada</option><option value="denunciado" selected>Denunciado</option><option value="denunciada">Denunciada</option><option value="réu">Réu</option><option value="ré">Ré</option><option value="condenado">Condenado</option><option value="condenada">Condenada</option><option value="vítima">Vítima</option></select></label>
+        <label class="campo">Fase<input type="text" id="fase" placeholder="Ex.: resposta à acusação"></label>
+        <label class="campo">Perspectiva<select id="perspectiva"><option value="defesa">Defesa do investigado ou acusado</option><option value="vitima">Vítima (assistência de acusação)</option></select></label>
+        <label class="campo">Escopo<select id="escopo"><option value="completo">Estudo de caso completo</option><option value="provas">Apenas mapeamento probatório</option><option value="tipicidade">Apenas análise de tipicidade</option><option value="risco">Avaliação rápida de risco</option></select></label>
+      </div>
+      <label class="campo" style="margin-top:12px">Orientações e contexto (opcional)<textarea id="orientacoes" rows="4" placeholder="Versão do cliente, pontos de atenção, foco desejado, informações que não constam dos autos"></textarea></label>
+      <details style="margin-top:12px"><summary class="pequeno" style="cursor:pointer">Estudos de referência (opcional)</summary>
+        <p class="pequeno mudo" style="margin:8px 0">Anexe estudos de caso anteriores considerados exemplares (.docx, .pdf ou .txt). Eles servem apenas como referência de qualidade, estrutura e tom, sem que os seus fatos sejam reproduzidos.</p>
+        <input type="file" id="referencias" accept=".docx,.pdf,.txt" multiple>
+        <div class="pequeno mudo" id="refInfo" style="margin-top:6px"></div>
+        <label class="check" style="margin-top:6px"><input type="checkbox" id="lembrarRef"> Lembrar os estudos de referência neste navegador</label>
+      </details>
+    </div>
+
+    <div class="card bloco">
+      <h2><span class="passo">Passo 3</span> Elaboração do estudo</h2>
+      <p class="mudo">A análise é feita pelo Claude, da Anthropic, com a chave de API do escritório. O texto extraído dos autos é enviado diretamente do seu navegador à API, sem passar por nenhum outro servidor.</p>
+      <div class="grade g3">
+        <label class="campo">Chave de API da Anthropic<input type="password" id="chave" autocomplete="off" placeholder="sk-ant-..."></label>
+        <label class="campo">Modelo<select id="modelo"><option value="claude-opus-5-5">Claude Opus 5.5 (recomendado)</option><option value="claude-fable-5-1">Claude Fable 5.1 (máxima capacidade, custo maior)</option><option value="claude-sonnet-5-5">Claude Sonnet 5.5 (mais econômico)</option></select></label>
+        <label class="campo">Profundidade da análise<select id="esforco"><option value="high">Alta</option><option value="xhigh" selected>Muito alta (recomendada)</option><option value="max">Máxima</option></select></label>
+      </div>
+      <label class="check" style="margin-top:10px"><input type="checkbox" id="lembrarChave"> Lembrar a chave neste navegador</label>
+      <div class="aviso info" id="custo" hidden></div>
+      <label class="check" style="margin-top:6px"><input type="checkbox" id="consentimento"> Autorizo o envio do texto dos autos à API da Anthropic para a elaboração deste estudo, ciente do sigilo profissional envolvido.</label>
+      <div class="linha-btns" style="margin-top:14px"><button type="button" class="btn" id="gerar" disabled>Gerar o estudo de caso</button><button type="button" class="btn sec" id="cancelarGeracao" hidden>Interromper</button></div>
+      <div id="progGeracao" hidden><div class="barra"><i id="barraGeracao"></i></div><div class="estado" id="estadoGeracao"></div><div class="pensando" id="pensando"></div></div>
+      <div id="avisoGeracao"></div>
+    </div>
+
+    <div id="resultado" hidden>
+      <div class="linha-btns" style="margin:24px 0 12px">
+        <h2 style="margin:0;flex:1">Estudo de caso</h2>
+        <button type="button" class="btn sec peq" id="copiar">Copiar texto</button>
+        <button type="button" class="btn peq" id="baixarWord">Baixar em Word</button>
+      </div>
+      <div class="rolagem"><div class="folha" id="folha"></div></div>
+    </div>
+
+    <details class="card bloco" style="margin-top:22px">
+      <summary style="cursor:pointer;font-weight:500">Como a ferramenta trabalha</summary>
+      <div class="base-lista" style="margin-top:12px">
+        <p>Cada página dos autos recebe um marcador com o número da página do PDF e, quando identificado, o ID do PJe, o evento do eproc ou a folha, para que todas as afirmações do estudo sejam rastreáveis. As páginas digitalizadas passam por OCR em português, e as de leitura precária são informadas como limitação da análise.</p>
+        <p>Processos que cabem na janela de contexto do modelo são analisados de uma só vez. Processos maiores são lidos em blocos, cada um fichado com as referências de página, e o estudo é redigido a partir dos fichamentos.</p>
+        <p>O estudo segue as diretrizes do projeto Estudo de Caso Criminal do escritório: postura investigativa e honesta quanto aos riscos, classificação de cada prova como favorável, desfavorável ou neutra, teses da mais forte à mais fraca, prosa sem listas nem travessões e síntese com providência ao final de cada seção. Não há menção a nenhum advogado. As referências jurisprudenciais devem ser conferidas no inteiro teor antes de qualquer uso em peça.</p>
+      </div>
+    </details>
+  </section>
+</main>
+
+<footer class="rodape">
+  <div class="wrap"><b>TPC ADVOGADOS</b> · HUB Criminal · Estudo de caso criminal. Documento analítico de uso interno; não constitui peça processual.</div>
+</footer>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
+<script src="../assets/hub.js"></script>
+<script src="../assets/doc.js"></script>
+<script src="leitor.js"></script>
+<script src="prompt.js"></script>
+<script src="docx.js"></script>
+<script type="module" src="app.js"></script>
+</body>
+</html>
