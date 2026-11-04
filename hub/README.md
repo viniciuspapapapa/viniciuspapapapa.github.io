@@ -13,6 +13,7 @@ hub/
     legislacao.js             CPP 158 a 158-F, 6º, 157, 159, 169-170, 245; CF; SV 14; Marco Civil; Leis 11.343 e 9.296; normas técnicas
     doutrina.js               Sínteses doutrinárias (Prado, Badaró, Aury Lopes Jr., Brasileiro, ISO 27037)
     precedentes.js            59 precedentes do STJ (dossiê IJCrim) + precedentes complementares
+    rif-juridico.js           Base da ferramenta de RIF: precedentes (Temas 990 e 1.404, STJ, STF), normas, NT CACOP 02/2026, doutrina
   cadeia-de-custodia/
     index.html                Interface da ferramenta
     regras.js                 Etapas, tipos de vestígio, peças processuais, 39 critérios e alertas (padrões editáveis)
@@ -21,7 +22,24 @@ hub/
     dossie.js                 Dossiê completo (falhas, jurisprudência aplicável e como utilizá-la, diligências, riscos, minuta)
     ia.js                     Análise complementar opcional (API do Claude, chave do próprio usuário)
     app.js                    Controlador da interface
+  rif/
+    index.html                Interface (layout de painel analítico, abas e relatórios)
+    md5.js                    MD5 para conferência do código de controle dos CSV do COAF
+    motor.js                  Leitura dos CSV (Comunicações, Envolvidos, Ocorrências), fluxos por seção do relato,
+                              reconciliação, dupla contagem, recursos próprios, inconsistências e pontos favoráveis
+    comparador.js             Leitura do relatório policial em PDF (com OCR), reconstrução das tabelas e verificação
+                              de cada transação contra o RIF
+    relatorio.js              Controle de legalidade, relatório da defesa, relatório comparativo e exportação .doc
+    app.js                    Controlador da interface
 ```
+
+## Análise de RIF
+
+A ferramenta recebe os três CSV do COAF (separador `;`, codificação detectada automaticamente) e o relatório policial em PDF.
+Os fluxos são lidos nas seções “principais remetentes/depositantes” e “principais destinatários” do relato bancário, e não por
+proximidade de palavras, para preservar o sentido real do dinheiro. Para incluir precedentes, acrescente objetos em
+`dados/rif-juridico.js` (`{ id, tribunal, orgao, proc, rel?, data, posicao: base|favoravel|contraria|neutra, tese, uso }`) e
+cite o `id` nos achados de `relatorio.js`.
 
 ## Como alimentar a base jurídica
 
