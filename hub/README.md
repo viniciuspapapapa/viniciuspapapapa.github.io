@@ -24,6 +24,15 @@ hub/
     ia.js                     Análise complementar opcional (API do Claude, chave do próprio usuário)
     app.js                    Controlador da interface
   assets/doc.js               Exportação comum de relatórios (.doc, cópia e impressão)
+  proposta/
+    proposta.js               Valores por extenso, cláusula de honorários e diagramação sobre o modelo (pdf-lib, fontes Inter)
+    app.js                    Formulário e pré-visualização
+    modelo-proposta.pdf       Modelo da proposta do escritório, sem dados de cliente (campos variáveis removidos)
+  organizador/
+    capa.js                   Capa institucional da skill organizador-documentos (medidas, paleta e fontes Lato)
+    drive.js                  Google Drive API v3 (chave de API para links públicos; OAuth para arquivos privados)
+    app.js                    Montagem, classificação por IA, agrupamento, orientação, refação de capas e verificação
+  assets/fonts/               Inter e Lato (SIL Open Font License) para os PDFs gerados no navegador
   estudo-de-caso/
     leitor.js                 Leitura integral dos PDFs (pdf.js) com OCR (Tesseract) e marcadores de página e ID
     prompt.js                 Instruções do projeto Estudo de Caso Criminal (sem identificação de advogados)
