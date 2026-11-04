@@ -24,6 +24,12 @@ hub/
     ia.js                     Análise complementar opcional (API do Claude, chave do próprio usuário)
     app.js                    Controlador da interface
   assets/doc.js               Exportação comum de relatórios (.doc, cópia e impressão)
+  estudo-de-caso/
+    leitor.js                 Leitura integral dos PDFs (pdf.js) com OCR (Tesseract) e marcadores de página e ID
+    prompt.js                 Instruções do projeto Estudo de Caso Criminal (sem identificação de advogados)
+    docx.js                   Texto marcado -> pré-visualização e Word sobre o modelo do escritório
+    app.js                    Fluxo da interface e chamadas à API do Claude (SDK oficial, chave do próprio usuário)
+    modelo-estudo.docx        Modelo Word (estilos, numeração, timbrado e rodapé do escritório, corpo vazio)
   reconhecimento/
     regras.js                 Quesitos (CPP, arts. 226 a 228; Res. CNJ 484/2022), variáveis de estimativa, avaliação e base jurídica
     app.js                    Atos de reconhecimento, sugestões a partir do texto, contaminação em cadeia e relatório
