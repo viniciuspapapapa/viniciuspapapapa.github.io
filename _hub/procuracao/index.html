@@ -59,13 +59,44 @@
 <main class="wrap">
   <section class="heroi">
     <div class="sobretitulo">Ferramenta 09 · Gestão do escritório</div>
-    <h1>Procurações</h1>
-    <p class="lead">Procuração no padrão institucional do escritório, com logotipo, título em versalete, corpo em Segoe UI e rodapé com a faixa amarela, em Word pronto para assinatura. O texto se ajusta à modalidade, ao gênero e ao número de outorgantes e procuradores.</p>
+    <h1>Procurações e substabelecimentos</h1>
+    <p class="lead">Procuração e substabelecimento no padrão institucional do escritório, com logotipo, título em versalete, corpo em Segoe UI e rodapé com a faixa amarela, em Word pronto para assinatura. O texto se ajusta à modalidade, ao gênero e ao número de outorgantes e procuradores.</p>
   </section>
 
   <section class="secao duas" style="padding-top:18px">
     <div>
       <div class="card bloco">
+        <h2>Documento</h2>
+        <div class="modalidades" id="documentos">
+          <label><input type="radio" name="doc" value="procuracao" checked><b>Procuração</b><span>Instrumento de mandato outorgado pelo cliente.</span></label>
+          <label><input type="radio" name="doc" value="substabelecimento"><b>Substabelecimento</b><span>Transferência dos poderes do mandato a outro advogado, com ou sem reservas.</span></label>
+        </div>
+      </div>
+
+      <div class="card bloco" data-sub hidden>
+        <h2>Substabelecimento</h2>
+        <div class="grade g2">
+          <label class="campo" style="grid-column:1/-1">Cliente que outorgou o mandato<input type="text" id="sCliente" placeholder="Nome completo ou razão social"></label>
+          <label class="campo">Quem substabelece e assina<select id="sDe"></select></label>
+          <label class="campo">Reserva de poderes<select id="sReserva"><option value="com">Com reserva de iguais poderes</option><option value="sem">Sem reserva de poderes</option></select></label>
+        </div>
+        <div class="grade g4" id="sDeOutro" hidden style="margin-top:10px">
+          <label class="campo">Nome completo<input type="text" id="sDeNome"></label>
+          <label class="campo">UF da OAB<input type="text" id="sDeUf" maxlength="2" value="MG"></label>
+          <label class="campo">Número da OAB<input type="text" id="sDeOab" placeholder="000.000"></label>
+          <label class="campo">Gênero<select id="sDeG"><option value="m">Masculino</option><option value="f">Feminino</option></select></label>
+        </div>
+        <h3 style="font-size:15px;margin:14px 0 6px">Advogados substabelecidos</h3>
+        <div class="advs" id="sPara"></div>
+        <div id="sParaOutros" style="margin-top:8px"></div>
+        <button type="button" class="btn sec peq" id="sAddPara">+ Advogado externo</button>
+        <div class="grade g2" style="margin-top:12px">
+          <label class="campo">Poderes substabelecidos<select id="sPoderes"><option value="todos">Todos os poderes do mandato</option><option value="especificos">Poderes específicos</option></select></label>
+        </div>
+        <label class="campo" id="sPoderesTxt" hidden style="margin-top:10px">Poderes específicos<textarea id="sPoderesTexto" rows="2" placeholder="Ex.: acompanhar a audiência de instrução e julgamento designada para 10/12/2026, inclusive formular perguntas e requerimentos"></textarea><span class="dica">Completa a frase “é restrito aos poderes para…”.</span></label>
+      </div>
+
+      <div class="card bloco" data-proc>
         <h2>Modalidade</h2>
         <div class="modalidades" id="modalidades">
           <label><input type="radio" name="mod" value="defesa" checked><b>Defesa nos autos</b><span>Para defender os interesses jurídicos do outorgante nos autos indicados.</span></label>
@@ -87,13 +118,13 @@
         <label class="check" id="cAssistente" style="margin-top:8px"><input type="checkbox" id="assistente"> Incluir a habilitação como assistente de acusação (arts. 268 e seguintes do CPP)</label>
       </div>
 
-      <div class="card bloco">
+      <div class="card bloco" data-proc>
         <h2>Outorgantes</h2>
         <div id="outorgantes"></div>
         <div class="linha-btns"><button type="button" class="btn sec peq" id="addPF">+ Pessoa física</button><button type="button" class="btn sec peq" id="addPJ">+ Pessoa jurídica</button></div>
       </div>
 
-      <div class="card bloco">
+      <div class="card bloco" data-proc>
         <h2>Advogados constituídos</h2>
         <div class="advs" id="advs"></div>
         <div id="outrosAdv" style="margin-top:8px"></div>
@@ -108,8 +139,8 @@
       </div>
 
       <div class="card bloco">
-        <h2>Poderes e fecho</h2>
-        <div class="advs">
+        <h2 id="tituloFecho">Poderes e fecho</h2>
+        <div class="advs" data-proc>
           <label class="check" id="cSuperiores"><input type="checkbox" id="superiores"> Incluir atuação perante o STJ e o STF (habeas corpus, revisão criminal, apelação)</label>
           <label class="check" id="cAcordos"><input type="checkbox" id="acordos"> Poderes especiais para ANPP, transação penal e suspensão condicional do processo</label>
           <label class="check" id="cValores"><input type="checkbox" id="valores"> Poderes para receber e dar quitação, levantar alvarás e requerer a restituição de bens</label>

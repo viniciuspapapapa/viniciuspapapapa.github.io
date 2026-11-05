@@ -1,0 +1,8 @@
+# Alternativa à configuração pelo painel: `npx wrangler deploy` nesta pasta.
+# Opcional: `npx wrangler secret put APP_TOKEN` (senha exigida pelo Worker; informe a mesma no HUB).
+name = "datajud-tpc"
+main = "worker.js"
+compatibility_date = "2026-09-01"
+
+[vars]
+ALLOWED_ORIGIN = "https://viniciuspapapapa.github.io"

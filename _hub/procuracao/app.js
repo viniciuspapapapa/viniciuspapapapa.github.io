@@ -49,6 +49,45 @@
   }
   $("#addProc").onclick = () => { addProc(); agendar(); };
 
+  /* ------------------------------------------------------------------ substabelecimento */
+  $("#sDe").innerHTML = P.ADVOGADOS.map(a => '<option value="' + a.id + '"' + (a.id === "vinicius" ? " selected" : "") + ">" + esc(a.nome) + "</option>").join("") + '<option value="__outro">Outro advogado…</option>';
+  $("#sPara").innerHTML = P.ADVOGADOS.map(a => '<label class="check"><input type="checkbox" data-sub-adv="' + a.id + '"> ' + esc(a.nome) + ' <span class="dica">OAB/' + a.uf + " " + a.oab + "</span></label>").join("");
+  function addSubPara() {
+    const el = document.createElement("div"); el.className = "item";
+    el.innerHTML = '<div class="item-cab"><b>Advogado externo</b><button type="button" class="x" aria-label="Remover advogado">×</button></div><div class="grade g4"><label class="campo">Nome completo<input type="text" data-k="nome"></label><label class="campo">UF da OAB<input type="text" data-k="uf" maxlength="2" value="MG"></label><label class="campo">Número da OAB<input type="text" data-k="oab" placeholder="000.000"></label><label class="campo">Gênero' + generoSel("g") + "</label></div>";
+    el.querySelector(".x").onclick = () => { el.remove(); agendar(); };
+    el.addEventListener("input", agendar); el.addEventListener("change", agendar);
+    $("#sParaOutros").appendChild(el);
+  }
+  $("#sAddPara").onclick = () => { addSubPara(); agendar(); };
+  ["#sCliente", "#sDe", "#sReserva", "#sDeNome", "#sDeUf", "#sDeOab", "#sDeG", "#sPoderes", "#sPoderesTexto"].forEach(x => { $(x).addEventListener("input", agendar); $(x).addEventListener("change", agendar); });
+  $("#sPara").addEventListener("change", agendar);
+  const documento = () => document.querySelector('input[name="doc"]:checked').value;
+  function dadosSubst() {
+    const base = dados(), id = $("#sDe").value;
+    const de = id === "__outro" ? { nome: $("#sDeNome").value.trim(), uf: $("#sDeUf").value.trim().toUpperCase(), oab: $("#sDeOab").value.trim(), g: $("#sDeG").value } : P.ADVOGADOS.find(a => a.id === id);
+    const para = P.ADVOGADOS.filter(a => document.querySelector('[data-sub-adv="' + a.id + '"]').checked)
+      .concat([...$("#sParaOutros").children].map(el => ({ nome: val(el, "nome"), uf: val(el, "uf").toUpperCase(), oab: val(el, "oab"), g: val(el, "g") })));
+    return { substabelecente: de, substabelecidos: para, reserva: $("#sReserva").value, poderes: $("#sPoderes").value, poderesTexto: $("#sPoderesTexto").value.trim(), cliente: $("#sCliente").value.trim(), procedimentos: base.procedimentos, local: base.local, data: base.data };
+  }
+  function camposDocumento() {
+    const sub = documento() === "substabelecimento";
+    document.querySelectorAll("[data-proc]").forEach(x => { x.hidden = sub; });
+    document.querySelectorAll("[data-sub]").forEach(x => { x.hidden = !sub; });
+    $("#sDeOutro").hidden = $("#sDe").value !== "__outro";
+    $("#sPoderesTxt").hidden = $("#sPoderes").value !== "especificos";
+    $("#tituloFecho").textContent = sub ? "Local e data" : "Poderes e fecho";
+    camposModalidade();
+    if (sub) { $("#blocoFato").hidden = true; $("#tituloProc").textContent = "Processo ou procedimento (opcional)"; }
+  }
+  document.querySelectorAll('input[name="doc"]').forEach(r => r.addEventListener("change", () => { camposDocumento(); agendar(); }));
+  ["#sDe", "#sPoderes"].forEach(x => $(x).addEventListener("change", camposDocumento));
+  function atual() {
+    if (documento() === "substabelecimento") { const d = dadosSubst(); return { spec: P.montarSubst(d), faltas: P.validarSubst(d), nome: "Substabelecimento - " + (d.cliente || "cliente") }; }
+    const d = dados(), o = d.outorgantes[0] || {}, nome = (o.tipo === "pj" ? o.razao : o.nome) + (d.outorgantes.length > 1 ? " e outros" : "");
+    return { spec: P.montar(d), faltas: P.validar(d), nome: "Procuração - " + nome };
+  }
+
   /* ------------------------------------------------------------------ coleta e prévia */
   const val = (el, k) => { const x = el.querySelector('[data-k="' + k + '"]'); return x ? x.value.trim() : ""; };
   function modalidade() { return document.querySelector('input[name="mod"]:checked').value; }
@@ -74,23 +113,22 @@
   ["#especie", "#representado", "#querelado", "#fato", "#tipificacao", "#assistente", "#superiores", "#acordos", "#valores", "#copiaCompleta", "#local", "#data"].forEach(s => { $(s).addEventListener("input", agendar); $(s).addEventListener("change", agendar); });
   function agendar() { clearTimeout(timer); timer = setTimeout(previa, 250); }
   function previa() {
-    const d = dados(), faltas = P.validar(d);
+    const { spec, faltas } = atual();
     $("#faltas").innerHTML = faltas.length ? '<div class="falta">Para gerar, preencha: ' + esc(faltas.join("; ")) + ".</div>" : "";
-    $("#folha").innerHTML = P.html(P.montar(d));
+    $("#folha").innerHTML = P.html(spec);
     $("#baixar").disabled = faltas.length > 0;
   }
   $("#baixar").onclick = async () => {
-    const d = dados(), faltas = P.validar(d);
+    const { spec, faltas, nome } = atual();
     if (faltas.length) { window.HUB.toast("Preencha: " + faltas[0] + "."); return; }
     try {
-      const blob = await P.docx(P.montar(d), "modelo-procuracao.docx");
-      const o = d.outorgantes[0], nome = (o.tipo === "pj" ? o.razao : o.nome) + (d.outorgantes.length > 1 ? " e outros" : "");
-      const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "Procuração - " + nome.replace(/[\\/:*?"<>|]+/g, "_") + ".docx"; document.body.appendChild(a); a.click();
+      const blob = await P.docx(spec, "modelo-procuracao.docx");
+      const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = nome.replace(/[\\/:*?"<>|]+/g, "_") + ".docx"; document.body.appendChild(a); a.click();
       setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1500);
     } catch (e) { window.HUB.toast(e.message || "Não foi possível gerar o Word.", 5000); }
   };
-  $("#copiar").onclick = () => window.HUB_DOC.copiar(P.texto(P.montar(dados())));
+  $("#copiar").onclick = () => window.HUB_DOC.copiar(P.texto(atual().spec));
 
   const hoje = new Date(); $("#data").value = new Date(Date.UTC(hoje.getFullYear(), hoje.getMonth(), hoje.getDate())).toISOString().slice(0, 10);
-  addOutorgante("pf"); addProc(); camposModalidade(); previa();
+  addOutorgante("pf"); addProc(); camposDocumento(); previa();
 })();

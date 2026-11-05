@@ -39,9 +39,11 @@ _hub/  (publicada cifrada em hub/)
     ia.js                     Análise complementar opcional (API do Claude, chave do próprio usuário)
     app.js                    Controlador da interface
   assets/doc.js               Exportação comum de relatórios (.doc, cópia e impressão)
+  assets/peca.js              Peças no padrão TPC (endereçamento, seções, tabelas, assinaturas) em Word e pré-visualização
+  assets/modelo-tpc.docx      Arquivo-base institucional comum às peças (mesmo timbrado da procuração; corpo {{BODY}})
   procuracao/
-    procuracao.js             Texto e concordância (skill procuracao-tpc), validação sem lacunas e .docx sobre o arquivo-base
-    app.js                    Formulário e pré-visualização
+    procuracao.js             Texto e concordância (skill procuracao-tpc), substabelecimento, validação sem lacunas e .docx
+    app.js                    Formulário (procuração ou substabelecimento) e pré-visualização
     modelo-procuracao.docx    Arquivo-base institucional da procuração (cabeçalho, rodapé e faixa amarela; corpo {{BODY}})
   proposta/
     proposta.js               Valores por extenso, cláusula de honorários e diagramação sobre o modelo (pdf-lib, fontes Inter)
@@ -66,6 +68,19 @@ _hub/  (publicada cifrada em hub/)
   prescricao/
     motor.js                  Cálculo da prescrição (CP, arts. 109 a 119; Lei 810/1949; Súmula 415 do STJ; Tema 788)
     app.js                    Formulário, linha do tempo e relatório
+  execucao/
+    motor.js                  Dosimetria (CP, arts. 59 a 68, 33, 44 e 77) e execução: art. 112 da LEP vigente (Leis
+                              15.402/2026 e 15.358/2026), remição, detração, livramento (CP, art. 83); datas pelo motor da prescrição
+    requerimento.js           Requerimentos de progressão e de livramento condicional no padrão TPC
+    app.js                    Abas de dosimetria e de execução, memória de cálculo e requerimento
+  relatorio/
+    traducao.js               Tribunal pelo número CNJ, movimentações do DataJud, do texto colado ou do PDF dos autos,
+                              tradução para linguagem acessível e situação atual
+    relatorio.js              Relatório periódico ao cliente no padrão TPC
+    app.js                    Conexão com o serviço intermediário, carteiras salvas por cliente e geração
+  risco/
+    questionario.js           Questionário (lavagem, tributário, anticorrupção, ambiental), pontuação e parecer
+    app.js                    Interface do questionário e do parecer
   rif/
     index.html                Interface (layout de painel analítico, abas e relatórios)
     md5.js                    MD5 para conferência do código de controle dos CSV do COAF
@@ -101,6 +116,20 @@ Os arquivos de `dados/` são arrays JavaScript simples. Para incluir novos itens
 
 Cada critério em `regras.js` tem `pos` (indícios de cumprimento) e `neg` (indícios de vício), em expressões regulares aplicadas sobre texto
 minúsculo e sem acentos, além das minutas `falta` e `vicio` usadas no relatório (`{v}` é o vestígio; `{p}` as páginas).
+
+## Relatório processual e DataJud
+
+A API Pública do DataJud responde a consultas de servidor, mas não envia o cabeçalho `Access-Control-Allow-Origin`, de
+modo que o navegador bloqueia a consulta direta. A pasta `datajud-worker/` contém o serviço intermediário (Cloudflare
+Worker gratuito) e o roteiro de instalação em `LEIA-ME.md`. O endereço do Worker e a senha são informados na própria
+ferramenta e ficam salvos apenas no navegador. Sem o Worker, a ferramenta funciona com o texto dos andamentos ou com a
+cópia atualizada dos autos em PDF.
+
+## Execução penal
+
+As frações de progressão seguem a redação vigente do art. 112 da LEP: caput e incisos I a IV pela Lei 15.402/2026 e
+incisos V a VIII pela Lei 15.358/2026. Para fatos anteriores, informe a fração da redação então vigente no campo
+"Fração manual" de cada condenação (CF, art. 5º, XL).
 
 ## Bibliotecas (CDN, versões fixas)
 
