@@ -1,8 +1,12 @@
-# Alternativa à configuração pelo painel: `npx wrangler deploy` nesta pasta.
-# Opcional: `npx wrangler secret put APP_TOKEN` (senha exigida pelo Worker; informe a mesma no HUB).
+# Configuração do Worker "datajud-tpc".
+# Se o Worker estiver ligado a este repositório pelo Cloudflare (Workers Builds), defina em
+# Settings > Build > Root directory o valor "datajud-worker": cada publicação no GitHub passa a implantar este código.
+# Alternativa pela linha de comando: `npx wrangler deploy` nesta pasta e `npx wrangler secret put APP_TOKEN`.
 name = "datajud-tpc"
 main = "worker.js"
 compatibility_date = "2026-09-01"
+# preserva as variáveis cadastradas no painel a cada implantação (o APP_TOKEN, como segredo, já é preservado)
+keep_vars = true
 
 [vars]
 ALLOWED_ORIGIN = "https://viniciuspapapapa.github.io"
