@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Central de Certidões · HUB Criminal TPC</title>
+<meta name="description" content="Central de certidões criminais: painel com os serviços oficiais de todos os tribunais estaduais, federais, militares, eleitoral, superiores e Polícia Federal, leitura automática das certidões e relatório no padrão TPC.">
+<meta name="theme-color" content="#f6f4ef">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=DM+Mono:wght@400;500&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/hub.css">
+<style>
+  .heroi { padding: 34px 0 6px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 14px; }
+  .chips span { font-size: 12px; padding: 4px 10px; border: 1px solid var(--line-2); border-radius: 999px; background: var(--surface); color: var(--ink-2); }
+  .bloco { padding: 18px; margin-bottom: 14px; }
+  .bloco > h2 { font-size: 22px; margin-bottom: 4px; }
+  .bloco > p.mudo { margin: 0 0 12px; font-size: 14px; }
+  input[type=date], input[type=email] { width: 100%; border: 1px solid var(--line-2); background: var(--surface); color: var(--ink); border-radius: 8px; padding: 8px 10px; font-size: 14.5px; min-width: 0; }
+  .dica { font-size: 12.5px; color: var(--ink-3); font-weight: 400; }
+  .ufs { display: grid; grid-template-columns: repeat(auto-fill, minmax(62px, 1fr)); gap: 4px 8px; margin-top: 6px; }
+  .ufs label { font-size: 13.5px; display: flex; gap: 5px; align-items: center; cursor: pointer; }
+  .grupos { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px 14px; }
+  @media (max-width: 760px) { .grupos { grid-template-columns: minmax(0, 1fr); } }
+  .colar { position: sticky; top: 64px; z-index: 5; }
+  .colar .linha { display: flex; flex-wrap: wrap; gap: 6px; }
+  .colar button { border: 1px solid var(--line-2); background: var(--surface); color: var(--ink); border-radius: 999px; padding: 6px 12px; font: inherit; font-size: 13px; cursor: pointer; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .colar button b { font-weight: 600; margin-right: 4px; }
+  .colar button.ok { border-color: var(--ok); color: var(--ok); }
+  .prog { display: flex; align-items: center; gap: 12px; margin: 6px 0 12px; flex-wrap: wrap; }
+  .barra { height: 8px; background: var(--line); border-radius: 99px; overflow: hidden; flex: 1; min-width: 160px; }
+  .barra i { display: block; height: 100%; width: 0; background: var(--ok); transition: width .2s; }
+  .grupo-t { font-family: var(--serif); font-size: 19px; margin: 18px 0 8px; }
+  .org { border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; background: var(--surface-2); margin-bottom: 8px; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 6px 12px; align-items: center; border-left: 5px solid var(--line-2); }
+  .org.negativa { border-left-color: var(--ok); } .org.positiva { border-left-color: var(--bad); } .org.solicitada, .org.aguardando { border-left-color: var(--warn); } .org.presencial { border-left-color: var(--info); }
+  .org .nome { font-size: 14.5px; } .org .nome b { font-weight: 600; margin-right: 6px; }
+  .org .nota { grid-column: 1 / -1; font-size: 12.5px; color: var(--ink-3); }
+  .org .acoes { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; align-items: center; }
+  .org select { padding: 6px 8px; font-size: 13px; border-radius: 8px; border: 1px solid var(--line-2); background: var(--surface); color: var(--ink); }
+  .org .doc { grid-column: 1 / -1; font-size: 13px; }
+  @media (max-width: 640px) { .org { grid-template-columns: minmax(0, 1fr); } .org .acoes { justify-content: flex-start; } }
+  .tw { overflow-x: auto; border: 1px solid var(--line); border-radius: 8px; margin: 8px 0 14px; }
+  table.t { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+  table.t th { text-align: left; background: var(--surface-2); color: var(--ink-2); font-weight: 500; padding: 8px 10px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+  table.t td { padding: 8px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  .aviso { border-left: 3px solid var(--warn); background: var(--warn-bg); padding: 8px 12px; border-radius: 0 8px 8px 0; font-size: 13.5px; margin: 6px 0; }
+  .duas { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr); gap: 18px; align-items: start; }
+  @media (max-width: 1020px) { .duas { grid-template-columns: minmax(0, 1fr); } }
+  .folha { max-height: 85vh; overflow: auto; }
+  @media (max-width: 1020px) { .folha { max-height: none; } }
+  .checks { display: grid; gap: 6px; }
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body>
+<header class="topo">
+  <div class="topo-in">
+    <a class="marca" href="../" aria-label="HUB Criminal TPC, página inicial"><span class="marca-tpc">TPC</span><span class="marca-txt"><b>HUB</b> Criminal</span></a>
+    <nav class="migalha" aria-label="Você está em"><span>/</span><span>Central de certidões</span></nav>
+    <div class="espaco"></div>
+    <button class="btn-icone" type="button" onclick="HUB.alternarTema()" aria-label="Alternar tema claro ou escuro" title="Tema"><span data-tema-icone>☾</span></button>
+  </div>
+</header>
+<div class="faixa"></div>
+
+<main class="wrap">
+  <section class="heroi">
+    <div class="sobretitulo">Ferramenta 13 · Diligências</div>
+    <h1>Central de certidões</h1>
+    <p class="lead">Painel com os serviços oficiais de certidão criminal de todos os tribunais estaduais, das seis regiões da Justiça Federal, da Justiça Militar, da Justiça Eleitoral, do STF, do STJ e da Polícia Federal. Os tribunais exigem a verificação humana (captcha), por isso cada certidão é emitida por você no site oficial, com os dados prontos para colar; a leitura das certidões, o controle e o relatório são automáticos.</p>
+    <div class="chips"><span>27 tribunais de justiça</span><span>TRF1 a TRF6</span><span>STM e TJMs</span><span>TSE</span><span>STF e STJ</span><span>Polícia Federal e BNMP</span></div>
+  </section>
+
+  <section class="secao" style="padding-top:18px">
+    <div class="card bloco">
+      <h2>Pessoa pesquisada</h2>
+      <p class="mudo">Os dados ficam apenas neste navegador. Vários tribunais exigem, além do nome e do CPF, o nome da mãe, a data de nascimento e o RG.</p>
+      <div class="grade g4">
+        <label class="campo" style="grid-column:span 2">Nome completo<input type="text" id="nome" autocomplete="off"></label>
+        <label class="campo">CPF<input type="text" id="cpf" inputmode="numeric" placeholder="000.000.000-00" autocomplete="off"></label>
+        <label class="campo">Data de nascimento<input type="date" id="nasc"></label>
+        <label class="campo" style="grid-column:span 2">Nome da mãe<input type="text" id="mae" autocomplete="off"></label>
+        <label class="campo" style="grid-column:span 2">Nome do pai (opcional)<input type="text" id="pai" autocomplete="off"></label>
+        <label class="campo">RG<input type="text" id="rg" autocomplete="off"></label>
+        <label class="campo">Órgão emissor e UF do RG<input type="text" id="rgOrgao" placeholder="SSP/MG" autocomplete="off"></label>
+        <label class="campo">E-mail para receber certidões<input type="email" id="email" placeholder="certidoes@tpcadvogados.com.br"></label>
+        <label class="campo">Finalidade<select id="finalidade"><option>Defesa criminal</option><option>Instrução de pedido de liberdade</option><option>Comprovação de bons antecedentes</option><option>Diligência pré-contratual (compliance)</option><option>Outra</option></select></label>
+      </div>
+      <div class="grade g2" style="margin-top:10px">
+        <label class="campo">Pesquisas salvas<select id="salvas"><option value="">Nova pesquisa</option></select></label>
+        <div class="campo" style="justify-content:end"><div class="linha-btns"><button type="button" class="btn sec peq" id="excluir">Excluir pesquisa salva</button></div></div>
+      </div>
+      <div id="cpfAviso"></div>
+    </div>
+
+    <div class="card bloco">
+      <h2>Abrangência</h2>
+      <div class="grupos" id="grupos"></div>
+      <div style="margin-top:12px">
+        <label class="check"><input type="radio" name="alc" value="ufs" checked> Somente os estados selecionados (tribunal de justiça, TRF da região e tribunal militar estadual)</label>
+        <label class="check"><input type="radio" name="alc" value="brasil"> Todo o Brasil (27 tribunais de justiça e as seis regiões federais)</label>
+      </div>
+      <div class="ufs" id="ufs"></div>
+      <div class="linha-btns" style="margin-top:12px"><button type="button" class="btn" id="montar">Montar painel</button></div>
+    </div>
+
+    <div class="card bloco colar" id="colar" hidden>
+      <div class="linha-btns" style="margin-bottom:6px"><b style="flex:1">Dados para colar</b><span class="dica">Clique para copiar</span></div>
+      <div class="linha" id="colarLinha"></div>
+    </div>
+
+    <div class="card bloco" id="painelBloco" hidden>
+      <h2>Painel de certidões</h2>
+      <div class="prog"><div class="barra"><i id="progBarra"></i></div><span class="pequeno" id="progTxt"></span></div>
+      <p class="pequeno mudo" style="margin:0 0 6px">Ao clicar em <b>Abrir</b>, o serviço oficial abre em nova aba e o item passa a “solicitada”. Ao importar o PDF, a situação é preenchida automaticamente. Se um endereço mudou, use <b>Portal</b>, que leva à página principal do órgão.</p>
+      <div id="painel"></div>
+    </div>
+
+    <div class="card bloco" id="importBloco" hidden>
+      <h2>Certidões emitidas</h2>
+      <p class="mudo">Selecione de uma vez todos os PDFs baixados. A ferramenta identifica o órgão, o resultado, as datas e os números dos processos, e confere se a certidão se refere à pessoa pesquisada.</p>
+      <label class="btn peq" style="cursor:pointer;display:inline-flex">Importar certidões em PDF<input type="file" id="pdfs" accept="application/pdf" multiple hidden></label>
+      <div class="pequeno" id="importEstado" style="margin-top:8px"></div>
+      <div class="tw" id="docsTw" hidden><table class="t"><thead><tr><th>Arquivo</th><th>Órgão</th><th>Resultado</th><th>Emissão</th><th>Validade</th><th>Processos</th></tr></thead><tbody id="docs"></tbody></table></div>
+      <div class="linha-btns"><button type="button" class="btn sec peq" id="levarBase" hidden>Levar os processos encontrados à base do relatório processual</button></div>
+    </div>
+
+    <div class="card bloco" id="relBloco" hidden>
+      <h2>Relatório de certidões</h2>
+      <div class="duas">
+        <div>
+          <h3 style="font-size:15px;margin:0 0 6px">Quem assina</h3>
+          <div class="checks" id="advs"></div>
+          <label class="campo" style="margin-top:12px">Local<input type="text" id="local" value="Belo Horizonte/MG"></label>
+        </div>
+        <div>
+          <div class="linha-btns" style="margin-bottom:8px"><b style="flex:1">Documento</b><button type="button" class="btn sec peq" id="editar">Editar texto</button><button type="button" class="btn sec peq" id="descartar" hidden>Descartar edições</button><button type="button" class="btn sec peq" id="copiar">Copiar texto</button><button type="button" class="btn peq" id="baixar">Baixar em Word</button></div>
+          <div class="folha" id="folha"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="rodape">
+  <div class="wrap"><b>TPC ADVOGADOS</b> · HUB Criminal · Central de certidões. As certidões são emitidas pelo usuário nos serviços oficiais; a leitura automática deve ser conferida antes da juntada.</div>
+</footer>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="../assets/hub.js"></script>
+<script src="../assets/doc.js"></script>
+<script src="../assets/peca.js"></script>
+<script src="../estudo-de-caso/leitor.js"></script>
+<script src="../relatorio/traducao.js"></script>
+<script src="../relatorio/base.js"></script>
+<script src="catalogo.js"></script>
+<script src="leitor.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

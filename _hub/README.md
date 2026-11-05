@@ -81,6 +81,10 @@ _hub/  (publicada cifrada em hub/)
     envio.js                  Outlook (Microsoft Graph com MSAL, ou e-mail .eml pronto) e WhatsApp (wa.me)
     app.js                    Abas da base e do relatório, edição do texto na visualização e envio
   login/oauth.html            Página de retorno do login Microsoft (pública, sem conteúdo)
+  certidoes/
+    catalogo.js               Serviços oficiais de certidão criminal (27 TJs, TRF1 a TRF6, STM, TJMs, TSE, STF, STJ, PF, BNMP)
+    leitor.js                 Leitura das certidões em PDF: órgão, resultado, datas, números CNJ e conferência do pesquisado
+    app.js                    Painel de emissão, dados para colar, importação dos PDFs, relatório e envio à base do relatório
   risco/
     questionario.js           Questionário (lavagem, tributário, anticorrupção, ambiental), pontuação e parecer
     app.js                    Interface do questionário e do parecer
@@ -119,6 +123,14 @@ Os arquivos de `dados/` são arrays JavaScript simples. Para incluir novos itens
 
 Cada critério em `regras.js` tem `pos` (indícios de cumprimento) e `neg` (indícios de vício), em expressões regulares aplicadas sobre texto
 minúsculo e sem acentos, além das minutas `falta` e `vicio` usadas no relatório (`{v}` é o vestígio; `{p}` as páginas).
+
+## Central de certidões
+
+Os tribunais protegem a emissão com verificação humana (captcha), de modo que cada certidão é emitida pelo usuário no
+serviço oficial; a ferramenta organiza o painel, deixa os dados prontos para colar, lê os PDFs baixados e redige o
+relatório. Os endereços estão em `certidoes/catalogo.js` (conferidos em novembro de 2026): `st: "ok"` respondeu ao
+teste, `"doc"` consta de documento oficial recente mas não respondeu ao teste feito do exterior, e `"portal"` leva à
+página principal do órgão. Atualize o catálogo quando um tribunal mudar o endereço.
 
 ## Configurações das integrações
 
