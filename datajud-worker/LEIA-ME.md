@@ -15,6 +15,14 @@ O Worker identifica o tribunal pelo próprio número do processo (segmentos J e 
 4. Copie o endereço do Worker (algo como `https://datajud-tpc.SEU-USUARIO.workers.dev`).
 5. No HUB, abra **Relatório processual**, clique em **Configurar DataJud**, cole o endereço e, se tiver criado o `APP_TOKEN`, a mesma senha. As configurações ficam salvas apenas no navegador.
 
+## Worker ligado ao GitHub (Workers Builds)
+
+Se o Worker foi criado a partir deste repositório, o Cloudflare refaz a implantação a cada publicação no GitHub. Sem
+ajuste, ele implanta a raiz do repositório, que não contém o código do serviço, e o endereço passa a responder 404 em
+branco. Para corrigir, abra o Worker, vá a Settings > Build e informe `datajud-worker` em "Root directory" (os comandos
+de build ficam vazios e o de implantação é `npx wrangler deploy`). Depois, clique em "Retry build" ou faça nova
+implantação. A partir daí, cada publicação implanta o código correto, e o `APP_TOKEN`, como segredo, é preservado.
+
 ## Configuração pela linha de comando
 
 ```bash
