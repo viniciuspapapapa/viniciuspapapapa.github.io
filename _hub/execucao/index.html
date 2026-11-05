@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Execução Penal e Dosimetria · HUB Criminal TPC</title>
+<meta name="description" content="Dosimetria trifásica com regime inicial, substituição e sursis; cálculo de execução penal com detração, remição, progressão pelo art. 112 da LEP vigente e livramento condicional, com requerimento no padrão TPC.">
+<meta name="theme-color" content="#f6f4ef">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=DM+Mono:wght@400;500&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/hub.css">
+<style>
+  .heroi { padding: 34px 0 6px; }
+  .heroi h1 { max-width: 900px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 14px; }
+  .chips span { font-size: 12px; padding: 4px 10px; border: 1px solid var(--line-2); border-radius: 999px; background: var(--surface); color: var(--ink-2); }
+  .abas { margin: 18px 0 16px; }
+  .bloco { padding: 18px; margin-bottom: 14px; }
+  .bloco > h2 { font-size: 22px; margin-bottom: 4px; }
+  .bloco > p.mudo { margin: 0 0 12px; font-size: 14px; }
+  input[type=date], input[type=number] { width: 100%; border: 1px solid var(--line-2); background: var(--surface); border-radius: 8px; padding: 8px 10px; font-size: 14.5px; min-width: 0; }
+  .pena { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+  .pena input { text-align: center; }
+  .dica { font-size: 12.5px; color: var(--ink-3); font-weight: 400; }
+  .checks { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px 14px; }
+  @media (max-width: 720px) { .checks { grid-template-columns: minmax(0, 1fr); } }
+  .item { border: 1px solid var(--line); border-radius: 10px; padding: 12px; background: var(--surface-2); margin-bottom: 10px; }
+  .item-cab { display: flex; gap: 8px; align-items: center; margin-bottom: 8px; }
+  .item-cab b { flex: 1; font-size: 14px; }
+  .x { border: 1px solid var(--line-2); background: var(--surface); border-radius: 8px; width: 34px; height: 34px; cursor: pointer; color: var(--ink-3); font-size: 17px; flex: none; }
+  .causa { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, .7fr) minmax(0, 2fr) auto; gap: 8px; align-items: end; margin-bottom: 8px; }
+  .periodo { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto; gap: 8px; align-items: end; margin-bottom: 8px; }
+  @media (max-width: 620px) { .causa { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto; } .causa .desc { grid-column: 1 / -1; grid-row: 2; } }
+  .res { padding: 18px; margin-bottom: 14px; border-left: 6px solid var(--brand); }
+  .res h3 { font-size: 24px; margin: 0 0 8px; }
+  .kp { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin: 12px 0; }
+  @media (max-width: 760px) { .kp { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  .kp > div { border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; background: var(--surface-2); min-width: 0; }
+  .kp span { display: block; font-size: 12px; color: var(--ink-3); text-transform: uppercase; letter-spacing: .06em; }
+  .kp b { display: block; font-family: var(--serif); font-size: 21px; line-height: 1.15; margin-top: 4px; overflow-wrap: anywhere; }
+  .tw { overflow-x: auto; border: 1px solid var(--line); border-radius: 8px; margin: 8px 0 14px; }
+  table.t { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+  table.t th { text-align: left; background: var(--surface-2); color: var(--ink-2); font-weight: 500; padding: 8px 10px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+  table.t td { padding: 8px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  .ok { color: var(--ok); font-weight: 600; } .pend { color: var(--warn); font-weight: 600; }
+  .aviso { border-left: 3px solid var(--warn); background: var(--warn-bg); padding: 8px 12px; border-radius: 0 8px 8px 0; font-size: 13.5px; margin: 6px 0; }
+  .falta { border-left: 3px solid var(--warn); background: var(--warn-bg); padding: 9px 12px; border-radius: 0 8px 8px 0; font-size: 13.5px; margin: 0 0 10px; }
+  .duas { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr); gap: 18px; align-items: start; }
+  @media (max-width: 1020px) { .duas { grid-template-columns: minmax(0, 1fr); } }
+  .folha { max-height: 80vh; overflow: auto; }
+  @media (max-width: 1020px) { .folha { max-height: none; } }
+  details > summary { cursor: pointer; font-weight: 500; }
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body>
+<header class="topo">
+  <div class="topo-in">
+    <a class="marca" href="../" aria-label="HUB Criminal TPC, página inicial"><span class="marca-tpc">TPC</span><span class="marca-txt"><b>HUB</b> Criminal</span></a>
+    <nav class="migalha" aria-label="Você está em"><span>/</span><span>Execução penal e dosimetria</span></nav>
+    <div class="espaco"></div>
+    <button class="btn-icone" type="button" onclick="HUB.alternarTema()" aria-label="Alternar tema claro ou escuro" title="Tema"><span data-tema-icone>☾</span></button>
+  </div>
+</header>
+<div class="faixa"></div>
+
+<main class="wrap">
+  <section class="heroi">
+    <div class="sobretitulo">Ferramenta 10 · Pena e execução</div>
+    <h1>Execução penal e dosimetria</h1>
+    <p class="lead">Dosimetria nas três fases, com regime inicial, substituição e sursis. Na execução, detração, remição, progressão pelas frações vigentes do art. 112 da LEP e livramento condicional, com a data de cada benefício e o requerimento no padrão do escritório.</p>
+    <div class="chips"><span>CP, arts. 33, 44, 59 a 68, 77 e 83</span><span>LEP, art. 112 (Leis 15.402/2026 e 15.358/2026)</span><span>LEP, arts. 126 a 128</span><span>Súmulas 231, 269, 440 e 441 do STJ</span><span>Súmulas 715, 718 e 719 do STF</span><span>SV 26 e 56</span></div>
+  </section>
+
+  <div class="abas" role="tablist">
+    <button type="button" class="aba" role="tab" aria-selected="true" data-aba="dosimetria">Dosimetria</button>
+    <button type="button" class="aba" role="tab" aria-selected="false" data-aba="execucao">Execução penal</button>
+  </div>
+
+  <!-- ================================================================ DOSIMETRIA -->
+  <section id="aba-dosimetria">
+    <div class="card bloco">
+      <h2>Crime e pena cominada</h2>
+      <div class="grade g4">
+        <label class="campo" style="grid-column:span 2">Crime<input type="text" id="dCrime" placeholder="Ex.: roubo majorado (art. 157, § 2º, II, do CP)"></label>
+        <label class="campo">Espécie<select id="dEspecie"><option value="reclusao">Reclusão</option><option value="detencao">Detenção</option></select></label>
+        <label class="campo">Critério da 1ª fase<select id="dCriterio"><option value="oitavo">1/8 do intervalo entre mínimo e máximo</option><option value="sexto">1/6 da pena mínima</option></select></label>
+        <div class="campo">Pena mínima<div class="pena"><input type="number" min="0" id="dMinA" placeholder="anos" aria-label="Pena mínima, anos"><input type="number" min="0" id="dMinM" placeholder="meses" aria-label="Pena mínima, meses"><input type="number" min="0" id="dMinD" placeholder="dias" aria-label="Pena mínima, dias"></div></div>
+        <div class="campo">Pena máxima<div class="pena"><input type="number" min="0" id="dMaxA" placeholder="anos" aria-label="Pena máxima, anos"><input type="number" min="0" id="dMaxM" placeholder="meses" aria-label="Pena máxima, meses"><input type="number" min="0" id="dMaxD" placeholder="dias" aria-label="Pena máxima, dias"></div></div>
+        <label class="campo">Detração para o regime (dias)<input type="number" min="0" id="dDetracao" placeholder="0"><span class="dica">CPP, art. 387, § 2º</span></label>
+      </div>
+      <div class="checks" style="margin-top:12px">
+        <label class="check"><input type="checkbox" id="dViolencia"> Crime com violência ou grave ameaça à pessoa</label>
+        <label class="check"><input type="checkbox" id="dCulposo"> Crime culposo</label>
+        <label class="check"><input type="checkbox" id="dHediondo"> Hediondo ou equiparado</label>
+        <label class="check"><input type="checkbox" id="dReincEsp"> Reincidência específica (art. 44, § 3º)</label>
+        <label class="check"><input type="checkbox" id="dMaior70"> Maior de 70 anos ou razões de saúde (sursis do art. 77, § 2º)</label>
+      </div>
+    </div>
+
+    <div class="card bloco">
+      <h2>1ª fase · Circunstâncias judiciais</h2>
+      <p class="mudo">Marque apenas as circunstâncias valoradas negativamente com fundamentação concreta (CP, art. 59).</p>
+      <div class="checks" id="dCirc"></div>
+    </div>
+
+    <div class="card bloco">
+      <h2>2ª fase · Agravantes e atenuantes</h2>
+      <div class="grade g2" style="margin-bottom:10px">
+        <label class="campo">Fração por circunstância<input type="text" id="dFracao2" value="1/6"></label>
+        <label class="check" style="align-self:end"><input type="checkbox" id="dSum231" checked> Aplicar a Súmula 231 do STJ</label>
+      </div>
+      <details open><summary>Agravantes (CP, arts. 61 e 62)</summary><div class="checks" id="dAgrav" style="margin-top:8px"></div></details>
+      <details open style="margin-top:10px"><summary>Atenuantes (CP, arts. 65 e 66)</summary><div class="checks" id="dAten" style="margin-top:8px"></div></details>
+    </div>
+
+    <div class="card bloco">
+      <h2>3ª fase · Causas de aumento e de diminuição</h2>
+      <p class="mudo">Frações como 1/3, 2/3 ou 50%. Incidem em cascata sobre a pena da operação anterior.</p>
+      <div id="dCausas"></div>
+      <button type="button" class="btn sec peq" id="dAddCausa">+ Causa de aumento ou diminuição</button>
+    </div>
+
+    <div id="dRes"></div>
+  </section>
+
+  <!-- ================================================================ EXECUÇÃO -->
+  <section id="aba-execucao" hidden>
+    <div class="card bloco">
+      <h2>Execução</h2>
+      <p class="mudo">Os dados ficam apenas no navegador.</p>
+      <div class="grade g4">
+        <label class="campo" style="grid-column:span 2">Apenado<input type="text" id="eApenado"></label>
+        <label class="campo">Gênero<select id="eG"><option value="m">Masculino</option><option value="f">Feminino</option></select></label>
+        <label class="campo">Autos da execução<input type="text" id="eAutos" placeholder="0000000-00.0000.8.13.0000"></label>
+        <label class="campo">Início do cumprimento<input type="date" id="eInicio"><span class="dica">Prisão ou recolhimento</span></label>
+        <label class="campo">Regime atual<select id="eRegime"><option value="fechado">Fechado</option><option value="semiaberto">Semiaberto</option><option value="aberto">Aberto</option></select></label>
+        <label class="campo">Última progressão (opcional)<input type="date" id="eUltProg"></label>
+        <label class="campo">Última falta grave (opcional)<input type="date" id="eFalta"></label>
+        <label class="campo">Dias de interrupção<input type="number" min="0" id="eInterrup" placeholder="0"><span class="dica">Fuga ou evasão</span></label>
+        <label class="campo">Data de referência<input type="date" id="eRef"><span class="dica">Padrão: hoje</span></label>
+      </div>
+      <div class="checks" style="margin-top:12px">
+        <label class="check"><input type="checkbox" id="eBonsAnt" checked> Bons antecedentes (CP, art. 83, I)</label>
+        <label class="check"><input type="checkbox" id="eMae"> Gestante, mãe ou responsável por criança ou pessoa com deficiência (art. 112, § 3º)</label>
+      </div>
+    </div>
+
+    <div class="card bloco">
+      <h2>Condenações</h2>
+      <p class="mudo">Cada pena recebe a fração do respectivo inciso do art. 112. Para fato anterior às Leis 15.358/2026 e 15.402/2026, informe a fração da redação então vigente, se mais benéfica.</p>
+      <div id="eConds"></div>
+      <button type="button" class="btn sec peq" id="eAddCond">+ Condenação</button>
+    </div>
+
+    <div class="card bloco">
+      <h2>Detração e remição</h2>
+      <p class="mudo">Prisão provisória (CP, art. 42) e dias remidos (LEP, arts. 126 a 128), computados como pena cumprida.</p>
+      <div id="eDet"></div>
+      <button type="button" class="btn sec peq" id="eAddDet">+ Período de prisão provisória</button>
+      <div class="grade g4" style="margin-top:14px">
+        <label class="campo">Dias trabalhados<input type="number" min="0" id="eTrab" placeholder="0"><span class="dica">1 dia remido a cada 3</span></label>
+        <label class="campo">Horas de estudo<input type="number" min="0" id="eEst" placeholder="0"><span class="dica">1 dia a cada 12 horas</span></label>
+        <label class="campo">Leitura (dias remidos)<input type="number" min="0" id="eLeit" placeholder="0"><span class="dica">Resolução CNJ 391/2021</span></label>
+        <label class="campo">Outros dias remidos<input type="number" min="0" id="eOutros" placeholder="0"></label>
+        <label class="campo">Dias remidos revogados<input type="number" min="0" id="ePerd" placeholder="0"><span class="dica">Até 1/3 (art. 127)</span></label>
+        <label class="campo">Remidos após a data-base<input type="number" min="0" id="ePosBase" placeholder="0"><span class="dica">Só com progressão ou falta posterior ao início</span></label>
+      </div>
+      <label class="check" style="margin-top:10px"><input type="checkbox" id="eConc"> Conclusão de ensino fundamental, médio ou superior (acréscimo de 1/3, art. 126, § 5º)</label>
+    </div>
+
+    <div id="eRes"></div>
+
+    <div class="card bloco" id="eReqBloco" hidden>
+      <h2>Requerimento</h2>
+      <div class="duas">
+        <div>
+          <div class="grade g2">
+            <label class="campo">Pedido<select id="rTipo"><option value="progressao">Progressão de regime</option><option value="livramento">Livramento condicional</option></select></label>
+            <label class="campo">Tratamento do juízo<select id="rJuizG"><option value="m">Excelentíssimo Senhor Juiz</option><option value="f">Excelentíssima Senhora Juíza</option></select></label>
+            <label class="campo" style="grid-column:1/-1">Juízo<input type="text" id="rJuizo" value="Vara de Execuções Penais da Comarca de Belo Horizonte/MG"></label>
+            <label class="campo">Exame criminológico<select id="rExame"><option value="nao">Não realizado</option><option value="favoravel">Realizado, favorável</option></select></label>
+            <label class="campo" data-lc>Reparação do dano<select id="rRepar"><option value="na">Não se aplica</option><option value="reparado">Reparado</option><option value="impossivel">Impossibilidade de reparar</option></select></label>
+            <label class="campo" data-lc style="grid-column:1/-1">Ocupação lícita (opcional)<input type="text" id="rOcup" placeholder="proposta de emprego formal na empresa ..."></label>
+            <label class="campo">Local<input type="text" id="rLocal" value="Belo Horizonte/MG"></label>
+            <label class="campo">Data<input type="date" id="rData"></label>
+          </div>
+          <div class="checks" style="margin-top:10px">
+            <label class="check"><input type="checkbox" id="rAtestado" checked> Atestado de conduta anexado</label>
+            <label class="check"><input type="checkbox" id="rRemPend"> Remição pendente de declaração</label>
+            <label class="check" data-lc><input type="checkbox" id="rTrab"> Trabalho na unidade (bom desempenho)</label>
+          </div>
+          <h3 style="font-size:15px;margin:14px 0 6px">Advogados que assinam</h3>
+          <div class="checks" id="rAdvs"></div>
+        </div>
+        <div>
+          <div class="linha-btns" style="margin-bottom:8px"><b style="flex:1">Pré-visualização</b><button type="button" class="btn sec peq" id="rCopiar">Copiar texto</button><button type="button" class="btn peq" id="rBaixar">Baixar em Word</button></div>
+          <div id="rFaltas"></div>
+          <div class="folha" id="rFolha"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="rodape">
+  <div class="wrap"><b>TPC ADVOGADOS</b> · HUB Criminal · Execução penal e dosimetria. Cálculo local no navegador; confira o resultado com a guia de execução e o atestado de pena antes de protocolar.</div>
+</footer>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="../assets/hub.js"></script>
+<script src="../assets/doc.js"></script>
+<script src="../assets/peca.js"></script>
+<script src="../prescricao/motor.js"></script>
+<script src="motor.js"></script>
+<script src="requerimento.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

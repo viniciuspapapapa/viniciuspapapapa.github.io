@@ -149,6 +149,41 @@
     return { titulo: "Procuração", paragrafos, local_data: fim(d.local) + ", " + dataExtenso(d.data) + ".", assinaturas };
   }
 
+
+  /* ------------------------------------------------------------------ substabelecimento (mesmo layout da procuração) */
+  /* d = { substabelecente: adv, substabelecidos: [adv], reserva: "com"|"sem", poderes: "todos"|"especificos", poderesTexto,
+           cliente, procedimentos, local, data } */
+  function qualAdv(a) { return [[a.nome, "b"], [", " + flex(a.g, "inscrito", "inscrita") + " na OAB/" + a.uf + " sob o nº " + a.oab, "n"]]; }
+  const ehTPC = a => ADVOGADOS.some(x => x.nome === a.nome && x.oab === a.oab);
+  function montarSubst(d) {
+    const s = d.substabelecente || { nome: "", uf: "", oab: "", g: "m" }, alvos = d.substabelecidos || [];
+    const r = [["Pelo presente instrumento particular, ", "n"], ...qualAdv(s)];
+    if (ehTPC(s)) r.push([", " + flex(s.g, "integrante", "integrante") + " da sociedade de advogados ", "n"], [SOCIEDADE, "b"], [", inscrita no CNPJ sob o nº " + CNPJ_SOC, "n"]);
+    r.push([", substabelece, " + (d.reserva === "sem" ? "sem reserva de poderes" : "com reserva de iguais poderes") + ", em favor de ", "n"]);
+    alvos.forEach((a, i) => { if (i > 0) r.push([i === alvos.length - 1 ? ", e " : ", ", "n"]); r.push(...qualAdv(a)); });
+    r.push([", os poderes que lhe foram conferidos por ", "n"], [fim(d.cliente) || "NOME DO CLIENTE", "b"]);
+    const procs = (d.procedimentos || []).filter(p => fim(p.numero));
+    if (procs.length) { const a = autos(procs); r.push([" para atuação nos autos " + a.texto + a.orgao + ".", "n"]); }
+    else r.push([", nos termos do instrumento de mandato originário.", "n"]);
+    const paragrafos = [r];
+    if (d.poderes === "especificos") paragrafos.push([["O presente substabelecimento é restrito aos poderes para " + fim(d.poderesTexto) + ", " + (d.reserva === "sem" ? "nos limites do mandato originário." : "permanecendo os demais poderes do mandato originário com " + flex(s.g, "o substabelecente", "a substabelecente") + "."), "n"]]);
+    else paragrafos.push([["O presente substabelecimento compreende todos os poderes outorgados no instrumento de mandato originário, inclusive os da cláusula ", "n"], ["ad judicia et extra", "i"], [" e os poderes especiais nele expressamente previstos, podendo " + (alvos.length > 1 ? "os substabelecidos" : flex((alvos[0] || {}).g, "o substabelecido", "a substabelecida")) + " praticar todos os atos necessários à defesa dos interesses " + (procs.length ? "nos referidos autos" : "do mandante") + ".", "n"]]);
+    if (d.reserva === "sem") paragrafos.push([["O substabelecimento sem reserva de poderes é realizado com o prévio e inequívoco conhecimento do cliente, nos termos do art. 26, § 1º, do Código de Ética e Disciplina da Ordem dos Advogados do Brasil.", "n"]]);
+    return { titulo: "Substabelecimento", paragrafos, local_data: fim(d.local) + ", " + dataExtenso(d.data) + ".", assinaturas: [{ nome: s.nome, linhas: ["OAB/" + s.uf + " " + s.oab] }] };
+  }
+  function validarSubst(d) {
+    const f = [], okAdv = a => a && fim(a.nome) && /^[\d.]+$/.test(a.oab || "") && /^[A-Z]{2}$/.test(a.uf || "");
+    if (!okAdv(d.substabelecente)) f.push("nome, UF e OAB do advogado que substabelece");
+    if (!(d.substabelecidos || []).length) f.push("ao menos um advogado substabelecido");
+    else if (!d.substabelecidos.every(okAdv)) f.push("nome, UF e OAB de cada advogado substabelecido");
+    if (d.substabelecente && (d.substabelecidos || []).some(a => a.nome === d.substabelecente.nome && a.oab === d.substabelecente.oab)) f.push("um substabelecido diferente de quem substabelece");
+    if (!fim(d.cliente)) f.push("o nome do cliente que outorgou o mandato");
+    if (d.poderes === "especificos" && !fim(d.poderesTexto)) f.push("a descrição dos poderes substabelecidos");
+    if ((d.procedimentos || []).some(p => fim(p.numero) && !fim(p.orgao))) f.push("o órgão em que tramita cada procedimento");
+    if (!fim(d.local)) f.push("o local");
+    return [...new Set(f)];
+  }
+
   /* ------------------------------------------------------------------ .docx (mesmo XML do gerador da skill) */
   const X = s => String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
   const FONT = '<w:rFonts w:ascii="Segoe UI" w:eastAsia="Segoe UI" w:hAnsi="Segoe UI" w:cs="Segoe UI"/>';
@@ -195,5 +230,5 @@
   }
   function texto(spec) { return [spec.titulo.toUpperCase(), ...spec.paragrafos.map(p => p.map(x => x[0]).join("")), spec.local_data, ...spec.assinaturas.map(a => [a.nome, ...(a.linhas || [])].join("\n"))].join("\n\n"); }
 
-  root.PROCURACAO = { ADVOGADOS, PADRAO, PROCEDIMENTOS, montar, validar, docx, html, texto, dataExtenso };
+  root.PROCURACAO = { ADVOGADOS, PADRAO, PROCEDIMENTOS, montar, validar, montarSubst, validarSubst, docx, html, texto, dataExtenso };
 })(typeof window !== "undefined" ? window : globalThis);

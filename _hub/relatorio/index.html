@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Relatório Processual · HUB Criminal TPC</title>
+<meta name="description" content="Relatório periódico ao cliente: consulta das movimentações no DataJud (CNJ), por texto colado ou pela cópia dos autos, tradução para linguagem acessível e documento no padrão TPC.">
+<meta name="theme-color" content="#f6f4ef">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=DM+Mono:wght@400;500&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/hub.css">
+<style>
+  .heroi { padding: 34px 0 6px; }
+  .bloco { padding: 18px; margin-bottom: 14px; }
+  .bloco > h2 { font-size: 22px; margin-bottom: 4px; }
+  .bloco > p.mudo { margin: 0 0 12px; font-size: 14px; }
+  input[type=date], input[type=url], input[type=password] { width: 100%; border: 1px solid var(--line-2); background: var(--surface); color: var(--ink); border-radius: 8px; padding: 8px 10px; font-size: 14.5px; min-width: 0; }
+  .dica { font-size: 12.5px; color: var(--ink-3); font-weight: 400; }
+  .item { border: 1px solid var(--line); border-radius: 10px; padding: 12px; background: var(--surface-2); margin-bottom: 10px; }
+  .item-cab { display: flex; gap: 8px; align-items: center; margin-bottom: 8px; flex-wrap: wrap; }
+  .item-cab b { flex: 1; font-size: 14px; min-width: 120px; }
+  .x { border: 1px solid var(--line-2); background: var(--surface); border-radius: 8px; width: 34px; height: 34px; cursor: pointer; color: var(--ink-3); font-size: 17px; flex: none; }
+  .fontes { display: flex; gap: 6px 14px; flex-wrap: wrap; margin: 8px 0; }
+  .estado { font-size: 13px; margin-top: 6px; }
+  .estado.ok { color: var(--ok); } .estado.erro { color: var(--bad); } .estado.info { color: var(--ink-3); }
+  .duas { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr); gap: 18px; align-items: start; }
+  @media (max-width: 1020px) { .duas { grid-template-columns: minmax(0, 1fr); } }
+  .folha { max-height: 85vh; overflow: auto; }
+  @media (max-width: 1020px) { .folha { max-height: none; } }
+  .checks { display: grid; gap: 6px; }
+  .aviso { border-left: 3px solid var(--warn); background: var(--warn-bg); padding: 8px 12px; border-radius: 0 8px 8px 0; font-size: 13.5px; margin: 6px 0; }
+  details.cfg > summary { cursor: pointer; font-weight: 600; font-size: 15px; }
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body>
+<header class="topo">
+  <div class="topo-in">
+    <a class="marca" href="../" aria-label="HUB Criminal TPC, página inicial"><span class="marca-tpc">TPC</span><span class="marca-txt"><b>HUB</b> Criminal</span></a>
+    <nav class="migalha" aria-label="Você está em"><span>/</span><span>Relatório processual</span></nav>
+    <div class="espaco"></div>
+    <button class="btn-icone" type="button" onclick="HUB.alternarTema()" aria-label="Alternar tema claro ou escuro" title="Tema"><span data-tema-icone>☾</span></button>
+  </div>
+</header>
+<div class="faixa"></div>
+
+<main class="wrap">
+  <section class="heroi">
+    <div class="sobretitulo">Ferramenta 11 · Relacionamento com o cliente</div>
+    <h1>Relatório processual ao cliente</h1>
+    <p class="lead">Consulta das movimentações de cada processo na base pública do CNJ (DataJud), tradução dos andamentos para linguagem acessível e relatório periódico no padrão TPC, pronto para enviar. Sem conexão com o DataJud, use o texto dos andamentos ou a cópia atualizada dos autos.</p>
+  </section>
+
+  <section class="secao" style="padding-top:18px">
+    <div class="card bloco">
+      <details class="cfg" id="cfgDj">
+        <summary>Conexão com o DataJud <span class="dica" id="djResumo"></span></summary>
+        <p class="pequeno" style="margin:10px 0">O DataJud não permite consulta direta pelo navegador (bloqueio de CORS), por isso a consulta passa por um serviço intermediário próprio do escritório, publicado gratuitamente no Cloudflare Workers. O roteiro de instalação está na pasta <b>datajud-worker</b> do repositório. Endereço e senha ficam salvos apenas neste navegador.</p>
+        <div class="grade g2">
+          <label class="campo">Endereço do serviço<input type="url" id="djUrl" placeholder="https://datajud-tpc.seu-usuario.workers.dev"></label>
+          <label class="campo">Senha do serviço (APP_TOKEN)<input type="password" id="djToken" autocomplete="off"></label>
+        </div>
+        <div class="linha-btns" style="margin-top:10px"><button type="button" class="btn sec peq" id="djSalvar">Salvar e testar</button></div>
+        <div class="estado info" id="djEstado"></div>
+      </details>
+    </div>
+
+    <div class="card bloco">
+      <h2>Cliente e período</h2>
+      <div class="grade g4">
+        <label class="campo" style="grid-column:span 2">Cliente<input type="text" id="cliente"></label>
+        <label class="campo">De<input type="date" id="ini"></label>
+        <label class="campo">Até<input type="date" id="fim"></label>
+        <label class="campo" style="grid-column:span 2">Saudação<input type="text" id="saudacao" placeholder="Prezado Senhor Fulano,"></label>
+        <label class="campo">Local<input type="text" id="local" value="Belo Horizonte/MG"></label>
+        <label class="campo">Carteira salva<select id="carteiras"><option value="">Nova</option></select></label>
+      </div>
+      <div class="linha-btns" style="margin-top:10px"><button type="button" class="btn sec peq" id="salvarCarteira">Salvar processos deste cliente</button><button type="button" class="btn sec peq" id="excluirCarteira">Excluir carteira</button></div>
+    </div>
+
+    <div class="card bloco">
+      <h2>Processos</h2>
+      <p class="mudo">Informe o número no padrão CNJ. O tribunal é identificado pelo próprio número.</p>
+      <div id="procs"></div>
+      <div class="linha-btns"><button type="button" class="btn sec peq" id="addProc">+ Processo</button><button type="button" class="btn peq" id="consultarTodos">Consultar todos no DataJud</button></div>
+    </div>
+
+    <div class="card bloco">
+      <h2>Relatório</h2>
+      <div class="duas">
+        <div>
+          <h3 style="font-size:15px;margin:0 0 6px">Quem assina</h3>
+          <div class="checks" id="advs"></div>
+          <label class="campo" style="margin-top:12px">Parágrafo de abertura (opcional)<textarea id="abertura" rows="3" placeholder="Deixe em branco para usar o texto padrão."></textarea></label>
+        </div>
+        <div>
+          <div class="linha-btns" style="margin-bottom:8px"><b style="flex:1">Pré-visualização</b><button type="button" class="btn sec peq" id="copiar">Copiar para e-mail</button><button type="button" class="btn peq" id="baixar">Baixar em Word</button></div>
+          <div id="faltas"></div>
+          <div class="folha" id="folha"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="rodape">
+  <div class="wrap"><b>TPC ADVOGADOS</b> · HUB Criminal · Relatório processual. Os dados do DataJud são públicos e podem ter defasagem; processos em segredo de justiça não constam da base. Confira antes de enviar ao cliente.</div>
+</footer>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="../assets/hub.js"></script>
+<script src="../assets/doc.js"></script>
+<script src="../assets/peca.js"></script>
+<script src="../estudo-de-caso/leitor.js"></script>
+<script src="../prescricao/motor.js"></script>
+<script src="../estudo-de-caso/catalogo.js"></script>
+<script src="../estudo-de-caso/analise.js"></script>
+<script src="traducao.js"></script>
+<script src="relatorio.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
