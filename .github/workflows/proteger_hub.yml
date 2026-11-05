@@ -31,6 +31,10 @@ jobs:
       - name: Cifrar as páginas do HUB
         env:
           HUB_SENHA: ${{ secrets.HUB_SENHA }}
+          HUB_DATAJUD_URL: ${{ vars.HUB_DATAJUD_URL }}
+          HUB_DATAJUD_TOKEN: ${{ secrets.HUB_DATAJUD_TOKEN }}
+          HUB_OUTLOOK_CLIENT_ID: ${{ vars.HUB_OUTLOOK_CLIENT_ID }}
+          HUB_OUTLOOK_TENANT: ${{ vars.HUB_OUTLOOK_TENANT }}
         run: |
           if [ -z "$HUB_SENHA" ]; then
             echo "::error::Cadastre a senha do HUB no segredo HUB_SENHA (Settings > Secrets and variables > Actions) e execute este fluxo novamente."

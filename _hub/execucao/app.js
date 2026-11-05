@@ -168,6 +168,9 @@
   /* ------------------------------------------------------------------ requerimento */
   $("#rAdvs").innerHTML = T.ADVOGADOS.map(a => '<label class="check"><input type="checkbox" data-adv="' + a.id + '"' + (a.id === "vinicius" || a.id === "renato" ? " checked" : "") + "> " + esc(a.nome) + ' <span class="dica">OAB/' + a.uf + " " + a.oab + "</span></label>").join("");
   let tR = null;
+  const edR = T.editor($("#rFolha"), { aviso: () => { $("#rDescartar").hidden = false; } });
+  $("#rEditar").onclick = () => { const on = !edR.editando(); edR.editar(on); $("#rEditar").textContent = on ? "Concluir edição" : "Editar texto"; $("#rDescartar").hidden = !edR.editado(); };
+  $("#rDescartar").onclick = () => { if (!confirm("Descartar as edições feitas no texto?")) return; edR.descartar(); $("#rEditar").textContent = "Editar texto"; $("#rDescartar").hidden = true; previaR(); };
   function agR() { clearTimeout(tR); tR = setTimeout(previaR, 200); }
   function dadosR() {
     const { e } = ultimaExec;
@@ -195,16 +198,17 @@
     document.querySelectorAll("[data-lc]").forEach(x => { x.hidden = $("#rTipo").value !== "livramento"; });
     const { blocos, faltas, aviso } = blocosR();
     $("#rFaltas").innerHTML = (faltas.length ? '<div class="falta">Para gerar, preencha ou ajuste: ' + esc(faltas.join("; ")) + ".</div>" : "") + (aviso || []).map(a => '<div class="aviso">' + esc(a) + "</div>").join("");
-    $("#rFolha").innerHTML = blocos ? T.html(blocos) : "";
+    edR.mostrar(blocos || []);
+    if (edR.editado()) $("#rFaltas").insertAdjacentHTML("beforeend", '<div class="aviso">O texto foi editado manualmente; alterações no cálculo só entram no documento se você descartar as edições.</div>');
     $("#rBaixar").disabled = !!faltas.length;
   }
   $("#rBaixar").onclick = async () => {
     const { blocos, faltas } = blocosR();
     if (faltas.length) { window.HUB.toast("Preencha: " + faltas[0] + "."); return; }
-    try { T.baixar(await T.docx(blocos), ($("#rTipo").value === "progressao" ? "Requerimento de progressão - " : "Requerimento de livramento condicional - ") + $("#eApenado").value.trim()); }
+    try { T.baixar(await T.docx(edR.blocos()), ($("#rTipo").value === "progressao" ? "Requerimento de progressão - " : "Requerimento de livramento condicional - ") + $("#eApenado").value.trim()); }
     catch (x) { window.HUB.toast(x.message || "Não foi possível gerar o Word.", 5000); }
   };
-  $("#rCopiar").onclick = () => { const { blocos } = blocosR(); if (blocos) window.HUB_DOC.copiar(T.texto(blocos)); };
+  $("#rCopiar").onclick = () => window.HUB_DOC.copiar(T.texto(edR.blocos()));
 
   const h = new Date(), hoje = new Date(Date.UTC(h.getFullYear(), h.getMonth(), h.getDate())).toISOString().slice(0, 10);
   $("#rData").value = hoje;

@@ -4,6 +4,9 @@
   const R = window.RISCO, T = window.TPC_PECA, esc = window.HUB.esc;
   const $ = s => document.querySelector(s);
   let timer = null;
+  const ed = T.editor($("#folha"), { aviso: () => { $("#descartar").hidden = false; } });
+  $("#editar").onclick = () => { const on = !ed.editando(); ed.editar(on); $("#editar").textContent = on ? "Concluir edição" : "Editar texto"; $("#descartar").hidden = !ed.editado(); };
+  $("#descartar").onclick = () => { if (!confirm("Descartar as edições feitas no texto?")) return; ed.descartar(); $("#editar").textContent = "Editar texto"; $("#descartar").hidden = true; atualizar(); };
   const OPC = [["sim", "Sim"], ["parcial", "Parcial"], ["nao", "Não"], ["na", "N/A"]];
   const classe = n => ({ "crítico": "critico", "não avaliado": "na" }[n] || n);
 
@@ -36,10 +39,11 @@
     if (!document.querySelector("[data-adv]:checked")) faltas.push("ao menos um advogado");
     $("#faltas").innerHTML = faltas.length ? '<div class="aviso" style="border-left:3px solid var(--warn);background:var(--warn-bg);padding:8px 12px;border-radius:0 8px 8px 0;font-size:13.5px;margin-bottom:10px">Para gerar, complete: ' + esc(faltas.join("; ")) + ".</div>" : "";
     $("#baixar").disabled = faltas.length > 0;
-    $("#folha").innerHTML = T.html(out.blocos);
+    ed.mostrar(out.blocos);
+    if (ed.editado()) $("#faltas").insertAdjacentHTML("beforeend", '<div class="aviso" style="border-left:3px solid var(--warn);background:var(--warn-bg);padding:8px 12px;border-radius:0 8px 8px 0;font-size:13.5px;margin-bottom:10px">O texto foi editado manualmente; novas respostas só entram no parecer se você descartar as edições.</div>');
   }
-  $("#baixar").onclick = async () => { const { emp, out } = montar(); try { T.baixar(await T.docx(out.blocos), "Parecer de risco penal - " + (emp.nome || "empresa")); } catch (e) { window.HUB.toast(e.message || "Não foi possível gerar o Word.", 5000); } };
-  $("#copiar").onclick = () => window.HUB_DOC.copiar(T.texto(montar().out.blocos));
+  $("#baixar").onclick = async () => { const { emp } = montar(); try { T.baixar(await T.docx(ed.blocos()), "Parecer de risco penal - " + (emp.nome || "empresa")); } catch (e) { window.HUB.toast(e.message || "Não foi possível gerar o Word.", 5000); } };
+  $("#copiar").onclick = () => window.HUB_DOC.copiar(T.texto(ed.blocos()));
   const h = new Date(); $("#data").value = new Date(Date.UTC(h.getFullYear(), h.getMonth(), h.getDate())).toISOString().slice(0, 10);
   atualizar();
 })();

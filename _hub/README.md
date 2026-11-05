@@ -77,7 +77,10 @@ _hub/  (publicada cifrada em hub/)
     traducao.js               Tribunal pelo número CNJ, movimentações do DataJud, do texto colado ou do PDF dos autos,
                               tradução para linguagem acessível e situação atual
     relatorio.js              Relatório periódico ao cliente no padrão TPC
-    app.js                    Conexão com o serviço intermediário, carteiras salvas por cliente e geração
+    base.js                   Base de processos no navegador (IndexedDB): planilha, atualização em lote, cópia de segurança
+    envio.js                  Outlook (Microsoft Graph com MSAL, ou e-mail .eml pronto) e WhatsApp (wa.me)
+    app.js                    Abas da base e do relatório, edição do texto na visualização e envio
+  login/oauth.html            Página de retorno do login Microsoft (pública, sem conteúdo)
   risco/
     questionario.js           Questionário (lavagem, tributário, anticorrupção, ambiental), pontuação e parecer
     app.js                    Interface do questionário e do parecer
@@ -117,6 +120,32 @@ Os arquivos de `dados/` são arrays JavaScript simples. Para incluir novos itens
 Cada critério em `regras.js` tem `pos` (indícios de cumprimento) e `neg` (indícios de vício), em expressões regulares aplicadas sobre texto
 minúsculo e sem acentos, além das minutas `falta` e `vicio` usadas no relatório (`{v}` é o vestígio; `{p}` as páginas).
 
+## Configurações das integrações
+
+O endereço e a senha do serviço do DataJud e o ID do aplicativo Microsoft 365 não ficam nas fontes (o repositório é
+público): `_ferramentas/proteger-hub.mjs` os incorpora apenas às páginas cifradas, a partir das variáveis
+`HUB_DATAJUD_URL` (padrão: o Worker `datajud-tpc` do escritório), `HUB_DATAJUD_TOKEN` (padrão: a própria `HUB_SENHA`),
+`HUB_OUTLOOK_CLIENT_ID` e `HUB_OUTLOOK_TENANT`. No fluxo "Proteger HUB", cadastre-as em Settings > Secrets and variables >
+Actions (o token como segredo; as demais como variáveis). Cada navegador pode sobrepor esses valores na própria ferramenta.
+
+## Envio pelo Outlook (Microsoft 365)
+
+O botão "Enviar pelo Outlook" envia o e-mail com o relatório anexado pela conta Microsoft 365 do advogado, por meio do
+Microsoft Graph. Para habilitá-lo, uma única vez:
+
+1. Em <https://entra.microsoft.com>, abra Aplicativos > Registros de aplicativo > Novo registro. Nome: `HUB TPC Relatórios`.
+   Tipos de conta: "Somente contas deste diretório organizacional" (ou, se o e-mail do escritório não for Microsoft 365
+   corporativo, "contas de qualquer diretório e contas Microsoft pessoais").
+2. Em URI de redirecionamento, escolha a plataforma "Aplicativo de página única (SPA)" e informe
+   `https://viniciuspapapapa.github.io/hub/login/oauth.html`.
+3. Em Permissões de API, confirme `Microsoft Graph > Delegadas > Mail.Send` (e `User.Read`). Se o diretório exigir,
+   um administrador concede o consentimento.
+4. Copie o "ID do aplicativo (cliente)" e o "ID do diretório (locatário)" e informe-os na ferramenta (Configuração do
+   Outlook) ou nas variáveis `HUB_OUTLOOK_CLIENT_ID` e `HUB_OUTLOOK_TENANT`.
+
+Sem essa configuração, "Abrir no Outlook" gera um e-mail .eml com destinatário, assunto, texto e anexo, que o Outlook
+para Windows ou Mac abre como mensagem nova, pronta para enviar.
+
 ## Relatório processual e DataJud
 
 A API Pública do DataJud responde a consultas de servidor, mas não envia o cabeçalho `Access-Control-Allow-Origin`, de
@@ -124,6 +153,10 @@ modo que o navegador bloqueia a consulta direta. A pasta `datajud-worker/` cont�
 Worker gratuito) e o roteiro de instalação em `LEIA-ME.md`. O endereço do Worker e a senha são informados na própria
 ferramenta e ficam salvos apenas no navegador. Sem o Worker, a ferramenta funciona com o texto dos andamentos ou com a
 cópia atualizada dos autos em PDF.
+
+A base de processos (planilha com número CNJ, cliente, identificação, e-mail e WhatsApp) fica no IndexedDB do navegador.
+Ao abrir a ferramenta, os processos sem consulta há mais de 24 horas são atualizados automaticamente, três por vez. Use
+"Exportar cópia de segurança" periodicamente e "Restaurar cópia" para levar a base a outro computador.
 
 ## Execução penal
 
