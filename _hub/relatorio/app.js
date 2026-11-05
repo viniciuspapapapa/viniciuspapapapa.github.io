@@ -31,11 +31,16 @@
   async function chamar(caminho, corpo) {
     const c = cfg();
     if (!c.url) throw new Error("Configure a conexão com o DataJud ou use o texto dos andamentos ou o PDF dos autos.");
-    let r;
-    try { r = await fetch(String(c.url).replace(/\/+$/, "") + caminho, { method: corpo ? "POST" : "GET", headers: Object.assign({ "Content-Type": "application/json" }, c.token ? { "x-app-token": c.token } : {}), body: corpo ? JSON.stringify(corpo) : undefined }); }
-    catch (e) { throw new Error("Não foi possível alcançar o serviço intermediário do DataJud. Verifique a conexão."); }
+    let r = null;
+    /* falhas de rede passageiras (implantação em curso no Cloudflare, DataJud lento): até três tentativas */
+    for (let t = 0; t < 3 && !r; t++) {
+      if (t) await new Promise(ok => setTimeout(ok, 2500 * t));
+      try { r = await fetch(String(c.url).replace(/\/+$/, "") + caminho, { method: corpo ? "POST" : "GET", headers: Object.assign({ "Content-Type": "application/json" }, c.token ? { "x-app-token": c.token } : {}), body: corpo ? JSON.stringify(corpo) : undefined }); }
+      catch (e) { r = null; }
+    }
+    if (!r) throw new Error("Não foi possível alcançar o serviço intermediário do DataJud depois de três tentativas. Verifique a conexão; se persistir, abra o endereço do serviço seguido de /status para conferir se ele está no ar.");
     const j = await r.json().catch(() => ({}));
-    if (!r.ok) throw new Error(r.status === 401 ? "Senha do serviço do DataJud recusada." : j.erro || "O serviço respondeu " + r.status + ".");
+    if (!r.ok) throw new Error(r.status === 401 ? "Senha do serviço do DataJud recusada." : r.status === 404 && !j.erro ? "O serviço do DataJud está sem o código publicado (resposta 404). Confira a implantação no Cloudflare." : j.erro || "O serviço respondeu " + r.status + ".");
     return j;
   }
   const consultarDJ = n => chamar("/consulta", { numero: T.dig(n) });
