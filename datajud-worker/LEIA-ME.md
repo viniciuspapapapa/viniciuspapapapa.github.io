@@ -23,6 +23,10 @@ branco. Para corrigir, abra o Worker, vá a Settings > Build e informe `datajud-
 de build ficam vazios e o de implantação é `npx wrangler deploy`). Depois, clique em "Retry build" ou faça nova
 implantação. A partir daí, cada publicação implanta o código correto, e o `APP_TOKEN`, como segredo, é preservado.
 
+Como proteção adicional, a raiz do repositório tem um `wrangler.toml` que aponta para `datajud-worker/worker.js`: mesmo
+que o "Root directory" fique em branco, a implantação automática publica o serviço, e não o site. Os dois arquivos
+`wrangler.toml` (raiz e `datajud-worker/`) devem permanecer iguais.
+
 ## Configuração pela linha de comando
 
 ```bash
