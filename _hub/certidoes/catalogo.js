@@ -1,0 +1,58 @@
+/* Catálogo dos serviços públicos de certidão (conferido em novembro de 2026).
+   "ok": endereço respondeu ao teste automático ou está protegido contra robôs (o que confirma o serviço);
+   "doc": endereço indicado em documentos oficiais recentes, mas o servidor não respondeu ao teste feito fora do Brasil;
+   "portal": endereço da página de certidões do tribunal, onde se escolhe a certidão criminal.
+   Os endereços mudam com frequência: em caso de erro, use o botão "Portal" ou edite o link no próprio painel. */
+(function (root) {
+  "use strict";
+  const UF_NOME = { AC: "Acre", AL: "Alagoas", AP: "Amapá", AM: "Amazonas", BA: "Bahia", CE: "Ceará", DF: "Distrito Federal", ES: "Espírito Santo", GO: "Goiás", MA: "Maranhão", MT: "Mato Grosso", MS: "Mato Grosso do Sul", MG: "Minas Gerais", PA: "Pará", PB: "Paraíba", PR: "Paraná", PE: "Pernambuco", PI: "Piauí", RJ: "Rio de Janeiro", RN: "Rio Grande do Norte", RS: "Rio Grande do Sul", RO: "Rondônia", RR: "Roraima", SC: "Santa Catarina", SP: "São Paulo", SE: "Sergipe", TO: "Tocantins" };
+  const TRF_DA_UF = { AC: 1, AM: 1, AP: 1, BA: 1, DF: 1, GO: 1, MA: 1, MT: 1, PA: 1, PI: 1, RO: 1, RR: 1, TO: 1, RJ: 2, ES: 2, SP: 3, MS: 3, PR: 4, RS: 4, SC: 4, AL: 5, CE: 5, PB: 5, PE: 5, RN: 5, SE: 5, MG: 6 };
+  const TJ = (uf, sigla, url, st, portal, nota) => ({ id: sigla.toLowerCase(), grupo: "estadual", sigla, uf, nome: (uf === "DF" ? "Tribunal de Justiça do Distrito Federal e dos Territórios" : "Tribunal de Justiça do Estado " + (["AC", "AP", "AM", "CE", "ES", "MA", "PA", "PR", "PI", "RJ", "RN", "RS", "TO"].includes(uf) ? "do " : ["BA", "PB"].includes(uf) ? "da " : "de ") + UF_NOME[uf]), url, st, portal, nota });
+
+  const ITENS = [
+    TJ("AC", "TJAC", "https://certidoes.tjac.jus.br/", "doc", "https://www.tjac.jus.br/", "O antigo endereço do e-SAJ redireciona para este portal de certidões."),
+    TJ("AL", "TJAL", "https://www2.tjal.jus.br/sco/abrirCadastro.do", "ok", "https://www.tjal.jus.br/", "Sistema e-SAJ: escolha o modelo de certidão criminal."),
+    TJ("AP", "TJAP", "https://tucujuris.tjap.jus.br/tucujuris/pages/certidao-publica/certidao-publica.html", "ok", "https://www.tjap.jus.br/portal/certidoes.html", "Sistema Tucujuris (certidão pública)."),
+    TJ("AM", "TJAM", "https://consultasaj.tjam.jus.br/sco/abrirCadastro.do", "doc", "https://www.tjam.jus.br/", "Sistema e-SAJ: escolha o modelo de certidão criminal."),
+    TJ("BA", "TJBA", "https://portalcertidoes.tjba.jus.br/", "ok", "https://www.tjba.jus.br/", "Portal de certidões: há opções separadas para 1º e 2º grau; a criminal dispensa o pagamento de DAJ."),
+    TJ("CE", "TJCE", "https://sirece.tjce.jus.br/sirece-web/", "ok", "https://www.tjce.jus.br/", "Sistema Sirece: Pessoa Física, natureza Criminal, tipo Certidão Judicial; abrange 1º e 2º grau. Homônimos e registros criminais impedem a emissão online."),
+    TJ("DF", "TJDFT", "https://cnc.tjdft.jus.br/solicitacao-externa", "doc", "https://www.tjdft.jus.br/servicos/certidoes/certidao-nada-consta", "Certidão Nada Consta (criminal ou especial cível e criminal). Se positiva, o TJDFT orienta comparecer ao Nucer."),
+    TJ("ES", "TJES", "https://sistemas.tjes.jus.br/certidaonegativa/sistemas/certidao/CERTIDAOPESQUISA.cfm", "ok", "https://www.tjes.jus.br/", "Certidão negativa online; havendo registro ou homônimo, o pedido segue ao protocolo do fórum."),
+    TJ("GO", "TJGO", "https://projudi.tjgo.jus.br/CertidaoNegativaPositivaPublica?PaginaAtual=1&TipoArea=2&InteressePessoal=S", "ok", "https://www.tjgo.jus.br/", "Projudi: área Criminal já selecionada pelo link."),
+    TJ("MA", "TJMA", "https://jurisconsult.tjma.jus.br/#/certidao-generate-state-certificate-form", "ok", "https://www.tjma.jus.br/", "Jurisconsult (Resolução GP 28/2018), gratuita."),
+    TJ("MT", "TJMT", "https://sec.tjmt.jus.br/primeiro-grau/certidao-negativa-pessoa-fisica", "ok", "https://www.tjmt.jus.br/", "Certidão de 1º grau; o 2º grau tem opção própria no mesmo sistema."),
+    TJ("MS", "TJMS", "https://esaj.tjms.jus.br/sco/abrirCadastro.do", "doc", "https://www.tjms.jus.br/", "e-SAJ: a certidão é enviada por e-mail; se positiva ou com inconsistência, deve ser retirada no distribuidor."),
+    TJ("MG", "TJMG", "https://rupe.tjmg.jus.br/rupe/justica/publico/certidoes/criarSolicitacaoCertidao.rupe?solicitacaoPublica=true", "ok", "https://www.tjmg.jus.br/portal-tjmg/processos/certidao-judicial/", "Sistema RUPE, com reCAPTCHA; escolha a certidão criminal (1ª e 2ª instância)."),
+    TJ("PA", "TJPA", "https://consultas.tjpa.jus.br/certidao/pages/pesquisaGeralCentralCertidao.action", "ok", "https://www.tjpa.jus.br/", "Central de certidões."),
+    TJ("PB", "TJPB", "https://app.tjpb.jus.br/certo/paginas/publico/solicitarCertidao.jsf", "ok", "https://www.tjpb.jus.br/", "Sistema Certo."),
+    TJ("PR", "TJPR", "https://www.tjpr.jus.br/certidoes", "ok", "https://www.tjpr.jus.br/", "Página de certidões: escolha a de distribuição criminal."),
+    TJ("PE", "TJPE", "https://portal.tjpe.jus.br/web/antecedentes-criminais", "ok", "https://portal.tjpe.jus.br/certidoes", "Certidão de antecedentes criminais; homônimos exigem atendimento presencial."),
+    TJ("PI", "TJPI", "https://www.tjpi.jus.br/themisconsulta/certidao", "ok", "https://www.tjpi.jus.br/", "Sistema Themis."),
+    TJ("RJ", "TJRJ", "https://www.tjrj.jus.br/", "portal", "https://www.tjrj.jus.br/", "Certidão de distribuição criminal gratuita pelo formulário do Portal Extrajudicial (acesso pela página inicial do TJRJ). Na capital, a distribuição abrange os ofícios de registro de distribuição."),
+    TJ("RN", "TJRN", "https://apps.tjrn.jus.br/certidoes/f/public/form.xhtml", "ok", "https://www.tjrn.jus.br/", "Formulário público de certidões."),
+    TJ("RS", "TJRS", "https://www.tjrs.jus.br/novo/processos-e-servicos/servicos-processuais/emissao-de-antecedentes-e-certidoes/", "doc", "https://www.tjrs.jus.br/", "Emissão de antecedentes e certidões, gratuita."),
+    TJ("RO", "TJRO", "https://www.tjro.jus.br/certidao-unificada/certidaoPublicaEmitir", "ok", "https://www.tjro.jus.br/", "Certidão unificada."),
+    TJ("RR", "TJRR", "https://certidao.tjrr.jus.br/certidao/pages/certidao/certidao-negativa", "ok", "https://www.tjrr.jus.br/", "Só emite online quando o resultado é “nada consta”."),
+    TJ("SC", "TJSC", "https://www.tjsc.jus.br/certidoes", "ok", "https://www.tjsc.jus.br/certidoes", "Pedido online gratuito no modelo criminal (inclui juizados especiais criminais)."),
+    TJ("SP", "TJSP", "https://esaj.tjsp.jus.br/sco/abrirCadastro.do", "ok", "https://www.tjsp.jus.br/Certidoes/Certidoes/CertidoesPrimeiraInstancia", "e-SAJ com reCAPTCHA: escolha a certidão de distribuição de ações criminais. O pedido é processado e a certidão é disponibilizada depois."),
+    TJ("SE", "TJSE", "https://www.tjse.jus.br/portal/servicos/judiciais/certidao-judicial/solicitar-certidao-judicial", "ok", "https://www.tjse.jus.br/portal/servicos/judiciais/certidao-judicial", "Solicitação de certidão judicial."),
+    TJ("TO", "TJTO", "https://siscoce.tjto.jus.br/solicitacao_certidao/solicitar", "doc", "https://www.tjto.jus.br/", "Siscoce."),
+    { id: "trf1", grupo: "federal", sigla: "TRF1", regiao: 1, nome: "Justiça Federal da 1ª Região (AC, AM, AP, BA, DF, GO, MA, MT, PA, PI, RO, RR e TO)", url: "https://sistemas.trf1.jus.br/certidao/", st: "ok", portal: "https://www.trf1.jus.br/", nota: "Escolha certidão criminal; há opções para 1º e 2º grau." },
+    { id: "trf2", grupo: "federal", sigla: "TRF2", regiao: 2, nome: "Justiça Federal da 2ª Região (RJ e ES)", url: "https://certidoes.trf2.jus.br/certidoes/", st: "ok", portal: "https://www.trf2.jus.br/", nota: "" },
+    { id: "trf3", grupo: "federal", sigla: "TRF3", regiao: 3, nome: "Justiça Federal da 3ª Região (SP e MS)", url: "https://web.trf3.jus.br/certidao-regional/", st: "doc", portal: "https://www.trf3.jus.br/", nota: "Certidão regional." },
+    { id: "trf4", grupo: "federal", sigla: "TRF4", regiao: 4, nome: "Justiça Federal da 4ª Região (RS, PR e SC)", url: "https://www2.trf4.jus.br/trf4/processos/certidao/index.php", st: "ok", portal: "https://www.trf4.jus.br/", nota: "" },
+    { id: "trf5", grupo: "federal", sigla: "TRF5", regiao: 5, nome: "Justiça Federal da 5ª Região (AL, CE, PB, PE, RN e SE)", url: "https://certidoes.trf5.jus.br/certidoes2022/", st: "ok", portal: "https://www.trf5.jus.br/", nota: "" },
+    { id: "trf6", grupo: "federal", sigla: "TRF6", regiao: 6, nome: "Justiça Federal da 6ª Região (MG)", url: "https://sistemas.trf6.jus.br/certidao/", st: "ok", portal: "https://portal.trf6.jus.br/", nota: "O TRF6 orienta emitir uma certidão por instância e por sistema (e-Proc e PJe)." },
+    { id: "stm", grupo: "militar", sigla: "STM", nome: "Justiça Militar da União (Superior Tribunal Militar)", url: "https://www2.stm.jus.br/certidao_negativa/", st: "ok", portal: "https://www.stm.jus.br/", nota: "Certidão negativa criminal; validade de 90 dias." },
+    { id: "tjmmg", grupo: "militar", sigla: "TJMMG", uf: "MG", nome: "Tribunal de Justiça Militar de Minas Gerais", url: "https://tjmmg.jus.br/certidao-negativa/", st: "ok", portal: "https://www.tjmmg.jus.br/", nota: "Relevante para militares estaduais." },
+    { id: "tjmsp", grupo: "militar", sigla: "TJMSP", uf: "SP", nome: "Tribunal de Justiça Militar de São Paulo", url: "https://www.tjmsp.jus.br/", st: "portal", portal: "https://www.tjmsp.jus.br/", nota: "Abra a seção de certidões no portal. Relevante para militares estaduais." },
+    { id: "tjmrs", grupo: "militar", sigla: "TJMRS", uf: "RS", nome: "Tribunal de Justiça Militar do Rio Grande do Sul", url: "https://www.tjmrs.jus.br/certidoes/solicitar", st: "ok", portal: "https://www.tjmrs.jus.br/certidoes/", nota: "Relevante para militares estaduais." },
+    { id: "tse", grupo: "eleitoral", sigla: "TSE", nome: "Justiça Eleitoral (certidão de crimes eleitorais)", url: "https://www.tse.jus.br/servicos-eleitorais/certidoes/certidao-de-crimes-eleitorais", st: "ok", portal: "https://www.tse.jus.br/servicos-eleitorais/certidoes", nota: "Pede dados do título ou nome da mãe e data de nascimento; divergência cadastral impede a emissão." },
+    { id: "stf", grupo: "superior", sigla: "STF", nome: "Supremo Tribunal Federal", url: "https://portal.stf.jus.br/servicos/certidao/", st: "ok", portal: "https://portal.stf.jus.br/", nota: "Certidão de distribuição; emissão online quando negativa." },
+    { id: "stj", grupo: "superior", sigla: "STJ", nome: "Superior Tribunal de Justiça", url: "https://processo.stj.jus.br/processo/certidao/inicio", st: "ok", portal: "https://www.stj.jus.br/sites/portalp/Servicos/Certidoes", nota: "Certidão judicial gratuita (IN STJ/GP 41/2023)." },
+    { id: "pf", grupo: "policia", sigla: "PF", nome: "Polícia Federal (antecedentes criminais)", url: "https://www.gov.br/pf/pt-br/assuntos/antecedentes-criminais", st: "ok", portal: "https://www.gov.br/pf/pt-br/assuntos/antecedentes-criminais", nota: "Exige login gov.br; validade de 90 dias. Homônimos exigem comparecimento a posto da PF." },
+    { id: "bnmp", grupo: "policia", sigla: "BNMP", nome: "Banco Nacional de Mandados de Prisão (CNJ)", url: "https://portalbnmp.cnj.jus.br/", st: "ok", portal: "https://portalbnmp.cnj.jus.br/", nota: "Consulta pública de mandados (não emite certidão em PDF); exige cadastro prévio do consulente e registra a consulta." }
+  ];
+  const GRUPOS = [["estadual", "Justiça Estadual"], ["federal", "Justiça Federal"], ["militar", "Justiça Militar"], ["eleitoral", "Justiça Eleitoral"], ["superior", "Tribunais Superiores"], ["policia", "Polícia Federal e mandados de prisão"]];
+  root.CERT_CAT = { ITENS, GRUPOS, UF_NOME, TRF_DA_UF };
+})(typeof window !== "undefined" ? window : globalThis);
