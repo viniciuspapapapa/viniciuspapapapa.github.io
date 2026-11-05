@@ -1,0 +1,10 @@
+# Implantação do serviço intermediário do DataJud (Cloudflare Worker "datajud-tpc").
+# Este arquivo existe para que a implantação automática do Cloudflare (Workers Builds), quando executada a partir da
+# raiz deste repositório, publique sempre o código do serviço, e não o site. Mantenha igual a datajud-worker/wrangler.toml.
+name = "datajud-tpc"
+main = "datajud-worker/worker.js"
+compatibility_date = "2026-09-01"
+keep_vars = true
+
+[vars]
+ALLOWED_ORIGIN = "https://viniciuspapapapa.github.io"
