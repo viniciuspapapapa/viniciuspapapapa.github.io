@@ -43,7 +43,8 @@
     if (!r.ok) throw new Error(r.status === 401 ? "Senha do serviço do DataJud recusada." : r.status === 404 && !j.erro ? "O serviço do DataJud está sem o código publicado (resposta 404). Confira a implantação no Cloudflare." : j.erro || "O serviço respondeu " + r.status + ".");
     return j;
   }
-  const consultarDJ = n => chamar("/consulta", { numero: T.dig(n) });
+  /* o serviço devolve a resposta do DataJud sem alterações (hits.hits[]._source); versões antigas devolviam { processos } */
+  const consultarDJ = async n => { const j = await chamar("/consulta", { numero: T.dig(n) }); return j.processos ? j : { numero: T.dig(n), processos: ((j.hits || {}).hits || []).map(h => h._source) }; };
   $("#djSalvar").onclick = async () => {
     gravar("relatorio_datajud", $("#djUrl").value.trim() ? { url: $("#djUrl").value.trim(), token: $("#djToken").value.trim() } : null); resumoCfg();
     const e = $("#djEstado"); e.className = "estado info"; e.textContent = "Testando…";

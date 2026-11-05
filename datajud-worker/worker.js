@@ -42,7 +42,7 @@ export default {
     try {
       if (env.APP_TOKEN && req.headers.get('x-app-token') !== env.APP_TOKEN) return json({ erro: 'Não autorizado.' }, 401, cors);
       const p = url.pathname.replace(/\/+$/, '') || '/';
-      if (p === '/status' || p === '/') return json({ ok: true, servico: 'datajud', origem: env.ALLOWED_ORIGIN || '*' }, 200, cors);
+      if (p === '/status' || p === '/') return json({ ok: true, servico: 'datajud', versao: 2, origem: env.ALLOWED_ORIGIN || '*' }, 200, cors);
       if (p === '/consulta' && req.method === 'POST') {
         const corpo = await req.json().catch(() => ({}));
         const numero = String(corpo.numero || '').replace(/\D/g, '');
@@ -57,11 +57,14 @@ export default {
         /* o DataJud devolve 429 quando sobrecarregado: até duas novas tentativas */
         let r = await consultar();
         for (let i = 1; i <= 2 && (r.status === 429 || r.status >= 500); i++) { await new Promise(ok => setTimeout(ok, 1200 * i)); r = await consultar(); }
-        const txt = await r.text();
-        let data = null; try { data = JSON.parse(txt); } catch { data = null; }
-        if (!r.ok || !data) return json({ erro: r.status === 429 ? 'O DataJud está sobrecarregado no momento. Tente novamente em alguns instantes.' : `O DataJud respondeu ${r.status}.`, detalhe: txt.slice(0, 300) }, 502, cors);
-        const processos = (data.hits?.hits || []).map(h => h._source);
-        return json({ numero, tribunal: alias, processos, consultadoEm: new Date().toISOString() }, 200, cors);
+        if (!r.ok) {
+          const txt = await r.text();
+          return json({ erro: r.status === 429 ? 'O DataJud está sobrecarregado no momento. Tente novamente em alguns instantes.' : `O DataJud respondeu ${r.status}.`, detalhe: txt.slice(0, 300) }, 502, cors);
+        }
+        /* repassa a resposta do DataJud sem lê-la: processos com centenas de movimentações estouravam o limite de
+           processamento do plano gratuito (10 ms), e o Cloudflare devolvia erro sem os cabeçalhos de CORS.
+           O HUB lê hits.hits[]._source. */
+        return new Response(r.body, { status: 200, headers: Object.assign({ 'Content-Type': 'application/json; charset=utf-8', 'X-Tribunal': alias }, cors) });
       }
       return json({ erro: 'Rota inexistente.' }, 404, cors);
     } catch (e) {
