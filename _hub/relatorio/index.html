@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Relatório Processual · HUB Criminal TPC</title>
-<meta name="description" content="Relatório periódico ao cliente: consulta das movimentações no DataJud (CNJ), por texto colado ou pela cópia dos autos, tradução para linguagem acessível e documento no padrão TPC.">
+<meta name="description" content="Base de processos do escritório atualizada no DataJud (CNJ), relatório periódico ao cliente em linguagem acessível, editável na tela e enviado pelo Outlook ou pelo WhatsApp.">
 <meta name="theme-color" content="#f6f4ef">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -31,6 +31,22 @@
   .checks { display: grid; gap: 6px; }
   .aviso { border-left: 3px solid var(--warn); background: var(--warn-bg); padding: 8px 12px; border-radius: 0 8px 8px 0; font-size: 13.5px; margin: 6px 0; }
   details.cfg > summary { cursor: pointer; font-weight: 600; font-size: 15px; }
+  .abas { margin: 18px 0 16px; }
+  .barra { height: 8px; background: var(--line); border-radius: 99px; overflow: hidden; }
+  .barra i { display: block; height: 100%; width: 0; background: var(--ink-2); transition: width .2s; }
+  .tw { overflow-x: auto; border: 1px solid var(--line); border-radius: 8px; max-height: 70vh; overflow-y: auto; }
+  table.t { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+  table.t th { text-align: left; background: var(--surface-2); color: var(--ink-2); font-weight: 500; padding: 8px 10px; border-bottom: 1px solid var(--line); white-space: nowrap; position: sticky; top: 0; z-index: 1; }
+  table.t td { padding: 8px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  table.t td.num { white-space: nowrap; font-family: var(--mono); font-size: 12.5px; }
+  table.t .mini { display: block; font-size: 12px; color: var(--ink-3); }
+  table.t .novas { display: inline-block; font-size: 11px; background: var(--warn-bg); color: var(--warn); border-radius: 99px; padding: 1px 8px; margin-left: 4px; font-weight: 600; }
+  table.t .falha { color: var(--bad); font-size: 12px; }
+  table.t button.lnk { border: 0; background: none; color: var(--ink-3); cursor: pointer; font-size: 12px; padding: 0; text-decoration: underline; }
+  .envio { display: grid; gap: 4px; }
+  .envio .btn { justify-content: center; }
+  .envio .dica { margin: 0 0 10px; }
+  input[type=tel], input[type=search] { width: 100%; border: 1px solid var(--line-2); background: var(--surface); color: var(--ink); border-radius: 8px; padding: 8px 10px; font-size: 14.5px; min-width: 0; }
   [hidden] { display: none !important; }
 </style>
 </head>
@@ -49,41 +65,93 @@
   <section class="heroi">
     <div class="sobretitulo">Ferramenta 11 · Relacionamento com o cliente</div>
     <h1>Relatório processual ao cliente</h1>
-    <p class="lead">Consulta das movimentações de cada processo na base pública do CNJ (DataJud), tradução dos andamentos para linguagem acessível e relatório periódico no padrão TPC, pronto para enviar. Sem conexão com o DataJud, use o texto dos andamentos ou a cópia atualizada dos autos.</p>
+    <p class="lead">Base de processos do escritório alimentada por planilha e atualizada no DataJud, a base pública do CNJ. Os andamentos são traduzidos para linguagem acessível e geram um relatório no padrão TPC, que pode ser editado na própria tela e enviado ao cliente pelo Outlook ou pelo WhatsApp.</p>
   </section>
 
-  <section class="secao" style="padding-top:18px">
+  <div class="abas" role="tablist">
+    <button type="button" class="aba" role="tab" aria-selected="true" data-aba="base">Base de processos <span class="cont" id="contBase">0</span></button>
+    <button type="button" class="aba" role="tab" aria-selected="false" data-aba="relatorio">Relatório e envio</button>
+  </div>
+
+  <!-- ================================================================ BASE -->
+  <section id="aba-base">
     <div class="card bloco">
       <details class="cfg" id="cfgDj">
         <summary>Conexão com o DataJud <span class="dica" id="djResumo"></span></summary>
-        <p class="pequeno" style="margin:10px 0">O DataJud não permite consulta direta pelo navegador (bloqueio de CORS), por isso a consulta passa por um serviço intermediário próprio do escritório, publicado gratuitamente no Cloudflare Workers. O roteiro de instalação está na pasta <b>datajud-worker</b> do repositório. Endereço e senha ficam salvos apenas neste navegador.</p>
+        <p class="pequeno" style="margin:10px 0">A consulta passa pelo serviço intermediário do escritório no Cloudflare, porque o DataJud não aceita consultas feitas diretamente pelo navegador. O acesso já vem configurado no HUB; preencha os campos abaixo apenas para usar outro endereço ou outra senha neste navegador.</p>
         <div class="grade g2">
           <label class="campo">Endereço do serviço<input type="url" id="djUrl" placeholder="https://datajud-tpc.seu-usuario.workers.dev"></label>
           <label class="campo">Senha do serviço (APP_TOKEN)<input type="password" id="djToken" autocomplete="off"></label>
         </div>
-        <div class="linha-btns" style="margin-top:10px"><button type="button" class="btn sec peq" id="djSalvar">Salvar e testar</button></div>
+        <div class="linha-btns" style="margin-top:10px"><button type="button" class="btn sec peq" id="djSalvar">Salvar e testar</button><button type="button" class="btn sec peq" id="djPadrao">Usar a configuração do escritório</button></div>
         <div class="estado info" id="djEstado"></div>
       </details>
     </div>
 
     <div class="card bloco">
-      <h2>Cliente e período</h2>
-      <div class="grade g4">
-        <label class="campo" style="grid-column:span 2">Cliente<input type="text" id="cliente"></label>
-        <label class="campo">De<input type="date" id="ini"></label>
-        <label class="campo">Até<input type="date" id="fim"></label>
-        <label class="campo" style="grid-column:span 2">Saudação<input type="text" id="saudacao" placeholder="Prezado Senhor Fulano,"></label>
-        <label class="campo">Local<input type="text" id="local" value="Belo Horizonte/MG"></label>
-        <label class="campo">Carteira salva<select id="carteiras"><option value="">Nova</option></select></label>
+      <h2>Base de processos</h2>
+      <p class="mudo" id="baseResumo">Carregando…</p>
+      <div class="linha-btns">
+        <label class="btn peq" style="cursor:pointer">Importar planilha<input type="file" id="planilha" accept=".xlsx,.xls,.csv,.ods" hidden></label>
+        <button type="button" class="btn sec peq" id="modelo">Baixar planilha modelo</button>
+        <button type="button" class="btn sec peq" id="novoProc">+ Processo</button>
+        <button type="button" class="btn sec peq" id="exportar">Exportar cópia de segurança</button>
+        <label class="btn sec peq" style="cursor:pointer">Restaurar cópia<input type="file" id="restaurar" accept=".json" hidden></label>
       </div>
-      <div class="linha-btns" style="margin-top:10px"><button type="button" class="btn sec peq" id="salvarCarteira">Salvar processos deste cliente</button><button type="button" class="btn sec peq" id="excluirCarteira">Excluir carteira</button></div>
+      <div class="grade g4" id="formNovo" hidden style="margin-top:12px">
+        <label class="campo">Número (CNJ)<input type="text" id="nNumero" inputmode="numeric" placeholder="0000000-00.0000.0.00.0000"></label>
+        <label class="campo">Cliente<input type="text" id="nCliente" list="listaClientes"></label>
+        <label class="campo">Identificação (opcional)<input type="text" id="nApelido"></label>
+        <div class="campo" style="justify-content:end"><button type="button" class="btn peq" id="nIncluir">Incluir na base</button></div>
+      </div>
+      <datalist id="listaClientes"></datalist>
+      <div id="importInfo"></div>
+      <label class="check" style="margin-top:12px"><input type="checkbox" id="autoAtualizar" checked> Atualizar automaticamente ao abrir a ferramenta os processos sem consulta há mais de 24 horas</label>
     </div>
 
     <div class="card bloco">
-      <h2>Processos</h2>
-      <p class="mudo">Informe o número no padrão CNJ. O tribunal é identificado pelo próprio número.</p>
+      <div class="grade g4">
+        <label class="campo">Cliente<select id="fCliente"><option value="">Todos os clientes</option></select></label>
+        <label class="campo" style="grid-column:span 2">Buscar<input type="search" id="fBusca" placeholder="Número, identificação ou andamento"></label>
+        <label class="campo">Mostrar<select id="fMostrar"><option value="">Todos</option><option value="novas">Com movimentação nova</option><option value="erro">Com falha na consulta</option><option value="nunca">Nunca consultados</option></select></label>
+      </div>
+      <div class="linha-btns" style="margin-top:12px">
+        <label class="check"><input type="checkbox" id="selTodos"> Selecionar os exibidos</label>
+        <span class="espaco"></span>
+        <button type="button" class="btn peq" id="atuSel">Atualizar selecionados</button>
+        <button type="button" class="btn sec peq" id="atuTodos">Atualizar todos os exibidos</button>
+        <button type="button" class="btn sec peq" id="relSel">Relatório dos selecionados</button>
+        <button type="button" class="btn sec peq" id="lidos">Marcar novidades como vistas</button>
+        <button type="button" class="btn sec peq perigo" id="remSel">Remover selecionados</button>
+      </div>
+      <div id="progresso" hidden style="margin-top:12px"><div class="barra"><i id="progBarra"></i></div><div class="linha-btns" style="margin-top:6px"><span class="pequeno" id="progTxt" style="flex:1"></span><button type="button" class="btn sec peq" id="cancelar">Interromper</button></div></div>
+      <div class="tw" style="margin-top:12px"><table class="t" id="tabela"><thead><tr><th></th><th>Processo</th><th>Cliente</th><th>Último andamento</th><th>Consulta</th></tr></thead><tbody></tbody></table></div>
+      <p class="pequeno mudo" id="rodapeTabela"></p>
+    </div>
+  </section>
+
+  <!-- ================================================================ RELATÓRIO -->
+  <section id="aba-relatorio" hidden>
+    <div class="card bloco">
+      <h2>Cliente e período</h2>
+      <div class="grade g4">
+        <label class="campo" style="grid-column:span 2">Cliente da base<select id="clienteSel"><option value="">Selecione…</option></select></label>
+        <label class="campo">De<input type="date" id="ini"></label>
+        <label class="campo">Até<input type="date" id="fim"></label>
+        <label class="campo" style="grid-column:span 2">Nome do cliente no relatório<input type="text" id="cliente"></label>
+        <label class="campo" style="grid-column:span 2">Saudação<input type="text" id="saudacao" placeholder="Prezado Senhor Fulano,"></label>
+        <label class="campo" style="grid-column:span 2">E-mail do cliente<input type="text" id="email" placeholder="cliente@empresa.com.br; outro@empresa.com.br"></label>
+        <label class="campo">WhatsApp do cliente<input type="tel" id="telefone" placeholder="(31) 90000-0000"></label>
+        <label class="campo">Local<input type="text" id="local" value="Belo Horizonte/MG"></label>
+      </div>
+      <p class="dica" style="margin:8px 0 0">E-mail, WhatsApp e saudação ficam gravados no cadastro do cliente na base.</p>
+    </div>
+
+    <div class="card bloco">
+      <h2>Processos do relatório</h2>
+      <p class="mudo">Ao escolher o cliente, os processos dele na base entram aqui com as movimentações já consultadas. Também é possível incluir processo avulso, colar andamentos ou anexar a cópia dos autos.</p>
       <div id="procs"></div>
-      <div class="linha-btns"><button type="button" class="btn sec peq" id="addProc">+ Processo</button><button type="button" class="btn peq" id="consultarTodos">Consultar todos no DataJud</button></div>
+      <div class="linha-btns"><button type="button" class="btn sec peq" id="addProc">+ Processo avulso</button><button type="button" class="btn peq" id="consultarTodos">Atualizar as movimentações deste relatório</button></div>
     </div>
 
     <div class="card bloco">
@@ -93,11 +161,42 @@
           <h3 style="font-size:15px;margin:0 0 6px">Quem assina</h3>
           <div class="checks" id="advs"></div>
           <label class="campo" style="margin-top:12px">Parágrafo de abertura (opcional)<textarea id="abertura" rows="3" placeholder="Deixe em branco para usar o texto padrão."></textarea></label>
+          <div class="aviso" style="margin-top:12px">Para alterar qualquer trecho, clique em <b>Editar texto</b> e escreva diretamente no documento ao lado. A tecla Enter cria novo parágrafo; apagar todo o texto de um parágrafo o retira do documento.</div>
         </div>
         <div>
-          <div class="linha-btns" style="margin-bottom:8px"><b style="flex:1">Pré-visualização</b><button type="button" class="btn sec peq" id="copiar">Copiar para e-mail</button><button type="button" class="btn peq" id="baixar">Baixar em Word</button></div>
+          <div class="linha-btns" style="margin-bottom:8px"><b style="flex:1">Documento</b><button type="button" class="btn sec peq" id="editar">Editar texto</button><button type="button" class="btn sec peq" id="descartar" hidden>Descartar edições</button><button type="button" class="btn sec peq" id="copiar">Copiar texto</button><button type="button" class="btn peq" id="baixar">Baixar em Word</button></div>
           <div id="faltas"></div>
           <div class="folha" id="folha"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card bloco">
+      <h2>Envio ao cliente</h2>
+      <div class="duas">
+        <div>
+          <label class="campo">Assunto<input type="text" id="assunto"></label>
+          <label class="campo" style="margin-top:10px">Mensagem do e-mail<textarea id="mensagem" rows="9"></textarea><span class="dica">O relatório em Word segue anexado. O texto é refeito a cada alteração enquanto não for editado aqui.</span></label>
+          <label class="campo" style="margin-top:10px">Cópia (opcional)<input type="text" id="cc" placeholder="equipe@tpcadvogados.com.br"></label>
+        </div>
+        <div>
+          <div class="envio">
+            <button type="button" class="btn" id="enviarOutlook">Enviar pelo Outlook</button>
+            <p class="dica" id="outlookConta">Envio imediato pela conta Microsoft 365 do advogado, com o relatório anexado e cópia em Itens Enviados.</p>
+            <button type="button" class="btn sec" id="abrirOutlook">Abrir no Outlook para revisar e enviar</button>
+            <p class="dica">Baixa um e-mail pronto (destinatário, assunto, texto e anexo) que o Outlook do computador abre como mensagem nova. Não exige configuração.</p>
+            <button type="button" class="btn sec" id="whats">Enviar resumo pelo WhatsApp</button>
+            <p class="dica">Abre o WhatsApp com o resumo da situação de cada processo já escrito; o arquivo Word, se desejado, é anexado na própria conversa.</p>
+          </div>
+          <details class="cfg" id="cfgOutlook" style="margin-top:10px">
+            <summary>Configuração do Outlook (Microsoft 365)</summary>
+            <p class="pequeno" style="margin:10px 0">O envio automático usa a permissão Mail.Send de um aplicativo registrado no Microsoft Entra ID do escritório, com plataforma <i>Single-page application</i> e endereço de retorno <span class="mono" id="redir"></span>. O roteiro está no arquivo README do HUB.</p>
+            <div class="grade g2">
+              <label class="campo">ID do aplicativo (client ID)<input type="text" id="olClient" placeholder="00000000-0000-0000-0000-000000000000"></label>
+              <label class="campo">Diretório (tenant ID ou common)<input type="text" id="olTenant" placeholder="common"></label>
+            </div>
+            <div class="linha-btns" style="margin-top:10px"><button type="button" class="btn sec peq" id="olSalvar">Salvar</button><button type="button" class="btn sec peq" id="olSair">Desconectar a conta Microsoft</button></div>
+          </details>
         </div>
       </div>
     </div>
@@ -110,6 +209,8 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.27.0/lib/msal-browser.min.js"></script>
 <script src="../assets/hub.js"></script>
 <script src="../assets/doc.js"></script>
 <script src="../assets/peca.js"></script>
@@ -119,6 +220,8 @@
 <script src="../estudo-de-caso/analise.js"></script>
 <script src="traducao.js"></script>
 <script src="relatorio.js"></script>
+<script src="base.js"></script>
+<script src="envio.js"></script>
 <script src="app.js"></script>
 </body>
 </html>

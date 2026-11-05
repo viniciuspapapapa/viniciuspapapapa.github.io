@@ -3,7 +3,13 @@
    (PBKDF2-SHA256, 600 mil iterações). Os scripts e estilos locais são incorporados ao HTML antes da cifra; modelos
    (.pdf, .docx) são cifrados à parte e decifrados em tempo de execução. Fontes e imagens da marca são públicas.
 
-   Uso: HUB_SENHA='senha do escritório' node _ferramentas/proteger-hub.mjs */
+   Uso: HUB_SENHA='senha do escritório' node _ferramentas/proteger-hub.mjs
+
+   Configurações das integrações, incorporadas somente às páginas cifradas (nunca às fontes do repositório público):
+     HUB_DATAJUD_URL        endereço do serviço intermediário do DataJud (padrão: datajud-tpc do escritório)
+     HUB_DATAJUD_TOKEN      senha do serviço (APP_TOKEN do Worker); se ausente, usa HUB_SENHA
+     HUB_OUTLOOK_CLIENT_ID  ID do aplicativo registrado no Microsoft Entra ID para o envio pelo Outlook
+     HUB_OUTLOOK_TENANT     diretório do Microsoft 365 (padrão: common) */
 import { promises as fs } from "node:fs";
 import path from "node:path";
 import { webcrypto as wc } from "node:crypto";
@@ -17,6 +23,12 @@ const NAO_PUBLICAR = /(^|\/)README\.md$|\.(js|css)$/i;
 
 const senha = process.env.HUB_SENHA || "";
 if (senha.length < 10) { console.error("Defina HUB_SENHA com pelo menos 10 caracteres."); process.exit(1); }
+
+const CONFIG = {
+  datajud: { url: process.env.HUB_DATAJUD_URL || "https://datajud-tpc.viniciuspapapapa.workers.dev", token: process.env.HUB_DATAJUD_TOKEN || senha },
+  outlook: { clientId: process.env.HUB_OUTLOOK_CLIENT_ID || "", tenant: process.env.HUB_OUTLOOK_TENANT || "common" }
+};
+const SCRIPT_CONFIG = "<script>window.HUB_CONFIG=" + JSON.stringify(CONFIG).replace(/</g, "\\u003c") + ";</script>";
 
 const b64 = u => Buffer.from(u).toString("base64");
 const de64 = s => new Uint8Array(Buffer.from(s, "base64"));
@@ -64,7 +76,7 @@ async function incorporar(rel, html) {
     const tipo = /type="module"/i.test(a + b) ? ' type="module"' : "";
     return "<script" + tipo + ">\n" + (await ler(src)).replace(/<\/script/gi, "<\\/script") + "\n</script>";
   });
-  return html;
+  return html.replace(/<\/head>/i, SCRIPT_CONFIG + "\n</head>");
 }
 async function substituir(s, re, fn) {
   const partes = []; let ultimo = 0, m;
