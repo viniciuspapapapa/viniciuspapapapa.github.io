@@ -92,8 +92,11 @@ _hub/  (publicada cifrada em hub/)
     prompt.js                 Instruções da redação pelo Claude (base normativa autorizada, estrutura e estilo)
     documentos.js             Leitura dos documentos do cliente (matrícula, IRPF e IPTU) com OCR, extração por regras ou
                               pelo Claude, conciliação com o formulário e pontos de conferência (ônus, titularidade, divergências)
+    apresentacao.js           Apresentação no modelo institucional (lâminas fixas em apresentacao/ e lâminas do caso montadas
+                              do formulário e do texto do diagnóstico, inclusive editado), com prévia e PowerPoint (PptxGenJS)
+    apresentacao/             Lâminas institucionais (JPG), ícones e logotipo extraídos do modelo do escritório (públicos)
     app.js                    Formulário com rascunho local, anexos com revisão antes de aplicar, panorama, redação pelo
-                              Claude e diagnóstico editável em Word
+                              Claude, diagnóstico editável (edições salvas no navegador) em Word e apresentação
   certidoes/
     catalogo.js               Serviços oficiais de certidão criminal (27 TJs, TRF1 a TRF6, STM, TJMs, TSE, STF, STJ, PF, BNMP)
     leitor.js                 Leitura das certidões em PDF: órgão, resultado, datas, números CNJ e conferência do pesquisado
@@ -191,7 +194,16 @@ incisos V a VIII pela Lei 15.358/2026. Para fatos anteriores, informe a fração
 
 ## Bibliotecas (CDN, versões fixas)
 
-pdf.js 3.11.174 · tesseract.js 5.1.1 (modelo `por`) · exifr 7.1.3 · mammoth 1.6.0.
+pdf.js 3.11.174 · tesseract.js 5.1.1 (modelo `por`) · exifr 7.1.3 · mammoth 1.6.0 · pptxgenjs 3.12.0.
+
+## Diagnóstico patrimonial: reforma tributária
+
+O motor (`patrimonio/motor.js`) projeta a tributação dos aluguéis em três momentos e no cronograma ano a ano da
+transição (EC 132/2023 e LC 214/2025): 2026 como ano de teste, CBS a partir de 2027 com o split payment, IBS em 10%,
+20%, 30% e 40% de 2029 a 2032 e regime pleno em 2033. O ganho de capital latente usa as alíquotas progressivas da
+Lei 13.259/2016. Essas regras foram conferidas com os materiais de referência sobre a reforma tributária indicados pelo
+escritório (repositórios `AlissonSantos1/brasil-legal-skills` e `asv-digital/agents-contadores`, licença MIT); ao
+atualizar alíquotas ou marcos, revise também as instruções da redação em `patrimonio/prompt.js`.
 
 ## Degravação de audiências
 

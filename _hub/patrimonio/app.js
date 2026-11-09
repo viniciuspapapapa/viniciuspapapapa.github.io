@@ -8,7 +8,7 @@ import Anthropic from "https://cdn.jsdelivr.net/npm/@anthropic-ai/sdk@1.1.0/+esm
   const $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAll(s)];
   const ler = k => { try { return localStorage.getItem(k); } catch (e) { return null; } };
   const gravar = (k, v) => { try { if (v == null) localStorage.removeItem(k); else localStorage.setItem(k, v); } catch (e) { /* armazenamento indisponível */ } };
-  const K_CHAVE = "hub_claude_chave", K_CONS = "patrimonio_consentimento_anthropic", K_RASC = "patrimonio_rascunho";
+  const K_CHAVE = "hub_claude_chave", K_CONS = "patrimonio_consentimento_anthropic", K_RASC = "patrimonio_rascunho", K_TXT = "patrimonio_texto_editado", K_AP = "patrimonio_apresentacao";
   const PRECOS = { "claude-opus-5-5": [4, 20], "claude-sonnet-5-5": [2, 10] }, SAIDA = 22000;
   const E = { r: null, d: null, blocos: null, fonte: "regras", ctrl: null, iaDados: "" };
 
@@ -63,7 +63,7 @@ import Anthropic from "https://cdn.jsdelivr.net/npm/@anthropic-ai/sdk@1.1.0/+esm
   $("#novo").onclick = () => {
     if (!confirm("Iniciar um novo diagnóstico apaga os dados preenchidos neste navegador. Continuar?")) return;
     gravar(K_RASC, null); restaurar({ filhos: [{}], imoveis: [{}], empresas: [] }); $$("[data-k]").forEach(el => { if (el.tagName === "SELECT") el.selectedIndex = 0; else el.value = ""; });
-    E.fonte = "regras"; E.iaDados = ""; ed.descartar(); mudou();
+    E.fonte = "regras"; E.iaDados = ""; ed.descartar(); gravar(K_TXT, null); gravar(K_AP, null); restaurarAp({}); mudou();
   };
 
   /* ------------------------------------------------------------------ panorama */
@@ -89,7 +89,8 @@ import Anthropic from "https://cdn.jsdelivr.net/npm/@anthropic-ai/sdk@1.1.0/+esm
   }
 
   /* ------------------------------------------------------------------ relatório */
-  const ed = P.editor($("#folha"), { aviso: () => { $("#descartar").hidden = false; } });
+  const ed = P.editor($("#folha"), { aviso: () => { $("#descartar").hidden = false; }, aoEditar: () => { salvarTexto(); agendarApres(); } });
+  function salvarTexto() { if (ed.editado()) gravar(K_TXT, JSON.stringify({ editado: true, fonte: E.fonte, iaDados: E.iaDados, blocos: ed.blocos() })); else if (E.fonte === "ia" && E.blocos) gravar(K_TXT, JSON.stringify({ editado: false, fonte: "ia", iaDados: E.iaDados, blocos: E.blocos })); else gravar(K_TXT, null); }
   const advogados = () => P.ADVOGADOS.filter(a => document.querySelector('[data-adv="' + a.id + '"]').checked);
   const opcRel = () => ({ dataTexto: P.dataExtenso(new Date()), local: $("#local").value.trim() || "Belo Horizonte/MG", advogados: advogados() });
   function regras() { return M.relatorio(E.d, E.r, opcRel()); }
@@ -103,7 +104,7 @@ import Anthropic from "https://cdn.jsdelivr.net/npm/@anthropic-ai/sdk@1.1.0/+esm
   function mudou() { clearTimeout(timer); timer = setTimeout(atualizar, 250); }
   function atualizar() {
     E.d = coletar(); E.r = M.calcular(E.d); gravar(K_RASC, JSON.stringify(E.d));
-    painel(E.r); estado();
+    painel(E.r); estado(); agendarApres();
     if (E.fonte === "regras" && !ed.editado() && !E.ctrl) { E.blocos = regras(); mostrar(); }
     else if (E.fonte === "ia") mostrar();
   }
@@ -184,7 +185,7 @@ import Anthropic from "https://cdn.jsdelivr.net/npm/@anthropic-ai/sdk@1.1.0/+esm
       const fim = await fluxo.finalMessage(); motivo = fim.stop_reason;
       if (motivo === "refusal") throw new Error("O modelo recusou a redação deste diagnóstico.");
       if (!txt.trim()) throw new Error("A Anthropic não devolveu texto.");
-      E.blocos = blocosDe(txt); E.fonte = "ia"; E.iaDados = snap;
+      E.blocos = blocosDe(txt); E.fonte = "ia"; E.iaDados = snap; gravar(K_TXT, JSON.stringify({ editado: false, fonte: "ia", iaDados: snap, blocos: E.blocos })); agendarApres();
       progresso("Diagnóstico redigido. Confira os valores e as conclusões antes de entregar à família." + (motivo === "max_tokens" ? " O texto atingiu o limite de extensão e pode estar incompleto no final." : ""), null);
     } catch (x0) {
       const abortou = x0 instanceof Anthropic.APIUserAbortError || x0.name === "AbortError";
@@ -194,13 +195,55 @@ import Anthropic from "https://cdn.jsdelivr.net/npm/@anthropic-ai/sdk@1.1.0/+esm
     } finally { E.ctrl = null; $("#cancelar").hidden = true; estado(); mostrar(); }
   };
   $("#cancelar").onclick = () => { if (E.ctrl) E.ctrl.abort(); };
-  $("#regras").onclick = () => { if (ed.editado() && !confirm("Voltar ao texto por regras descarta as edições e o texto do Claude. Continuar?")) return; ed.descartar(); E.fonte = "regras"; E.iaDados = ""; E.blocos = regras(); $("#editar").textContent = "Editar texto"; $("#descartar").hidden = true; progresso("", null); mostrar(); };
+  $("#regras").onclick = () => { if (ed.editado() && !confirm("Voltar ao texto por regras descarta as edições e o texto do Claude. Continuar?")) return; ed.descartar(); gravar(K_TXT, null); E.fonte = "regras"; E.iaDados = ""; E.blocos = regras(); agendarApres(); $("#editar").textContent = "Editar texto"; $("#descartar").hidden = true; progresso("", null); mostrar(); };
 
   /* ------------------------------------------------------------------ edição e saída */
-  $("#editar").onclick = () => { const on = !ed.editando(); ed.editar(on); $("#editar").textContent = on ? "Concluir edição" : "Editar texto"; $("#descartar").hidden = !ed.editado(); };
-  $("#descartar").onclick = () => { if (!confirm("Descartar as edições feitas no texto?")) return; ed.descartar(); $("#editar").textContent = "Editar texto"; $("#descartar").hidden = true; if (E.fonte === "regras") E.blocos = regras(); mostrar(); };
+  $("#editar").onclick = () => { const on = !ed.editando(); ed.editar(on); salvarTexto(); agendarApres(); $("#editar").textContent = on ? "Concluir edição" : "Editar texto"; $("#descartar").hidden = !ed.editado(); };
+  $("#descartar").onclick = () => { if (!confirm("Descartar as edições feitas no texto?")) return; ed.descartar(); gravar(K_TXT, null); agendarApres(); $("#editar").textContent = "Editar texto"; $("#descartar").hidden = true; if (E.fonte === "regras") E.blocos = regras(); mostrar(); };
   $("#baixar").onclick = async () => { const n = (E.d && (E.d.cliente.nome || E.d.casal.patriarca)) || "família"; try { P.baixar(await P.docx(ed.blocos()), "Diagnóstico patrimonial e sucessório - " + n); } catch (x) { window.HUB.toast(x.message || "Não foi possível gerar o Word.", 5000); } };
   $("#copiar").onclick = () => window.HUB_DOC.copiar(P.texto(ed.blocos()));
+
+  /* ------------------------------------------------------------------ apresentação */
+  const A = window.PAT_APRES;
+  let apCfg = {}; try { apCfg = JSON.parse(ler(K_AP) || "{}") || {}; } catch (e) { apCfg = {}; }
+  function restaurarAp(c) { apCfg = c || {}; $("#apHolding").value = apCfg.holding || ""; $("#apInst").checked = apCfg.institucional !== false; $("#apUsufruto").value = apCfg.textoUsufruto || ""; }
+  function lerAp() { apCfg.holding = $("#apHolding").value.trim(); apCfg.institucional = $("#apInst").checked; apCfg.textoUsufruto = $("#apUsufruto").value.trim(); apCfg.modalidades = apCfg.modalidades || {}; $$("[data-mod]").forEach(s => { apCfg.modalidades[s.dataset.mod] = s.value; }); gravar(K_AP, JSON.stringify(apCfg)); }
+  function modalidades() {
+    const fs = ((E.d && E.d.filhos) || []).filter(f => f.nome), mod = apCfg.modalidades || {};
+    const atual = $$("[data-mod]").map(s => s.dataset.mod).join("|");
+    if (atual === fs.map(f => f.nome).join("|")) return;
+    $("#apModal").innerHTML = fs.length && E.r && E.r.holding.imoveis ? '<p class="pequeno" style="margin:0 0 6px;font-weight:600">Transferência das quotas no 2º passo</p><div class="grade g4">' + fs.map(f => '<label class="campo">' + esc(f.nome) + '<select data-mod="' + esc(f.nome) + '"><option value="doacao"' + (mod[f.nome] !== "venda" ? " selected" : "") + '>Doação com reserva de usufruto</option><option value="venda"' + (mod[f.nome] === "venda" ? " selected" : "") + ">Venda das quotas</option></select></label>").join("") + "</div>" : "";
+  }
+  let tAp = null, lams = [];
+  function agendarApres() { clearTimeout(tAp); tAp = setTimeout(previaAp, 350); }
+  function escala() { $$(".lam-q").forEach(q => { const pal = q.firstElementChild; if (pal) pal.style.transform = "scale(" + (q.clientWidth / 960) + ")"; }); }
+  function previaAp() {
+    if (!E.r || !A) return;
+    modalidades(); lerAp();
+    const tem = E.r.tot.bruto > 0;
+    $("#apBaixar").disabled = !tem;
+    if (!tem) { $("#apPrevia").innerHTML = ""; $("#apInfo").textContent = "Preencha os bens da família para montar a apresentação."; return; }
+    try { lams = A.montar(E.d, E.r, ed.blocos(), apCfg); }
+    catch (x) { $("#apInfo").textContent = "Não foi possível montar a apresentação: " + (x.message || x); return; }
+    $("#apInfo").textContent = lams.length + " lâminas" + (ed.editado() ? ", com o texto editado do diagnóstico" : E.fonte === "ia" ? ", com o texto redigido pelo Claude" : "");
+    $("#apPrevia").innerHTML = lams.map((l, i) => '<figure class="lam"><div class="lam-q">' + A.htmlLamina(l) + "</div><figcaption>" + (i + 1) + ". " + esc(l.titulo || l.nota || "") + "</figcaption></figure>").join("");
+    escala();
+  }
+  window.addEventListener("resize", escala);
+  ["#apHolding", "#apUsufruto"].forEach(s => $(s).addEventListener("input", agendarApres));
+  $("#apInst").addEventListener("change", agendarApres);
+  $("#apModal").addEventListener("change", agendarApres);
+  $("#apBaixar").onclick = async () => {
+    const b = $("#apBaixar"); b.disabled = true;
+    try {
+      previaAp();
+      const n = (E.d && (E.d.cliente.nome || E.d.casal.patriarca)) || "família";
+      await A.pptx(lams, "Planejamento patrimonial e sucessório - " + n, (m) => { $("#apInfo").textContent = m; });
+      $("#apInfo").textContent = "Apresentação gerada com " + lams.length + " lâminas.";
+    } catch (x) { window.HUB.toast(x.message || "Não foi possível gerar a apresentação.", 5000); $("#apInfo").textContent = ""; }
+    finally { b.disabled = false; }
+  };
+  restaurarAp(apCfg);
 
   /* ------------------------------------------------------------------ documentos do cliente */
   const DOCS = window.PAT_DOCS, ROT_TIPO = { matricula: "Matrícula", irpf: "IRPF", iptu: "IPTU", outro: "Não identificado" };
@@ -299,5 +342,12 @@ import Anthropic from "https://cdn.jsdelivr.net/npm/@anthropic-ai/sdk@1.1.0/+esm
   let rasc = null; try { rasc = JSON.parse(ler(K_RASC) || "null"); } catch (e) { rasc = null; }
   if (rasc) restaurar(rasc); else { adicionar("filhos"); adicionar("imoveis"); }
   atualizar();
+  let txtSalvo = null; try { txtSalvo = JSON.parse(ler(K_TXT) || "null"); } catch (e) { txtSalvo = null; }
+  if (txtSalvo && Array.isArray(txtSalvo.blocos) && txtSalvo.blocos.length) {
+    E.fonte = txtSalvo.fonte === "ia" ? "ia" : "regras"; E.iaDados = txtSalvo.iaDados || "";
+    if (E.fonte === "ia" && !txtSalvo.editado) { E.blocos = txtSalvo.blocos; mostrar(); }
+    else { if (E.fonte === "ia") E.blocos = txtSalvo.blocos; mostrar(); ed.carregar(txtSalvo.blocos); $("#descartar").hidden = false; }
+    agendarApres();
+  }
   window.PAT_ESTADO = { E, blocosDe, coletar, restaurar };
 })();

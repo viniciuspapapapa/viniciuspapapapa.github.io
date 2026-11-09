@@ -151,6 +151,7 @@
         else { capturar(); editando = false; render(editados || gerados); }
       },
       descartar() { editados = null; editando = false; render(gerados); },
+      carregar(bl) { editados = clone(bl || []); render(editados); },
       editado: () => !!editados,
       editando: () => editando
     };

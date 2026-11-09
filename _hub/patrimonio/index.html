@@ -69,6 +69,16 @@
   .prop .d { grid-column: 2; font-size: 12.5px; color: var(--ink-3); overflow-wrap: anywhere; }
   .prop select { grid-column: 2; justify-self: start; width: auto; min-width: 180px; margin-top: 4px; border: 1px solid var(--line-2); background: var(--surface); color: var(--ink); border-radius: 6px; padding: 4px 8px; font-size: 13.5px; }
   @media (max-width: 900px) and (min-width: 621px) { label.campo[style*="span 4"] { grid-column: 1 / -1 !important; } }
+  .lams { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; margin-top: 16px; }
+  @media (max-width: 760px) { .lams { grid-template-columns: minmax(0, 1fr); } }
+  .lam { margin: 0; min-width: 0; }
+  .lam-q { position: relative; aspect-ratio: 16 / 9; overflow: hidden; border: 1px solid var(--line-2); border-radius: 6px; background: var(--doc-paper); }
+  .lam-palco { position: absolute; left: 0; top: 0; width: 960px; height: 540px; transform-origin: 0 0; background: #fff; color: #262626; font-family: Aptos, "Segoe UI", Calibri, Arial, sans-serif; }
+  .lam figcaption { font-size: 12.5px; color: var(--ink-3); margin-top: 5px; }
+  .lam-tab { border-collapse: collapse; table-layout: fixed; color: #262626; }
+  .lam-tab th, .lam-tab td { border: 0.75px solid #bfbfbf; padding: 3px 5px; vertical-align: middle; line-height: 1.15; overflow-wrap: anywhere; }
+  .lam-tab th { background: #c8c3be; font-weight: 700; text-align: left; }
+  .lam-tab td { background: #fff; }
   [hidden] { display: none !important; }
 </style>
 </head>
@@ -236,9 +246,26 @@
       </details>
       <div style="margin-top:16px">
         <div class="linha-btns" style="margin-bottom:8px"><b style="flex:1" id="fonte">Pré-visualização</b><button type="button" class="btn sec peq" id="editar">Editar texto</button><button type="button" class="btn sec peq" id="descartar" hidden>Descartar edições</button><button type="button" class="btn sec peq" id="copiar">Copiar texto</button><button type="button" class="btn peq" id="baixar">Baixar em Word</button></div>
+        <p class="pequeno mudo" style="margin:0 0 8px">Use “Editar texto” para alterar o diagnóstico diretamente na folha. As edições ficam salvas neste navegador e se refletem no Word e na apresentação.</p>
         <div id="avisos"></div>
         <div class="folha" id="folha"></div>
       </div>
+    </div>
+
+    <div class="card bloco" id="apres">
+      <h2>8. Apresentação</h2>
+      <p class="mudo">Apresentação no modelo institucional do escritório, com a estrutura familiar, os passos do planejamento e os números do diagnóstico. As lâminas acompanham o formulário e o texto do diagnóstico, inclusive as edições feitas acima.</p>
+      <div class="grade g4">
+        <label class="campo" style="grid-column:span 2">Nome da holding<input type="text" id="apHolding" placeholder="Holding Família Patrimonial Ltda."></label>
+        <div style="grid-column:span 2;align-self:end"><label class="check"><input type="checkbox" id="apInst" checked> Incluir as lâminas institucionais do escritório</label></div>
+      </div>
+      <div id="apModal" style="margin-top:10px"></div>
+      <details class="cfg" style="margin-top:10px">
+        <summary>Texto do 3º passo (usufruto)</summary>
+        <label class="campo" style="margin-top:8px">Deixe em branco para usar o texto padrão<textarea id="apUsufruto" rows="3"></textarea></label>
+      </details>
+      <div class="linha-btns" style="margin-top:14px"><button type="button" class="btn" id="apBaixar">Baixar apresentação (PowerPoint)</button><span class="pequeno mudo" id="apInfo"></span></div>
+      <div class="lams" id="apPrevia"></div>
     </div>
   </section>
 </main>
@@ -250,12 +277,14 @@
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <script src="../assets/hub.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"></script>
 <script src="../estudo-de-caso/leitor.js"></script>
 <script src="documentos.js"></script>
 <script src="../assets/doc.js"></script>
 <script src="../assets/peca.js"></script>
 <script src="motor.js"></script>
 <script src="prompt.js"></script>
+<script src="apresentacao.js"></script>
 <script type="module" src="app.js"></script>
 </body>
 </html>

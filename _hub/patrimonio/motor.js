@@ -49,6 +49,26 @@
     { id: "2027", rot: "2027 e 2028 (CBS)", fator: 8.8 / 26.5 },
     { id: "2033", rot: "2033 em diante (IBS e CBS plenos)", fator: 1 }
   ];
+  /* Cronograma ano a ano (EC 132/2023 e LC 214/2025): 2026 é ano de teste, com CBS de 0,9% e IBS de 0,1% destacados e
+     dispensados do recolhimento para quem cumpre as obrigações acessórias; em 2027 a CBS entra em vigor e PIS e COFINS
+     são extintos; de 2029 a 2032 o IBS sobe em 10%, 20%, 30% e 40% da alíquota de referência; em 2033, regime pleno. */
+  const CRONOGRAMA = [
+    { id: "2026", rot: "2026", fator: 0, nota: "Ano de teste: CBS de 0,9% e IBS de 0,1% destacados, sem recolhimento" },
+    { id: "2027", rot: "2027", fator: 8.8 / 26.5, nota: "CBS em vigor; PIS e COFINS extintos; início do split payment" },
+    { id: "2028", rot: "2028", fator: 8.8 / 26.5, nota: "CBS plena; IBS em teste" },
+    { id: "2029", rot: "2029", fator: (8.8 + 0.1 * 17.7) / 26.5, nota: "IBS em 10% da alíquota de referência" },
+    { id: "2030", rot: "2030", fator: (8.8 + 0.2 * 17.7) / 26.5, nota: "IBS em 20%" },
+    { id: "2031", rot: "2031", fator: (8.8 + 0.3 * 17.7) / 26.5, nota: "IBS em 30%" },
+    { id: "2032", rot: "2032", fator: (8.8 + 0.4 * 17.7) / 26.5, nota: "IBS em 40%" },
+    { id: "2033", rot: "2033", fator: 1, nota: "IBS e CBS plenos; ICMS e ISS extintos" }
+  ];
+  /* Ganho de capital da pessoa física: alíquotas progressivas da Lei 13.259/2016, aplicadas por alienação. */
+  function irGanho(g) {
+    const F = [[5e6, 0.15], [10e6, 0.175], [30e6, 0.20], [Infinity, 0.225]];
+    let ir = 0, ant = 0;
+    for (const [lim, a] of F) { if (g > ant) ir += (Math.min(g, lim) - ant) * a; ant = lim; }
+    return Math.max(0, ir);
+  }
 
   function premissas(p) { const o = {}; Object.keys(PREMISSAS).forEach(k => { o[k] = p && p[k] !== "" && p[k] != null ? num(p[k]) : PREMISSAS[k].v; }); return o; }
 
@@ -79,7 +99,7 @@
     const s = r.semPlan = { monte, itcmd: monte * P.itcmd / 100, itcmdFuturo: monte * P.itcmdFuturo / 100, honorarios: monte * P.honorarios / 100, custas: monte * P.custas / 100 };
     s.total = s.itcmd + s.honorarios + s.custas; s.totalFuturo = s.itcmdFuturo + s.honorarios + s.custas;
     s.liquidez = t.aplicacoes + t.previdencia; s.falta = Math.max(0, s.total - s.liquidez);
-    r.ganhoLatente = soma(im, x => x.ganho); r.irGanhoLatente = r.ganhoLatente * 0.15;
+    r.ganhoLatente = soma(im, x => x.ganho); r.irGanhoLatente = soma(im, x => irGanho(x.ganho));
 
     /* Aluguéis: pessoa física x holding no lucro presumido, em três momentos da transição. */
     const alug = im.filter(x => x.aluguel > 0), R = soma(alug, x => x.aluguel) * 12;
@@ -91,15 +111,13 @@
     const iva = (base, fator) => Math.max(0, base) * P.ivaRef / 100 * 0.3 * fator;
     const presumido = R => { const base = 0.32 * Math.min(R, 5e6) + 0.352 * Math.max(0, R - 5e6); return { irpj: 0.15 * base + 0.10 * Math.max(0, base - 240000), csll: 0.09 * base }; };
     const pj = presumido(R), manut = P.manutencao * 12;
-    r.alugueis = {
-      receita: R, imoveis: alug.length, redutorSocial, pfContribuinte, titulares, outras,
-      fases: FASES.map(fs => {
-        const ivaPF = fs.fator && pfContribuinte ? iva(R - redutorSocial, fs.fator) : 0;
-        const pisCofins = fs.id === "2026" ? R * 0.0365 : 0, ivaPJ = fs.fator ? iva(R - redutorSocial, fs.fator) : 0;
-        const pf = irPF + ivaPF, pjT = pj.irpj + pj.csll + pisCofins + ivaPJ;
-        return { fase: fs, irPF, ivaPF, pf, irpj: pj.irpj, csll: pj.csll, pisCofins, ivaPJ, pj: pjT, pjManut: pjT + manut, economia: pf - pjT - manut };
-      })
+    const fase = fs => {
+      const ivaPF = fs.fator && pfContribuinte ? iva(R - redutorSocial, fs.fator) : 0;
+      const pisCofins = fs.id === "2026" ? R * 0.0365 : 0, ivaPJ = fs.fator ? iva(R - redutorSocial, fs.fator) : 0;
+      const pf = irPF + ivaPF, pjT = pj.irpj + pj.csll + pisCofins + ivaPJ;
+      return { fase: fs, irPF, ivaPF, pf, irpj: pj.irpj, csll: pj.csll, pisCofins, ivaPJ, pj: pjT, pjManut: pjT + manut, economia: pf - pjT - manut };
     };
+    r.alugueis = { receita: R, imoveis: alug.length, redutorSocial, pfContribuinte, titulares, outras, fases: FASES.map(fase), cronograma: CRONOGRAMA.map(fase) };
     const lucroPJ = R - r.alugueis.fases[0].pj - manut;
     r.alugueis.dividendoMensal = R ? Math.max(0, lucroPJ) / 12 / titulares : 0;
     r.alugueis.retencao = r.alugueis.dividendoMensal > 50000;
@@ -156,6 +174,7 @@
     if (comDivida.length || r.tot.dividas > 0 || /sim/i.test(sit.riscoProfissional || "")) o.push({ n: "elevado", t: "Credores e responsabilidade pessoal", x: "Há dívidas" + (comDivida.length ? (comDivida.length === 1 ? " na empresa " : " nas empresas ") + comDivida.map(x => x.nome.replace(/\.$/, "")).join(", ") : "") + (r.tot.dividas > 0 ? (comDivida.length ? " e" : "") + " pessoais de " + brl(r.tot.dividas) : "") + (/sim/i.test(sit.riscoProfissional || "") ? (comDivida.length || r.tot.dividas ? ", além de" : "") + " atividade profissional com responsabilidade pessoal" : "") + ". A transferência de bens com dívidas já existentes pode ser declarada ineficaz como fraude contra credores ou à execução (CC, art. 158; CPC, art. 792), e a holding não afasta a desconsideração da personalidade jurídica (CC, art. 50). O planejamento deve ser feito com patrimônio livre e documentação da finalidade legítima." });
     if (r.alugueis.retencao) o.push({ n: "moderado", t: "Tributação dos dividendos", x: "A distribuição estimada de " + brl(r.alugueis.dividendoMensal) + " mensais por sócio supera R$ 50 mil, sujeitando-se à retenção de 10% (Lei 15.270/2025), compensável no ajuste do IRPF mínimo. A Lei 15.270/2025 é questionada no STF (ADIs 7.912, 7.914, 7.917 e 7.954)." });
     if (r.alugueis.receita > 5e6) o.push({ n: "moderado", t: "Acréscimo da presunção no lucro presumido", x: "A receita de locação supera R$ 5 milhões, e a parcela excedente sofre o acréscimo de 10% na presunção (LC 224/2025), objeto de questionamento judicial." });
+    if (r.alugueis.receita) o.push({ n: "moderado", t: "Split payment e fluxo de caixa dos aluguéis", x: "A partir de 2027, a CBS e, gradualmente, o IBS passam a ser recolhidos no momento do pagamento (split payment, LC 214/2025): a parcela dos tributos é segregada pela instituição financeira e o locador recebe o aluguel já líquido. Na holding, isso exige revisar os contratos de locação, o destaque dos tributos nos documentos fiscais e a projeção de caixa para a distribuição de lucros." });
     if (r.alugueis.pfContribuinte) o.push({ n: "moderado", t: "Pessoa física contribuinte do IBS e da CBS", x: "Com receita anual de locação acima de R$ 240 mil e mais de três imóveis, a pessoa física passa a ser contribuinte do IBS e da CBS (LC 214/2025, art. 251), com as obrigações acessórias correspondentes." });
     if (/sim/i.test(sit.conflitos || "") || /sim/i.test(sit.outraUniao || "")) o.push({ n: "elevado", t: "Litigiosidade sucessória", x: "A existência de " + [/sim/i.test(sit.conflitos || "") ? "divergências familiares" : "", /sim/i.test(sit.outraUniao || "") ? "herdeiros de outra relação" : ""].filter(Boolean).join(" e ") + " aumenta o risco de inventário litigioso, longo e custoso, com bens indisponíveis e decisões tomadas por terceiros." });
     const comOnus = r.im.filter(x => x.onus && !/^nenhum/i.test(x.onus));
@@ -178,7 +197,7 @@
     const comOnusA = r.im.filter(x => x.onus && /penhora|arresto|sequestro|indisponib|arrolamento|a[çc][ãa]o/i.test(x.onus));
     if (comOnusA.length) o.push({ p: 1, t: "Regularizar as constrições registradas nas matrículas", x: "Levantar a origem e o valor das constrições em " + comOnusA.map(x => (x.desc || "imóvel").split(",")[0]).join(", ") + " e obter a baixa, a substituição da garantia ou a anuência do credor antes de integralizar ou doar esses imóveis." });
     if (r.tot.exterior > 0) o.push({ p: 3, t: "Organizar os bens no exterior", x: "Revisar a estrutura diante da Lei 14.754/2023 e da LC 227/2026 e avaliar instrumentos que evitem inventário no exterior." });
-    if (r.ganhoLatente > 0 && (d.objetivos || []).includes("venda")) o.push({ p: 3, t: "Planejar a venda dos imóveis", x: "O ganho de capital latente é de " + brl(r.ganhoLatente) + " (imposto estimado de " + brl(r.irGanhoLatente) + " na pessoa física, à alíquota inicial de 15%). A venda pela holding segue a tributação da pessoa jurídica e deve ser simulada antes da integralização." });
+    if (r.ganhoLatente > 0 && (d.objetivos || []).includes("venda")) o.push({ p: 3, t: "Planejar a venda dos imóveis", x: "O ganho de capital latente é de " + brl(r.ganhoLatente) + " (imposto estimado de " + brl(r.irGanhoLatente) + " na pessoa física, pelas alíquotas progressivas de 15% a 22,5% da Lei 13.259/2016, sem considerar os fatores de redução da Lei 11.196/2005 nem as isenções do imóvel único de até R$ 440 mil e do reinvestimento em imóvel residencial em 180 dias). A venda pela holding segue a tributação da pessoa jurídica e deve ser simulada antes da integralização." });
     return o.sort((x, y) => x.p - y.p);
   }
 
@@ -219,6 +238,8 @@
       p("A receita anual de locação é de " + brl(a.receita) + ", proveniente de " + a.imoveis + (a.imoveis === 1 ? " imóvel" : " imóveis") + ". Na pessoa física, o aluguel é tributado pelo IRPF na tabela progressiva, com alíquota marginal de até 27,5%" + (a.titulares > 1 ? ", considerada a divisão da receita entre os cônjuges" : "") + ". Na holding optante pelo lucro presumido, a base é de 32% da receita, com IRPJ, adicional e CSLL, além do PIS e da COFINS até 2026.");
     p("A partir de 2027, a locação passa a sofrer a incidência da CBS e, gradualmente, do IBS, com redução de 70% das alíquotas (LC 214/2025, art. 261) e redutor social de R$ 600 mensais por imóvel residencial (art. 260). A pessoa física só é contribuinte quando a receita anual supera R$ 240 mil e possui mais de três imóveis (art. 251)" + (a.pfContribuinte ? ", hipótese em que a família se enquadra." : ", hipótese em que a família hoje não se enquadra."));
       b.push({ t: "tab", cab: ["Momento", "Pessoa física", "Holding (tributos)", "Holding (com manutenção)", "Diferença anual"], larg: [1.6, 1.1, 1.1, 1.2, 1.1], linhas: a.fases.map(x => [x.fase.rot, brl(x.pf), brl(x.pj), brl(x.pjManut), brl(x.economia)]) });
+      p("O cronograma da transição, ano a ano, é o seguinte. Em 2026, a CBS de 0,9% e o IBS de 0,1% são apenas destacados nos documentos fiscais, com dispensa do recolhimento para quem cumpre as obrigações acessórias; em 2027, a CBS entra em vigor, PIS e COFINS são extintos e começa a implantação do split payment, pelo qual os tributos são segregados no próprio pagamento do aluguel; de 2029 a 2032, o IBS cresce em 10%, 20%, 30% e 40% da alíquota de referência; e, em 2033, o sistema opera em regime pleno.");
+      b.push({ t: "tab", cab: ["Ano", "Marco da transição", "Pessoa física", "Holding (com manutenção)", "Diferença anual"], larg: [0.6, 2.2, 1.1, 1.2, 1.1], linhas: a.cronograma.map(x => [x.fase.rot, x.fase.nota, brl(x.pf), brl(x.pjManut), brl(x.economia)]) });
       p("A carga efetiva atual é de " + pct(a.efetivaPF, 1) + " na pessoa física e de " + pct(a.efetivaPJ, 1) + " na holding. A projeção da pessoa física não considera deduções como IPTU, condomínio e taxa de administração, que reduzem a base do IRPF, nem eventuais créditos do IBS e da CBS na holding." + (a.retencao ? " A distribuição de lucros estimada supera R$ 50 mil mensais por sócio e sofreria a retenção de 10% da Lei 15.270/2025, compensável no ajuste anual." : " A distribuição de lucros estimada fica abaixo de R$ 50 mil mensais por sócio, sem a retenção de 10% da Lei 15.270/2025."));
       p("Em síntese, a holding " + (a.fases[2].economia > 0 ? "reduz a tributação dos aluguéis em cerca de " + brl(a.fases[2].economia) + " por ano no regime pleno da reforma" : "não reduz a tributação dos aluguéis no regime pleno da reforma, de modo que a sua justificativa deve repousar na sucessão e na governança") + ".");
     }
@@ -228,6 +249,7 @@
       sub("Holding patrimonial com doação das quotas");
       p("A integralização dos " + h.imoveis + " imóveis em uma holding, pelo valor declarado de " + brl(h.baseCont) + ", evita a apuração de ganho de capital (Lei 9.249/1995, art. 23). Em seguida, as quotas são doadas aos filhos com reserva de usufruto, o que mantém com os pais a renda e o controle, e retira esses bens do inventário futuro.");
       p("O ITCMD da doação é antecipado. Sobre o valor de mercado, alcança " + brl(h.itcmdMerc) + "; pela base contábil, ainda praticada enquanto a lei mineira não for adequada à LC 227/2026, " + brl(h.itcmdCont) + ". A esse valor somam-se os custos de constituição, estimados em " + brl(h.constituicao) + ", e a manutenção anual de " + brl(h.manutAno) + ".");
+      p("A transferência das quotas aos filhos pode ser feita por doação ou por venda. A doação, com reserva de usufruto e cláusulas de incomunicabilidade, impenhorabilidade e inalienabilidade, sujeita-se ao ITCMD e à colação, salvo dispensa expressa na parte disponível (CC, arts. 544 e 2.005), e é a via adequada para o herdeiro casado ou em união estável sob comunhão parcial, porque os bens recebidos por doação não se comunicam (CC, art. 1.659, I). A venda (cessão onerosa) afasta o ITCMD, mas exige preço efetivamente pago, com origem comprovada dos recursos do adquirente, apuração de ganho de capital pelo cedente quando o preço superar o custo das quotas e, entre ascendente e descendente, o consentimento dos demais descendentes e do cônjuge (CC, art. 496).");
       p("O ITBI na integralização merece análise prévia. Como a holding terá a locação como atividade preponderante, o Município pode negar a imunidade, e o Tema 1.348 do STF, que decidirá a questão, está pendente. A contingência estimada é de " + brl(h.itbi) + ".");
     }
     sub("Testamento");
@@ -268,14 +290,14 @@
       empresas: r.emp.map(x => ({ nome: x.nome, atividade: x.atividade, natureza: x.natureza, regime: x.regime, faturamento_anual: x.faturamento, participacao_familia_pct: x.participacao, patrimonio_liquido: x.pl, valor_estimado: x.mercado, lucros_distribuidos_ano: x.dividendos, dividas: x.dividas, valor_dividas: x.valorDividas, natureza_dividas: x.naturezaDividas })),
       financeiro: r.fin, premissas: r.P,
       calculos: {
-        totais: r.tot, composicao: r.composicao, ganho_capital_latente: R2(r.ganhoLatente), ir_ganho_latente_15pct: R2(r.irGanhoLatente),
+        totais: r.tot, composicao: r.composicao, ganho_capital_latente: R2(r.ganhoLatente), ir_ganho_latente_progressivo: R2(r.irGanhoLatente),
         sucessao_sem_planejamento: r.semPlan, holding: r.holding, cenarios: r.cenarios,
-        alugueis: { receita_anual: a.receita, imoveis_alugados: a.imoveis, pf_contribuinte_ibs_cbs: a.pfContribuinte, carga_efetiva_pf_2026_pct: +a.efetivaPF.toFixed(2), carga_efetiva_holding_2026_pct: +a.efetivaPJ.toFixed(2), dividendo_mensal_por_socio: R2(a.dividendoMensal), retencao_10pct_dividendos: a.retencao, fases: a.fases.map(x => ({ momento: x.fase.rot, pessoa_fisica: R2(x.pf), holding_tributos: R2(x.pj), holding_com_manutencao: R2(x.pjManut), diferenca_anual: R2(x.economia) })) },
+        alugueis: { receita_anual: a.receita, imoveis_alugados: a.imoveis, pf_contribuinte_ibs_cbs: a.pfContribuinte, carga_efetiva_pf_2026_pct: +a.efetivaPF.toFixed(2), carga_efetiva_holding_2026_pct: +a.efetivaPJ.toFixed(2), dividendo_mensal_por_socio: R2(a.dividendoMensal), retencao_10pct_dividendos: a.retencao, fases: a.fases.map(x => ({ momento: x.fase.rot, pessoa_fisica: R2(x.pf), holding_tributos: R2(x.pj), holding_com_manutencao: R2(x.pjManut), diferenca_anual: R2(x.economia) })), cronograma_ano_a_ano: (a.cronograma || []).map(x => ({ ano: x.fase.rot, marco: x.fase.nota, pessoa_fisica: R2(x.pf), holding_com_manutencao: R2(x.pjManut), diferenca_anual: R2(x.economia) })) },
         familia: { meacao: r.familia.meacao, concorrencia: r.familia.concorrencia, alertas: r.familia.alertas },
         riscos: r.riscos, roteiro: r.acoes
       }
     };
   }
 
-  root.PAT_MOTOR = { calcular, relatorio, paraIA, PREMISSAS, OBJETIVOS, REGIMES, brl, pct, num, irMensal };
+  root.PAT_MOTOR = { calcular, relatorio, paraIA, PREMISSAS, OBJETIVOS, REGIMES, CRONOGRAMA, brl, pct, num, irMensal, irGanho };
 })(typeof window !== "undefined" ? window : globalThis);
