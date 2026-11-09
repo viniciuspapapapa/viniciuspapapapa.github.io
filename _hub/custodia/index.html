@@ -90,15 +90,15 @@
         <summary>Opções</summary>
         <label class="campo" style="margin-top:10px">Orientação adicional à peça (opcional)<textarea id="orientacao" rows="2" placeholder="Ex.: enfatizar a prisão domiciliar; o cliente apresentará comprovante de emprego."></textarea></label>
         <div class="grade g4" style="margin-top:10px">
-          <label class="campo" style="grid-column:span 2">Chave da API da OpenAI<input type="password" id="chave" autocomplete="off" placeholder="sk-..."></label>
-          <label class="campo">Modelo<select id="modelo"><option value="gpt-5.5">GPT-5.5 (melhor qualidade)</option><option value="gpt-5.4-mini">GPT-5.4 mini (mais econômico)</option></select></label>
-          <label class="campo">Raciocínio<select id="esforco"><option value="high">Alto</option><option value="medium" selected>Médio</option><option value="low">Baixo</option></select></label>
+          <label class="campo" style="grid-column:span 2">Chave da API da Anthropic<input type="password" id="chave" autocomplete="off" placeholder="sk-ant-..."></label>
+          <label class="campo">Modelo<select id="modelo"><option value="claude-opus-5-5">Claude Opus 5.5 (melhor qualidade)</option><option value="claude-sonnet-5-5">Claude Sonnet 5.5 (mais econômico)</option></select></label>
+          <label class="campo">Raciocínio<select id="esforco"><option value="high" selected>Alto</option><option value="medium">Médio</option><option value="low">Baixo</option></select></label>
         </div>
         <div class="checks" style="margin-top:8px">
           <label class="check"><input type="checkbox" id="lembrarChave"> Guardar a chave neste navegador</label>
-          <label class="check"><input type="checkbox" id="consentimento"> Autorizo o envio do processo à OpenAI para a elaboração</label>
+          <label class="check"><input type="checkbox" id="consentimento"> Autorizo o envio do processo à Anthropic para a elaboração</label>
         </div>
-        <p class="pequeno mudo" style="margin:8px 0 0">Com a chave e a autorização, a peça é redigida pela IA a partir da leitura integral do processo, no padrão do escritório. Sem elas, a ferramenta gera um rascunho por regras, sem custo, que deve ser complementado.</p>
+        <p class="pequeno mudo" style="margin:8px 0 0">Com a chave e a autorização, a peça é redigida pelo Claude, da Anthropic, a partir da leitura integral do processo, no padrão do escritório. A chave é a mesma do organizador de documentos e fica apenas neste navegador. Sem elas, a ferramenta gera um rascunho por regras, sem custo, que deve ser complementado.</p>
         <p class="pequeno" id="custo" style="margin:6px 0 0"></p>
       </details>
     </div>
@@ -128,6 +128,6 @@
 <script src="../estudo-de-caso/analise.js"></script>
 <script src="motor.js"></script>
 <script src="prompt.js"></script>
-<script src="app.js"></script>
+<script type="module" src="app.js"></script>
 </body>
 </html>

@@ -1,4 +1,4 @@
-/* Instruções da elaboração por IA (OpenAI) do requerimento para a audiência de custódia.
+/* Instruções da elaboração por IA (Claude, da Anthropic) do requerimento para a audiência de custódia.
    Reproduzem o método da skill "audiencia-de-custodia" (análise do auto de prisão em flagrante e requerimento escrito,
    com a doutrina de Aury Lopes Jr., Eugênio Pacelli e Gustavo Badaró), a estrutura do requerimento de referência do
    escritório (sem dados do caso) e a redação vigente dos dispositivos, para que o modelo não cite texto revogado. */

@@ -1,6 +1,7 @@
 /* Audiência de custódia: anexa o processo, lê integralmente e elabora a peça.
-   Com chave da OpenAI e autorização, a peça é redigida pela IA (método da skill audiencia-de-custodia); sem elas, a
-   ferramenta gera um rascunho por regras (motor.js), sem custo. */
+   Com chave da Anthropic e autorização, a peça é redigida pelo Claude (método da skill audiencia-de-custodia); sem elas,
+   a ferramenta gera um rascunho por regras (motor.js), sem custo. Carregado como módulo, depois dos scripts clássicos. */
+import Anthropic from "https://cdn.jsdelivr.net/npm/@anthropic-ai/sdk@1.1.0/+esm";
 (function () {
   "use strict";
   const M = window.CUST_MOTOR, PR = window.CUST_PROMPT, P = window.TPC_PECA, esc = window.HUB.esc;
@@ -8,8 +9,9 @@
   if (window.pdfjsLib) window.pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
   const ler = k => { try { return localStorage.getItem(k); } catch (e) { return null; } };
   const gravar = (k, v) => { try { if (v == null) localStorage.removeItem(k); else localStorage.setItem(k, v); } catch (e) { /* armazenamento indisponível */ } };
-  const K_CHAVE = "hub_openai_chave", K_CONS = "custodia_consentimento";
-  const PRECOS = { "gpt-5.4-mini": [0.75, 4.5], "gpt-5.5": [5, 30] };
+  const K_CHAVE = "hub_claude_chave", K_CONS = "custodia_consentimento_anthropic"; /* a mesma chave do organizador */
+  const PRECOS = { "claude-opus-5-5": [4, 20], "claude-sonnet-5-5": [2, 10] }; /* US$ por milhão de tokens: entrada, saída */
+  const SAIDA = 25000; /* estimativa de tokens de saída (texto e raciocínio) */
   const E = { leitura: null, pgs: null, extr: null, texto: "", req: null, rot: null, peca: "req", ctrl: null, fonte: "" };
 
   /* ------------------------------------------------------------------ configuração */
@@ -25,15 +27,15 @@
   function estado() {
     $("#elaborar").disabled = !E.leitura || !!E.ctrl;
     $("#elaborar").textContent = usaIA() ? "Elaborar peça" : "Elaborar rascunho (sem IA)";
-    $("#motorInfo").textContent = usaIA() ? "A peça será redigida pela IA da OpenAI (" + $("#modelo").selectedOptions[0].textContent + ") a partir da leitura integral do processo." : "Sem a chave da OpenAI e a autorização (em Opções), a ferramenta gera um rascunho por regras, sem custo, que deve ser complementado pela equipe.";
+    $("#motorInfo").textContent = usaIA() ? "A peça será redigida pelo " + $("#modelo").selectedOptions[0].textContent.replace(/\s*\(.*$/, "") + ", da Anthropic, a partir da leitura integral do processo." : "Sem a chave da Anthropic e a autorização (em Opções), a ferramenta gera um rascunho por regras, sem custo, que deve ser complementado pela equipe.";
     if (E.texto && usaIA()) {
       const [pe, ps] = PRECOS[$("#modelo").value] || [1, 5], tin = (Math.min(E.texto.length, LIMITE) + PR.SISTEMA.length) / 3.2;
-      $("#custo").textContent = "Estimativa por peça: cerca de " + Math.round(tin / 1000) + " mil tokens de entrada e até 16 mil de saída, da ordem de US$ " + ((tin * pe + 16000 * ps) / 1e6).toFixed(2) + ". O raciocínio do modelo pode elevar esse valor.";
+      $("#custo").textContent = "Estimativa por peça: cerca de " + Math.round(tin / 1000) + " mil tokens de entrada e até " + Math.round(SAIDA / 1000) + " mil de saída, entre texto e raciocínio, da ordem de US$ " + ((tin * pe + SAIDA * ps) / 1e6).toFixed(2) + ". Processos mais longos ou o raciocínio alto podem elevar esse valor.";
     } else $("#custo").textContent = "";
   }
 
   /* ------------------------------------------------------------------ leitura do processo */
-  const LIMITE = 360000; /* caracteres enviados à IA */
+  const LIMITE = 600000; /* caracteres enviados à IA (cerca de 190 mil tokens; o modelo admite 1 milhão) */
   const RUIDO = /^(número do documento|https?:\/\/pje|assinado eletronicamente|num\. \d|fl\.?$|página \d+ de \d+$)/i;
   function textoParaIA(pgs) {
     const out = []; let tam = 0;
@@ -107,42 +109,37 @@
     $("#pecaBloco").hidden = false; abrir("req");
     if (!usaIA()) {
       const d = dadosRegras(); E.req = M.requerimento(d, M.analisar(d)); E.fonte = "regras";
-      mostrar(); progresso("Rascunho por regras gerado. Revise e complemente: a elaboração completa, no padrão da skill, exige a chave da OpenAI (em Opções).", null);
+      mostrar(); progresso("Rascunho por regras gerado. Revise e complemente: a elaboração completa, no padrão da skill, exige a chave da Anthropic (em Opções).", null);
       $("#pecaBloco").scrollIntoView({ behavior: "smooth" }); return;
     }
     const s = E.extr.sug, hoje = P.dataExtenso(new Date());
     const usuario = "<processo" + (E.parcial ? ' parcial="sim"' : "") + ">\n" + E.texto + "\n</processo>\n\n" + PR.pedido({ advogados: advogados().map(a => a.nome + " (OAB/" + a.uf + " " + a.oab + ")").join(", "), local: s.comarca ? s.comarca + "/MG" : "", hoje, parcial: E.parcial, orientacao: $("#orientacao").value.trim() });
     E.ctrl = new AbortController(); estado(); $("#cancelar").hidden = false;
-    progresso("Enviando o processo à OpenAI…", 0.04);
+    progresso("Enviando o processo à Anthropic…", 0.04);
     let txt = "", motivo = "";
     try {
-      const r = await fetch("https://api.openai.com/v1/chat/completions", {
-        method: "POST", signal: E.ctrl.signal,
-        headers: { Authorization: "Bearer " + $("#chave").value.trim(), "Content-Type": "application/json" },
-        body: JSON.stringify({ model: $("#modelo").value, stream: true, reasoning_effort: $("#esforco").value, max_completion_tokens: 32000, messages: [{ role: "system", content: PR.SISTEMA }, { role: "user", content: usuario }] })
-      });
-      if (!r.ok) {
-        let msg = ""; try { const j = await r.json(); msg = j.error && (j.error.code === "insufficient_quota" || j.error.code === "credit_balance_exhausted") ? "A conta da OpenAI está sem créditos. Adicione créditos em platform.openai.com." : (j.error && j.error.message) || ""; } catch (e) { /* ignora */ }
-        throw new Error(r.status === 401 ? "Chave da OpenAI inválida." : r.status === 429 && !msg ? "Limite de uso da OpenAI atingido; tente mais tarde." : msg || "Erro da OpenAI (" + r.status + ").");
+      const cli = new Anthropic({ apiKey: $("#chave").value.trim(), dangerouslyAllowBrowser: true, maxRetries: 3 });
+      const fluxo = cli.beta.messages.stream({
+        model: $("#modelo").value, max_tokens: 64000,
+        thinking: { type: "adaptive" }, output_config: { effort: $("#esforco").value },
+        betas: ["server-side-fallback-2026-07-01"], fallbacks: "default", /* recusa indevida do classificador: a própria API refaz em outro modelo */
+        system: PR.SISTEMA, messages: [{ role: "user", content: usuario }]
+      }, { signal: E.ctrl.signal });
+      let ultimo = 0;
+      for await (const ev of fluxo) {
+        if (ev.type === "content_block_start" && ev.content_block.type === "thinking" && !txt) progresso("O Claude está lendo o processo e estruturando a análise…", 0.1);
+        if (ev.type !== "content_block_delta" || ev.delta.type !== "text_delta") continue;
+        txt += ev.delta.text;
+        if (Date.now() - ultimo > 900) { ultimo = Date.now(); E.req = blocosDe(txt); E.fonte = "ia"; if (E.peca === "req") mostrar(); progresso("Redigindo a peça: " + Math.round(txt.length / 1000) + " mil caracteres…", Math.min(0.95, 0.15 + txt.length / 45000)); }
       }
-      progresso("A IA está lendo o processo e estruturando a peça…", 0.1);
-      const leitor = r.body.getReader(), dec = new TextDecoder(); let buf = "", ultimo = 0;
-      for (;;) {
-        const { done, value } = await leitor.read(); if (done) break;
-        buf += dec.decode(value, { stream: true });
-        let i;
-        while ((i = buf.indexOf("\n")) >= 0) {
-          const linha = buf.slice(0, i).trim(); buf = buf.slice(i + 1);
-          if (!linha.startsWith("data:")) continue;
-          const dado = linha.slice(5).trim(); if (dado === "[DONE]") continue;
-          try { const j = JSON.parse(dado), ch = j.choices && j.choices[0]; if (ch && ch.delta && ch.delta.content) txt += ch.delta.content; if (ch && ch.finish_reason) motivo = ch.finish_reason; } catch (e) { /* fragmento */ }
-        }
-        if (txt && Date.now() - ultimo > 900) { ultimo = Date.now(); E.req = blocosDe(txt); E.fonte = "ia"; if (E.peca === "req") mostrar(); progresso("Redigindo a peça: " + Math.round(txt.length / 1000) + " mil caracteres…", Math.min(0.95, 0.15 + txt.length / 45000)); }
-      }
-      if (!txt.trim()) throw new Error("A OpenAI não devolveu texto.");
+      const fim = await fluxo.finalMessage(); motivo = fim.stop_reason;
+      if (motivo === "refusal") throw new Error("O modelo recusou a elaboração desta peça" + (txt ? "; o texto parcial foi descartado" : "") + ".");
+      if (!txt.trim()) throw new Error("A Anthropic não devolveu texto.");
       E.req = blocosDe(txt); E.fonte = "ia"; mostrar();
-      progresso("Peça elaborada. Revise cada informação com o processo antes de protocolar." + (motivo === "length" ? " O texto atingiu o limite de extensão e pode estar incompleto no final." : ""), null);
-    } catch (x) {
+      progresso("Peça elaborada. Revise cada informação com o processo antes de protocolar." + (motivo === "max_tokens" ? " O texto atingiu o limite de extensão e pode estar incompleto no final." : ""), null);
+    } catch (x0) {
+      const x = x0 instanceof Anthropic.APIUserAbortError ? Object.assign(new Error(""), { name: "AbortError" }) : x0 instanceof Anthropic.APIError || x0 instanceof Anthropic.APIConnectionError ? new Error(erroApi(x0)) : x0;
+      if (motivo === "refusal") txt = "";
       if (x.name === "AbortError") progresso("Elaboração interrompida." + (txt ? " O texto parcial está abaixo." : ""), null);
       else {
         progresso((x.message || String(x)) + " Foi gerado um rascunho por regras para não perder o trabalho.", null);
@@ -151,12 +148,22 @@
     } finally { E.ctrl = null; $("#cancelar").hidden = true; estado(); }
   };
   $("#cancelar").onclick = () => { if (E.ctrl) E.ctrl.abort(); };
+  function erroApi(e) {
+    const msg = String(e.message || "");
+    if (e instanceof Anthropic.AuthenticationError) return "Chave da API da Anthropic inválida.";
+    if (/credit balance/i.test(msg)) return "A conta da Anthropic está sem créditos. Adicione créditos em console.anthropic.com, em Billing.";
+    if (e instanceof Anthropic.PermissionDeniedError) return "A chave da Anthropic não tem permissão para este modelo.";
+    if (e instanceof Anthropic.RateLimitError) return "Limite de uso da API da Anthropic atingido; aguarde alguns minutos e tente novamente.";
+    if (e instanceof Anthropic.APIConnectionError) return "Falha de conexão com a API da Anthropic.";
+    if (e.status === 529 || e.status === 503) return "A API da Anthropic está sobrecarregada no momento; tente novamente em alguns minutos.";
+    return "Erro da API da Anthropic" + (e.status ? " (" + e.status + ")" : "") + (msg ? ": " + msg.replace(/^\d{3}\s*/, "").slice(0, 200) : "") + ".";
+  }
 
   /* ------------------------------------------------------------------ peça */
   const ed = P.editor($("#folha"), { aviso: () => { $("#descartar").hidden = false; } });
   function mostrar() {
     const bl = E.peca === "req" ? E.req : E.rot;
-    $("#avisos").innerHTML = E.peca === "req" && E.fonte === "regras" ? '<div class="aviso">Rascunho por regras: a estrutura e os fundamentos estão prontos, mas a narrativa dos fatos e a análise das particularidades do caso devem ser complementadas. Para a peça completa, configure a chave da OpenAI em Opções.</div>' : E.peca === "rot" ? '<div class="aviso">Roteiro gerado por regras a partir dos elementos identificados no processo.</div>' : "";
+    $("#avisos").innerHTML = E.peca === "req" && E.fonte === "regras" ? '<div class="aviso">Rascunho por regras: a estrutura e os fundamentos estão prontos, mas a narrativa dos fatos e a análise das particularidades do caso devem ser complementadas. Para a peça completa, configure a chave da Anthropic em Opções.</div>' : E.peca === "rot" ? '<div class="aviso">Roteiro gerado por regras a partir dos elementos identificados no processo.</div>' : "";
     ed.mostrar(bl || []);
   }
   function abrir(qual) { E.peca = qual; document.querySelectorAll("[data-peca]").forEach(x => x.setAttribute("aria-selected", String(x.dataset.peca === qual))); }
