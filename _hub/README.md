@@ -82,9 +82,10 @@ _hub/  (publicada cifrada em hub/)
     app.js                    Abas da base e do relatório, edição do texto na visualização e envio
   login/oauth.html            Página de retorno do login Microsoft (pública, sem conteúdo)
   custodia/
-    motor.js                  Leitura do auto de prisão em flagrante, análise (CPP, arts. 302 a 310, 312 a 316, 318 e 319,
-                              redação vigente), requerimento escrito e roteiro oral da audiência de custódia
-    app.js                    Anexo do processo, formulário com as sugestões extraídas, análise e peças editáveis
+    prompt.js                 Instruções da elaboração por IA (método da skill audiencia-de-custodia, estrutura do
+                              requerimento de referência, redação vigente do CPP e da Lei 11.340/2006, precedentes)
+    motor.js                  Leitura do auto, rascunho por regras (sem IA) e roteiro oral
+    app.js                    Anexo do processo, elaboração pela OpenAI (chave do usuário) e peça editável em Word
   certidoes/
     catalogo.js               Serviços oficiais de certidão criminal (27 TJs, TRF1 a TRF6, STM, TJMs, TSE, STF, STJ, PF, BNMP)
     leitor.js                 Leitura das certidões em PDF: órgão, resultado, datas, números CNJ e conferência do pesquisado
