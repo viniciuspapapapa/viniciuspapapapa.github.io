@@ -5,15 +5,15 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Central de Certidões · HUB Criminal TPC</title>
 <meta name="description" content="Central de certidões criminais: painel com os serviços oficiais de todos os tribunais estaduais, federais, militares, eleitoral, superiores e Polícia Federal, leitura automática das certidões e relatório no padrão TPC.">
-<meta name="theme-color" content="#f6f4ef">
+<meta name="theme-color" content="#f5f1e8">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=DM+Mono:wght@400;500&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Red+Hat+Display:wght@500;600&family=Red+Hat+Text:wght@400;500;600&family=Red+Hat+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../assets/hub.css">
 <style>
   .heroi { padding: 34px 0 6px; }
   .chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 14px; }
-  .chips span { font-size: 12px; padding: 4px 10px; border: 1px solid var(--line-2); border-radius: 999px; background: var(--surface); color: var(--ink-2); }
+  .chips span { font-size: 13px; padding: 2px 8px; border-radius: var(--radius-chip); background: var(--surface-3); color: var(--ink-2); }
   .bloco { padding: 18px; margin-bottom: 14px; }
   .bloco > h2 { font-size: 22px; margin-bottom: 4px; }
   .bloco > p.mudo { margin: 0 0 12px; font-size: 14px; }
@@ -25,12 +25,12 @@
   @media (max-width: 760px) { .grupos { grid-template-columns: minmax(0, 1fr); } }
   .colar { position: sticky; top: 64px; z-index: 5; }
   .colar .linha { display: flex; flex-wrap: wrap; gap: 6px; }
-  .colar button { border: 1px solid var(--line-2); background: var(--surface); color: var(--ink); border-radius: 999px; padding: 6px 12px; font: inherit; font-size: 13px; cursor: pointer; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .colar button { border: 1px solid var(--line-2); background: var(--surface); color: var(--ink); border-radius: var(--radius-chip); padding: 6px 12px; font: inherit; font-size: 13px; cursor: pointer; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .colar button b { font-weight: 600; margin-right: 4px; }
   .colar button.ok { border-color: var(--ok); color: var(--ok); }
   .prog { display: flex; align-items: center; gap: 12px; margin: 6px 0 12px; flex-wrap: wrap; }
   .barra { height: 8px; background: var(--line); border-radius: 99px; overflow: hidden; flex: 1; min-width: 160px; }
-  .barra i { display: block; height: 100%; width: 0; background: var(--ok); transition: width .2s; }
+  .barra i { display: block; height: 100%; width: 0; background: var(--ok); }
   .grupo-t { font-family: var(--serif); font-size: 19px; margin: 18px 0 8px; }
   .org { border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; background: var(--surface-2); margin-bottom: 8px; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 6px 12px; align-items: center; border-left: 5px solid var(--line-2); }
   .org.negativa { border-left-color: var(--ok); } .org.positiva { border-left-color: var(--bad); } .org.solicitada, .org.aguardando { border-left-color: var(--warn); } .org.presencial { border-left-color: var(--info); }

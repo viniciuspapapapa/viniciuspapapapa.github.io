@@ -67,7 +67,7 @@ import Anthropic from "https://cdn.jsdelivr.net/npm/@anthropic-ai/sdk@1.1.0/+esm
   };
 
   /* ------------------------------------------------------------------ panorama */
-  const CORES = ["#1f3a5f", "#8a6d3b", "#4f7a5a", "#7a4f6d", "#3f6f8a", "#9a9a9a"];
+  const CORES = ["var(--serie-1)", "var(--serie-2)", "var(--serie-3)", "var(--serie-4)", "var(--serie-5)", "var(--serie-6)"];
   const tabela = (cab, linhas, num) => '<table class="pt"><thead><tr>' + cab.map((c, i) => "<th" + (num && num.includes(i) ? ' style="text-align:right"' : "") + ">" + esc(c) + "</th>").join("") + "</tr></thead><tbody>" + linhas.map(l => "<tr>" + l.map((c, i) => "<td" + (num && num.includes(i) ? ' class="v"' : "") + ">" + esc(c) + "</td>").join("") + "</tr>").join("") + "</tbody></table>";
   function painel(r) {
     const t = r.tot, vazio = !t.bruto;

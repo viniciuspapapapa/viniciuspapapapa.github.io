@@ -5,19 +5,19 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Estudo de Caso Criminal · HUB Criminal TPC</title>
 <meta name="description" content="Estudo de caso criminal a partir da cópia integral do processo: leitura com OCR, reconstrução fática, mapeamento probatório, tipicidade, teses defensivas da mais forte à mais fraca, riscos e observações estratégicas, em Word no padrão do escritório.">
-<meta name="theme-color" content="#f6f4ef">
+<meta name="theme-color" content="#f5f1e8">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=DM+Mono:wght@400;500&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Red+Hat+Display:wght@500;600&family=Red+Hat+Text:wght@400;500;600&family=Red+Hat+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../assets/hub.css">
 <style>
   .heroi { padding: 34px 0 6px; }
   .heroi h1 { max-width: 900px; }
   .chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 14px; }
-  .chips span { font-size: 12px; padding: 4px 10px; border: 1px solid var(--line-2); border-radius: 999px; background: var(--surface); color: var(--ink-2); }
+  .chips span { font-size: 13px; padding: 2px 8px; border-radius: var(--radius-chip); background: var(--surface-3); color: var(--ink-2); }
   .bloco { padding: 18px; margin-bottom: 14px; }
   .bloco > h2 { font-size: 23px; margin-bottom: 4px; display: flex; align-items: baseline; gap: 10px; }
-  .bloco > h2 .passo { font-family: var(--sans); font-size: 12px; letter-spacing: .14em; text-transform: uppercase; color: var(--ink-3); font-weight: 500; }
+  .bloco > h2 .passo { font-family: var(--sans); font-size: 12px; color: var(--ink-3); font-weight: 500; }
   .bloco > p.mudo { margin: 0 0 14px; font-size: 14px; }
   .zona { border: 2px dashed var(--line-2); border-radius: 12px; padding: 26px 16px; text-align: center; background: var(--surface-2); cursor: pointer; }
   .zona.sobre { border-color: var(--ink-3); background: color-mix(in srgb, var(--accent) 18%, var(--surface)); }
@@ -26,13 +26,13 @@
   .arq { display: flex; gap: 10px; align-items: center; padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); font-size: 14px; }
   .arq .nm { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .arq button { border: 0; background: none; cursor: pointer; color: var(--ink-3); font-size: 18px; }
-  .barra { height: 8px; background: var(--na-bg); border-radius: 999px; overflow: hidden; margin-top: 10px; }
-  .barra > i { display: block; height: 100%; width: 0; background: var(--brand); transition: width .25s; }
+  .barra { height: 8px; background: var(--na-bg); border-radius: var(--radius-chip); overflow: hidden; margin-top: 10px; }
+  .barra > i { display: block; height: 100%; width: 0; background: var(--brand); }
   .estado { font-size: 13.5px; color: var(--ink-2); margin-top: 6px; min-height: 20px; }
   .kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin-top: 12px; }
   @media (max-width: 720px) { .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
   .kpis > div { border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; background: var(--surface-2); }
-  .kpis span { display: block; font-size: 12px; color: var(--ink-3); text-transform: uppercase; letter-spacing: .06em; }
+  .kpis span { display: block; font-size: 12px; color: var(--ink-3); }
   .kpis b { display: block; font-family: var(--serif); font-size: 24px; line-height: 1.15; }
   .aviso { border-left: 3px solid var(--warn); background: var(--warn-bg); padding: 9px 12px; border-radius: 0 8px 8px 0; font-size: 13.5px; margin: 10px 0; }
   .aviso.info { border-left-color: var(--info); background: var(--info-bg); }
@@ -41,7 +41,7 @@
   [hidden] { display: none !important; }
 
   /* pré-visualização no padrão do modelo do escritório */
-  .folha { background: #fff; color: #000; border: 1px solid var(--line); border-radius: 6px; max-width: 860px; margin: 0 auto; padding: clamp(18px, 6vw, 64px) clamp(16px, 7vw, 76px); font-family: Calibri, Carlito, "Segoe UI", Arial, sans-serif; font-size: 15px; line-height: 1.32; }
+  .folha { background: var(--doc-paper); color: var(--doc-ink); border: 1px solid var(--line); border-radius: 6px; max-width: 860px; margin: 0 auto; padding: clamp(18px, 6vw, 64px) clamp(16px, 7vw, 76px); font-family: Calibri, Carlito, "Segoe UI", Arial, sans-serif; font-size: 15px; line-height: 1.32; }
   .folha p { margin: 0 0 13px; text-align: justify; }
   .folha .ec-logo { display: block; width: min(330px, 70%); margin: 0 0 26px; }
   .folha .ec-normal { text-align: left; }
@@ -54,8 +54,8 @@
   .folha .ec-q { margin-left: 25mm; font-size: 12px; line-height: 1.2; }
   @media (max-width: 640px) { .folha .ec-q { margin-left: 28px; } .folha .ec-h2 { margin-left: 16px; } }
   .folha .ec-tab { width: 100%; border-collapse: collapse; font-size: 11px; margin: 0 0 14px; }
-  .folha .ec-tab th, .folha .ec-tab td { border: 1px solid #000; padding: 3px 5px; vertical-align: middle; }
-  .folha .ec-tab th { background: #efefef; text-align: center; }
+  .folha .ec-tab th, .folha .ec-tab td { border: 1px solid var(--doc-ink); padding: 3px 5px; vertical-align: middle; }
+  .folha .ec-tab th { background: var(--doc-head); text-align: center; }
   .rolagem { overflow-x: auto; }
   .base-lista p { margin: 0 0 8px; font-size: 14px; }
 </style>
