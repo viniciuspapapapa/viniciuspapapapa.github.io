@@ -85,7 +85,7 @@ _hub/  (publicada cifrada em hub/)
     prompt.js                 Instruções da elaboração por IA (método da skill audiencia-de-custodia, estrutura do
                               requerimento de referência, redação vigente do CPP e da Lei 11.340/2006, precedentes)
     motor.js                  Leitura do auto, rascunho por regras (sem IA) e roteiro oral
-    app.js                    Anexo do processo, elaboração pela OpenAI (chave do usuário) e peça editável em Word
+    app.js                    Anexo do processo, elaboração pelo Claude, da Anthropic (chave do usuário) e peça editável em Word
   certidoes/
     catalogo.js               Serviços oficiais de certidão criminal (27 TJs, TRF1 a TRF6, STM, TJMs, TSE, STF, STJ, PF, BNMP)
     leitor.js                 Leitura das certidões em PDF: órgão, resultado, datas, números CNJ e conferência do pesquisado
