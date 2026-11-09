@@ -16,9 +16,40 @@
   function achar(pgs, re) { for (const pg of pgs) { const m = re.exec(pg.low); if (m) return { pg, idx: m.index, m }; } return null; }
   const ev = (a, rot) => (a ? { ref: a.pg.ref, trecho: trecho(a.pg, a.idx), rot } : null);
 
+  /* imputação pela capitulação do despacho ratificador ou da nota de culpa: "art. 147, § 1º do Decreto Lei 2848/40" */
+  const DIPLOMA = [[/decreto[-\s]*lei\s*(n[ºo.]*\s*)?2\.?848|codigo penal|\bcp\b/, "CP"], [/decreto[-\s]*lei\s*(n[ºo.]*\s*)?3\.?688|contravenc/, "LCP"], [/lei\s*(n[ºo.]*\s*)?11\.?343/, "11.343"], [/lei\s*(n[ºo.]*\s*)?10\.?826/, "10.826"], [/lei\s*(n[ºo.]*\s*)?9\.?503|transito/, "9.503"], [/lei\s*(n[ºo.]*\s*)?12\.?850/, "12.850"], [/lei\s*(n[ºo.]*\s*)?9\.?613/, "9.613"]];
+  let _imp = null, _impPgs = null;
+  function imputacao(pgs) {
+    if (_impPgs === pgs) return _imp;
+    const alvo = pgs.find(p => /ratifico a prisao/.test(p.low)) || pgs.find(p => /nota de culpa/.test(p.low)) || pgs.find(p => /tipificacao:/.test(p.low));
+    const out = [];
+    if (alvo) {
+      const t = alvo.low.slice(Math.max(0, alvo.low.search(/ratifico a prisao|crime\(s\) previstos|tipificacao:/)));
+      const r = /art(?:igo)?\.?\s*(\d{1,3}(?:-[a-z])?)((?:,?\s*(?:§|paragrafo)\s*[\wº]+)?(?:,?\s*inciso\s*[ivx]+)?)[^;]{0,40}?(decreto[-\s]*lei\s*(?:n[ºo.]*\s*)?\d\.?\d{3}(?:\/\d{2})?|lei\s*(?:n[ºo.]*\s*)?\d{1,2}\.?\d{3}(?:\/\d{2,4})?|codigo penal)/g;
+      let m;
+      while ((m = r.exec(t))) {
+        const dip = (DIPLOMA.find(([re]) => re.test(m[3])) || [, null])[1]; if (!dip || /11\.?340/.test(m[3])) continue;
+        const a = m[1].toUpperCase(), comp = m[2].replace(/paragrafo unico/g, "parágrafo único").replace(/paragrafo/g, "parágrafo").replace(/inciso\s+([ivx]+)/g, (x, n) => "inciso " + n.toUpperCase()).replace(/\s+/g, " ").trim().replace(/^,\s*/, "");
+        if (out.some(x => x.d === dip && x.a === a && x.comp === comp)) continue;
+        const c = K.CRIMES.find(x => x.d === dip && x.a === a);
+        const contr = dip === "LCP";
+        out.push({ d: dip, a, comp, contravencao: contr, rot: (contr ? "contravenção do " : c ? c.nome + " (" : "crime do ") + "art. " + a + (comp ? ", " + comp : "") + ", " + (dip === "CP" ? "do CP" : dip === "LCP" ? "do Decreto-Lei 3.688/1941" : "da Lei " + dip) + (c && !contr ? ")" : ""), min: c && !comp ? c.pena[0] : null, max: c && !comp ? c.pena[1] : null, violencia: !!(c && c.violencia), ref: alvo.ref });
+      }
+    }
+    _impPgs = pgs; _imp = out; return out;
+  }
+
   /* pgs: páginas do EC_ANALISE.paginas (com .low sem acento); itens: EC_ANALISE.pecas; crimes: EC_ANALISE.crimes */
   function extrair(pgs, itens, crimes) {
     const S = K.SINAIS, out = { sug: {}, prova: {}, crimes: [] };
+    /* identificação: autuado, juízo, número e comarca (capa do PJe e auto) */
+    const tudo = pgs.slice(0, 12).map(p => p.texto).join("\n");
+    let m = /\n\s*([A-ZÁÉÍÓÚÂÊÔÃÕÇ' ]{6,})\s*\((?:FLAGRANTEAD|AUTUAD|CONDUZID|INVESTIGAD)/.exec(tudo) || /CONDUZIDO\(A\):\s*([A-ZÁÉÍÓÚÂÊÔÃÕÇ' ]{6,})/.exec(tudo) || /Investigado\(s\):\s*([A-ZÁÉÍÓÚÂÊÔÃÕÇ' ]{6,})/.exec(tudo);
+    if (m) out.sug.nome = m[1].trim().toLowerCase().replace(/(^|\s)(\S)/g, (x, e, l) => e + l.toUpperCase()).replace(/ (Da|De|Do|Das|Dos|E) /g, x => x.toLowerCase());
+    m = /[ÓO]rg[ãa]o julgador:\s*([^\n]+)/i.exec(tudo); if (m) out.sug.juizo = m[1].trim();
+    m = /\b(\d{7}-\d{2}\.\d{4}\.\d\.\d{2}\.\d{4})\b/.exec(tudo); if (m) out.sug.autos = m[1];
+    m = /comarca de ([A-Za-zÀ-ú' ]+?)(?:\s*[-/]|\s*\n|$)/i.exec(out.sug.juizo || "") || /Comarca:\s*([A-ZÀ-Ú' ]+)/.exec(tudo);
+    if (m) out.sug.comarca = m[1].trim().toLowerCase().replace(/(^|\s)(\S)/g, (x, e, l) => e + l.toUpperCase());
     const set = (k, v, a, rot) => { out.sug[k] = v; if (a) out.prova[k] = ev(a, rot); };
     const apf = itens.filter(i => i.id === "apf").flatMap(i => i.pgs);
     const base = apf.length ? apf.concat(pgs.filter(p => !apf.includes(p))) : pgs;
@@ -26,6 +57,12 @@
     let a = achar(base, /(data\s*(e|\/)\s*hora|hora)\s*(da prisao|do fato|do flagrante|da ocorrencia|da conducao)[^0-9]{0,25}(\d{2})\/(\d{2})\/(\d{4})[^0-9]{0,15}(\d{1,2})\s*[:h]\s*(\d{2})/);
     if (!a) a = achar(base, /(foi preso|deu voz de prisao|voz de prisao|foi detid|foi conduzid|efetuou a prisao)[^.]{0,120}?(\d{2})\/(\d{2})\/(\d{4})[^0-9]{0,30}(\d{1,2})\s*[:h]\s*(\d{2})/);
     if (a) { const g = a.m.slice(-5); set("prisao", { data: g[2] + "-" + g[1] + "-" + g[0], hora: g[3].padStart(2, "0") + ":" + g[4] }, a, "Data e hora da prisão"); }
+    else {
+      /* APFD do PJe mineiro: "Às 23h e 16min de 08 de Novembro de 2026, ... compareceu ... o condutor" (apresentação do preso) */
+      const MES = ["janeiro", "fevereiro", "marco", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"];
+      a = achar(base, /as (\d{1,2})h(?: e (\d{1,2})min)? de (\d{1,2}) de (janeiro|fevereiro|marco|abril|maio|junho|julho|agosto|setembro|outubro|novembro|dezembro) de (\d{4})/);
+      if (a) { const m2 = a.m; set("prisao", { data: m2[5] + "-" + String(MES.indexOf(m2[4]) + 1).padStart(2, "0") + "-" + m2[3].padStart(2, "0"), hora: m2[1].padStart(2, "0") + ":" + (m2[2] || "00").padStart(2, "0") }, a, "Apresentação do preso à autoridade"); }
+    }
     /* comunicação ao juiz */
     a = achar(base, /(?:comunica\w*|encaminh\w*|remet\w*)[^.]{0,60}(?:ao|a) (?:meritissimo |exm[oa]\.? )?(?:juiz|juizo|poder judiciario|plantao judiciario|central de (?:audiencias de )?custodia)[^.]{0,90}?\d{2}\/\d{2}\/\d{4}(?:[^0-9]{0,15}\d{1,2}\s*[:h]\s*\d{2})?/);
     if (a) { const m = /(\d{2})\/(\d{2})\/(\d{4})(?:[^0-9]{0,15}(\d{1,2})\s*[:h]\s*(\d{2}))?/.exec(a.m[0].slice(a.m[0].search(/\d{2}\/\d{2}\/\d{4}/))); set("comunicacao", { data: m[3] + "-" + m[2] + "-" + m[1], hora: m[4] ? m[4].padStart(2, "0") + ":" + m[5] : "" }, a, "Comunicação ou encaminhamento ao juiz"); }
@@ -40,7 +77,8 @@
     a = achar(pgs, /(comunica\w*|contato|ciencia|avisad)[^.]{0,80}(familia|familiar|esposa|companheir|mae|pai|irma|irmao|pessoa (por ele |por ela )?indicada)/); set("familia", a ? "sim" : "nc", a, "Comunicação à família");
     /* exame de corpo de delito e relato de agressão */
     a = achar(pgs, /exame (de )?corpo de delito|exame de lesoes|laudo de lesoes|\becd\b/); set("corpoDelito", a ? "sim" : "nc", a, "Exame de corpo de delito");
-    a = achar(pgs, /(foi |fora |teria sido )?(agredid|espancad|apanhou)|lesoes? (aparentes|visiveis|na regiao)|escoriac|hematoma|spray de pimenta|tortur|socos? e chutes|chutes? e socos/); set("agressao", a ? "sim" : "nao", a, "Relato ou sinal de agressão");
+    /* violência atribuída aos agentes do Estado (e não a narrada pela vítima contra o autuado) */
+    a = achar(pgs, /(policia\w*|militares|guarnicao|agentes|pm)[^.]{0,60}(agredi|espanc|bateram|socos?|chutes?|tortur|spray)|(agredid[oa]|espancad[oa]|apanhou|torturad[oa])[^.]{0,40}(pel[oa]s? (policia|militares|guarnicao|agentes|pms?)|na viatura|na delegacia)/); set("agressao", a ? "sim" : "nao", a, "Relato de violência policial");
     a = achar(pgs, /algem/); if (a) { out.sug.algemas = "verificar"; out.prova.algemas = ev(a, "Uso de algemas"); }
     /* filhos (art. 304, § 4º) */
     a = achar(pgs, /(possui|tem|pai de|mae de)\s*(\d+|um|uma|dois|duas|tres)\s*filh|filh[oa]s? menor|nao possui filhos|sem filhos/); set("filhos", a ? (/nao possui|sem filhos/.test(a.m[0]) ? "nao" : "sim") : "nc", a, "Informação sobre filhos (art. 304, § 4º)");
@@ -60,7 +98,7 @@
     a = achar(pgs, /(\d+(?:[.,]\d+)?)\s*(g|gramas|kg|quilos?)\b[^.]{0,60}(maconha|cocaina|crack|droga|substancia|entorpecente)|(maconha|cocaina|crack)[^.]{0,60}?(\d+(?:[.,]\d+)?)\s*(g|gramas|kg|quilos?)\b/);
     if (a) set("droga", a.m[0], a, "Quantidade de droga");
     a = achar(pgs, /legitima defesa|estado de necessidade|estrito cumprimento do dever legal|exercicio regular de direito/); if (a) set("excludente", "verificar", a, "Menção a excludente de ilicitude");
-    out.crimes = (crimes || []).map(c => ({ rot: c.nome + " (" + (c.d === "CP" ? "CP, art. " + c.a : "Lei " + c.d + ", art. " + c.a) + ")", d: c.d, a: c.a, max: c.pena[1], min: c.pena[0], violencia: !!c.violencia, ref: (c.pgs || []).slice(0, 3).map(p => p.ref).join("; ") }));
+    out.crimes = imputacao(pgs).concat((crimes || []).filter(c => !imputacao(pgs).some(x => x.d === c.d && x.a === c.a)).map(c => ({ rot: c.nome + " (" + (c.d === "CP" ? "CP, art. " + c.a : "Lei " + c.d + ", art. " + c.a) + ")", d: c.d, a: c.a, max: c.pena[1], min: c.pena[0], violencia: !!c.violencia, ref: (c.pgs || []).slice(0, 3).map(p => p.ref).join("; ") })));
     return out;
   }
 
@@ -73,7 +111,8 @@
   /* d: dados do formulário (ver app.js) */
   function analisar(d) {
     const r = { relax: [], liberdade: [], alertas: [], cautelares: [], domiciliar: null, fianca: null, prazos: {} };
-    const crimes = d.crimes || [], maxPena = crimes.reduce((m, c) => Math.max(m, +c.max || 0), 0), minPena = crimes.reduce((m, c) => Math.max(m, +c.min || 0), 0);
+    const todos = d.crimes || [], crimes = todos.filter(c => !c.contravencao), penaDesconhecida = crimes.some(c => !(+c.max > 0));
+    const maxPena = crimes.reduce((m, c) => Math.max(m, +c.max || 0), 0), minPena = crimes.reduce((m, c) => Math.max(m, +c.min || 0), 0);
     const violento = crimes.some(c => c.violencia), trafico = crimes.some(c => c.d === "11.343" && c.a === "33");
     const p = dt(d.prisao), com = dt(d.comunicacao), cus = dt(d.custodia);
     if (p && com) r.prazos.comunicacao = horas(p, com);
@@ -102,13 +141,13 @@
     /* II. preventiva e liberdade provisória */
     const reinc = !!(d.pessoal && d.pessoal.reincidente);
     const hip313 = (maxPena > 48) || reinc || (d.risco && (d.risco.vd || d.risco.orcrimUltra));
-    if (crimes.length && !hip313) r.liberdade.push({ id: "313", t: "Inadmissibilidade da preventiva: crime com pena máxima não superior a quatro anos, autuado não reincidente e fora das hipóteses do art. 313", f: "CPP, art. 313" });
+    if (crimes.length && !penaDesconhecida && !hip313) r.liberdade.push({ id: "313", t: "Inadmissibilidade da preventiva: crime com pena máxima não superior a quatro anos, autuado não reincidente e fora das hipóteses do art. 313", f: "CPP, art. 313" });
     if (d.excludente && d.excludente !== "nao") r.liberdade.push({ id: "excludente", t: "Indícios de excludente de ilicitude", f: "CPP, arts. 310, § 1º, e 314; CP, art. 23" });
     r.liberdade.push({ id: "fumus", t: "Fragilidade do fumus commissi delicti", f: "CPP, art. 312, caput", fraco: !(f.reconhecimento === "irregular" || f.confissaoInformal === "sim" || f.busca === "fragil" || f.domicilio === "sem") });
     r.liberdade.push({ id: "periculum", t: "Ausência de periculum libertatis concreto e contemporâneo", f: "CPP, arts. 312, §§ 2º e 4º, e 315, §§ 1º e 2º" });
     const pessoais = d.pessoal || {};
     if (pessoais.primario || pessoais.residencia || pessoais.trabalho) r.liberdade.push({ id: "pessoais", t: "Condições pessoais favoráveis", f: "CPP, art. 282, II" });
-    if (crimes.length && !violento && (minPena <= 48 || trafico)) r.liberdade.push({ id: "homogeneidade", t: "Desproporcionalidade da prisão frente à provável pena", f: "CPP, art. 282, II; CP, arts. 33, § 2º, c, e 44" + (trafico ? "; Lei 11.343/2006, art. 33, § 4º; STF, HC 118.533" : "") });
+    if (crimes.length && !penaDesconhecida && !violento && (minPena <= 48 || trafico)) r.liberdade.push({ id: "homogeneidade", t: "Desproporcionalidade da prisão frente à provável pena", f: "CPP, art. 282, II; CP, arts. 33, § 2º, c, e 44" + (trafico ? "; Lei 11.343/2006, art. 33, § 4º; STF, HC 118.533" : "") });
     /* alertas dos §§ 2º e 5º do art. 310 */
     const rs = d.risco || {};
     if (reinc || rs.orcrimArmada || rs.milicia || rs.armaRestrito) r.alertas.push({ id: "310p2", t: "O § 2º do art. 310 prevê a denegação da liberdade provisória ao reincidente, ao integrante de organização criminosa armada ou milícia e a quem porta arma de uso restrito. A defesa deve sustentar que a vedação não dispensa a demonstração concreta dos requisitos do art. 312 (CF, arts. 5º, LXVI, e 93, IX; CPP, art. 315; STF, HC 104.339, sobre a inconstitucionalidade da vedação abstrata à liberdade provisória)." });
@@ -118,7 +157,7 @@
 
     /* fiança */
     const inaf = crimes.some(c => INAFIANCAVEIS.some(([dd, aa]) => c.d === dd && c.a === aa)) || crimes.some(c => HEDIONDOS.some(([dd, aa]) => c.d === dd && c.a === aa));
-    if (crimes.length) r.fianca = inaf ? { cabe: false, t: "Crime inafiançável (CPP, art. 323). A inafiançabilidade não impede a liberdade provisória sem fiança (STF, HC 104.339), que deve ser requerida." }
+    if (crimes.length && !penaDesconhecida) r.fianca = inaf ? { cabe: false, t: "Crime inafiançável (CPP, art. 323). A inafiançabilidade não impede a liberdade provisória sem fiança (STF, HC 104.339), que deve ser requerida." }
       : { cabe: true, faixa: maxPena > 48 ? "de 10 a 200 salários mínimos (art. 325, II)" : "de 1 a 100 salários mínimos (art. 325, I)", dispensa: d.economia === "baixa", t: "" };
 
     /* cautelares sugeridas */
