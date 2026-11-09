@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Diagnóstico Patrimonial e Sucessório · HUB TPC</title>
+<meta name="description" content="Levantamento estruturado do patrimônio do grupo familiar e panorama completo do planejamento: custo da sucessão, tributação dos aluguéis antes e depois da reforma, holding, cenários comparativos, riscos e roteiro de ações.">
+<meta name="theme-color" content="#f6f4ef">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=DM+Mono:wght@400;500&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/hub.css">
+<style>
+  .heroi { padding: 34px 0 6px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 14px; }
+  .chips span { font-size: 12px; padding: 4px 10px; border: 1px solid var(--line-2); border-radius: 999px; background: var(--surface); color: var(--ink-2); }
+  .bloco { padding: 18px; margin-bottom: 14px; }
+  .bloco > h2 { font-size: 22px; margin-bottom: 4px; }
+  .bloco > p.mudo { margin: 0 0 12px; font-size: 14px; }
+  input[type=number] { width: 100%; border: 1px solid var(--line-2); background: var(--surface); color: var(--ink); border-radius: 8px; padding: 8px 10px; font-size: 14.5px; min-width: 0; }
+  .dica { font-size: 12.5px; color: var(--ink-3); font-weight: 400; }
+  .item { border: 1px solid var(--line); border-radius: 10px; padding: 12px; margin-bottom: 10px; background: var(--surface-2); }
+  .item-cab { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; font-weight: 600; font-size: 14px; }
+  .x { border: 1px solid var(--line-2); background: var(--surface); border-radius: 8px; width: 32px; height: 32px; cursor: pointer; color: var(--ink-3); font-size: 17px; flex: none; }
+  .checks { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px 14px; }
+  @media (max-width: 900px) { .checks { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } }
+  @media (max-width: 560px) { .checks { grid-template-columns: minmax(0, 1fr); } }
+  .placar { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin: 6px 0 14px; }
+  @media (max-width: 860px) { .placar { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  .placar > div { border: 1px solid var(--line); border-radius: 10px; padding: 12px; background: var(--surface-2); min-width: 0; }
+  .placar span { display: block; font-size: 11.5px; color: var(--ink-3); text-transform: uppercase; letter-spacing: .06em; }
+  .placar b { display: block; font-family: var(--serif); font-size: 25px; margin: 4px 0 2px; overflow-wrap: anywhere; }
+  .placar small { font-size: 12.5px; color: var(--ink-2); }
+  .tw { overflow-x: auto; }
+  table.pt { width: 100%; border-collapse: collapse; font-size: 13.5px; min-width: 520px; }
+  table.pt th, table.pt td { border-bottom: 1px solid var(--line); padding: 7px 8px; text-align: left; vertical-align: top; }
+  table.pt th { font-size: 11.5px; text-transform: uppercase; letter-spacing: .05em; color: var(--ink-3); font-weight: 500; }
+  table.pt td.v { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .comp { display: flex; height: 12px; border-radius: 99px; overflow: hidden; margin: 8px 0 6px; background: var(--line); }
+  .comp i { display: block; height: 100%; }
+  .leg { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 12.5px; color: var(--ink-2); }
+  .leg span::before { content: ""; display: inline-block; width: 9px; height: 9px; border-radius: 3px; margin-right: 5px; background: var(--c); }
+  .risco { border-left: 4px solid var(--line-2); padding: 8px 12px; margin: 6px 0; background: var(--surface-2); border-radius: 0 8px 8px 0; font-size: 13.5px; }
+  .risco.elevado { border-left-color: var(--bad); } .risco.moderado { border-left-color: var(--warn); }
+  .risco b { display: block; font-size: 14px; }
+  .aviso { border-left: 3px solid var(--warn); background: var(--warn-bg); padding: 8px 12px; border-radius: 0 8px 8px 0; font-size: 13.5px; margin: 6px 0; }
+  .sub-h { font-size: 16px; margin: 16px 0 6px; }
+  .barra { height: 6px; background: var(--line); border-radius: 99px; overflow: hidden; margin-top: 10px; }
+  .barra i { display: block; height: 100%; width: 0; background: var(--ink-2); transition: width .3s; }
+  details.cfg > summary { cursor: pointer; font-weight: 600; font-size: 14.5px; }
+  .duas { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 18px; align-items: start; }
+  @media (max-width: 860px) { .duas { grid-template-columns: minmax(0, 1fr); } }
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body>
+<header class="topo">
+  <div class="topo-in">
+    <a class="marca" href="../" aria-label="HUB TPC, página inicial"><span class="marca-tpc">TPC</span><span class="marca-txt"><b>HUB</b> Criminal</span></a>
+    <nav class="migalha" aria-label="Você está em"><span>/</span><span>Diagnóstico patrimonial</span></nav>
+    <div class="espaco"></div>
+    <button class="btn-icone" type="button" onclick="HUB.alternarTema()" aria-label="Alternar tema claro ou escuro" title="Tema"><span data-tema-icone>☾</span></button>
+  </div>
+</header>
+<div class="faixa"></div>
+
+<main class="wrap">
+  <section class="heroi">
+    <div class="sobretitulo">Ferramenta 15 · Patrimonial e sucessório</div>
+    <h1>Diagnóstico patrimonial e sucessório</h1>
+    <p class="lead">Informe a estrutura do grupo familiar e receba o panorama completo do planejamento: custo da sucessão no modelo atual, tributação dos aluguéis antes e depois da reforma, holding com doação de quotas, cenários comparativos, riscos e roteiro de ações, com o diagnóstico em Word no padrão TPC.</p>
+    <div class="chips"><span>CC, arts. 1.658 a 1.688 e 1.829 a 1.846</span><span>Lei 14.941/2003 (ITCD MG)</span><span>LC 227/2026</span><span>LC 214/2025, arts. 251, 260 e 261</span><span>LC 224/2025</span><span>Lei 15.270/2025</span><span>Temas 796, 1.214 e 1.348 do STF</span></div>
+  </section>
+
+  <section class="secao" style="padding-top:18px">
+    <p class="pequeno mudo" style="margin:0 0 12px">Os dados ficam apenas neste navegador, salvos como rascunho até que você inicie um novo diagnóstico. Valores aproximados são suficientes. <button type="button" class="btn sec peq" id="novo" style="margin-left:6px">Novo diagnóstico</button></p>
+
+    <div class="card bloco">
+      <h2>1. Família</h2>
+      <p class="mudo">Identificação, núcleo familiar e regime de bens.</p>
+      <div class="grade g4">
+        <label class="campo" style="grid-column:span 2">Cliente ou família<input type="text" id="cNome" data-k="cliente.nome" placeholder="Ex.: Família Andrade"></label>
+        <label class="campo">Cidade<input type="text" data-k="cliente.cidade" placeholder="Belo Horizonte"></label>
+        <label class="campo">UF do domicílio<input type="text" data-k="cliente.uf" maxlength="2" placeholder="MG"></label>
+        <label class="campo" style="grid-column:span 2">Patriarca<input type="text" data-k="casal.patriarca"></label>
+        <label class="campo">Idade<input type="number" min="0" data-k="casal.idadeP"></label>
+        <label class="campo">Profissão principal<input type="text" data-k="cliente.profissao"></label>
+        <label class="campo" style="grid-column:span 2">Matriarca<input type="text" data-k="casal.matriarca"></label>
+        <label class="campo">Idade<input type="number" min="0" data-k="casal.idadeM"></label>
+        <label class="campo">Regime de bens do casal<select data-k="casal.regime" id="regimeCasal"></select></label>
+        <label class="campo" style="grid-column:span 2">Outras rendas tributáveis de cada cônjuge (R$ por mês)<input type="text" inputmode="numeric" class="moeda" data-k="casal.outrasRendas" placeholder="Pró-labore, salário, aposentadoria"></label>
+      </div>
+      <h3 class="sub-h">Filhos</h3>
+      <div id="filhos"></div>
+      <button type="button" class="btn sec peq" data-add="filhos">Adicionar filho</button>
+    </div>
+
+    <div class="card bloco">
+      <h2>2. Imóveis</h2>
+      <p class="mudo">Valor declarado no imposto de renda e valor de mercado estimado. O ITCMD do imóvel é devido ao Estado em que ele se situa.</p>
+      <div id="imoveis"></div>
+      <button type="button" class="btn sec peq" data-add="imoveis">Adicionar imóvel</button>
+    </div>
+
+    <div class="card bloco">
+      <h2>3. Empresas e participações</h2>
+      <p class="mudo">Empresas operacionais, holdings e atividade rural. Deixe em branco se não houver.</p>
+      <div id="empresas"></div>
+      <button type="button" class="btn sec peq" data-add="empresas">Adicionar empresa</button>
+    </div>
+
+    <div class="card bloco">
+      <h2>4. Ativos financeiros e dívidas</h2>
+      <div class="grade g4">
+        <label class="campo">Aplicações financeiras (R$)<input type="text" inputmode="numeric" class="moeda" data-k="fin.aplicacoes"></label>
+        <label class="campo">Previdência privada, VGBL e PGBL (R$)<input type="text" inputmode="numeric" class="moeda" data-k="fin.previdencia"></label>
+        <label class="campo">Bens no exterior (R$)<input type="text" inputmode="numeric" class="moeda" data-k="fin.exterior"></label>
+        <label class="campo">Outros bens: veículos, obras, joias (R$)<input type="text" inputmode="numeric" class="moeda" data-k="fin.outros"></label>
+        <label class="campo" style="grid-column:span 2">Dívidas e garantias pessoais, como avais e fianças (R$)<input type="text" inputmode="numeric" class="moeda" data-k="fin.dividas"></label>
+        <label class="campo" style="grid-column:span 2">Forma dos bens no exterior<select data-k="fin.exteriorForma"><option value="">Não há ou não informado</option><option>Diretamente em nome da pessoa física</option><option>Por meio de offshore ou trust</option></select></label>
+      </div>
+    </div>
+
+    <div class="card bloco">
+      <h2>5. Situações e objetivos</h2>
+      <div class="grade g4">
+        <label class="campo">Possui testamento?<select data-k="sit.testamento"><option value="">Não informado</option><option value="sim">Sim</option><option value="nao">Não</option></select></label>
+        <label class="campo">Doações anteriores aos filhos?<select data-k="sit.doacoes"><option value="">Não informado</option><option value="sim">Sim</option><option value="nao">Não</option></select></label>
+        <label class="campo">Herdeiros de outra relação?<select data-k="sit.outraUniao"><option value="">Não informado</option><option value="sim">Sim</option><option value="nao">Não</option></select></label>
+        <label class="campo">Divergências familiares?<select data-k="sit.conflitos"><option value="">Não informado</option><option value="sim">Sim</option><option value="nao">Não</option></select></label>
+        <label class="campo">Sucessor na gestão da empresa?<select data-k="sit.sucessorEmpresa"><option value="">Não se aplica</option><option value="sim">Definido</option><option value="indefinido">Indefinido</option></select></label>
+        <label class="campo">Atividade com responsabilidade pessoal?<select data-k="sit.riscoProfissional"><option value="">Não informado</option><option value="sim">Sim (administrador, médico, avalista etc.)</option><option value="nao">Não</option></select></label>
+        <label class="campo">Já existe holding?<select data-k="sit.holdingExistente"><option value="">Não informado</option><option value="sim">Sim</option><option value="nao">Não</option></select></label>
+      </div>
+      <h3 class="sub-h">Objetivos da família</h3>
+      <div class="checks" id="objetivos"></div>
+      <label class="campo" style="margin-top:10px">Observações<textarea data-k="obs" rows="3" placeholder="Bens no exterior, testamento, questões familiares, intenção de venda, sucessão na empresa…"></textarea></label>
+    </div>
+
+    <div class="card bloco">
+      <details class="cfg">
+        <summary>Premissas de cálculo</summary>
+        <p class="pequeno mudo" style="margin:8px 0 10px">Valores de referência, editáveis para o caso concreto. As projeções consideram a legislação vigente e sinalizam as pendências como riscos.</p>
+        <div class="grade g4" id="premissas"></div>
+      </details>
+    </div>
+
+    <div class="card bloco" id="painel">
+      <h2>6. Panorama</h2>
+      <p class="mudo" id="painelVazio">Preencha os imóveis, as empresas ou os ativos financeiros para ver o panorama.</p>
+      <div id="painelConteudo" hidden>
+        <div class="placar" id="placar"></div>
+        <div class="comp" id="comp"></div><div class="leg" id="leg"></div>
+        <h3 class="sub-h">Cenários da sucessão</h3>
+        <div class="tw" id="cenarios"></div>
+        <div id="alugBloco"><h3 class="sub-h">Tributação anual dos aluguéis</h3><div class="tw" id="alugueis"></div></div>
+        <h3 class="sub-h">Riscos e pontos de atenção</h3>
+        <div id="riscos"></div>
+        <h3 class="sub-h">Roteiro de ações</h3>
+        <div class="tw" id="acoes"></div>
+      </div>
+    </div>
+
+    <div class="card bloco">
+      <h2>7. Diagnóstico</h2>
+      <div class="duas">
+        <div>
+          <h3 style="font-size:15px;margin:0 0 6px">Quem assina</h3>
+          <div class="checks" id="advs" style="grid-template-columns:minmax(0,1fr)"></div>
+          <label class="campo" style="margin-top:10px">Local<input type="text" id="local" value="Belo Horizonte/MG"></label>
+        </div>
+        <div>
+          <button type="button" class="btn" id="elaborar">Redigir com o Claude</button>
+          <button type="button" class="btn sec" id="cancelar" hidden>Interromper</button>
+          <button type="button" class="btn sec" id="regras" hidden>Voltar ao texto por regras</button>
+          <p class="pequeno" id="motorInfo" style="margin:10px 0 0"></p>
+          <div class="barra" id="barra" hidden><i></i></div>
+          <p class="pequeno" id="progresso" style="margin:6px 0 0"></p>
+        </div>
+      </div>
+      <details class="cfg" style="margin-top:14px">
+        <summary>Opções da redação pelo Claude</summary>
+        <label class="campo" style="margin-top:10px">Orientação adicional (opcional)<textarea id="orientacao" rows="2" placeholder="Ex.: enfatizar a governança da empresa; a família pretende vender a loja do Centro."></textarea></label>
+        <div class="grade g4" style="margin-top:10px">
+          <label class="campo" style="grid-column:span 2">Chave da API da Anthropic<input type="password" id="chave" autocomplete="off" placeholder="sk-ant-..."></label>
+          <label class="campo">Modelo<select id="modelo"><option value="claude-opus-5-5">Claude Opus 5.5 (melhor qualidade)</option><option value="claude-sonnet-5-5">Claude Sonnet 5.5 (mais econômico)</option></select></label>
+          <label class="campo">Raciocínio<select id="esforco"><option value="high" selected>Alto</option><option value="medium">Médio</option><option value="low">Baixo</option></select></label>
+        </div>
+        <div class="checks" style="margin-top:8px;grid-template-columns:minmax(0,1fr)">
+          <label class="check"><input type="checkbox" id="lembrarChave"> Guardar a chave neste navegador</label>
+          <label class="check"><input type="checkbox" id="consentimento"> Autorizo o envio dos dados patrimoniais à Anthropic para a redação</label>
+        </div>
+        <p class="pequeno mudo" style="margin:8px 0 0">O diagnóstico por regras é gerado na hora, sem custo e sem envio de dados. Com a chave e a autorização, o Claude redige uma análise mais aprofundada a partir dos mesmos números. A chave é a mesma das demais ferramentas e fica apenas neste navegador.</p>
+        <p class="pequeno" id="custo" style="margin:6px 0 0"></p>
+      </details>
+      <div style="margin-top:16px">
+        <div class="linha-btns" style="margin-bottom:8px"><b style="flex:1" id="fonte">Pré-visualização</b><button type="button" class="btn sec peq" id="editar">Editar texto</button><button type="button" class="btn sec peq" id="descartar" hidden>Descartar edições</button><button type="button" class="btn sec peq" id="copiar">Copiar texto</button><button type="button" class="btn peq" id="baixar">Baixar em Word</button></div>
+        <div id="avisos"></div>
+        <div class="folha" id="folha"></div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="rodape">
+  <div class="wrap"><b>TPC ADVOGADOS</b> · HUB. Ferramentas de apoio à análise jurídica; as projeções são estimativas e não substituem a análise documental.</div>
+</footer>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="../assets/hub.js"></script>
+<script src="../assets/doc.js"></script>
+<script src="../assets/peca.js"></script>
+<script src="motor.js"></script>
+<script src="prompt.js"></script>
+<script type="module" src="app.js"></script>
+</body>
+</html>

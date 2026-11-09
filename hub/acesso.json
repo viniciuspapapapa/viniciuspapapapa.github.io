@@ -3,5 +3,5 @@
   "algoritmo": "PBKDF2-SHA256/AES-256-GCM",
   "iteracoes": 600000,
   "sal": "rKZ/KNsASj4sT8/Xx/z41w==",
-  "verificador": "ctOI41I26TyKmaX8WOmEOlivI4NsGkxUrZr6jKLMwnTPmSW/oYGdTA90ztM="
+  "verificador": "XxSstyTgzrhcT5n7nw7PBsJKzChdQ5i2i8ne+NbJX6PC24eImSMyNLWRKDg="
 }
