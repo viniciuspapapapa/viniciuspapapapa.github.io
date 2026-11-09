@@ -104,7 +104,7 @@ document.open();document.write(html);document.close();
 })();`;
 const casca = cifra => `<!DOCTYPE html>
 <html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><meta name="robots" content="noindex, nofollow"><title>HUB Criminal TPC</title>
-<style>html,body{margin:0;background:#f6f4ef}@media (prefers-color-scheme:dark){html,body{background:#131312}}</style></head>
+<style>:root{--p:oklch(96% 0.011 85)}@media (prefers-color-scheme:dark){:root{--p:oklch(16% 0.011 85)}}html,body{margin:0;background:var(--p)}</style></head>
 <body><script id="hub-cifra" type="application/octet-stream">${cifra}</script><script>${LOADER}</script></body></html>
 `;
 

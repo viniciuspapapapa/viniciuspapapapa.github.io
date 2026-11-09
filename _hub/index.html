@@ -5,10 +5,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>HUB Criminal · TPC Advogados</title>
 <meta name="description" content="HUB de soluções para a advocacia criminal: cadeia de custódia, análise de RIF, degravação de audiências, reconhecimento de pessoas, prescrição penal e outras ferramentas de apoio à defesa.">
-<meta name="theme-color" content="#f6f4ef">
+<meta name="theme-color" content="#f5f1e8">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=DM+Mono:wght@400;500&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Red+Hat+Display:wght@500;600&family=Red+Hat+Text:wght@400;500;600&family=Red+Hat+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="assets/hub.css">
 <style>
   .heroi { padding: clamp(36px, 8vw, 84px) 0 26px; display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: 34px; align-items: center; }
@@ -21,13 +21,13 @@
   .selo .linha b { font-family: var(--serif); font-size: 24px; line-height: 1; }
   .ferramentas { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px; }
   @media (max-width: 380px) { .ferramentas { grid-template-columns: minmax(0, 1fr); } }
-  .ferr { position: relative; display: flex; flex-direction: column; gap: 10px; padding: 22px; text-decoration: none; color: inherit; transition: transform .15s, border-color .15s; min-height: 230px; }
-  a.ferr:hover { transform: translateY(-2px); border-color: var(--ink-3); }
-  .ferr .num { font-family: var(--serif); font-size: 15px; color: var(--ink-3); letter-spacing: .1em; }
+  .ferr { position: relative; display: flex; flex-direction: column; gap: 10px; padding: 22px; text-decoration: none; color: inherit; transition: transform var(--dur-short) var(--ease-out), box-shadow var(--dur-short) var(--ease-out); min-height: 230px; }
+  a.ferr:hover { transform: translateY(-2px); box-shadow: 0 0 0 1px var(--ink), var(--shadow-lift); }
+  .ferr .num { font-family: var(--serif); font-size: 15px; color: var(--ink-3); }
   .ferr h3 { font-size: 25px; margin: 0; }
   .ferr p { margin: 0; color: var(--ink-2); font-size: 14.5px; flex: 1; }
   .ferr .rodape-f { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
-  .ferr.ativa { border-top: 5px solid var(--accent); }
+  .ferr.ativa { box-shadow: 0 0 0 1px var(--line), var(--shadow); }
   .ferr.breve { background: var(--surface-2); box-shadow: none; }
   .ferr .seta { font-size: 20px; }
   .principios { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }

@@ -166,13 +166,13 @@
     }).join("\n\n");
   }
   /* CSS da folha de pré-visualização (injetado uma vez) */
-  const CSS = ".folha{background:#fff;color:#111;border:1px solid var(--line);border-radius:6px;padding:clamp(18px,6vw,60px) clamp(16px,7vw,66px) 24px;font-family:'Segoe UI','Open Sans',Arial,sans-serif;font-size:14px;line-height:1.6;overflow-wrap:anywhere}" +
+  const CSS = ".folha{background:var(--doc-paper);color:var(--doc-ink);border:0;box-shadow:0 0 0 1px var(--line),var(--shadow);border-radius:3px;padding:clamp(18px,6vw,60px) clamp(16px,7vw,66px) 24px;font-family:'Segoe UI','Open Sans',Arial,sans-serif;font-size:14px;line-height:1.6;overflow-wrap:anywhere}" +
     ".folha p{text-align:justify;margin:0 0 12px}.folha .pv-rec{text-indent:2em}.folha .vs{font-variant:small-caps;font-weight:700}.folha .pv-logo{width:min(300px,75%);display:block;margin-bottom:26px}" +
     ".folha .pv-end{font-weight:700;text-transform:uppercase;margin-bottom:34px}.folha .pv-ref{margin-bottom:24px}.folha .pv-tit{font-family:'Segoe UI','Open Sans',Arial,sans-serif;font-variant:small-caps;text-align:center;font-size:21px;font-weight:700;margin:6px 0 20px}" +
     ".folha .pv-h{font-family:'Segoe UI','Open Sans',Arial,sans-serif;font-size:15px;margin:22px 0 10px;font-weight:700}.folha .pv-sub{font-size:14px;margin:14px 0 8px;font-weight:700}" +
-    ".folha .pv-cit{margin:0 0 12px 22%;font-size:13px;text-align:justify}.folha .pv-tw{overflow-x:auto;margin:0 0 14px}.folha .pv-tab{width:100%;border-collapse:collapse;font-size:12px}.folha .pv-tab th,.folha .pv-tab td{border:1px solid #c8c3be;padding:4px 6px;text-align:left;vertical-align:top}.folha .pv-tab th{background:#efefef}" +
-    ".folha.editando [data-b]{outline:1px dashed #c9b84a;outline-offset:2px;border-radius:2px;cursor:text}.folha.editando [data-b]:focus{outline:2px solid #c9b84a;background:#fffdf0}" +
-    ".folha .pv-fecho{text-align:center;margin:18px 0}.folha .pv-data{margin:18px 0 46px}.folha .pv-ass{text-align:center;margin-bottom:40px}.folha .pv-rod{border-top:6px solid #F5EF90;padding-top:10px;margin-top:26px;text-align:center;font-size:11px;color:#9a9a9a;display:grid;gap:4px}";
+    ".folha .pv-cit{margin:0 0 12px 22%;font-size:13px;text-align:justify}.folha .pv-tw{overflow-x:auto;margin:0 0 14px}.folha .pv-tab{width:100%;border-collapse:collapse;font-size:12px}.folha .pv-tab th,.folha .pv-tab td{border:1px solid var(--doc-rule);padding:4px 6px;text-align:left;vertical-align:top}.folha .pv-tab th{background:var(--doc-head)}" +
+    ".folha.editando [data-b]{outline:1px dashed var(--doc-edit);outline-offset:2px;border-radius:2px;cursor:text}.folha.editando [data-b]:focus{outline:2px solid var(--doc-edit);background:var(--doc-edit-bg)}" +
+    ".folha .pv-fecho{text-align:center;margin:18px 0}.folha .pv-data{margin:18px 0 46px}.folha .pv-ass{text-align:center;margin-bottom:40px}.folha .pv-rod{border-top:6px solid var(--doc-mark);padding-top:10px;margin-top:26px;text-align:center;font-size:11px;color:var(--doc-muted);display:grid;gap:4px}";
   if (typeof document !== "undefined" && !document.getElementById("peca-css")) { const s = document.createElement("style"); s.id = "peca-css"; s.textContent = CSS; document.head.appendChild(s); }
 
   const MESES = ["janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"];

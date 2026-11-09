@@ -5,25 +5,25 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Organizador de Documentos · HUB Criminal TPC</title>
 <meta name="description" content="Organização de documentos de clientes em PDF único com capas numeradas (Doc. 1, Doc. 2...) na identidade TPC, a partir de anexos e do Google Drive, com classificação e ementas e refação de capas de PDFs já montados.">
-<meta name="theme-color" content="#f6f4ef">
+<meta name="theme-color" content="#f5f1e8">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=DM+Mono:wght@400;500&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Red+Hat+Display:wght@500;600&family=Red+Hat+Text:wght@400;500;600&family=Red+Hat+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../assets/hub.css">
 <style>
   .heroi { padding: 34px 0 6px; }
   .bloco { padding: 18px; margin-bottom: 14px; }
   .bloco > h2 { font-size: 23px; margin-bottom: 4px; display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap; }
-  .bloco > h2 .passo { font-family: var(--sans); font-size: 12px; letter-spacing: .14em; text-transform: uppercase; color: var(--ink-3); font-weight: 500; }
+  .bloco > h2 .passo { font-family: var(--sans); font-size: 12px; color: var(--ink-3); font-weight: 500; }
   .bloco > p.mudo { margin: 0 0 14px; font-size: 14px; }
   .modos { display: flex; gap: 8px; flex-wrap: wrap; margin: 6px 0 16px; }
-  .modos button[aria-pressed="true"] { background: var(--brand); color: var(--paper); border-color: var(--brand); }
+  .modos button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); border-color: color-mix(in oklab, var(--accent) 78%, var(--ink)); }
   .zona { border: 2px dashed var(--line-2); border-radius: 12px; padding: 24px 16px; text-align: center; background: var(--surface-2); cursor: pointer; }
   .zona.sobre { border-color: var(--ink-3); background: color-mix(in srgb, var(--accent) 18%, var(--surface)); }
   .zona b { display: block; font-size: 17px; font-weight: 500; }
   .doc { display: grid; grid-template-columns: 92px minmax(0, 1fr); gap: 14px; border: 1px solid var(--line); border-radius: 10px; padding: 12px; background: var(--surface); margin-bottom: 10px; }
   .doc.excluido { opacity: .45; }
-  .doc .thumb { width: 92px; height: 120px; border: 1px solid var(--line); border-radius: 4px; background: #fff; display: grid; place-items: center; overflow: hidden; }
+  .doc .thumb { width: 92px; height: 120px; border: 1px solid var(--line); border-radius: 4px; background: var(--doc-paper); display: grid; place-items: center; overflow: hidden; }
   .doc .thumb canvas, .doc .thumb img { max-width: 100%; max-height: 100%; }
   .doc-cab { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 8px; }
   .doc-cab b { font-family: var(--serif); font-size: 20px; }
@@ -35,14 +35,14 @@
   .grade-pg { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 10px; }
   .pg { border: 2px solid var(--line); border-radius: 6px; padding: 4px; background: var(--surface); cursor: pointer; text-align: center; font-size: 12px; }
   .pg.capa { border-color: var(--warn); background: var(--warn-bg); }
-  .pg canvas { width: 100%; height: auto; display: block; background: #fff; }
-  .barra { height: 8px; background: var(--na-bg); border-radius: 999px; overflow: hidden; margin-top: 10px; }
-  .barra > i { display: block; height: 100%; width: 0; background: var(--brand); transition: width .25s; }
+  .pg canvas { width: 100%; height: auto; display: block; background: var(--doc-paper); }
+  .barra { height: 8px; background: var(--na-bg); border-radius: var(--radius-chip); overflow: hidden; margin-top: 10px; }
+  .barra > i { display: block; height: 100%; width: 0; background: var(--brand); }
   .estado { font-size: 13.5px; color: var(--ink-2); margin-top: 6px; min-height: 20px; }
   .aviso { border-left: 3px solid var(--warn); background: var(--warn-bg); padding: 9px 12px; border-radius: 0 8px 8px 0; font-size: 13.5px; margin: 8px 0; }
   .aviso.info { border-left-color: var(--info); background: var(--info-bg); }
   .folha-contato { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 10px; margin-top: 12px; }
-  .folha-contato canvas { width: 100%; height: auto; border: 1px solid var(--line); background: #fff; box-shadow: var(--shadow); }
+  .folha-contato canvas { width: 100%; height: auto; border: 1px solid var(--line); background: var(--doc-paper); box-shadow: var(--shadow); }
   input[type=password] { width: 100%; border: 1px solid var(--line-2); background: var(--surface); border-radius: 8px; padding: 9px 11px; font-size: 14.5px; }
   details summary { cursor: pointer; }
   .guia p { margin: 0 0 8px; font-size: 13.5px; }
