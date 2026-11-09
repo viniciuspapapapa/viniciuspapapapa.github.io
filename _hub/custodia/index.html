@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Audiência de Custódia · HUB Criminal TPC</title>
+<meta name="description" content="Análise do auto de prisão em flagrante e elaboração do requerimento escrito e do roteiro oral para a audiência de custódia: relaxamento, liberdade provisória, cautelares e prisão domiciliar.">
+<meta name="theme-color" content="#f6f4ef">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=DM+Mono:wght@400;500&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/hub.css">
+<style>
+  .heroi { padding: 34px 0 6px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 14px; }
+  .chips span { font-size: 12px; padding: 4px 10px; border: 1px solid var(--line-2); border-radius: 999px; background: var(--surface); color: var(--ink-2); }
+  .bloco { padding: 18px; margin-bottom: 14px; }
+  .bloco > h2 { font-size: 22px; margin-bottom: 4px; }
+  .bloco > p.mudo { margin: 0 0 12px; font-size: 14px; }
+  input[type=date], input[type=time], input[type=number] { width: 100%; border: 1px solid var(--line-2); background: var(--surface); color: var(--ink); border-radius: 8px; padding: 8px 10px; font-size: 14.5px; min-width: 0; }
+  .dica { font-size: 12.5px; color: var(--ink-3); font-weight: 400; }
+  .dh { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); gap: 6px; }
+  .checks { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px 14px; }
+  @media (max-width: 720px) { .checks { grid-template-columns: minmax(0, 1fr); } }
+  .sug { font-size: 11.5px; color: var(--info); font-weight: 500; }
+  .prova { border-left: 3px solid var(--line-2); padding: 6px 10px; margin: 6px 0; font-size: 13px; background: var(--surface-2); border-radius: 0 8px 8px 0; }
+  .prova b { font-weight: 600; } .prova .ref { color: var(--ink-3); font-size: 12px; }
+  .crime { display: grid; grid-template-columns: minmax(0, 2.4fr) minmax(0, .8fr) minmax(0, .8fr) auto auto; gap: 8px; align-items: end; margin-bottom: 8px; }
+  @media (max-width: 720px) { .crime { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } .crime .rot { grid-column: 1 / -1; } }
+  .x { border: 1px solid var(--line-2); background: var(--surface); border-radius: 8px; width: 34px; height: 34px; cursor: pointer; color: var(--ink-3); font-size: 17px; flex: none; }
+  .tese { border-left: 4px solid var(--line-2); padding: 8px 12px; margin: 6px 0; background: var(--surface-2); border-radius: 0 8px 8px 0; font-size: 14px; }
+  .tese.relax { border-left-color: var(--bad); } .tese.lib { border-left-color: var(--ok); } .tese.alerta { border-left-color: var(--warn); }
+  .tese small { display: block; color: var(--ink-3); font-size: 12px; margin-top: 2px; }
+  .aviso { border-left: 3px solid var(--warn); background: var(--warn-bg); padding: 8px 12px; border-radius: 0 8px 8px 0; font-size: 13.5px; margin: 6px 0; }
+  .duas { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.3fr); gap: 18px; align-items: start; }
+  @media (max-width: 1020px) { .duas { grid-template-columns: minmax(0, 1fr); } }
+  .folha { max-height: 85vh; overflow: auto; }
+  @media (max-width: 1020px) { .folha { max-height: none; } }
+  .abas { margin: 0 0 12px; }
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body>
+<header class="topo">
+  <div class="topo-in">
+    <a class="marca" href="../" aria-label="HUB Criminal TPC, página inicial"><span class="marca-tpc">TPC</span><span class="marca-txt"><b>HUB</b> Criminal</span></a>
+    <nav class="migalha" aria-label="Você está em"><span>/</span><span>Audiência de custódia</span></nav>
+    <div class="espaco"></div>
+    <button class="btn-icone" type="button" onclick="HUB.alternarTema()" aria-label="Alternar tema claro ou escuro" title="Tema"><span data-tema-icone>☾</span></button>
+  </div>
+</header>
+<div class="faixa"></div>
+
+<main class="wrap">
+  <section class="heroi">
+    <div class="sobretitulo">Ferramenta 14 · Liberdade</div>
+    <h1>Audiência de custódia</h1>
+    <p class="lead">Análise do auto de prisão em flagrante e elaboração do requerimento escrito e do roteiro oral para a audiência de custódia: relaxamento da prisão ilegal, liberdade provisória, cautelares diversas e prisão domiciliar, com a doutrina de Aury Lopes Jr., Eugênio Pacelli e Gustavo Badaró.</p>
+    <div class="chips"><span>CF, art. 5º, LXI a LXVI</span><span>CPP, arts. 302 a 310</span><span>CPP, arts. 312 a 316</span><span>CPP, arts. 318, 318-A e 319</span><span>CPP, arts. 321 a 350</span><span>SV 11 · Súmula 145 do STF</span><span>Tema 280 do STF</span></div>
+  </section>
+
+  <section class="secao" style="padding-top:18px">
+    <div class="card bloco">
+      <h2>Anexo do processo</h2>
+      <p class="mudo">Envie o auto de prisão em flagrante e os demais documentos disponíveis (boletim de ocorrência, depoimentos, folha de antecedentes). A leitura é feita no navegador, com reconhecimento de texto nas páginas digitalizadas, e preenche as sugestões abaixo com a indicação da página.</p>
+      <label class="btn peq" style="cursor:pointer;display:inline-flex">Anexar o auto de prisão em flagrante (PDF)<input type="file" id="anexo" accept="application/pdf" multiple hidden></label>
+      <div class="pequeno" id="leituraEstado" style="margin-top:8px"></div>
+      <div id="provas"></div>
+    </div>
+
+    <div class="card bloco">
+      <h2>Prisão e autuado</h2>
+      <div class="grade g4">
+        <label class="campo" style="grid-column:span 2">Nome do autuado<input type="text" id="nome"></label>
+        <label class="campo">Gênero<select id="g"><option value="m">Masculino</option><option value="f">Feminino</option></select></label>
+        <label class="campo">Nº do auto ou dos autos<input type="text" id="autos"></label>
+        <label class="campo" style="grid-column:span 2">Juízo<input type="text" id="juizo" value="Central de Audiências de Custódia da Comarca de Belo Horizonte/MG"></label>
+        <label class="campo">Tratamento<select id="juizG"><option value="m">Excelentíssimo Senhor Juiz</option><option value="f">Excelentíssima Senhora Juíza</option></select></label>
+        <label class="campo">Espécie de flagrante<select id="especie"><option value="I">Está cometendo a infração (art. 302, I)</option><option value="II">Acaba de cometê-la (art. 302, II)</option><option value="III">Perseguido logo após (art. 302, III)</option><option value="IV">Encontrado logo depois (art. 302, IV)</option><option value="permanente">Crime permanente (art. 303)</option><option value="nao">Nenhuma situação de flagrância</option><option value="preparado">Flagrante preparado ou provocado</option></select></label>
+        <div class="campo">Prisão<span class="sug" data-sug="prisao"></span><div class="dh"><input type="date" id="pData" aria-label="Data da prisão"><input type="time" id="pHora" aria-label="Hora da prisão"></div></div>
+        <div class="campo">Encaminhamento do auto ao juiz<span class="sug" data-sug="comunicacao"></span><div class="dh"><input type="date" id="cData" aria-label="Data do encaminhamento"><input type="time" id="cHora" aria-label="Hora do encaminhamento"></div></div>
+        <div class="campo">Audiência de custódia<div class="dh"><input type="date" id="aData" aria-label="Data da audiência"><input type="time" id="aHora" aria-label="Hora da audiência"></div></div>
+        <label class="check" style="align-self:end"><input type="checkbox" id="lapso"> Lapso dilatado no “logo após” ou “logo depois”</label>
+      </div>
+      <h3 style="font-size:15px;margin:16px 0 6px">Imputação</h3>
+      <div id="crimes"></div>
+      <div class="linha-btns"><select id="addCrimeSel" style="max-width:340px"></select><button type="button" class="btn sec peq" id="addCrime">+ Incluir crime</button></div>
+      <label class="campo" style="margin-top:12px">Síntese dos fatos (opcional)<textarea id="sintese" rows="3" placeholder="Narrativa breve do auto, nas palavras da defesa."></textarea></label>
+    </div>
+
+    <div class="card bloco">
+      <h2>Legalidade da prisão</h2>
+      <p class="mudo">As sugestões extraídas do anexo aparecem em azul; confira cada item com o auto.</p>
+      <div class="grade g4" id="flags"></div>
+      <div class="checks" style="margin-top:10px">
+        <label class="check"><input type="checkbox" id="custodiaJust"> O atraso da audiência de custódia foi motivado</label>
+      </div>
+    </div>
+
+    <div class="card bloco">
+      <h2>Condições pessoais e riscos</h2>
+      <div class="checks" id="pessoais"></div>
+      <div class="grade g4" style="margin-top:12px">
+        <label class="campo" style="grid-column:span 2">Endereço (opcional)<input type="text" id="endereco" placeholder="Rua..., nº..., bairro, cidade/UF"></label>
+        <label class="campo">Ocupação (opcional)<input type="text" id="ocupacao" placeholder="auxiliar administrativo"></label>
+        <label class="campo">Situação econômica<select id="economia"><option value="media">Compatível com fiança</option><option value="baixa">Hipossuficiente (dispensa da fiança)</option></select></label>
+        <label class="campo" style="grid-column:span 2">Excludente de ilicitude (CP, art. 23)<span class="sug" data-sug="excludente"></span><select id="excludente"><option value="nao">Não há indício</option><option value="legitima">Legítima defesa</option><option value="necessidade">Estado de necessidade</option><option value="estrito">Estrito cumprimento do dever legal ou exercício regular de direito</option></select></label>
+      </div>
+      <h3 style="font-size:15px;margin:16px 0 6px">Circunstâncias que a acusação pode invocar (CPP, arts. 310, §§ 2º e 5º, e 313)</h3>
+      <div class="checks" id="riscos"></div>
+    </div>
+
+    <div class="card bloco">
+      <h2>Análise</h2>
+      <div id="analise"></div>
+      <h3 style="font-size:15px;margin:16px 0 6px">Cautelares a oferecer (CPP, art. 319)</h3>
+      <div class="checks" id="cautelares"></div>
+    </div>
+
+    <div class="card bloco">
+      <h2>Peças</h2>
+      <div class="abas" role="tablist"><button type="button" class="aba" role="tab" aria-selected="true" data-peca="req">Requerimento escrito</button><button type="button" class="aba" role="tab" aria-selected="false" data-peca="rot">Roteiro oral</button></div>
+      <div class="duas">
+        <div>
+          <h3 style="font-size:15px;margin:0 0 6px">Quem assina</h3>
+          <div class="checks" id="advs" style="grid-template-columns:minmax(0,1fr)"></div>
+          <label class="campo" style="margin-top:12px">Local<input type="text" id="local" value="Belo Horizonte/MG"></label>
+        </div>
+        <div>
+          <div class="linha-btns" style="margin-bottom:8px"><b style="flex:1" id="pecaTit">Requerimento</b><button type="button" class="btn sec peq" id="editar">Editar texto</button><button type="button" class="btn sec peq" id="descartar" hidden>Descartar edições</button><button type="button" class="btn sec peq" id="copiar">Copiar texto</button><button type="button" class="btn peq" id="baixar">Baixar em Word</button></div>
+          <div id="faltas"></div>
+          <div class="folha" id="folha"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="rodape">
+  <div class="wrap"><b>TPC ADVOGADOS</b> · HUB Criminal · Audiência de custódia. A leitura automática do auto é uma sugestão: confira cada item com o documento antes de protocolar.</div>
+</footer>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="../assets/hub.js"></script>
+<script src="../assets/doc.js"></script>
+<script src="../assets/peca.js"></script>
+<script src="../estudo-de-caso/leitor.js"></script>
+<script src="../prescricao/motor.js"></script>
+<script src="../estudo-de-caso/catalogo.js"></script>
+<script src="../estudo-de-caso/analise.js"></script>
+<script src="motor.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

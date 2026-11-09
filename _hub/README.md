@@ -81,6 +81,10 @@ _hub/  (publicada cifrada em hub/)
     envio.js                  Outlook (Microsoft Graph com MSAL, ou e-mail .eml pronto) e WhatsApp (wa.me)
     app.js                    Abas da base e do relatório, edição do texto na visualização e envio
   login/oauth.html            Página de retorno do login Microsoft (pública, sem conteúdo)
+  custodia/
+    motor.js                  Leitura do auto de prisão em flagrante, análise (CPP, arts. 302 a 310, 312 a 316, 318 e 319,
+                              redação vigente), requerimento escrito e roteiro oral da audiência de custódia
+    app.js                    Anexo do processo, formulário com as sugestões extraídas, análise e peças editáveis
   certidoes/
     catalogo.js               Serviços oficiais de certidão criminal (27 TJs, TRF1 a TRF6, STM, TJMs, TSE, STF, STJ, PF, BNMP)
     leitor.js                 Leitura das certidões em PDF: órgão, resultado, datas, números CNJ e conferência do pesquisado
