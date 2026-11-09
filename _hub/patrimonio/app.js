@@ -18,7 +18,7 @@ import Anthropic from "https://cdn.jsdelivr.net/npm/@anthropic-ai/sdk@1.1.0/+esm
   const UFS = "AC AL AP AM BA CE DF ES GO MA MT MS MG PA PB PR PE PI RJ RN RS RO RR SC SP SE TO".split(" ");
   const LISTAS = {
     filhos: { rot: "Filho", campos: [["nome", "Nome", "text", 2], ["idade", "Idade", "number"], ["regime", "Estado civil e regime", "sel:" + REG], ["incapaz", "Incapaz ou com deficiência?", "sel:" + SIMNAO]] },
-    imoveis: { rot: "Imóvel", campos: [["desc", "Descrição e localidade", "text", 2], ["tipo", "Tipo", "sel:<option>Residência da família</option><option>Residencial (locação ou outro uso)</option><option>Comercial</option><option>Rural</option><option>Terreno ou lote</option>"], ["uf", "UF", "sel:" + UFS.map(u => "<option" + (u === "MG" ? " selected" : "") + ">" + u + "</option>").join("")], ["irpf", "Valor no IRPF (R$)", "moeda"], ["mercado", "Valor de mercado (R$)", "moeda"], ["alugado", "Alugado?", "sel:<option value=\"nao\">Não</option><option value=\"sim\">Sim</option><option value=\"parcial\">Parcialmente</option>"], ["aluguel", "Aluguel mensal (R$)", "moeda"]] },
+    imoveis: { rot: "Imóvel", campos: [["desc", "Descrição e localidade", "text", 2], ["tipo", "Tipo", "sel:<option>Residência da família</option><option>Residencial (locação ou outro uso)</option><option>Comercial</option><option>Rural</option><option>Terreno ou lote</option>"], ["uf", "UF", "sel:" + UFS.map(u => "<option" + (u === "MG" ? " selected" : "") + ">" + u + "</option>").join("")], ["irpf", "Valor no IRPF (R$)", "moeda"], ["mercado", "Valor de mercado (R$)", "moeda"], ["alugado", "Alugado?", "sel:<option value=\"nao\">Não</option><option value=\"sim\">Sim</option><option value=\"parcial\">Parcialmente</option>"], ["aluguel", "Aluguel mensal (R$)", "moeda"], ["matricula", "Matrícula, cartório e inscrição", "text", 2], ["titular", "Titular(es) no registro", "text", 2], ["onus", "Ônus e restrições (matrícula)", "text", 4]] },
     empresas: { rot: "Empresa", campos: [["nome", "Razão social", "text", 2], ["cnpj", "CNPJ", "text"], ["atividade", "Atividade principal", "text"], ["natureza", "Natureza jurídica", "sel:<option value=\"\">Selecione</option><option>Sociedade limitada</option><option>Sociedade limitada unipessoal</option><option>Sociedade anônima</option><option>Empresário individual</option><option>Holding patrimonial</option><option>Produtor rural</option>"], ["regime", "Regime tributário", "sel:<option value=\"\">Selecione</option><option>Simples Nacional</option><option>Lucro presumido</option><option>Lucro real</option><option>Pessoa física (rural)</option>"], ["faturamento", "Faturamento anual (R$)", "moeda"], ["participacao", "Participação da família (%)", "number"], ["pl", "Patrimônio líquido da participação (R$)", "moeda"], ["mercado", "Valor de mercado da participação (R$)", "moeda"], ["dividendos", "Lucros distribuídos por ano (R$)", "moeda"], ["dividas", "Possui dívidas relevantes?", "sel:" + SIMNAO], ["valorDividas", "Valor das dívidas (R$)", "moeda"], ["naturezaDividas", "Natureza das dívidas", "text", 2]] }
   };
   function campoHtml([k, rot, tipo, span]) {
@@ -201,6 +201,99 @@ import Anthropic from "https://cdn.jsdelivr.net/npm/@anthropic-ai/sdk@1.1.0/+esm
   $("#descartar").onclick = () => { if (!confirm("Descartar as edições feitas no texto?")) return; ed.descartar(); $("#editar").textContent = "Editar texto"; $("#descartar").hidden = true; if (E.fonte === "regras") E.blocos = regras(); mostrar(); };
   $("#baixar").onclick = async () => { const n = (E.d && (E.d.cliente.nome || E.d.casal.patriarca)) || "família"; try { P.baixar(await P.docx(ed.blocos()), "Diagnóstico patrimonial e sucessório - " + n); } catch (x) { window.HUB.toast(x.message || "Não foi possível gerar o Word.", 5000); } };
   $("#copiar").onclick = () => window.HUB_DOC.copiar(P.texto(ed.blocos()));
+
+  /* ------------------------------------------------------------------ documentos do cliente */
+  const DOCS = window.PAT_DOCS, ROT_TIPO = { matricula: "Matrícula", irpf: "IRPF", iptu: "IPTU", outro: "Não identificado" };
+  if (window.pdfjsLib) window.pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+  const K_CONS_DOCS = "patrimonio_consentimento_docs";
+  const DOC = { itens: [], fila: Promise.resolve(), props: [] };
+  $("#consDocs").checked = ler(K_CONS_DOCS) === "1";
+  const claudeDocs = () => $("#modoLeitura").value === "claude" && !!$("#chave").value.trim() && $("#consDocs").checked;
+  function infoModo() {
+    const cl = $("#modoLeitura").value === "claude";
+    $("#consDocs").closest("div").hidden = !cl;
+    $("#modoInfo").textContent = !cl ? "Os documentos são lidos neste navegador e não saem do computador. Em documentos digitalizados de baixa qualidade, a leitura pelo Claude tende a ser mais precisa."
+      : !$("#chave").value.trim() ? "Informe a chave da API da Anthropic em 7. Diagnóstico, Opções da redação pelo Claude. Sem ela, a leitura é feita por regras."
+      : !$("#consDocs").checked ? "Marque a autorização para enviar os documentos à Anthropic. Sem ela, a leitura é feita por regras."
+      : "Cada documento será enviado à Anthropic e lido pelo " + $("#modelo").selectedOptions[0].textContent.replace(/\s*\(.*$/, "") + ". Custo aproximado: alguns centavos de dólar por documento.";
+  }
+  $("#modoLeitura").onchange = infoModo;
+  $("#consDocs").onchange = e => { gravar(K_CONS_DOCS, e.target.checked ? "1" : null); infoModo(); };
+  $("#chave").addEventListener("input", infoModo); $("#modelo").addEventListener("change", infoModo);
+
+  function desenharDocs() {
+    $("#listaDocs").innerHTML = DOC.itens.map(it => {
+      const tag = it.erro ? '<span class="tag bad">Erro</span>' : it.e ? '<span class="tag ' + (it.e.tipo === "outro" ? "warn" : "ok") + '">' + ROT_TIPO[it.e.tipo] + "</span>" : '<span class="tag na">' + (it.estado || "Na fila") + "</span>";
+      const lt = it.leitura;
+      const det = it.erro ? esc(it.erro) : it.e ? esc(it.e.resumo || "") + (lt ? " · " + lt.paginas + (lt.paginas === 1 ? " página" : " páginas") + (lt.ocr ? ", OCR em " + lt.ocr + " (confiança média de " + lt.conf + "%)" : "") : "") + (it.modo === "claude" ? " · lido pelo Claude" : "") + (lt && lt.ilegiveis && lt.ilegiveis.length ? ' · <span style="color:var(--bad)">trechos de leitura duvidosa, confira</span>' : "") : esc(it.prog || "");
+      return '<div class="doc"><b>' + esc(it.f.name) + "</b>" + tag + '<span class="det">' + det + "</span>" + (lt && lt.texto ? "<details><summary>Ver o texto lido</summary><pre>" + esc(lt.texto.slice(0, 60000)) + "</pre></details>" : "") + "</div>";
+    }).join("");
+  }
+  async function processar(it) {
+    it.estado = "Lendo"; desenharDocs();
+    try {
+      const prog = (m, fr) => { it.prog = m + (fr != null ? " (" + Math.round(fr * 100) + "%)" : ""); desenharDocs(); };
+      if (claudeDocs()) {
+        it.modo = "claude"; prog("Enviando à Anthropic e aguardando a leitura…", null);
+        const cli = new Anthropic({ apiKey: $("#chave").value.trim(), dangerouslyAllowBrowser: true, maxRetries: 3 });
+        it.e = await DOCS.extrairComClaude(cli, it.f, { modelo: $("#modelo").value });
+      } else {
+        it.modo = "regras"; it.leitura = await DOCS.lerArquivo(it.f, prog);
+        it.e = DOCS.extrair(it.leitura.texto);
+        if (it.leitura.ocr && it.leitura.conf < 70) it.e.alertas.push("A leitura por OCR teve confiança média de " + it.leitura.conf + "%: confira os valores com o documento" + ($("#chave").value.trim() ? " ou refaça a leitura pelo Claude." : "."));
+      }
+    } catch (x) { it.erro = x instanceof Anthropic.APIError || x instanceof Anthropic.APIConnectionError ? erroApi(x) : (x.message || String(x)); }
+    it.estado = ""; desenharDocs(); revisar();
+  }
+  function anexar(lista) {
+    [...lista].forEach(f => { const it = { f }; DOC.itens.push(it); DOC.fila = DOC.fila.then(() => processar(it)); });
+    desenharDocs();
+  }
+  $("#arquivos").onchange = e => { anexar(e.target.files); e.target.value = ""; };
+  const zona = $("#zona");
+  ["dragenter", "dragover"].forEach(t => zona.addEventListener(t, e => { e.preventDefault(); zona.classList.add("sobre"); }));
+  ["dragleave", "drop"].forEach(t => zona.addEventListener(t, e => { e.preventDefault(); zona.classList.remove("sobre"); }));
+  zona.addEventListener("drop", e => { if (e.dataTransfer && e.dataTransfer.files.length) anexar(e.dataTransfer.files); });
+  $("#limparDocs").onclick = () => { DOC.itens = DOC.itens.filter(it => !it.e && !it.erro); desenharDocs(); revisar(); };
+
+  function revisar() {
+    const prontos = DOC.itens.filter(it => it.e && it.e.tipo !== "outro").map(it => ({ nome: it.f.name, e: it.e }));
+    $("#revisao").hidden = !DOC.itens.some(it => it.e || it.erro);
+    if (!prontos.length) { $("#propostas").innerHTML = DOC.itens.some(it => it.e) ? '<p class="pequeno mudo">Nenhum dado aproveitável foi encontrado nos documentos lidos.</p>' : ""; $("#conferencias").innerHTML = ""; $("#aplicar").disabled = true; DOC.props = []; return; }
+    const { propostas, conferencias } = DOCS.propostas(prontos, coletar(), M.brl);
+    DOC.props = propostas; let g = "";
+    $("#propostas").innerHTML = propostas.length ? propostas.map((p, i) => {
+      const cab = p.grupo !== g ? '<div class="prop-g">' + esc(g = p.grupo) + "</div>" : "";
+      const sel = p.escolha ? '<select data-esc="' + i + '" aria-label="Preencher como">' + p.escolha.map(([k, r]) => '<option value="' + k + '"' + (k === p.padrao ? " selected" : "") + ">" + esc(r) + "</option>").join("") + "</select>" : "";
+      return cab + '<label class="prop"><input type="checkbox" data-prop="' + i + '"' + (p.marcado === false ? "" : " checked") + '><span class="t">' + esc(p.rot) + '</span><span class="d">' + esc(p.det || "") + "</span>" + sel + "</label>";
+    }).join("") : '<p class="pequeno mudo">Os dados dos documentos já constam do formulário.</p>';
+    $("#conferencias").innerHTML = conferencias.length ? '<h3 class="sub-h">Pontos de conferência</h3>' + conferencias.map(c => '<div class="aviso">' + esc(c) + "</div>").join("") : "";
+    $("#aplicar").disabled = !propostas.length;
+  }
+  $("#aplicar").onclick = () => {
+    const P = DOC.props, criados = {};
+    const valorEm = (el, k, v) => { const c = el.querySelector('[data-c="' + k + '"]'); if (!c) return; if (c.tagName === "SELECT" && ![...c.options].some(o => (o.value || o.textContent) === v)) return; c.value = v; };
+    const itemLista = (lista, idx) => idx >= 0 ? $$("#" + lista + " .item")[idx] : null;
+    const vazioLista = lista => $$("#" + lista + " .item").find(el => [...el.querySelectorAll("input[data-c]")].every(c => !c.value.trim()));
+    let n = 0;
+    P.forEach((p, i) => {
+      const ck = document.querySelector('[data-prop="' + i + '"]'); if (!ck || !ck.checked) return;
+      const a = p.acao; n++;
+      if (a.tipo === "campo") { const chave = p.escolha ? document.querySelector('[data-esc="' + i + '"]').value : a.chave; const el = document.querySelector('[data-k="' + chave + '"]'); if (el) el.value = a.valor; }
+      else if (a.tipo === "filho") {
+        const el = $$("#filhos .item").find(x => x.querySelector('[data-c="nome"]').value.trim() && DOCS._t.mesmaPessoa(x.querySelector('[data-c="nome"]').value, a.nome)) || vazioLista("filhos") || adicionar("filhos");
+        if (!el.querySelector('[data-c="nome"]').value.trim()) valorEm(el, "nome", a.nome);
+        if (a.idade) valorEm(el, "idade", a.idade);
+      }
+      else if (a.tipo === "imovel" || a.tipo === "empresa") { const lista = a.tipo === "imovel" ? "imoveis" : "empresas"; const el = itemLista(lista, a.idx) || vazioLista(lista) || adicionar(lista); criados[i] = el; Object.keys(a.campos).forEach(k => valorEm(el, k, a.campos[k])); }
+      else if (a.tipo === "imovelMercado" || a.tipo === "empresaPl") { const lista = a.tipo === "imovelMercado" ? "imoveis" : "empresas"; const el = criados[a.ref] || itemLista(lista, a.idx); if (el) valorEm(el, a.tipo === "imovelMercado" ? "mercado" : "pl", a.valor); }
+      else if (a.tipo === "obs") { const el = document.querySelector('[data-k="obs"]'); const cab = "Pontos de conferência dos documentos:"; el.value = (el.value.split(cab)[0].trim() + "\n\n" + cab + "\n" + a.texto).trim(); }
+    });
+    ["imoveis", "empresas", "filhos"].forEach(renumerar);
+    atualizar(); revisar();
+    window.HUB.toast(n ? n + (n === 1 ? " informação aplicada" : " informações aplicadas") + " ao formulário. Confira os blocos abaixo." : "Nenhuma informação marcada.", 4000);
+  };
+  infoModo();
 
   /* ------------------------------------------------------------------ início */
   let rasc = null; try { rasc = JSON.parse(ler(K_RASC) || "null"); } catch (e) { rasc = null; }

@@ -54,6 +54,21 @@
   details.cfg > summary { cursor: pointer; font-weight: 600; font-size: 14.5px; }
   .duas { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 18px; align-items: start; }
   @media (max-width: 860px) { .duas { grid-template-columns: minmax(0, 1fr); } }
+  .zona { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; border: 1.5px dashed var(--line-2); border-radius: var(--radius); padding: 16px; background: var(--surface-2); transition: border-color var(--dur-short) var(--ease-out), background-color var(--dur-short) var(--ease-out); }
+  .zona.sobre { border-color: var(--accent); background: var(--accent-soft); }
+  .lista-docs { display: grid; gap: 6px; margin-top: 12px; }
+  .doc { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 10px; align-items: center; border: 1px solid var(--line); border-radius: 8px; padding: 9px 12px; background: var(--surface); font-size: 14px; }
+  .doc b { overflow-wrap: anywhere; font-weight: 600; }
+  .doc .det { grid-column: 1 / -1; color: var(--ink-3); font-size: 13px; }
+  .doc details { grid-column: 1 / -1; font-size: 13px; }
+  .doc details pre { white-space: pre-wrap; max-height: 260px; overflow: auto; background: var(--surface-2); border: 1px solid var(--line); border-radius: 6px; padding: 8px; font-family: var(--mono); font-size: 12px; margin: 6px 0 0; }
+  .prop-g { font-size: 13px; color: var(--ink-3); font-weight: 600; margin: 12px 0 4px; }
+  .prop { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 2px 10px; padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; margin-bottom: 6px; background: var(--surface-2); }
+  .prop input[type=checkbox] { margin-top: 3px; width: 17px; height: 17px; accent-color: var(--accent); }
+  .prop .t { font-size: 14px; font-weight: 500; overflow-wrap: anywhere; }
+  .prop .d { grid-column: 2; font-size: 12.5px; color: var(--ink-3); overflow-wrap: anywhere; }
+  .prop select { grid-column: 2; justify-self: start; width: auto; min-width: 180px; margin-top: 4px; border: 1px solid var(--line-2); background: var(--surface); color: var(--ink); border-radius: 6px; padding: 4px 8px; font-size: 13.5px; }
+  @media (max-width: 900px) and (min-width: 621px) { label.campo[style*="span 4"] { grid-column: 1 / -1 !important; } }
   [hidden] { display: none !important; }
 </style>
 </head>
@@ -78,6 +93,28 @@
 
   <section class="secao" style="padding-top:18px">
     <p class="pequeno mudo" style="margin:0 0 12px">Os dados ficam apenas neste navegador, salvos como rascunho até que você inicie um novo diagnóstico. Valores aproximados são suficientes. <button type="button" class="btn sec peq" id="novo" style="margin-left:6px">Novo diagnóstico</button></p>
+
+    <div class="card bloco" id="docs">
+      <h2>Documentos do cliente</h2>
+      <p class="mudo">Anexe as matrículas dos imóveis, as declarações de imposto de renda e os carnês de IPTU. A ferramenta lê os documentos, inclusive os digitalizados e as fotografias (OCR), identifica valores, localização, titularidade e ônus, e propõe o preenchimento do formulário para a sua conferência.</p>
+      <div class="zona" id="zona">
+        <label class="btn" style="cursor:pointer">Anexar documentos<input type="file" id="arquivos" accept="application/pdf,image/jpeg,image/png,image/webp,.pdf,.jpg,.jpeg,.png,.webp,.txt" multiple hidden></label>
+        <span class="pequeno mudo">ou arraste os arquivos para cá · PDF, JPG ou PNG</span>
+      </div>
+      <div class="grade g4" style="margin-top:12px">
+        <label class="campo" style="grid-column:span 2">Modo de leitura<select id="modoLeitura"><option value="regras">Por regras, neste navegador (sem envio de dados)</option><option value="claude">Pelo Claude (mais preciso em documentos digitalizados)</option></select></label>
+        <div style="grid-column:span 2;align-self:end"><label class="check"><input type="checkbox" id="consDocs"> Autorizo o envio dos documentos à Anthropic para a leitura</label></div>
+      </div>
+      <p class="pequeno" id="modoInfo" style="margin:6px 0 0"></p>
+      <div id="listaDocs" class="lista-docs"></div>
+      <div id="revisao" hidden>
+        <h3 class="sub-h">Dados encontrados</h3>
+        <p class="pequeno mudo" style="margin:0 0 8px">Desmarque o que não deve ser aplicado. Os valores provisórios vêm desmarcados. Nada é alterado até você aplicar.</p>
+        <div id="propostas"></div>
+        <div id="conferencias"></div>
+        <div class="linha-btns" style="margin-top:12px"><button type="button" class="btn" id="aplicar">Aplicar ao formulário</button><button type="button" class="btn sec" id="limparDocs">Remover documentos</button></div>
+      </div>
+    </div>
 
     <div class="card bloco">
       <h2>1. Família</h2>
@@ -209,8 +246,12 @@
 <footer class="rodape">
   <div class="wrap"><b>TPC ADVOGADOS</b> · HUB. Ferramentas de apoio à análise jurídica; as projeções são estimativas e não substituem a análise documental.</div>
 </footer>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <script src="../assets/hub.js"></script>
+<script src="../estudo-de-caso/leitor.js"></script>
+<script src="documentos.js"></script>
 <script src="../assets/doc.js"></script>
 <script src="../assets/peca.js"></script>
 <script src="motor.js"></script>

@@ -90,7 +90,10 @@ _hub/  (publicada cifrada em hub/)
     motor.js                  Cálculos do diagnóstico patrimonial e sucessório (ITCMD, inventário, aluguéis na pessoa física
                               e na holding antes e depois da reforma, cenários, riscos e roteiro) e relatório por regras
     prompt.js                 Instruções da redação pelo Claude (base normativa autorizada, estrutura e estilo)
-    app.js                    Formulário com rascunho local, panorama, redação pelo Claude e diagnóstico editável em Word
+    documentos.js             Leitura dos documentos do cliente (matrícula, IRPF e IPTU) com OCR, extração por regras ou
+                              pelo Claude, conciliação com o formulário e pontos de conferência (ônus, titularidade, divergências)
+    app.js                    Formulário com rascunho local, anexos com revisão antes de aplicar, panorama, redação pelo
+                              Claude e diagnóstico editável em Word
   certidoes/
     catalogo.js               Serviços oficiais de certidão criminal (27 TJs, TRF1 a TRF6, STM, TJMs, TSE, STF, STJ, PF, BNMP)
     leitor.js                 Leitura das certidões em PDF: órgão, resultado, datas, números CNJ e conferência do pesquisado
