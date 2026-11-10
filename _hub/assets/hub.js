@@ -37,4 +37,24 @@
   document.addEventListener("DOMContentLoaded", () => {
     document.querySelectorAll("[data-tema-icone]").forEach(el => el.textContent = window.HUB.iconeTema());
   });
+
+  /* O login guarda a senha com o usuário fixo "HUB Criminal TPC". Nos navegadores que salvaram a senha, o
+     preenchimento automático cola esse usuário no primeiro campo de texto das páginas (por exemplo, a busca da
+     ferramenta de PDF, que deixava de listar as ferramentas). Aqui os campos recusam o preenchimento e, se o
+     navegador insistir, o valor é apagado e o campo avisa a página da mudança. */
+  const USUARIO_LOGIN = "HUB Criminal TPC";
+  function limparAutofill() {
+    if (/\/login\/?$/.test(location.pathname)) return;
+    document.querySelectorAll('input:not([type]), input[type="text"], input[type="search"], input[type="email"]').forEach(el => {
+      if (!el.hasAttribute("autocomplete")) el.setAttribute("autocomplete", "off");
+      if (el.value.trim() === USUARIO_LOGIN) {
+        el.value = "";
+        el.dispatchEvent(new Event("input", { bubbles: true })); el.dispatchEvent(new Event("change", { bubbles: true }));
+      }
+    });
+  }
+  const vigiarAutofill = () => { limparAutofill(); [150, 600, 1500, 3000].forEach(ms => setTimeout(limparAutofill, ms)); };
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", vigiarAutofill); else vigiarAutofill();
+  window.addEventListener("pageshow", vigiarAutofill);
+  document.addEventListener("input", e => { const el = e.target; if (el && el.tagName === "INPUT" && el.type !== "password" && el.value.trim() === USUARIO_LOGIN) setTimeout(limparAutofill, 0); }, true);
 })();
