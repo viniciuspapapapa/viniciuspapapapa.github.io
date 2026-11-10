@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Ferramentas de PDF · HUB TPC</title>
+<meta name="description" content="Trinta e três ferramentas de PDF no navegador: juntar, dividir, comprimir, converter, editar, assinar, proteger, tarjar, comparar, OCR e IA, sem enviar os arquivos a servidores.">
+<meta name="theme-color" content="#f5f1e8">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Red+Hat+Display:wght@500;600&family=Red+Hat+Text:wght@400;500;600&family=Red+Hat+Mono:wght@400;500&family=Dancing+Script:wght@600&family=Great+Vibes&family=Caveat:wght@600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/hub.css">
+<style>
+  .heroi { padding: 34px 0 6px; }
+  .busca { max-width: 420px; margin: 18px 0 0; }
+  .cat { margin: 26px 0 0; }
+  .cat > h2 { font-size: 22px; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid var(--ink); }
+  .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 250px), 1fr)); gap: 12px; }
+  .ferr-pdf { display: grid; gap: 6px; align-content: start; padding: 16px; text-decoration: none; color: inherit; position: relative; min-height: 112px; transition: transform var(--dur-short) var(--ease-out), box-shadow var(--dur-short) var(--ease-out); }
+  .ferr-pdf:hover { transform: translateY(-2px); box-shadow: 0 0 0 1px var(--ink), var(--shadow-lift); }
+  .ferr-pdf b { font-family: var(--serif); font-size: 18px; font-weight: 600; letter-spacing: -.02em; }
+  .ferr-pdf span { font-size: 14px; color: var(--ink-2); line-height: 1.45; }
+  .ferr-pdf .tag { position: absolute; top: 12px; right: 12px; font-style: normal; }
+  .mesa-cab { display: flex; gap: 12px; align-items: flex-start; justify-content: space-between; flex-wrap: wrap; padding: 26px 0 10px; }
+  .mesa-cab h1 { font-size: clamp(30px, 4vw, 44px); margin: 2px 0 6px; }
+  .zona { display: grid; place-items: center; text-align: center; gap: 4px; border: 2px dashed var(--line-2); border-radius: var(--radius); padding: 34px 16px; background: var(--surface); cursor: pointer; transition: border-color var(--dur-short) var(--ease-out); }
+  .zona:hover, .zona.sobre { border-color: var(--accent); }
+  .zona.compacta { padding: 14px; }
+  .zona b { font-size: 16px; }
+  .arq { display: flex; align-items: center; gap: 8px; padding: 8px 0; border-bottom: 1px solid var(--line); }
+  .arq-n { flex: 1; min-width: 0; overflow-wrap: anywhere; font-size: 15px; }
+  .x { border: 1px solid var(--line-2); background: var(--surface); border-radius: var(--radius-key); min-width: 34px; height: 34px; cursor: pointer; color: var(--ink-2); font-size: 16px; }
+  .x:hover { border-color: var(--ink); }
+  .bloco { padding: 18px; margin-top: 14px; }
+  .bloco > h2 { font-size: 20px; margin-bottom: 10px; }
+  #opcoes { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; align-items: end; }
+  #opcoes .larga { grid-column: 1 / -1; }
+  @media (max-width: 860px) { #opcoes { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } }
+  @media (max-width: 560px) { #opcoes { grid-template-columns: minmax(0, 1fr); } }
+  .acao { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-top: 16px; }
+  .barra { height: 6px; background: var(--line); border-radius: 99px; overflow: hidden; margin-top: 10px; }
+  .barra i { display: block; height: 100%; width: 0; background: var(--ink-2); }
+  .erro { color: var(--bad); font-size: 15px; margin-top: 8px; }
+  .aviso { border-left: 3px solid var(--warn); background: var(--warn-bg); padding: 8px 12px; border-radius: 0 8px 8px 0; font-size: 14px; margin: 6px 0; }
+  .resultado { margin-top: 16px; }
+  .resultado h2 { font-size: 22px; }
+  .saidas { margin-top: 10px; max-height: 340px; overflow: auto; }
+  .previa { margin-top: 14px; border-top: 1px solid var(--line); padding-top: 12px; }
+  .md h2, .md h3, .md h4 { font-family: var(--serif); margin: 14px 0 6px; } .md p { margin: 0 0 10px; } .md table { border-collapse: collapse; } .md td, .md th { border: 1px solid var(--line-2); padding: 4px 6px; }
+  .cmp-2 { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 14px; }
+  .cmp-3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+  @media (max-width: 760px) { .cmp-2, .cmp-3 { grid-template-columns: minmax(0, 1fr); } }
+  .cmp-txt { background: var(--doc-paper); color: var(--doc-ink); border-radius: var(--radius-sheet); box-shadow: 0 0 0 1px var(--line); padding: 14px; font-size: 14px; line-height: 1.65; max-height: 70vh; overflow: auto; }
+  .cmp-txt ins { background: var(--ok-bg); color: var(--ok); text-decoration: none; } .cmp-txt del { background: var(--bad-bg); color: var(--bad); }
+  :root[data-theme="dark"] .cmp-txt ins, :root[data-theme="dark"] .cmp-txt del { color: var(--doc-ink); }
+  .cmp-pg { margin-bottom: 18px; } .cmp-pg img { width: 100%; box-shadow: 0 0 0 1px var(--line); border-radius: 3px; } .cmp-pg figure { margin: 0; } .cmp-pg figcaption { font-size: 13px; color: var(--ink-3); }
+  /* grade de miniaturas */
+  .g-barra { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 10px; }
+  .g-lista { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; }
+  .g-pg { background: var(--surface); border-radius: var(--radius); box-shadow: 0 0 0 1px var(--line); padding: 8px; cursor: pointer; user-select: none; }
+  .g-pg.sel { box-shadow: 0 0 0 2px var(--accent); background: var(--accent-soft); }
+  .g-pg.arr { opacity: .5; }
+  .g-quadro { height: 190px; display: grid; place-items: center; overflow: hidden; }
+  .g-quadro canvas { max-width: 100%; max-height: 186px; box-shadow: 0 0 0 1px var(--line); background: var(--doc-paper); }
+  .g-branca { width: 120px; height: 170px; display: grid; place-items: center; background: var(--doc-paper); color: var(--doc-muted); font-size: 12px; box-shadow: 0 0 0 1px var(--line); }
+  .g-pe { display: flex; align-items: center; justify-content: space-between; gap: 4px; margin-top: 6px; flex-wrap: wrap; }
+  .g-num { font-family: var(--mono); font-size: 13px; } .g-num small { font-family: var(--sans); color: var(--ink-3); }
+  .g-bts { display: flex; gap: 2px; }
+  .g-b { border: 1px solid var(--line-2); background: var(--surface); border-radius: 5px; min-width: 26px; height: 26px; cursor: pointer; font-size: 14px; padding: 0 4px; color: var(--ink); }
+  .g-b:hover { border-color: var(--ink); }
+  .g-ck input { width: 18px; height: 18px; }
+  /* visor de página */
+  .v-barra { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-bottom: 8px; }
+  .v-barra [aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); border-color: color-mix(in oklab, var(--accent) 78%, var(--ink)); }
+  .v-props { display: inline-flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+  .v-p { display: inline-flex; gap: 5px; align-items: center; font-size: 13px; color: var(--ink-2); }
+  .v-p input[type=color] { width: 34px; height: 28px; padding: 0; border: 1px solid var(--line-2); border-radius: 4px; min-height: 0; }
+  .v-p input[type=number], .v-p select { min-height: 30px; padding: 3px 6px; font-size: 14px; width: auto; }
+  .v-pgn { min-width: 110px; text-align: center; }
+  .v-palco { background: var(--surface-3); border-radius: var(--radius); padding: 14px; overflow: auto; display: grid; justify-items: center; }
+  .v-folha { position: relative; box-shadow: 0 0 0 1px var(--line), var(--shadow); background: var(--doc-paper); }
+  .v-folha canvas { display: block; }
+  .v-camada { position: absolute; inset: 0; cursor: crosshair; touch-action: none; overflow: hidden; }
+  .v-obj { position: absolute; box-sizing: border-box; cursor: move; }
+  .v-obj.sel { outline: 2px solid var(--focus); outline-offset: 1px; }
+  .v-obj img { width: 100%; height: 100%; display: block; pointer-events: none; }
+  .v-txt { min-width: 20px; outline: none; white-space: pre; cursor: text; }
+  .v-campo { background: color-mix(in oklab, var(--info) 18%, transparent); border: 1px dashed var(--info); }
+  .v-campo .v-txt { font-size: 11px; color: var(--info); padding: 1px 3px; white-space: nowrap; overflow: hidden; }
+  .v-ocultar { background: var(--doc-ink); }
+  .v-recorte { outline: 9999px solid oklch(18% 0.006 60 / .45); border: 2px dashed var(--accent); }
+  .v-recorte.sel { outline: 9999px solid oklch(18% 0.006 60 / .45); }
+  .v-al { position: absolute; right: -6px; bottom: -6px; width: 12px; height: 12px; background: var(--accent); border: 1px solid var(--ink); border-radius: 3px; cursor: nwse-resize; display: none; }
+  .v-obj.sel .v-al { display: block; }
+  .duas-a { display: grid; grid-template-columns: minmax(0, 340px) minmax(0, 1fr); gap: 16px; align-items: start; }
+  @media (max-width: 900px) { .duas-a { grid-template-columns: minmax(0, 1fr); } }
+  .a-pad { width: 100%; height: auto; background: var(--doc-paper); border-radius: 6px; box-shadow: 0 0 0 1px var(--line-2); touch-action: none; cursor: crosshair; margin-top: 10px; }
+  .sub-h { font-size: 16px; margin: 14px 0 8px; }
+  .conv-palco { position: fixed; left: -12000px; top: 0; background: var(--doc-paper); }
+  details.cfg > summary { cursor: pointer; font-weight: 600; font-size: 15px; }
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body>
+<header class="topo">
+  <div class="topo-in">
+    <a class="marca" href="../" aria-label="HUB TPC, página inicial"><span class="marca-tpc">TPC</span><span class="marca-txt"><b>HUB</b> Criminal</span></a>
+    <nav class="migalha" aria-label="Você está em"><span>/</span><span>Ferramentas de PDF</span></nav>
+    <div class="espaco"></div>
+    <button class="btn-icone" type="button" onclick="HUB.alternarTema()" aria-label="Alternar tema claro ou escuro" title="Tema"><span data-tema-icone>☾</span></button>
+  </div>
+</header>
+<div class="faixa"></div>
+
+<main class="wrap">
+  <div id="inicio">
+    <section class="heroi">
+      <div class="sobretitulo">Ferramenta 16 · Documentos</div>
+      <h1>Ferramentas de PDF</h1>
+      <p class="lead">Juntar, dividir, comprimir, converter, editar, assinar, proteger, tarjar, comparar e ler com OCR: tudo no próprio navegador, sem enviar os documentos do escritório a servidores.</p>
+      <label class="campo busca">Procurar ferramenta<input type="search" id="busca" placeholder="Ex.: juntar, assinar, Word"></label>
+    </section>
+    <div id="grade"></div>
+  </div>
+
+  <div id="mesa" hidden>
+    <div class="mesa-cab">
+      <div><div class="sobretitulo" id="mCat"></div><h1 id="mTitulo"></h1><p class="mudo" id="mDesc" style="margin:0;max-width:760px"></p></div>
+      <button type="button" class="btn sec" id="voltar">Todas as ferramentas</button>
+    </div>
+    <label class="zona" id="zona"><b id="zonaTxt"></b><span class="pequeno mudo" id="zonaSub"></span><input type="file" id="arquivo" hidden></label>
+    <div id="lista"></div>
+    <div class="card bloco" id="opcoesBloco"><div id="opcoes"></div>
+      <details class="cfg" id="iaOpcoes" style="margin-top:14px" hidden>
+        <summary>Opções de IA</summary>
+        <div class="grade g4" style="margin-top:10px">
+          <label class="campo" style="grid-column:span 2">Chave da API da Anthropic<input type="password" id="chave" autocomplete="off" placeholder="sk-ant-..."></label>
+          <label class="campo">Modelo<select id="modelo"><option value="claude-sonnet-5-5">Claude Sonnet 5.5 (rápido e econômico)</option><option value="claude-opus-5-5">Claude Opus 5.5 (máxima qualidade)</option></select></label>
+          <label class="campo">Raciocínio<select id="esforco"><option value="medium" selected>Médio</option><option value="high">Alto</option><option value="low">Baixo</option></select></label>
+        </div>
+        <div class="grade" style="margin-top:8px;gap:6px">
+          <label class="check"><input type="checkbox" id="lembrarChave"> Guardar a chave neste navegador</label>
+          <label class="check"><input type="checkbox" id="consentimento"> Autorizo o envio do texto do documento à Anthropic</label>
+        </div>
+        <p class="pequeno mudo" style="margin:8px 0 0">Somente as ferramentas de inteligência artificial enviam o texto do documento, e apenas com esta autorização. A chave é a mesma das demais ferramentas do HUB e fica apenas neste navegador.</p>
+      </details>
+    </div>
+    <div id="area" style="margin-top:14px"></div>
+    <div class="acao"><button type="button" class="btn" id="executar">Processar</button><span class="pequeno mudo" id="estado"></span></div>
+    <div class="barra" id="barra" hidden><i></i></div>
+    <p class="pequeno" id="progresso" style="margin:6px 0 0"></p>
+    <p class="erro" id="erro" role="alert"></p>
+    <div id="res"></div>
+  </div>
+</main>
+
+<footer class="rodape">
+  <div class="wrap"><b>TPC ADVOGADOS</b> · HUB. Os arquivos são processados neste navegador. As bibliotecas abertas usadas (pdf.js, pdf-lib, qpdf, Tesseract, mammoth, SheetJS, PptxGenJS, html2pdf) são carregadas sob demanda.</div>
+</footer>
+<script src="../assets/hub.js"></script>
+<script src="nucleo.js"></script>
+<script src="visor.js"></script>
+<script src="ferramentas.js"></script>
+<script src="office.js"></script>
+<script src="app.js"></script>
+<script type="module" src="ia.js"></script>
+</body>
+</html>
