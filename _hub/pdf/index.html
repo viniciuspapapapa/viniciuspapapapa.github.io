@@ -121,6 +121,11 @@
       <label class="campo busca">Procurar ferramenta<input type="search" id="busca" placeholder="Ex.: juntar, assinar, Word"></label>
     </section>
     <div id="grade"></div>
+    <details class="cfg diag" style="margin-top:22px"><summary>Diagnóstico deste navegador</summary>
+      <p class="pequeno mudo" style="margin:8px 0">Se alguma ferramenta não abrir ou não concluir neste computador, use a verificação abaixo e envie o resultado ao administrador do HUB. Ela testa cada componente sem enviar nenhum arquivo.</p>
+      <div class="acao" style="margin-top:0"><button type="button" class="btn sec" id="diag">Verificar componentes</button><button type="button" class="btn sec" id="diagCopiar" hidden>Copiar resultado</button></div>
+      <pre id="diagRes" class="pequeno" style="white-space:pre-wrap;margin:10px 0 0"></pre>
+    </details>
   </div>
 
   <div id="mesa" hidden>
@@ -157,6 +162,21 @@
 <footer class="rodape">
   <div class="wrap"><b>TPC ADVOGADOS</b> · HUB. Os arquivos são processados neste navegador. As bibliotecas abertas usadas (pdf.js, pdf-lib, qpdf, Tesseract, mammoth, SheetJS, PptxGenJS, html2pdf) são carregadas sob demanda.</div>
 </footer>
+<script>
+/* registra falhas de carregamento ou execução e as mostra na tela, para diagnóstico em outros computadores */
+window.PDF_FALHAS = [];
+(function () {
+  function mostra(m) {
+    m = String(m || "erro desconhecido").slice(0, 300); if (window.PDF_FALHAS.indexOf(m) >= 0) return; window.PDF_FALHAS.push(m);
+    var el = document.getElementById("falhaPdf");
+    if (!el) { el = document.createElement("div"); el.id = "falhaPdf"; el.setAttribute("role", "alert"); el.style.cssText = "position:fixed;left:12px;right:12px;bottom:12px;z-index:99;padding:10px 14px;border-radius:10px;background:#7a2318;color:#fff;font:14px/1.4 system-ui,sans-serif;max-height:40vh;overflow:auto"; (document.body || document.documentElement).appendChild(el); }
+    el.textContent = "Erro na ferramenta de PDF: " + window.PDF_FALHAS.join(" · ") + ". Abra \"Diagnóstico deste navegador\", ao final da página, e envie o resultado ao administrador do HUB.";
+  }
+  window.addEventListener("error", function (e) { if (e && e.message && !/ResizeObserver/.test(e.message)) mostra(e.message + (e.lineno ? " (linha " + e.lineno + ")" : "")); });
+  window.addEventListener("unhandledrejection", function (e) { var r = e && e.reason; mostra(r && r.message || r); });
+  window.PDF_MOSTRA_FALHA = mostra;
+})();
+</script>
 <script src="../assets/hub.js"></script>
 <script src="nucleo.js"></script>
 <script src="visor.js"></script>
