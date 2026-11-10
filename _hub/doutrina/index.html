@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Pesquisa Doutrinária · HUB TPC</title>
+<meta name="description" content="Pesquisa por tema nos livros de doutrina do escritório, com OCR, página impressa, citação ABNT e exportação em Word.">
+<meta name="theme-color" content="#f5f1e8">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Red+Hat+Display:wght@500;600&family=Red+Hat+Text:wght@400;500;600&family=Red+Hat+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/hub.css">
+<style>
+  .heroi { padding: 34px 0 6px; }
+  .bloco { padding: 18px; margin-bottom: 14px; }
+  .bloco > h2 { font-size: 22px; margin-bottom: 4px; }
+  .base-linha { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; justify-content: space-between; font-size: 14px; }
+  .base-linha .info { color: var(--ink-2); }
+  .barra { height: 6px; background: var(--line); border-radius: 99px; overflow: hidden; margin-top: 10px; }
+  .barra i { display: block; height: 100%; width: 0; background: var(--ink-2); transition: width .2s; }
+  .busca-linha { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 8px; align-items: end; }
+  @media (max-width: 720px) { .busca-linha { grid-template-columns: 1fr; } }
+  .busca-linha input { font-size: 17px; }
+  .dica { font-size: 13px; color: var(--ink-3); margin: 6px 0 0; }
+  .filtros { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 240px), 1fr)); gap: 8px; margin-top: 12px; }
+  .layout-res { display: grid; grid-template-columns: minmax(0, 1fr) 260px; gap: 16px; align-items: start; }
+  @media (max-width: 960px) { .layout-res { grid-template-columns: 1fr; } .lado { order: -1; } }
+  .lado { position: sticky; top: 12px; font-size: 14px; }
+  .lado h3 { font-size: 15px; margin: 0 0 6px; }
+  .lado button.obra { display: flex; width: 100%; justify-content: space-between; gap: 8px; text-align: left; background: none; border: 0; border-bottom: 1px solid var(--line); padding: 6px 2px; cursor: pointer; color: var(--ink); font: inherit; }
+  .lado button.obra:hover, .lado button.obra[aria-pressed="true"] { background: var(--surface-2); }
+  .lado button.obra b { font-weight: 500; font-family: var(--mono); font-size: 12.5px; color: var(--ink-3); }
+  .trecho { border-top: 1px solid var(--ink); padding: 14px 0 16px; }
+  .trecho-cab { display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: baseline; justify-content: space-between; }
+  .trecho-cab h3 { font-size: 16px; margin: 0; }
+  .trecho-cab small { color: var(--ink-3); font-family: var(--mono); font-size: 12.5px; }
+  .trecho .txt { margin: 8px 0 0; font-size: 15.5px; line-height: 1.6; }
+  .trecho .txt p { margin: 0 0 8px; }
+  .trecho mark { background: var(--accent-soft); color: inherit; border-radius: 3px; padding: 0 1px; }
+  .trecho .motivo { margin: 8px 0 0; font-size: 14px; color: var(--ink-2); border-left: 3px solid var(--accent); padding: 2px 0 2px 10px; }
+  .trecho .acoes { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-top: 10px; }
+  .trecho .acoes .btn { padding: 6px 10px; font-size: 14px; }
+  .trecho .pag { display: inline-flex; align-items: center; gap: 6px; font-size: 13.5px; color: var(--ink-2); }
+  .trecho .pag input { width: 74px; padding: 4px 6px; font-size: 14px; }
+  .trecho .sel { display: inline-flex; align-items: center; gap: 6px; font-size: 14px; margin-left: auto; }
+  .sintese { background: var(--surface-2); border-radius: var(--radius-key); padding: 12px 14px; font-size: 15px; line-height: 1.6; }
+  .sintese p { margin: 0 0 8px; }
+  .vazio { color: var(--ink-3); padding: 18px 0; }
+  .aviso { border-left: 3px solid var(--warn); background: var(--warn-bg, var(--surface-2)); padding: 8px 12px; border-radius: 0 8px 8px 0; font-size: 14px; margin: 8px 0; }
+  .selbar { position: sticky; bottom: 10px; z-index: 5; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: space-between; background: var(--surface); border: 1px solid var(--ink); border-radius: var(--radius-key); padding: 8px 12px; margin-top: 12px; box-shadow: 0 6px 22px oklch(0% 0 0 / 0.12); }
+  dialog.visor { width: min(980px, 96vw); height: min(92vh, 1200px); padding: 0; border: 1px solid var(--ink); border-radius: 12px; background: var(--surface); color: var(--ink); }
+  dialog.visor::backdrop { background: oklch(0% 0 0 / 0.45); }
+  .visor-cab { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: space-between; padding: 10px 14px; border-bottom: 1px solid var(--line); }
+  .visor-cab b { font-size: 15px; }
+  .visor-corpo { height: calc(100% - 58px); overflow: auto; background: var(--surface-3); display: grid; place-items: start center; padding: 14px; }
+  .visor-corpo canvas { max-width: 100%; height: auto; box-shadow: 0 2px 14px oklch(0% 0 0 / 0.18); background: #fff; }
+  details.cfg > summary { cursor: pointer; font-weight: 600; font-size: 15px; }
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body>
+<header class="topo">
+  <div class="topo-in">
+    <a class="marca" href="../" aria-label="HUB TPC, página inicial"><span class="marca-tpc">TPC</span><span class="marca-txt"><b>HUB</b> Criminal</span></a>
+    <nav class="migalha" aria-label="Você está em"><span>/</span><span>Pesquisa doutrinária</span></nav>
+    <div class="espaco"></div>
+    <button class="btn-icone" type="button" onclick="HUB.alternarTema()" aria-label="Alternar tema claro ou escuro" title="Tema"><span data-tema-icone>☾</span></button>
+  </div>
+</header>
+<div class="faixa"></div>
+
+<main class="wrap">
+  <section class="heroi">
+    <div class="sobretitulo">Ferramenta 19 · Doutrina</div>
+    <h1>Pesquisa doutrinária</h1>
+    <p class="lead">Indique o tema e encontre, em segundos, os trechos dos livros da biblioteca do escritório que tratam dele, com a página da obra, a citação em ABNT pronta para a peça e a exportação dos trechos escolhidos em Word.</p>
+  </section>
+
+  <section class="secao" style="padding-top:18px">
+    <div class="card bloco">
+      <div class="base-linha">
+        <span class="info" id="baseInfo">Carregando a base de livros…</span>
+        <span class="linha-btns" style="margin:0"><button type="button" class="btn sec" id="atualizar">Atualizar base</button><a class="btn sec" id="pastaDrive" href="https://drive.google.com/drive/folders/1gfp6mt_FsaxZC1Lj9FW40btN5XQwR5G3" target="_blank" rel="noopener">Pasta no Drive</a></span>
+      </div>
+      <div class="barra" id="barra" hidden><i></i></div>
+      <p class="pequeno mudo" id="baseEstado" style="margin:6px 0 0"></p>
+    </div>
+
+    <div class="card bloco">
+      <h2>Tema</h2>
+      <div class="busca-linha" style="margin-top:8px">
+        <label class="campo">Tema ou expressão<input type="search" id="q" autocomplete="off" placeholder="Ex.: prova ilícita por derivação; cadeia de custódia; dolo eventual"></label>
+        <button type="button" class="btn" id="buscar">Buscar nos livros</button>
+        <button type="button" class="btn sec" id="buscarIA" title="O Claude amplia o tema e seleciona os trechos mais pertinentes">Busca inteligente</button>
+      </div>
+      <p class="dica">Sem diferença entre maiúsculas, acentos, singular e plural. Use aspas para a expressão exata ("fonte independente") e o sinal de menos para excluir um termo (-civil).</p>
+      <div class="filtros">
+        <label class="campo">Área<select id="fArea"><option value="">Todas as áreas</option></select></label>
+        <label class="campo">Obra<select id="fObra"><option value="">Todas as obras</option></select></label>
+        <label class="campo">Trechos por obra<select id="fPor"><option value="3">Até 3</option><option value="6" selected>Até 6</option><option value="12">Até 12</option><option value="40">Todos</option></select></label>
+      </div>
+      <details class="cfg" id="iaCfg" style="margin-top:14px">
+        <summary>Busca inteligente com Claude</summary>
+        <p class="pequeno mudo" style="margin:8px 0">O Claude traduz o tema para o vocabulário da doutrina (institutos correlatos, sinônimos, dispositivos legais), busca nos livros e escolhe os trechos mais pertinentes, sem reescrevê-los. São enviados à Anthropic apenas o tema e os trechos candidatos.</p>
+        <div class="grade g4">
+          <label class="campo" style="grid-column:span 2">Chave da API da Anthropic<input type="password" id="chave" autocomplete="off" placeholder="sk-ant-..."></label>
+          <label class="campo">Modelo<select id="modelo"><option value="claude-sonnet-5-5">Claude Sonnet 5.5 (rápido)</option><option value="claude-opus-5-5">Claude Opus 5.5 (máxima qualidade)</option></select></label>
+          <label class="campo">Raciocínio<select id="esforco"><option value="low">Baixo</option><option value="medium" selected>Médio</option><option value="high">Alto</option></select></label>
+        </div>
+        <div class="grade" style="margin-top:8px;gap:6px">
+          <label class="check"><input type="checkbox" id="lembrarChave"> Guardar a chave neste navegador</label>
+          <label class="check"><input type="checkbox" id="consentimento"> Autorizo o envio do tema e dos trechos candidatos à Anthropic</label>
+        </div>
+      </details>
+      <p class="pequeno" id="estado" style="margin:10px 0 0"></p>
+    </div>
+
+    <div class="card bloco" id="resBloco" hidden>
+      <div class="linha-btns" style="justify-content:space-between;margin:0"><h2 style="margin:0">Trechos</h2><span class="pequeno mudo" id="resumo"></span></div>
+      <div id="sintese" class="sintese" style="margin-top:12px" hidden></div>
+      <div class="layout-res" style="margin-top:12px">
+        <div id="lista"></div>
+        <aside class="lado" id="lado"></aside>
+      </div>
+      <div class="selbar" id="selbar" hidden>
+        <span id="selInfo" class="pequeno"></span>
+        <span class="linha-btns" style="margin:0"><button type="button" class="btn sec" id="limparSel">Limpar seleção</button><button type="button" class="btn" id="word">Exportar seleção em Word</button></span>
+      </div>
+    </div>
+
+    <div class="card bloco">
+      <details class="cfg"><summary>Obras na base</summary><div id="obras" style="margin-top:10px"></div></details>
+    </div>
+  </section>
+</main>
+
+<dialog class="visor" id="visor" aria-label="Visualização do livro">
+  <div class="visor-cab">
+    <b id="vTitulo"></b>
+    <span class="linha-btns" style="margin:0">
+      <button type="button" class="btn sec" id="vAnt" aria-label="Página anterior">←</button>
+      <span class="pequeno" id="vPag"></span>
+      <button type="button" class="btn sec" id="vProx" aria-label="Próxima página">→</button>
+      <a class="btn sec" id="vDrive" target="_blank" rel="noopener">Abrir no Drive</a>
+      <button type="button" class="btn sec" id="vFechar">Fechar</button>
+    </span>
+  </div>
+  <div class="visor-corpo" id="vCorpo"></div>
+</dialog>
+
+<footer class="rodape">
+  <div class="wrap"><b>TPC ADVOGADOS</b> · HUB. A base reúne o texto dos livros da pasta de doutrina do escritório no Google Drive, com OCR das páginas digitalizadas, e fica cifrada com a senha do HUB. Confira sempre o trecho na obra antes de citá-lo.</div>
+</footer>
+<script src="../vendor/jszip/jszip.min.js"></script>
+<script src="../assets/hub.js"></script>
+<script src="../assets/peca.js"></script>
+<script src="obras.js"></script>
+<script src="motor.js"></script>
+<script type="module" src="app.js"></script>
+</body>
+</html>
