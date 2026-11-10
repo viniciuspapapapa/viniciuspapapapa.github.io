@@ -1,0 +1,1584 @@
+/* Painel de Produtividade e Rentabilidade (ferramenta 20 do HUB), portado de painel-produtividade.html. */
+/* Bibliotecas hospedadas no próprio HUB (pasta vendor), para funcionar em redes que bloqueiam CDNs; a CDN é a reserva. */
+function carregarScript(urls, ok){
+  return new Promise((res, rej)=>{
+    const tenta=i=>{ if(ok()) return res(); if(i>=urls.length) return rej(new Error('biblioteca indisponível'));
+      const s=document.createElement('script'); s.src=urls[i]; s.async=true;
+      s.onload=()=>ok()?res():tenta(i+1); s.onerror=()=>{ s.remove(); tenta(i+1); }; document.head.appendChild(s); };
+    tenta(0);
+  });
+}
+const VENDOR_PP=new URL('../vendor/', location.href).href;
+const LIBS_PP=Promise.all([
+  carregarScript([VENDOR_PP+'chartjs/chart.umd.min.js','https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js'],()=>typeof Chart!=='undefined'),
+  carregarScript([VENDOR_PP+'xlsx/xlsx.full.min.js','https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js'],()=>typeof XLSX!=='undefined')
+]);
+
+/* ============================================================
+   PAINEL DE PRODUTIVIDADE — TPC ADVOGADOS
+   Motor de análise 100% client-side. Reprocessa a cada upload.
+   Registro (record): {cliente,tipo,descricao,advogado,data(YYYY-MM-DD),min}
+   ============================================================ */
+
+/* ---- dataset padrão (Junho/2026) embutido ---- */
+const RECORDS_DEFAULT = [];   // sem dados embutidos: o painel abre vazio (privacidade)
+const PERIODO_DEFAULT = "Junho/2026";
+
+/* ---- parâmetros de negócio (ajustáveis) ---- */
+const CFG = {
+  internoPatterns: [/tpc\s*toledo/i, /^tpc\s*-\s*tpc/i],  // cliente = escritório (não faturável)
+  curtoMin: 10,          // < 10 min = lançamento de granularidade fina
+  muitoCurtoMin: 5,      // <= 5 min = muito curto
+  descMinChars: 15,      // descrição abaixo disto = incompleta
+  cargaAltaMin: 600,     // > 10h/dia = carga suspeita
+  cargaBaixaMin: 240,    // < 4h em dia útil trabalhado = subaproveitamento
+  jornadaBaixaMin: 360,  // < 6h/dia = jornada abaixo do esperado
+  jornadaAltaMin: 480,   // > 8h/dia = jornada acima de 8h
+  tarefaLongaMin: 90,    // > 1h30 em um único lançamento = tarefa longa
+  internoAltoPct: 40,    // > 40% interno = alerta de rentabilidade
+  descricoesGenericas: [ // descrições genéricas demais (isoladas)
+    'analise','análise','reuniao','reunião','contato','leitura','estudo','pesquisa',
+    'diligencia','diligência','andamento','processo','peticao','petição','despacho',
+    'email','e-mail','ligacao','ligação','ok','minuta','audiencia','audiência',
+    'movimentacao','movimentação','prazo','revisao','revisão','manifestacao','manifestação'
+  ],
+  // tipos de serviço de elaboração/revisão de peças e petições (aplicado ao "Tipo de Serviço")
+  pecaPattern: /minuta|manifest|alega|embargo|agravo|peticao|petição|peça|\bpeca\b|recurso|apela|contesta|impugna|memoria|memória|notifica|contrarraz|razoes|razões|parecer|inicial|distribuic|distribuiç/i,
+  // natureza da atividade (1ª regra que casar vence) — para gestão do mix contencioso × consultivo
+  naturaPatterns: [
+    ['Contencioso',           /minuta|manifest|alega|embargo|agravo|peticao|petição|peça|\bpeca\b|recurso|apela|contesta|impugna|memoria|memória|audiencia|audiência|movimentacao|movimentação|despacho|decisao|decisão|monitorar|verificar status|diligencia|diligência|protocolo|distribuic|distribuiç|juntada|habilitar|oitiva|jecrim|prazo|processo|instrucao|instrução|conciliacao|conciliação|autos/i],
+    ['Captação/Prospecção',   /prospect|captac|captaç/i],
+    ['Consultivo',            /consultoria|parecer|consulta|notifica|procuracao|procuração|pesquisa|estudo|contrato/i],
+    ['Reuniões/Alinhamento',  /reuniao|reunião|call|alinhamento/i],
+    ['Gestão/Administrativo', /cadastr|ficha tempo|relatorio|relatório|ausencia|ausência|apresentac|apresentaç|\bbi\b|resposta de e-?mail|contato|envio|organizac|organizaç|orientac|orientaç|e-?mail|guia|custas/i]
+  ],
+  // subtipo real da peça/petição — lido da DESCRIÇÃO (observações) + tipo; 1ª regra que casar vence.
+  // Aplicado sobre o texto sem acento/minúsculo de (descrição + " " + tipo de serviço).
+  subtipoPeca: [
+    ['Alegações Finais',                /alegacoes finais|alegacao final|memoriais/],
+    ['Resposta à Acusação',             /resposta a acusacao|defesa previa|defesa preliminar/],
+    ['Contrarrazões',                   /contrarraz|contra-?razoes|contra razoes/],
+    ['Razões de Apelação',              /razoes de apela|apelacao|apelar/],
+    ['Embargos de Declaração',          /embargos de declara|\bembargos\b|elaboracao de ed\b|protocolo de ed\b|revisao.*\bed\b|\bed\b/],
+    ['Recurso em Sentido Estrito (RESE)',/\brese\b|sentido estrito/],
+    ['Recurso Esp./ARESP',              /\baresp\b|\bresp\b|recurso especial|agravo em recurso/],
+    ['Agravo',                          /agravo/],
+    ['Habeas Corpus',                   /habeas|\bhc\b/],
+    ['Exceção de Suspeição',            /excecao de suspei|suspeicao|excecao/],
+    ['Notícia-Crime',                   /noticia-?crime|notitia criminis/],
+    ['Petição Inicial',                 /\binicial\b|distribuicao de peticao/],
+    ['Notificação/Contranotificação',   /notifica|contranotifica|resposta a demanda|resposta.*oficio|minuta.*oficio/],
+    ['Parecer',                         /parecer/],
+    ['Cautelar (sigilo/arresto)',       /quebra de sigilo|arresto|sequestro|cautelar|busca e apreensao/],
+    ['Extinção de Punibilidade',        /extincao da punib|punibilidade/],
+    ['Habilitação/Procuração',          /habilitacao|procuracao|habilitar advogado|substabelec/],
+    ['Pedido de acesso/vista',          /acesso ao inqu|acesso do inqu|acesso e reagend|vista dos autos|\bacesso\b/],
+    ['Pedido de saída p/ consulta',     /saida pra consulta|saida para consulta/],
+    ['Assistente de Acusação',          /assistente de acusa/],
+    ['Descadastramento/Isenção',        /descadastr|isenc/],
+    ['Manifestação (genérica)',         /manifesta/],
+    ['Juntada/Protocolo',               /juntada|protocolo|redistribui|distribui|comprovante/]
+  ]
+};
+
+/* ---- estado ---- */
+let RECORDS = RECORDS_DEFAULT.slice();
+let PERIODO = PERIODO_DEFAULT;
+let ANALISE = null;
+let atual = '__equipe__';
+let charts = {};
+let clientChartMode = 'horas';   // horas | tarefas
+let RATE = +(localStorage.getItem('tpc_rate')||0);   // valor/hora (R$) p/ estimativa de faturamento
+const tableState = {};           // por-view estado das tabelas
+
+/* ============================================================
+   1. HELPERS
+   ============================================================ */
+const norm = s => (s||'').toString().trim();
+const semAcento = s => norm(s).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'');
+const isInterno = cli => CFG.internoPatterns.some(rx => rx.test(cli||''));
+const isPeca = tipo => CFG.pecaPattern.test(tipo||'');
+function classifyNatureza(tipo){
+  const t=tipo||'';
+  for(const [nome,rx] of CFG.naturaPatterns){ if(rx.test(t)) return nome; }
+  return 'Outros';
+}
+// identifica o subtipo real da peça a partir da descrição (observações) + tipo
+function classifySubtipoPeca(tipo, desc){
+  const t=semAcento((desc||'')+' '+(tipo||''));
+  for(const [nome,rx] of CFG.subtipoPeca){ if(rx.test(t)) return nome; }
+  return 'Não especificado';
+}
+function fmtRS(v){ return 'R$ '+(v||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}); }
+function fmtH(min){ // decimal horas
+  return (min/60).toLocaleString('pt-BR',{maximumFractionDigits:1})+'h';
+}
+function fmtHM(min){ // 118h 05
+  const h=Math.floor(min/60), m=Math.round(min%60);
+  return h+'h'+(m<10?'0'+m:m);
+}
+function fmtPct(x){ return (x||0).toLocaleString('pt-BR',{maximumFractionDigits:1})+'%'; }
+function primeiroNome(nome){
+  const p=norm(nome).split(/\s+/);
+  return p.slice(0,2).join(' ');
+}
+function diaSemana(iso){
+  const d=new Date(iso+'T12:00:00');
+  return ['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'][d.getDay()];
+}
+function isoWeekKey(iso){
+  const d=new Date(iso+'T12:00:00');
+  const t=new Date(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate()));
+  const day=(t.getUTCDay()+6)%7; t.setUTCDate(t.getUTCDate()-day+3);
+  const firstThu=new Date(Date.UTC(t.getUTCFullYear(),0,4));
+  const week=1+Math.round(((t-firstThu)/86400000-3+((firstThu.getUTCDay()+6)%7))/7);
+  return t.getUTCFullYear()+'-S'+String(week).padStart(2,'0');
+}
+
+/* ============================================================
+   2. PARSER DE PLANILHAS (SheetJS) — corrige a coluna G
+   ============================================================ */
+function excelSerialToISO(serial){
+  // Excel epoch = 1899-12-30
+  const d = new Date(Date.UTC(1899,11,30) + Math.round(serial)*86400000);
+  return d.toISOString().slice(0,10);
+}
+function durMinFromCell(v){
+  // v pode ser: número serial (1.0104 = 00:15), Date, ou string "01/01/1900 00:15:00" / "00:15"
+  if(v==null||v==='') return 0;
+  if(typeof v==='number'){
+    const frac = v - Math.floor(v);        // parte fracionária = fração do dia = duração <24h
+    return Math.round(frac*24*60);
+  }
+  if(v instanceof Date){
+    return v.getHours()*60 + v.getMinutes() + Math.round(v.getSeconds()/60);
+  }
+  const s=v.toString().trim();
+  const m=s.match(/(\d{1,2}):(\d{2})(?::(\d{2}))?\s*$/); // último HH:MM(:SS)
+  if(m) return (+m[1])*60 + (+m[2]) + Math.round((+(m[3]||0))/60);
+  return 0;
+}
+function headerIndex(headers){
+  const H = headers.map(h=>semAcento(h));
+  const find = keys => { for(let i=0;i<H.length;i++){ if(keys.some(k=>H[i].includes(k))) return i; } return -1; };
+  return {
+    cliente: find(['cliente']),
+    tipo:    find(['tipo de servico','tipo servico','tipo']),
+    desc:    find(['descricao']),
+    adv:     find(['advogado','responsavel','profissional']),
+    data:    find(['data']),
+    horas:   find(['horas cobraveis','horas','tempo','duracao'])
+  };
+}
+function parseSheet(rowsAoA, fallbackNome){
+  // acha a linha de cabeçalho
+  let hIdx=-1;
+  for(let i=0;i<Math.min(rowsAoA.length,8);i++){
+    const line=rowsAoA[i].map(semAcento).join('|');
+    if(line.includes('cliente') && (line.includes('advogado')||line.includes('tipo'))){ hIdx=i; break; }
+  }
+  if(hIdx<0) hIdx=0;
+  const col = headerIndex(rowsAoA[hIdx]);
+  const out=[];
+  for(let i=hIdx+1;i<rowsAoA.length;i++){
+    const r=rowsAoA[i];
+    const cliente=norm(r[col.cliente]);
+    let adv=col.adv>=0?norm(r[col.adv]):'';
+    if(!adv) adv = fallbackNome||'';
+    // pula rodapé "Total:" e linhas vazias
+    if(!cliente) continue;
+    if(/^total/i.test(cliente)) continue;
+    let dataISO=null;
+    const rawData=r[col.data];
+    if(typeof rawData==='number') dataISO=excelSerialToISO(rawData);
+    else if(rawData instanceof Date) dataISO=rawData.toISOString().slice(0,10);
+    else if(rawData){
+      const m=rawData.toString().match(/(\d{2})\/(\d{2})\/(\d{4})/);
+      if(m) dataISO=`${m[3]}-${m[2]}-${m[1]}`;
+    }
+    out.push({
+      cliente,
+      tipo: col.tipo>=0?norm(r[col.tipo]):'',
+      descricao: col.desc>=0?norm(r[col.desc]):'',
+      advogado: adv||'(sem advogado)',
+      data: dataISO,
+      min: durMinFromCell(r[col.horas])
+    });
+  }
+  return out;
+}
+function readFiles(files){
+  const jobs=[...files].map(file=>new Promise((res,rej)=>{
+    const fr=new FileReader();
+    fr.onload=e=>{
+      try{
+        const wb=XLSX.read(e.target.result,{type:'array',cellDates:false});
+        let recs=[];
+        wb.SheetNames.forEach(sn=>{
+          const aoa=XLSX.utils.sheet_to_json(wb.Sheets[sn],{header:1,raw:true,defval:''});
+          const nomeArq=file.name.replace(/\.(xlsx|xls)$/i,'').replace(/^.*?_/, '');
+          recs=recs.concat(parseSheet(aoa, nomeArq));
+        });
+        res(recs);
+      }catch(err){ rej(err); }
+    };
+    fr.onerror=rej;
+    fr.readAsArrayBuffer(file);
+  }));
+  return Promise.all(jobs).then(arrs=>arrs.flat());
+}
+
+/* ============================================================
+   3. MOTOR DE ANÁLISE
+   ============================================================ */
+function descProblema(desc){
+  const d=norm(desc);
+  if(!d) return 'Sem descrição';
+  if(d.length < CFG.descMinChars) return 'Descrição muito curta ('+d.length+' caract.)';
+  const palavras=d.split(/\s+/).filter(Boolean);
+  const base=semAcento(d).replace(/[^a-z0-9\s]/g,'').trim();
+  if(palavras.length<=1) return 'Apenas uma palavra';
+  if(CFG.descricoesGenericas.includes(base)) return 'Descrição genérica';
+  return null;
+}
+function agg(records){
+  const porCliente={}, porTipo={}, porTipoMin={}, porClienteMin={};
+  const dias={}, diaSem={}, semanas={}, porDiaAdv={}, porDia={};
+  const porDesc={};        // descrição normalizada -> {count,min,ex,tipos}
+  const natureza={};       // natureza -> {min,count}
+  const pecas=[];          // lançamentos de elaboração/revisão de peças
+  let totalMin=0, internoMin=0, internoTasks=0;
+  const flags=[]; // registros problemáticos
+  // duplicidade
+  const dupMap={};
+  records.forEach(r=>{
+    const k=[semAcento(r.advogado),semAcento(r.cliente),semAcento(r.tipo),r.data].join('¦');
+    (dupMap[k]=dupMap[k]||[]).push(r);
+  });
+  records.forEach(r=>{
+    totalMin+=r.min;
+    const interno=isInterno(r.cliente);
+    if(interno){ internoMin+=r.min; internoTasks++; }
+    porCliente[r.cliente]=(porCliente[r.cliente]||0)+1;
+    porClienteMin[r.cliente]=(porClienteMin[r.cliente]||0)+r.min;
+    if(r.tipo){ porTipo[r.tipo]=(porTipo[r.tipo]||0)+1; porTipoMin[r.tipo]=(porTipoMin[r.tipo]||0)+r.min; }
+    // descrição normalizada (para "descrições mais recorrentes")
+    if(r.descricao){
+      const dk=semAcento(r.descricao);
+      const d=porDesc[dk]=porDesc[dk]||{count:0,min:0,ex:r.descricao,tipos:{}};
+      d.count++; d.min+=r.min; if(r.tipo) d.tipos[r.tipo]=(d.tipos[r.tipo]||0)+1;
+    }
+    // natureza da atividade
+    const nat=classifyNatureza(r.tipo);
+    natureza[nat]=natureza[nat]||{min:0,count:0}; natureza[nat].min+=r.min; natureza[nat].count++;
+    // peças/petições (+ subtipo identificado pela descrição)
+    if(isPeca(r.tipo)) pecas.push({...r, subtipo: classifySubtipoPeca(r.tipo, r.descricao)});
+    if(r.data){
+      dias[r.data]=true;
+      const ds=diaSemana(r.data); diaSem[ds]=(diaSem[ds]||0)+1;
+      const wk=isoWeekKey(r.data);
+      semanas[wk]=semanas[wk]||{tarefas:0,min:0,curtas:0};
+      semanas[wk].tarefas++; semanas[wk].min+=r.min;
+      if(r.min>0 && r.min<CFG.curtoMin) semanas[wk].curtas++;
+      const pk=r.advogado+'¦'+r.data;
+      porDiaAdv[pk]=porDiaAdv[pk]||{adv:r.advogado,data:r.data,min:0,tasks:0};
+      porDiaAdv[pk].min+=r.min; porDiaAdv[pk].tasks++;
+      // total por dia (da visão atual) — para jornada diária <6h / >8h
+      porDia[r.data]=porDia[r.data]||{data:r.data,min:0,tasks:0};
+      porDia[r.data].min+=r.min; porDia[r.data].tasks++;
+    }
+  });
+  // classificar flags por registro
+  const nTasks=records.length;
+  let nCurta=0, nMuitoCurta=0, nSemDur=0, nSemTipo=0, nDescRuim=0, nDup=0;
+  const dupSet=new Set();
+  Object.values(dupMap).forEach(g=>{ if(g.length>1) g.forEach(r=>dupSet.add(r)); });
+  records.forEach(r=>{
+    const probs=[];
+    if(r.min===0){ nSemDur++; probs.push({t:'Sem duração',sev:'crit'}); }
+    else if(r.min<=CFG.muitoCurtoMin){ nMuitoCurta++; probs.push({t:'Muito curto (≤5min)',sev:'warn'}); }
+    else if(r.min<CFG.curtoMin){ nCurta++; probs.push({t:'Curto (<10min)',sev:'info'}); }
+    if(!r.tipo){ nSemTipo++; probs.push({t:'Sem tipo de serviço',sev:'crit'}); }
+    const dp=descProblema(r.descricao);
+    if(dp){ nDescRuim++; probs.push({t:dp,sev:'warn'}); }
+    if(dupSet.has(r)){ nDup++; probs.push({t:'Possível duplicidade',sev:'info'}); }
+    if(probs.length) flags.push({rec:r, probs});
+  });
+  // cargas diárias anômalas
+  const cargasAltas=Object.values(porDiaAdv).filter(x=>x.min>CFG.cargaAltaMin)
+     .sort((a,b)=>b.min-a.min);
+  // jornada diária: dias abaixo de 6h e acima de 8h (da visão atual)
+  const diasArr=Object.values(porDia).sort((a,b)=>a.data.localeCompare(b.data));
+  const diasBaixos=diasArr.filter(x=>x.min<CFG.jornadaBaixaMin).sort((a,b)=>a.min-b.min);
+  const diasAltos=diasArr.filter(x=>x.min>CFG.jornadaAltaMin).sort((a,b)=>b.min-a.min);
+  // tarefas longas (> 1h30)
+  const tarefasLongas=records.filter(r=>r.min>CFG.tarefaLongaMin).sort((a,b)=>b.min-a.min);
+  const externoMin=totalMin-internoMin;
+  const sortEntries=o=>Object.entries(o).sort((a,b)=>b[1]-a[1]);
+  // descrições recorrentes (só as que repetem)
+  const descArr=Object.values(porDesc).sort((a,b)=> b.count-a.count || b.min-a.min);
+  // peças agrupadas por "peça" (cliente+tipo) => tempo total de elaboração de cada uma
+  const pecaGrpMap={};
+  pecas.forEach(p=>{
+    const k=semAcento(p.advogado)+'¦'+semAcento(p.cliente)+'¦'+semAcento(p.tipo);
+    const g=pecaGrpMap[k]=pecaGrpMap[k]||{cliente:p.cliente,tipo:p.tipo,adv:p.advogado,min:0,lanc:0,datas:new Set()};
+    g.min+=p.min; g.lanc++; if(p.data) g.datas.add(p.data);
+  });
+  const pecaGrupos=Object.values(pecaGrpMap).map(g=>({...g,dias:g.datas.size})).sort((a,b)=>b.min-a.min);
+  // peças por advogado (contagem + tempo)  e por tipo de peça
+  const pecasPorAdv={}, pecasPorTipo={}, pecasPorTipoMin={};
+  const subtipo={};   // subtipo identificado -> {count,min,tipos:{}}
+  pecas.forEach(p=>{
+    (pecasPorAdv[p.advogado]=pecasPorAdv[p.advogado]||{lanc:0,min:0})&&0;
+    pecasPorAdv[p.advogado].lanc++; pecasPorAdv[p.advogado].min+=p.min;
+    if(p.tipo){ pecasPorTipo[p.tipo]=(pecasPorTipo[p.tipo]||0)+1; pecasPorTipoMin[p.tipo]=(pecasPorTipoMin[p.tipo]||0)+p.min; }
+    const st=subtipo[p.subtipo]=subtipo[p.subtipo]||{count:0,min:0,tipos:{}};
+    st.count++; st.min+=p.min; if(p.tipo) st.tipos[p.tipo]=(st.tipos[p.tipo]||0)+1;
+  });
+  const subtipoArr=Object.entries(subtipo).map(([k,v])=>({nome:k,count:v.count,min:v.min,tipos:v.tipos}))
+     .sort((a,b)=> b.count-a.count || b.min-a.min);
+  const nSubNaoEspec=(subtipo['Não especificado']||{count:0}).count;
+  // natureza ordenada
+  const natArr=Object.entries(natureza).map(([k,v])=>({nome:k,min:v.min,count:v.count}))
+     .sort((a,b)=>b.min-a.min);
+  // concentração da carteira (só clientes externos = faturáveis)
+  const extClientes=sortEntries(porClienteMin).filter(e=>!isInterno(e[0]));
+  const topCliMin=extClientes[0]?extClientes[0][1]:0;
+  const top3Min=extClientes.slice(0,3).reduce((a,e)=>a+e[1],0);
+  const adminMin=(natureza['Gestão/Administrativo']||{min:0}).min;
+  return {
+    nTasks, totalMin, internoMin, externoMin,
+    pctInterno: totalMin?internoMin/totalMin*100:0,
+    pctExterno: totalMin?externoMin/totalMin*100:0,
+    diasTrab: Object.keys(dias).length,
+    porClienteCount: sortEntries(porCliente),
+    porClienteMin: sortEntries(porClienteMin),
+    porTipoCount: sortEntries(porTipo),
+    porTipoMin: sortEntries(porTipoMin),
+    descArr, pecas, pecaGrupos, pecasPorAdv,
+    pecasPorTipo: sortEntries(pecasPorTipo),
+    pecasPorTipoMin: sortEntries(pecasPorTipoMin),
+    subtipoArr, nSubNaoEspec,
+    diasArr, diasBaixos, diasAltos, tarefasLongas,
+    natArr, adminMin,
+    carteira:{
+      nClientesExt: extClientes.length,
+      topCliente: extClientes[0]?extClientes[0][0]:'—',
+      topClientePct: externoMin? topCliMin/externoMin*100 : 0,
+      top3Pct: externoMin? top3Min/externoMin*100 : 0
+    },
+    diaSem, semanas,
+    flags,
+    diag:{
+      nCurta,nMuitoCurta,nSemDur,nSemTipo,nDescRuim,
+      nDup: dupSet.size,
+      pctCurta: nTasks? (nCurta+nMuitoCurta)/nTasks*100 : 0,
+      pctDescRuim: nTasks? nDescRuim/nTasks*100 : 0,
+      pctDup: nTasks? dupSet.size/nTasks*100 : 0,
+      cargasAltas
+    },
+    tasksDia: Object.keys(dias).length? nTasks/Object.keys(dias).length : 0
+  };
+}
+function analyzeAll(records){
+  const porAdv={};
+  records.forEach(r=>{ (porAdv[r.advogado]=porAdv[r.advogado]||[]).push(r); });
+  const advs=Object.keys(porAdv).sort();
+  const result={ '__equipe__': agg(records) };
+  result['__equipe__'].label='Equipe (consolidado)';
+  result['__equipe__'].records=records;
+  advs.forEach(a=>{
+    result[a]=agg(porAdv[a]);
+    result[a].label=a;
+    result[a].records=porAdv[a];
+  });
+  // médias da equipe (entre advogados) p/ comparação
+  const med={tasksDia:0,pctCurta:0,pctInterno:0,pctDup:0,pctDescRuim:0};
+  advs.forEach(a=>{ med.tasksDia+=result[a].tasksDia; med.pctCurta+=result[a].diag.pctCurta;
+    med.pctInterno+=result[a].pctInterno; med.pctDup+=result[a].diag.pctDup; med.pctDescRuim+=result[a].diag.pctDescRuim; });
+  const n=advs.length||1;
+  Object.keys(med).forEach(k=>med[k]/=n);
+  result.__medias__=med;
+  result.__advs__=advs;
+  return result;
+}
+
+/* ============================================================
+   4. INSIGHTS (diagnóstico textual por advogado)
+   ============================================================ */
+function gerarInsights(key, s, med){
+  if(key==='__equipe__') return null;
+  const L=[];
+  if(s.pctInterno > CFG.internoAltoPct)
+    L.push({sev:'warn',b:'Rentabilidade',t:`<b>${fmtPct(s.pctInterno)}</b> do tempo é interno (escritório, não faturável) — acima do limite de ${CFG.internoAltoPct}%. São <b>${fmtH(s.internoMin)}</b> que não geram receita direta.`});
+  if(s.diag.pctCurta > med.pctCurta && s.diag.pctCurta>15)
+    L.push({sev:'info',b:'Granularidade',t:`<b>${fmtPct(s.diag.pctCurta)}</b> dos lançamentos têm menos de ${CFG.curtoMin} min (média da equipe: ${fmtPct(med.pctCurta)}). Fragmentar apontamentos dificulta a cobrança e pode subestimar o esforço real.`});
+  if(s.diag.pctDup > med.pctDup && s.diag.nDup>0)
+    L.push({sev:'info',b:'Duplicidade',t:`<b>${s.diag.nDup}</b> lançamentos (${fmtPct(s.diag.pctDup)}) repetem cliente + tipo + data no mesmo dia — candidatos a duplicidade ou a consolidação em um único apontamento.`});
+  if(s.diag.nSemDur>0)
+    L.push({sev:'crit',b:'Sem duração',t:`<b>${s.diag.nSemDur}</b> lançamento(s) com <b>00:00</b> de horas — tempo não contabilizado, prejuízo direto de faturamento.`});
+  if(s.diag.pctDescRuim>25)
+    L.push({sev:'warn',b:'Descrição',t:`<b>${fmtPct(s.diag.pctDescRuim)}</b> das descrições estão incompletas ou genéricas — risco de glosa pelo cliente e perda de rastreabilidade do trabalho.`});
+  if(s.diag.cargasAltas.length>0){
+    const c=s.diag.cargasAltas[0];
+    L.push({sev:'info',b:'Carga diária',t:`Pico de <b>${fmtHM(c.min)}</b> em ${c.data.split('-').reverse().join('/')} (${c.tasks} tarefas). Dias muito carregados podem indicar apontamento retroativo em bloco.`});
+  }
+  return L;
+}
+
+/* ============================================================
+   5. RENDER
+   ============================================================ */
+function el(html){ const t=document.createElement('template'); t.innerHTML=html.trim(); return t.content.firstChild; }
+
+function buildTabs(){
+  const nav=document.getElementById('tabs');
+  const nomes={'__equipe__':'Equipe'};
+  ANALISE.__advs__.forEach(a=>nomes[a]=primeiroNome(a));
+  const ordem=['__equipe__',...ANALISE.__advs__];
+  nav.innerHTML='';
+  ordem.forEach(k=>{
+    const t=el(`<div class="tab ${k===atual?'active':''}">${nomes[k]}</div>`);
+    t.onclick=()=>{ atual=k; render(); window.scrollTo({top:0}); };
+    nav.appendChild(t);
+  });
+}
+
+function kpiRow(s){
+  const med=ANALISE.__medias__;
+  const flagInt=s.pctInterno>CFG.internoAltoPct;
+  const flagCurta=s.diag.pctCurta>med.pctCurta;
+  const kpis=[
+    {c:'', label:'Horas apontadas', value:fmtHM(s.totalMin), sub:`<b>${s.diasTrab}</b> dias · ${fmtH(s.diasTrab?s.totalMin/s.diasTrab:0)}/dia`},
+    {c:'', label:'Tarefas registradas', value:s.nTasks, sub:`<b>${s.tasksDia.toLocaleString('pt-BR',{maximumFractionDigits:1})}</b> tarefas/dia`},
+    {c:flagInt?'flag':'good', label:'Horas faturáveis', value:fmtPct(s.pctExterno), sub:`<b>${fmtH(s.internoMin)}</b> internas (não faturáveis)`},
+    {c:flagCurta?'flag':'', label:'Lançamentos < 10 min', value:fmtPct(s.diag.pctCurta), sub:`média equipe: ${fmtPct(med.pctCurta)}`},
+    {c:(s.diag.nSemDur||s.diag.nSemTipo)?'bad':(s.diag.nDescRuim?'flag':''), label:'Alertas de lançamento', value:s.flags.length, sub:`<b>${s.diag.nDescRuim}</b> descr. · <b>${s.diag.nDup}</b> dup. · <b>${s.diag.nSemDur+s.diag.nSemTipo}</b> crít.`}
+  ];
+  return `<div class="kpis">`+kpis.map(k=>`
+    <div class="kpi ${k.c}">
+      <div class="label">${k.label}</div>
+      <div class="value">${k.value}</div>
+      <div class="sub">${k.sub}</div>
+    </div>`).join('')+`</div>`;
+}
+
+function insightsBlock(key,s){
+  const L=gerarInsights(key,s,ANALISE.__medias__);
+  if(key==='__equipe__')
+    return `<div class="insights"><div class="insight-empty">Selecione um advogado nas abas acima para ver o diagnóstico individual — rentabilidade, granularidade, duplicidade e qualidade das descrições. Abaixo, o comparativo da equipe.</div></div>`;
+  if(!L || !L.length)
+    return `<div class="insights"><div class="insight-empty"><b>Sem desvios relevantes.</b> Os indicadores de ${primeiroNome(s.label)} estão dentro dos parâmetros da equipe neste período.</div></div>`;
+  const badge={crit:'badge b-crit',warn:'badge b-warn',info:'badge b-info'};
+  return `<div class="insights">`+L.map(i=>`
+    <div class="insight-card sev-${i.sev}"><span class="${badge[i.sev]}">${i.b}</span>${i.t}</div>`).join('')+`</div>`;
+}
+
+function topList(entries, fmt, unit){
+  const max=entries.length?entries[0][1]:1;
+  return `<div class="tablewrap"><table><tbody>`+entries.slice(0,8).map((e,i)=>`
+    <tr class="drillable" data-drill-kind="cliente" data-drill-value="${attr(e[0])}" data-drill-label="${attr(e[0])}" title="Ver lançamentos">
+      <td style="width:26px"><span class="rank-tag">${i+1}</span></td>
+      <td>${e[0].length>52?e[0].slice(0,52)+'…':e[0]}${isInterno(e[0])?' <span class="pill pill-int">interno</span>':''}</td>
+      <td class="num">${fmt(e[1])}<span class="bar-inline" style="width:${Math.max(4,e[1]/max*70)}px"></span></td>
+    </tr>`).join('')+`</tbody></table></div>`;
+}
+
+/* lista COMPLETA de clientes (todos os que tiveram lançamento) */
+function clienteRowsHtml(s, filtro){
+  const countMap=Object.fromEntries(s.porClienteCount);
+  const total=s.totalMin||1;
+  const max=s.porClienteMin.length?s.porClienteMin[0][1]:1;
+  const f=semAcento(filtro||'');
+  const ranked=s.porClienteMin.map((e,i)=>({e,rank:i+1}));
+  const arr=ranked.filter(x=>!f||semAcento(x.e[0]).includes(f));
+  if(!arr.length) return `<tr><td colspan="5" style="text-align:center;color:#9A9A9A;padding:20px">Nenhum cliente encontrado.</td></tr>`;
+  return arr.map(({e,rank})=>`
+    <tr class="drillable" data-drill-kind="cliente" data-drill-value="${attr(e[0])}" data-drill-label="${attr(e[0])}" title="Ver lançamentos">
+      <td style="width:26px"><span class="rank-tag">${rank}</span></td>
+      <td>${e[0]}${isInterno(e[0])?' <span class="pill pill-int">interno</span>':''}</td>
+      <td class="num">${countMap[e[0]]||0}</td>
+      <td class="num">${fmtHM(e[1])}<span class="bar-inline" style="width:${Math.max(4,e[1]/max*55)}px"></span></td>
+      <td class="num">${fmtPct(e[1]/total*100)}</td>
+    </tr>`).join('');
+}
+function clienteListaCompleta(s){
+  const n=s.porClienteMin.length;
+  const nExt=s.porClienteMin.filter(e=>!isInterno(e[0])).length;
+  return `<div class="panel">
+    <h3>Todos os clientes atendidos (${n})</h3>
+    <div class="table-tools" style="margin-bottom:8px">
+      <input id="buscaCli" placeholder="filtrar cliente…">
+      <span class="count" id="cntCli">${nExt} faturáveis · ${fmtHM(s.totalMin)}</span>
+    </div>
+    <div class="tablewrap" style="max-height:320px;overflow-y:auto;border:none">
+      <table><thead><tr><th style="width:26px">#</th><th>Cliente</th><th class="num">Tarefas</th><th class="num">Horas</th><th class="num">% total</th></tr></thead>
+      <tbody id="tbodyCli">${clienteRowsHtml(s,'')}</tbody></table>
+    </div>
+  </div>`;
+}
+function wireClienteBusca(s){
+  const inp=document.getElementById('buscaCli'); if(!inp) return;
+  const tb=document.getElementById('tbodyCli'), cnt=document.getElementById('cntCli');
+  inp.oninput=()=>{
+    tb.innerHTML=clienteRowsHtml(s,inp.value);
+    const f=semAcento(inp.value);
+    const nv=s.porClienteMin.filter(e=>!f||semAcento(e[0]).includes(f)).length;
+    cnt.textContent = inp.value ? `${nv} de ${s.porClienteMin.length}` : `${s.porClienteMin.filter(e=>!isInterno(e[0])).length} faturáveis · ${fmtHM(s.totalMin)}`;
+  };
+}
+
+function sectionTitle(tag,txt,hint){
+  return `<div class="section-title"><span class="tag">${tag}</span>${txt}${hint?` <span class="hint">— ${hint}</span>`:''}</div>`;
+}
+
+function comparativoEquipe(){
+  const advs=ANALISE.__advs__;
+  const rows=advs.map(a=>{
+    const s=ANALISE[a];
+    return {a,s};
+  }).sort((x,y)=>y.s.totalMin-x.s.totalMin);
+  return `
+  ${sectionTitle('⚖','Comparativo da equipe','ranking de esforço, rentabilidade e qualidade')}
+  <div class="tablewrap"><table>
+    <thead><tr>
+      <th>Advogado</th><th class="num">Horas</th><th class="num">Tarefas</th>
+      <th class="num">Faturável</th><th class="num">Interno</th>
+      <th class="num">&lt;10min</th><th class="num">Duplic.</th><th class="num">Descr. incompl.</th><th class="num">Alertas</th>
+    </tr></thead>
+    <tbody>${rows.map(({a,s})=>`
+      <tr>
+        <td><b>${primeiroNome(a)}</b><div class="muted" style="font-size:11px">${a}</div></td>
+        <td class="num">${fmtHM(s.totalMin)}</td>
+        <td class="num">${s.nTasks}</td>
+        <td class="num"><span class="pill ${s.pctExterno>=60?'pill-info':'pill-warn'}">${fmtPct(s.pctExterno)}</span></td>
+        <td class="num ${s.pctInterno>CFG.internoAltoPct?'':''}">${fmtPct(s.pctInterno)}</td>
+        <td class="num">${fmtPct(s.diag.pctCurta)}</td>
+        <td class="num">${s.diag.nDup}</td>
+        <td class="num">${s.diag.nDescRuim}</td>
+        <td class="num">${s.flags.length}</td>
+      </tr>`).join('')}</tbody>
+  </table></div>
+  <div class="legend-note">Faturável = tempo dedicado a clientes externos. Interno = tempo no próprio escritório (TPC), não gera receita direta. Quanto maior o faturável, maior a rentabilidade da área.</div>`;
+}
+
+function diagTable(s, viewKey){
+  const st=tableState[viewKey]=tableState[viewKey]||{filtro:'',busca:''};
+  const rows=s.flags.map(f=>{
+    const sevOrder={crit:0,warn:1,info:2};
+    const sev=f.probs.reduce((a,p)=>sevOrder[p.sev]<sevOrder[a]?p.sev:a,'info');
+    return {f,sev};
+  }).sort((a,b)=>({crit:0,warn:1,info:2})[a.sev]-({crit:0,warn:1,info:2})[b.sev]);
+  const pill={crit:'pill-crit',warn:'pill-warn',info:'pill-info'};
+  const body=rows.map(({f})=>{
+    const r=f.rec;
+    return {
+      html:`<tr>
+        <td>${r.data?r.data.split('-').reverse().join('/'):'<span class="muted">—</span>'}</td>
+        <td>${r.cliente}${isInterno(r.cliente)?' <span class="pill pill-int">interno</span>':''}</td>
+        <td>${r.tipo||'<span class="pill pill-crit">sem tipo</span>'}</td>
+        <td>${r.descricao||'<span class="muted">(vazio)</span>'}</td>
+        <td class="num">${r.min?fmtHM(r.min):'<span class="pill pill-crit">00:00</span>'}</td>
+        <td>${f.probs.map(p=>`<span class="pill ${pill[p.sev]}">${p.t}</span>`).join(' ')}</td>
+      </tr>`,
+      probs:f.probs.map(p=>p.t).join(' '),
+      txt:semAcento(r.cliente+' '+r.tipo+' '+r.descricao)
+    };
+  });
+  return {rows:body};
+}
+
+/* ---- cores por natureza da atividade ---- */
+const NAT_CORES={'Contencioso':'#2B2B2B','Consultivo':'#2A78D6','Captação/Prospecção':'#1BAF7A','Reuniões/Alinhamento':'#E8E347','Gestão/Administrativo':'#EB6834','Outros':'#B8B8B8'};
+function natBadge(nome){ return `<span class="nat-dot" style="background:${NAT_CORES[nome]||'#B8B8B8'}"></span>${nome}`; }
+
+/* Rentabilidade estimada + concentração da carteira */
+function rentabilidadeSection(s){
+  const rate=RATE;
+  const fatExt = rate? s.externoMin/60*rate : null;
+  const custoInt = rate? s.internoMin/60*rate : null;
+  const custoAdmin = rate? s.adminMin/60*rate : null;
+  const c=s.carteira;
+  const concClass = c.topClientePct>50?'bad':(c.topClientePct>35?'flag':'good');
+  return sectionTitle('$','Rentabilidade &amp; carteira','estimativa de faturamento e risco de concentração de clientes')
+  + `<div class="rate-bar">
+       <label>Valor/hora (R$): <input id="rateInput" type="number" min="0" step="10" placeholder="ex.: 350" value="${rate||''}"></label>
+       <span class="muted">Aplicado às horas faturáveis para estimar o faturamento. Fica salvo neste navegador; não altera os demais indicadores.</span>
+     </div>
+     <div class="kpis" style="grid-template-columns:repeat(5,1fr)">
+       <div class="kpi good"><div class="label">Faturamento estimado</div>
+         <div class="value">${fatExt!=null?fmtRS(fatExt):'—'}</div>
+         <div class="sub"><b>${fmtH(s.externoMin)}</b> faturáveis${fatExt==null?' · defina o valor/hora':''}</div></div>
+       <div class="kpi flag"><div class="label">Custo do tempo interno</div>
+         <div class="value">${custoInt!=null?fmtRS(custoInt):'—'}</div>
+         <div class="sub"><b>${fmtH(s.internoMin)}</b> não faturados (TPC)</div></div>
+       <div class="kpi ${s.totalMin&&s.adminMin/s.totalMin>0.2?'flag':''}"><div class="label">Tempo administrativo</div>
+         <div class="value">${fmtPct(s.totalMin?s.adminMin/s.totalMin*100:0)}</div>
+         <div class="sub"><b>${fmtH(s.adminMin)}</b>${custoAdmin!=null?' · '+fmtRS(custoAdmin):''}</div></div>
+       <div class="kpi ${concClass}"><div class="label">Maior cliente (carteira)</div>
+         <div class="value">${fmtPct(c.topClientePct)}</div>
+         <div class="sub">${c.topCliente.length>24?c.topCliente.slice(0,24)+'…':c.topCliente}</div></div>
+       <div class="kpi"><div class="label">Concentração top 3</div>
+         <div class="value">${fmtPct(c.top3Pct)}</div>
+         <div class="sub"><b>${c.nClientesExt}</b> clientes faturáveis no período</div></div>
+     </div>`;
+}
+
+/* Natureza da atividade (mix contencioso × consultivo × gestão) */
+function naturezaSection(s){
+  return sectionTitle('◧','Natureza da atividade','onde o tempo da área é investido — visão estratégica do mix')
+  + `<div class="grid">
+       <div class="panel"><h3>Horas por natureza</h3><canvas id="cNatureza"></canvas></div>
+       <div class="panel"><h3>Detalhamento</h3>
+         <div class="tablewrap" style="border:none"><table>
+           <thead><tr><th>Natureza</th><th class="num">Horas</th><th class="num">% do tempo</th><th class="num">Lançamentos</th></tr></thead>
+           <tbody>${s.natArr.map(n=>`<tr class="drillable" data-drill-kind="natureza" data-drill-value="${attr(n.nome)}" data-drill-label="${attr(n.nome)}" title="Ver lançamentos"><td>${natBadge(n.nome)}</td><td class="num">${fmtHM(n.min)}</td><td class="num">${fmtPct(s.totalMin?n.min/s.totalMin*100:0)}</td><td class="num">${n.count}</td></tr>`).join('')}</tbody>
+         </table></div>
+         <div class="legend-note">Classificação automática pelo tipo de serviço. Contencioso = trabalho processual; Consultivo = pareceres e consultoria; Gestão/Administrativo = cadastros, relatórios e tarefas internas (custo, não receita).</div>
+       </div>
+     </div>`;
+}
+
+/* Descrições de tarefas mais recorrentes */
+function descricoesSection(s){
+  const rec=s.descArr.filter(d=>d.count>1).slice(0,15);
+  const maxc=rec.length?rec[0].count:1;
+  const totalRep=s.descArr.filter(d=>d.count>1).reduce((a,d)=>a+d.count,0);
+  let html=sectionTitle('▣','Descrições de tarefas mais recorrentes','quais descrições foram lançadas mais vezes');
+  html+=`<div class="legend-note" style="margin-bottom:8px">${rec.length
+     ? `A descrição mais repetida foi <b>"${rec[0].ex}"</b> — <b>${rec[0].count} lançamentos</b> (${fmtHM(rec[0].min)}). Ao todo, <b>${totalRep} lançamentos</b> usam descrições que se repetem: padrões de trabalho recorrentes, candidatos a automação, delegação ou consolidação em um único apontamento.`
+     : 'Nenhuma descrição se repete neste recorte.'}</div>`;
+  if(rec.length) html+=`<div class="tablewrap"><table>
+    <thead><tr><th style="width:26px">#</th><th>Descrição (texto exatamente como lançado)</th><th>Tipo de serviço predominante</th><th class="num">Lançamentos</th><th class="num">Horas</th></tr></thead>
+    <tbody>${rec.map((d,i)=>{
+      const tp=Object.entries(d.tipos).sort((a,b)=>b[1]-a[1])[0];
+      return `<tr class="drillable" data-drill-kind="descricao" data-drill-value="${attr(semAcento(d.ex))}" data-drill-label="${attr(d.ex)}" title="Ver lançamentos">
+        <td><span class="rank-tag">${i+1}</span></td>
+        <td>"${d.ex}"</td>
+        <td class="muted">${tp?tp[0]:'—'}</td>
+        <td class="num">${d.count}<span class="bar-inline" style="width:${Math.max(4,d.count/maxc*60)}px"></span></td>
+        <td class="num">${fmtHM(d.min)}</td>
+      </tr>`;}).join('')}</tbody></table></div>`;
+  return html;
+}
+
+/* Elaboração de peças e petições — por advogado e tempo por peça */
+function pecasSection(s){
+  const title=sectionTitle('§','Elaboração de peças e petições','prazos elaborados por advogado e tempo gasto em cada peça');
+  if(!s.pecas.length) return title+`<div class="empty-state">Nenhum lançamento de elaboração/revisão de peças neste recorte.</div>`;
+  const tipoTop=s.pecasPorTipo[0]||['—',0];
+  const tipoTopMin=(s.pecasPorTipoMin.find(e=>e[0]===tipoTop[0])||[0,0])[1];
+  const grpTop=s.pecaGrupos[0];
+  let html=title;
+  html+=`<div class="hl">
+    <div class="hl-card"><div class="hl-k">Peça mais elaborada (nº de lançamentos)</div>
+      <div class="hl-v">${tipoTop[0]}</div>
+      <div class="hl-s"><b>${tipoTop[1]}</b> lançamentos · ${fmtHM(tipoTopMin)} no total</div></div>
+    <div class="hl-card"><div class="hl-k">Peça que mais consumiu tempo</div>
+      <div class="hl-v">${grpTop.tipo}</div>
+      <div class="hl-s"><b>${fmtHM(grpTop.min)}</b> — ${grpTop.cliente.length>30?grpTop.cliente.slice(0,30)+'…':grpTop.cliente}</div></div>
+  </div>`;
+  // resumo por advogado (visão de equipe)
+  if(atual==='__equipe__'){
+    const adv=Object.entries(s.pecasPorAdv).sort((a,b)=>b[1].min-a[1].min);
+    html+=`<div class="tablewrap" style="margin-top:14px"><table>
+      <thead><tr><th>Advogado</th><th class="num">Peças (lançamentos)</th><th class="num">Horas em peças</th><th class="num">Tempo médio/lançamento</th><th>Peça predominante</th></tr></thead>
+      <tbody>${adv.map(([a,v])=>{
+        const sa=ANALISE[a]; const tp=sa&&sa.pecasPorTipo[0]?sa.pecasPorTipo[0]:null;
+        return `<tr><td><b>${primeiroNome(a)}</b></td><td class="num">${v.lanc}</td><td class="num">${fmtHM(v.min)}</td><td class="num">${fmtHM(v.min/v.lanc)}</td><td>${tp?tp[0]+' ('+tp[1]+'×)':'—'}</td></tr>`;
+      }).join('')}</tbody></table></div>`;
+  }
+  // chart + tempo por tipo
+  html+=`<div class="grid" style="margin-top:14px">
+    <div class="panel canvas-tall"><h3>Tipos de peça — nº de lançamentos</h3><canvas id="cPecas"></canvas></div>
+    <div class="panel"><h3>Tempo por tipo de peça</h3>
+      <div class="tablewrap" style="border:none"><table>
+        <thead><tr><th>Tipo de peça</th><th class="num">Qtd</th><th class="num">Total</th><th class="num">Médio</th></tr></thead>
+        <tbody>${s.pecasPorTipo.map(([t,cc])=>{const tot=(s.pecasPorTipoMin.find(e=>e[0]===t)||[0,0])[1];return `<tr class="drillable" data-drill-kind="pecaTipo" data-drill-value="${attr(t)}" data-drill-label="${attr(t)}" title="Ver lançamentos"><td>${t}</td><td class="num">${cc}</td><td class="num">${fmtHM(tot)}</td><td class="num">${fmtHM(tot/cc)}</td></tr>`;}).join('')}</tbody>
+      </table></div></div>
+  </div>`;
+  // tempo de elaboração por peça (cliente+tipo)
+  html+=`<div style="margin-top:14px">
+    <div class="legend-note" style="margin-bottom:8px">Tempo de elaboração de <b>cada peça</b> (cliente + tipo) — soma todos os lançamentos, mostrando quanto cada petição levou de fato, mesmo dividida em vários dias.</div>
+    <div class="tablewrap" style="max-height:460px;overflow-y:auto"><table>
+    <thead><tr>${atual==='__equipe__'?'<th>Advogado</th>':''}<th>Cliente</th><th>Tipo de peça</th><th class="num">Lançs.</th><th class="num">Dias</th><th class="num">Tempo total</th></tr></thead>
+    <tbody>${s.pecaGrupos.map(g=>`<tr>${atual==='__equipe__'?`<td>${primeiroNome(g.adv)}</td>`:''}<td>${g.cliente}${isInterno(g.cliente)?' <span class="pill pill-int">int</span>':''}</td><td>${g.tipo}</td><td class="num">${g.lanc}</td><td class="num">${g.dias}</td><td class="num">${fmtHM(g.min)}</td></tr>`).join('')}</tbody>
+    </table></div></div>`;
+  return html;
+}
+
+/* Relatório: tipo de petição/minuta identificado a partir da descrição */
+function subtipoPecaSection(s){
+  const title=sectionTitle('◈','Tipo de petição/minuta identificado','lê a descrição de cada peça e revela o que foi realmente elaborado');
+  if(!s.pecas || !s.pecas.length) return '';
+  const arr=s.subtipoArr;
+  const top=arr.filter(x=>x.nome!=='Não especificado')[0]||arr[0];
+  const topMin=[...arr].sort((a,b)=>b.min-a.min).filter(x=>x.nome!=='Não especificado')[0]||arr[0];
+  const totalPecas=s.pecas.length;
+  const totalMinP=s.pecas.reduce((a,p)=>a+p.min,0);
+  const idOrder={}; arr.forEach((x,i)=>idOrder[x.nome]=i);
+  const pill=st=> st==='Não especificado' ? 'pill-crit' : 'pill-info';
+  let html=title;
+  html+=`<div class="legend-note" style="margin:0 0 12px">Cada um dos <b>${totalPecas} lançamentos</b> de peça/minuta foi classificado pelo conteúdo da descrição. Foram identificados <b>${arr.filter(x=>x.nome!=='Não especificado').length} tipos distintos</b> de petição.${s.nSubNaoEspec?` <b style="color:#B02020">${s.nSubNaoEspec}</b> lançamento(s) têm descrição vaga demais para identificar a peça — reveja e peça detalhamento (destacados em vermelho na tabela).`:' Todas as peças puderam ser identificadas pela descrição.'}</div>`;
+  html+=`<div class="hl">
+    <div class="hl-card"><div class="hl-k">Peça mais elaborada (identificada)</div>
+      <div class="hl-v">${top.nome}</div>
+      <div class="hl-s"><b>${top.count}</b> lançamentos · ${fmtHM(top.min)}</div></div>
+    <div class="hl-card"><div class="hl-k">Peça que mais consumiu tempo</div>
+      <div class="hl-v">${topMin.nome}</div>
+      <div class="hl-s"><b>${fmtHM(topMin.min)}</b> em ${topMin.count} lançamento(s)</div></div>
+  </div>`;
+  // gráfico + tabela-resumo
+  html+=`<div class="grid" style="margin-top:14px">
+    <div class="panel canvas-tall"><h3>Tipos de petição identificados — nº de lançamentos</h3><canvas id="cSubtipo"></canvas></div>
+    <div class="panel"><h3>Resumo por tipo de petição</h3>
+      <div class="tablewrap" style="border:none;max-height:340px;overflow-y:auto"><table>
+        <thead><tr><th>Tipo de petição/minuta</th><th class="num">Qtd</th><th class="num">Horas</th><th class="num">Médio</th></tr></thead>
+        <tbody>${arr.map(x=>`<tr class="drillable" data-drill-kind="subtipo" data-drill-value="${attr(x.nome)}" data-drill-label="${attr(x.nome)}" title="Ver lançamentos">
+          <td>${x.nome==='Não especificado'?'<span class="pill pill-crit">Não especificado</span>':x.nome}</td>
+          <td class="num">${x.count}</td><td class="num">${fmtHM(x.min)}</td><td class="num">${fmtHM(x.min/x.count)}</td></tr>`).join('')}</tbody>
+      </table></div></div>
+  </div>`;
+  // relatório detalhado: cada peça com seu subtipo identificado
+  const dados=[...s.pecas].sort((a,b)=> (idOrder[a.subtipo]-idOrder[b.subtipo]) || (b.min-a.min));
+  html+=`<div class="panel" style="margin-top:14px"><h3>Relatório detalhado — o que foi elaborado em cada tarefa</h3>
+    <div class="tablewrap" style="max-height:520px;overflow-y:auto"><table>
+    <thead><tr>${atual==='__equipe__'?'<th>Advogado</th>':''}<th>Data</th><th>Cliente</th><th>Tipo (ADVWin)</th><th>Petição identificada</th><th>Descrição (observações)</th><th class="num">Tempo</th></tr></thead>
+    <tbody>${dados.map(p=>`<tr>
+      ${atual==='__equipe__'?`<td>${primeiroNome(p.advogado)}</td>`:''}
+      <td>${p.data?p.data.split('-').reverse().join('/'):'—'}</td>
+      <td>${p.cliente}${isInterno(p.cliente)?' <span class="pill pill-int">int</span>':''}</td>
+      <td class="muted">${p.tipo}</td>
+      <td><span class="pill ${pill(p.subtipo)}">${p.subtipo}</span></td>
+      <td>${p.descricao?p.descricao:'<span class="muted">(vazio)</span>'}</td>
+      <td class="num">${p.min?fmtHM(p.min):'<span class="pill pill-crit">00:00</span>'}</td>
+    </tr>`).join('')}</tbody>
+    </table></div>
+    <div class="legend-note">Coluna "Petição identificada" = leitura automática da descrição. Onde aparece <span class="pill pill-crit">Não especificado</span>, a observação não diz qual peça foi feita — oriente o advogado a descrever (ex.: "Elaboração de contestação" em vez de "Elaboração de petição").</div>
+  </div>`;
+  return html;
+}
+
+/* Jornada diária — dias abaixo de 6h e acima de 8h */
+function jornadaSection(s){
+  const escopo = atual==='__equipe__' ? 'total da equipe por dia' : 'do advogado por dia';
+  const dataBR=d=>d.split('-').reverse().join('/')+' ('+diaSemana(d).slice(0,3)+')';
+  const tabela=(lista,vazio)=> lista.length
+    ? `<div class="tablewrap" style="border:none;max-height:230px;overflow-y:auto"><table>
+        <thead><tr><th>Dia</th><th class="num">Horas</th><th class="num">Tarefas</th></tr></thead>
+        <tbody>${lista.map(x=>`<tr class="drillable" data-drill-kind="dia" data-drill-value="${attr(x.data)}" data-drill-label="${attr(dataBR(x.data))}" title="Ver lançamentos"><td>${dataBR(x.data)}</td><td class="num">${fmtHM(x.min)}</td><td class="num">${x.tasks}</td></tr>`).join('')}</tbody></table></div>`
+    : `<div class="empty-state" style="padding:20px">${vazio}</div>`;
+  return sectionTitle('◷','Jornada diária','dias com menos de 6h e dias com mais de 8h de lançamentos ('+escopo+')')
+   + `<div class="kpis" style="grid-template-columns:repeat(4,1fr)">
+        <div class="kpi ${s.diasBaixos.length?'flag':''}"><div class="label">Dias abaixo de 6h</div><div class="value">${s.diasBaixos.length}</div><div class="sub">de ${s.diasArr.length} dias com lançamento</div></div>
+        <div class="kpi ${s.diasAltos.length?'good':''}"><div class="label">Dias acima de 8h</div><div class="value">${s.diasAltos.length}</div><div class="sub">jornada intensa</div></div>
+        <div class="kpi"><div class="label">Dias entre 6h e 8h</div><div class="value">${s.diasArr.length-s.diasBaixos.length-s.diasAltos.length}</div><div class="sub">dentro do esperado</div></div>
+        <div class="kpi"><div class="label">Média por dia</div><div class="value">${fmtH(s.diasArr.length? s.totalMin/s.diasArr.length:0)}</div><div class="sub">${s.diasArr.length} dias trabalhados</div></div>
+      </div>
+      <div class="grid" style="margin-top:14px">
+        <div class="panel canvas-tall" style="grid-column:1 / -1"><h3>Horas lançadas por dia <span class="legend-note" style="margin:0">— vermelho &lt; 6h · cinza 6–8h · amarelo &gt; 8h</span></h3><canvas id="cJornada"></canvas></div>
+      </div>
+      <div class="grid" style="margin-top:14px">
+        <div class="panel"><h3>Dias abaixo de 6h (${s.diasBaixos.length})</h3>${tabela(s.diasBaixos,'Nenhum dia abaixo de 6h.')}</div>
+        <div class="panel"><h3>Dias acima de 8h (${s.diasAltos.length})</h3>${tabela(s.diasAltos,'Nenhum dia acima de 8h.')}</div>
+      </div>`;
+}
+
+/* Tarefas mais longas (> 1h30 num único lançamento) */
+function tarefasLongasSection(s){
+  const L=s.tarefasLongas;
+  const title=sectionTitle('⧗','Tarefas mais longas','lançamentos individuais acima de 1h30');
+  if(!L.length) return title+`<div class="empty-state">Nenhum lançamento acima de 1h30 neste recorte.</div>`;
+  const totMin=L.reduce((a,r)=>a+r.min,0);
+  return title
+   + `<div class="legend-note" style="margin-bottom:10px"><b>${L.length}</b> lançamento(s) acima de 1h30, somando <b>${fmtHM(totMin)}</b> (${fmtPct(s.totalMin?totMin/s.totalMin*100:0)} do total). Ordenados do maior para o menor.</div>
+      <div class="tablewrap" style="max-height:460px;overflow-y:auto"><table>
+        <thead><tr>${atual==='__equipe__'?'<th>Advogado</th>':''}<th>Data</th><th>Cliente</th><th>Tipo</th><th>Descrição</th><th class="num">Tempo</th></tr></thead>
+        <tbody>${L.map(r=>`<tr>
+          ${atual==='__equipe__'?`<td>${primeiroNome(r.advogado)}</td>`:''}
+          <td>${r.data?r.data.split('-').reverse().join('/'):'—'}</td>
+          <td>${r.cliente}${isInterno(r.cliente)?' <span class="pill pill-int">int</span>':''}</td>
+          <td>${r.tipo||'<span class="muted">—</span>'}</td>
+          <td>${r.descricao||'<span class="muted">(vazio)</span>'}</td>
+          <td class="num"><b>${fmtHM(r.min)}</b></td>
+        </tr>`).join('')}</tbody></table></div>`;
+}
+
+function render(){
+  const s=ANALISE[atual];
+  const app=document.getElementById('app');
+  buildTabs();
+  document.getElementById('periodoLabel').textContent =
+    `${PERIODO} · ${ANALISE.__advs__.length} advogado(s) · ${ANALISE['__equipe__'].nTasks} lançamentos · ${fmtHM(ANALISE['__equipe__'].totalMin)} apontadas`;
+
+  const clienteMaisTasks=s.porClienteCount.filter(e=>!isInterno(e[0]))[0]||s.porClienteCount[0]||['—',0];
+  const clienteMaisMin=s.porClienteMin.filter(e=>!isInterno(e[0]))[0]||s.porClienteMin[0]||['—',0];
+  const atividadeMais=s.porTipoCount[0]||['—',0];
+  const atividadeMaisMin=s.porTipoMin[0]||['—',0];
+
+  let html='';
+  html+=kpiRow(s);
+  html+=insightsBlock(atual,s);
+
+  if(atual==='__equipe__') html+=comparativoEquipe();
+
+  // Panorama
+  html+=sectionTitle('▦','Panorama geral', PERIODO);
+  html+=`<div class="grid g3">
+    <div class="panel"><h3>Evolução semanal (horas)</h3><canvas id="cSemanal"></canvas></div>
+    <div class="panel"><h3>Distribuição por dia da semana</h3><canvas id="cDia"></canvas></div>
+    <div class="panel"><h3>Faturável × Interno</h3><canvas id="cInterno"></canvas>
+      <div class="legend-note" style="text-align:center">${fmtH(s.externoMin)} para clientes · ${fmtH(s.internoMin)} interno TPC</div></div>
+  </div>`;
+
+  // Jornada diária (dias < 6h e > 8h)
+  html+=jornadaSection(s);
+
+  // Rentabilidade & carteira + Natureza da atividade (adicionais de gestão)
+  html+=rentabilidadeSection(s);
+  html+=naturezaSection(s);
+
+  // (a) cliente mais atendido + (d) principais clientes
+  html+=sectionTitle('a','Cliente mais atendido','principais clientes + lista completa de todos os atendidos (item d)');
+  html+=`<div class="hl">
+    <div class="hl-card"><div class="hl-k">Mais atendido — por nº de tarefas</div>
+      <div class="hl-v">${clienteMaisTasks[0]}</div>
+      <div class="hl-s"><b>${clienteMaisTasks[1]}</b> lançamentos no período</div></div>
+    <div class="hl-card"><div class="hl-k">Maior tempo dedicado — por horas</div>
+      <div class="hl-v">${clienteMaisMin[0]}</div>
+      <div class="hl-s"><b>${fmtHM(clienteMaisMin[1])}</b> apontadas</div></div>
+  </div>`;
+  html+=`<div class="grid" style="margin-top:14px">
+    <div class="panel canvas-tall"><h3>Principais clientes
+      <span class="toggle"><button id="tgHoras" class="on">Horas</button><button id="tgTarefas">Tarefas</button></span></h3>
+      <canvas id="cClientes"></canvas></div>
+    ${clienteListaCompleta(s)}
+  </div>`;
+
+  // (b) atividade mais realizada
+  html+=sectionTitle('b','Atividade mais realizada','tipo de serviço mais frequente');
+  html+=`<div class="hl">
+    <div class="hl-card"><div class="hl-k">Atividade mais frequente</div>
+      <div class="hl-v">${atividadeMais[0]}</div>
+      <div class="hl-s"><b>${atividadeMais[1]}</b> lançamentos</div></div>
+    <div class="hl-card"><div class="hl-k">Atividade que mais consumiu horas</div>
+      <div class="hl-v">${atividadeMaisMin[0]}</div>
+      <div class="hl-s"><b>${fmtHM(atividadeMaisMin[1])}</b> dedicadas</div></div>
+  </div>`;
+  html+=`<div class="grid" style="margin-top:14px">
+    <div class="panel canvas-tall"><h3>Tipos de serviço — nº de lançamentos</h3><canvas id="cTiposCount"></canvas></div>
+    <div class="panel canvas-tall"><h3>Tipos de serviço — horas dedicadas (item c)</h3><canvas id="cTiposMin"></canvas></div>
+  </div>`;
+
+  // Descrições recorrentes + Peças/petições (adicionais)
+  html+=descricoesSection(s);
+  html+=pecasSection(s);
+  html+=subtipoPecaSection(s);
+
+  // Tarefas mais longas (> 1h30)
+  html+=tarefasLongasSection(s);
+
+  // (e) diagnósticos + (f) descrições
+  html+=sectionTitle('e','Diagnóstico de falhas no lançamento','clique em uma categoria para filtrar a tabela');
+  html+=diagCards(s);
+  const dt=diagTable(s,atual);
+  html+=`<div style="margin-top:14px">
+    <div class="table-tools">
+      <select id="fltProb"><option value="">Todos os alertas (${dt.rows.length})</option>
+        <option value="Sem duração">Sem duração (00:00)</option>
+        <option value="curto">Lançamentos curtos</option>
+        <option value="Sem tipo">Sem tipo de serviço</option>
+        <option value="Descrição">Descrição incompleta/genérica</option>
+        <option value="Sem descrição">Sem descrição</option>
+        <option value="duplicidade">Possível duplicidade</option>
+      </select>
+      <input id="buscaDiag" placeholder="Buscar cliente, tipo ou descrição…">
+      <span class="count" id="cntDiag"></span>
+    </div>
+    <div class="tablewrap"><table>
+      <thead><tr><th>Data</th><th>Cliente</th><th>Tipo</th><th>Descrição</th><th class="num">Horas</th><th>Alertas</th></tr></thead>
+      <tbody id="tbodyDiag"></tbody>
+    </table></div>
+  </div>`;
+
+  // (f) campos sem descrição completa — tabela dedicada
+  html+=sectionTitle('f','Campos sem descrição completa','lançamentos que precisam de detalhamento antes de faturar');
+  html+=descTable(s);
+
+  // detalhe completo (excluído do PDF resumido — é base de dados, não análise)
+  html+=`<div class="no-pdf">`+sectionTitle('▤','Base completa de lançamentos','todos os apontamentos — pesquisável')+fullTable(s,atual)+`</div>`;
+
+  // destrói gráficos antigos ANTES de trocar o DOM (evita frames em canvas destacado)
+  if(typeof Chart!=='undefined') destroyCharts();
+  app.innerHTML=html;
+
+  // gráficos isolados: se o Chart.js (CDN) falhar, as tabelas ainda funcionam
+  try{
+    if(typeof Chart==='undefined') throw new Error('Chart.js indisponível');
+    buildCharts(s);
+  }catch(err){
+    console.warn('Gráficos não carregados:',err.message);
+    document.querySelectorAll('canvas').forEach(cv=>{
+      cv.outerHTML='<div class="muted" style="padding:26px;text-align:center;font-size:12px">Gráfico indisponível (sem conexão para carregar a biblioteca de gráficos). As tabelas abaixo continuam válidas.</div>';
+    });
+  }
+  wireDiagTable(s,atual,dt);
+  wireFullTable(s,atual);
+  wireClienteBusca(s);
+  wireRate();
+}
+
+function wireRate(){
+  const inp=document.getElementById('rateInput');
+  if(!inp) return;
+  inp.onchange=()=>{
+    RATE=Math.max(0,+inp.value||0);
+    try{ localStorage.setItem('tpc_rate',RATE); }catch(e){}
+    render();
+  };
+}
+
+function diagCards(s){
+  const d=s.diag;
+  const cards=[
+    {n:d.nSemDur, l:'Sem duração (00:00)', c:'bad', f:'Sem duração'},
+    {n:d.nMuitoCurta+d.nCurta, l:'Lançamentos < 10 min', c:'flag', f:'curto'},
+    {n:d.nSemTipo, l:'Sem tipo de serviço', c:'bad', f:'Sem tipo'},
+    {n:d.nDescRuim, l:'Descrições incompletas', c:'flag', f:'Descrição'},
+    {n:d.nDup, l:'Possível duplicidade', c:'flag', f:'duplicidade'},
+    {n:s.diag.cargasAltas.length, l:'Dias com carga > 10h', c:'', f:''},
+  ];
+  return `<div class="kpis" style="grid-template-columns:repeat(6,1fr)">`+cards.map(c=>`
+    <div class="kpi ${c.n>0?c.c:''}" ${c.f?`data-filtro="${c.f}" style="cursor:pointer"`:''}>
+      <div class="label">${c.l}</div>
+      <div class="value">${c.n}</div>
+      <div class="sub">${c.n>0 && c.f?'clique p/ filtrar':' '}</div>
+    </div>`).join('')+`</div>`;
+}
+
+function descTable(s){
+  const rows=s.records.map(r=>({r,p:descProblema(r.descricao)})).filter(x=>x.p);
+  if(!rows.length) return `<div class="empty-state">✔ Todas as descrições deste recorte estão completas.</div>`;
+  const sev=p=>p==='Sem descrição'?'pill-crit':(p==='Apenas uma palavra'?'pill-warn':'pill-warn');
+  return `<div class="legend-note" style="margin-bottom:8px"><b>${rows.length}</b> lançamento(s) com descrição incompleta — some <b>${fmtHM(rows.reduce((a,x)=>a+x.r.min,0))}</b> em horas que podem ser questionadas pelo cliente.</div>
+  <div class="tablewrap"><table>
+    <thead><tr><th>Data</th><th>Cliente</th><th>Tipo</th><th>Descrição atual</th><th class="num">Horas</th><th>Problema</th></tr></thead>
+    <tbody>${rows.map(({r,p})=>`<tr>
+      <td>${r.data?r.data.split('-').reverse().join('/'):'—'}</td>
+      <td>${r.cliente}</td>
+      <td>${r.tipo||'<span class="pill pill-crit">sem tipo</span>'}</td>
+      <td>${r.descricao?`"${r.descricao}"`:'<span class="muted">(vazio)</span>'}</td>
+      <td class="num">${r.min?fmtHM(r.min):'00:00'}</td>
+      <td><span class="pill ${sev(p)}">${p}</span></td>
+    </tr>`).join('')}</tbody>
+  </table></div>`;
+}
+
+function fullTable(s,key){
+  return `<div class="table-tools">
+      <input id="buscaFull" placeholder="Buscar em ${s.records.length} lançamentos…">
+      <select id="fltCliente"><option value="">Todos os clientes</option>${
+        [...new Set(s.records.map(r=>r.cliente))].sort().map(c=>`<option>${c}</option>`).join('')}</select>
+      <select id="ordFull">
+        <option value="data">Ordenar: Data (padrão)</option>
+        <option value="min_desc">Horas: maiores primeiro</option>
+        <option value="min_asc">Horas: menores primeiro</option>
+      </select>
+      <span class="count" id="cntFull"></span>
+    </div>
+    <div class="tablewrap" style="max-height:520px;overflow-y:auto">
+      <table><thead><tr>${key==='__equipe__'?'<th>Advogado</th>':''}<th>Data</th><th>Cliente</th><th>Tipo</th><th>Descrição</th><th class="num">Horas</th></tr></thead>
+      <tbody id="tbodyFull"></tbody></table>
+    </div>`;
+}
+
+/* ---- interações de tabela ---- */
+function wireDiagTable(s,key,dt){
+  const tbody=document.getElementById('tbodyDiag');
+  const fSel=document.getElementById('fltProb');
+  const busca=document.getElementById('buscaDiag');
+  const cnt=document.getElementById('cntDiag');
+  function paint(){
+    const fv=fSel.value.toLowerCase(), bv=semAcento(busca.value);
+    const vis=dt.rows.filter(r=>{
+      const okF=!fv || r.probs.toLowerCase().includes(fv) ||
+        (fv==='curto' && /curto/i.test(r.probs)) ||
+        (fv==='duplicidade' && /duplic/i.test(r.probs));
+      const okB=!bv || r.txt.includes(bv);
+      return okF&&okB;
+    });
+    tbody.innerHTML=vis.length?vis.map(r=>r.html).join(''):`<tr><td colspan="6" style="text-align:center;color:#9A9A9A;padding:22px">Nenhum lançamento com esse filtro.</td></tr>`;
+    cnt.textContent=`${vis.length} de ${dt.rows.length}`;
+  }
+  fSel.onchange=paint; busca.oninput=paint;
+  document.querySelectorAll('[data-filtro]').forEach(c=>{
+    c.onclick=()=>{ fSel.value=c.dataset.filtro; paint(); document.getElementById('tbodyDiag').scrollIntoView({block:'center'}); };
+  });
+  paint();
+}
+function wireFullTable(s,key){
+  const tbody=document.getElementById('tbodyFull');
+  const busca=document.getElementById('buscaFull');
+  const fCli=document.getElementById('fltCliente');
+  const ord=document.getElementById('ordFull');
+  const cnt=document.getElementById('cntFull');
+  const data=s.records.map(r=>({r,txt:semAcento(r.advogado+' '+r.cliente+' '+r.tipo+' '+r.descricao)}));
+  const ordena=arr=>{
+    const o=ord?ord.value:'data';
+    if(o==='min_desc') return arr.slice().sort((a,b)=>b.r.min-a.r.min);
+    if(o==='min_asc')  return arr.slice().sort((a,b)=>a.r.min-b.r.min);
+    return arr.slice().sort((a,b)=>(a.r.data||'').localeCompare(b.r.data||''));
+  };
+  function paint(){
+    const bv=semAcento(busca.value), cv=fCli.value;
+    const vis=ordena(data.filter(d=>(!bv||d.txt.includes(bv))&&(!cv||d.r.cliente===cv)));
+    tbody.innerHTML=vis.slice(0,600).map(({r})=>`<tr>
+      ${key==='__equipe__'?`<td>${primeiroNome(r.advogado)}</td>`:''}
+      <td>${r.data?r.data.split('-').reverse().join('/'):'—'}</td>
+      <td>${r.cliente}${isInterno(r.cliente)?' <span class="pill pill-int">int</span>':''}</td>
+      <td>${r.tipo||'<span class="muted">—</span>'}</td>
+      <td>${r.descricao||'<span class="muted">(vazio)</span>'}</td>
+      <td class="num">${r.min?fmtHM(r.min):'<span class="pill pill-crit">00:00</span>'}</td>
+    </tr>`).join('');
+    cnt.textContent=`${vis.length} de ${data.length}`+(vis.length>600?' (mostrando 600)':'');
+  }
+  busca.oninput=paint; fCli.onchange=paint; if(ord) ord.onchange=paint;
+  paint();
+}
+
+/* ---- charts ---- */
+const CORES={amarelo:'#E8E347',grafite:'#2B2B2B',preto:'#0F0F10',cinza:'#B8B8B8',cinza2:'#8A8A8A',vermelho:'#D03B3B'};
+function destroyCharts(){ Object.values(charts).forEach(c=>c.destroy()); charts={}; }
+function buildCharts(s){
+  destroyCharts();
+  const gridC='#F0F0F0';
+  // semanal
+  const wks=Object.keys(s.semanas).sort();
+  charts.semanal=new Chart(document.getElementById('cSemanal'),{
+    type:'line',
+    data:{labels:wks.map(w=>'Sem '+w.split('S')[1]),
+      datasets:[{label:'Horas',data:wks.map(w=>+(s.semanas[w].min/60).toFixed(1)),
+        borderColor:CORES.grafite,backgroundColor:CORES.amarelo,pointBackgroundColor:CORES.amarelo,
+        pointRadius:5,borderWidth:2.5,tension:.25,fill:false}]},
+    options:{plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>c.parsed.y+'h'}}},
+      scales:{y:{beginAtZero:true,grid:{color:gridC}},x:{grid:{display:false}}}}
+  });
+  // dia semana
+  const dias=['Segunda','Terça','Quarta','Quinta','Sexta','Sábado','Domingo'];
+  charts.dia=new Chart(document.getElementById('cDia'),{
+    type:'bar',
+    data:{labels:dias,datasets:[{data:dias.map(d=>s.diaSem[d]||0),
+      backgroundColor:dias.map(d=>d==='Sexta'?CORES.amarelo:CORES.grafite),borderRadius:3}]},
+    options:{plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>c.parsed.y+' tarefas'}}},
+      scales:{y:{beginAtZero:true,grid:{color:gridC}},x:{grid:{display:false}}}}
+  });
+  // interno doughnut
+  charts.interno=new Chart(document.getElementById('cInterno'),{
+    type:'doughnut',
+    data:{labels:['Clientes (faturável)','Interno TPC'],
+      datasets:[{data:[+(s.externoMin/60).toFixed(1),+(s.internoMin/60).toFixed(1)],
+        backgroundColor:[CORES.grafite,CORES.amarelo],borderWidth:2,borderColor:'#fff'}]},
+    options:{cutout:'62%',plugins:{legend:{position:'bottom',labels:{boxWidth:12,font:{size:11}}},
+      tooltip:{callbacks:{label:c=>c.label+': '+c.parsed+'h'}}}}
+  });
+  // clientes (toggle)
+  drawClientes(s);
+  document.getElementById('tgHoras').onclick=()=>{clientChartMode='horas';toggleBtns();drawClientes(s);};
+  document.getElementById('tgTarefas').onclick=()=>{clientChartMode='tarefas';toggleBtns();drawClientes(s);};
+  // tipos count
+  const tc=s.porTipoCount.slice(0,10);
+  charts.tiposC=new Chart(document.getElementById('cTiposCount'),{
+    type:'bar',
+    data:{labels:tc.map(t=>t[0]),datasets:[{data:tc.map(t=>t[1]),backgroundColor:CORES.grafite,borderRadius:3}]},
+    options:{indexAxis:'y',onClick:chartDrill('tipo',i=>({value:tc[i][0],label:tc[i][0]})),onHover:chartHover,
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>c.parsed.x+' lançamentos'}}},
+      scales:{x:{beginAtZero:true,grid:{color:gridC}},y:{grid:{display:false},ticks:{font:{size:10.5}}}}}
+  });
+  // tipos min
+  const tm=s.porTipoMin.slice(0,10);
+  charts.tiposM=new Chart(document.getElementById('cTiposMin'),{
+    type:'bar',
+    data:{labels:tm.map(t=>t[0]),datasets:[{data:tm.map(t=>+(t[1]/60).toFixed(1)),backgroundColor:CORES.amarelo,borderRadius:3}]},
+    options:{indexAxis:'y',onClick:chartDrill('tipo',i=>({value:tm[i][0],label:tm[i][0]})),onHover:chartHover,
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>c.parsed.x+'h'}}},
+      scales:{x:{beginAtZero:true,grid:{color:gridC}},y:{grid:{display:false},ticks:{font:{size:10.5}}}}}
+  });
+  // natureza da atividade (doughnut)
+  if(document.getElementById('cNatureza') && s.natArr.length){
+    charts.natureza=new Chart(document.getElementById('cNatureza'),{
+      type:'doughnut',
+      data:{labels:s.natArr.map(n=>n.nome),
+        datasets:[{data:s.natArr.map(n=>+(n.min/60).toFixed(1)),
+          backgroundColor:s.natArr.map(n=>NAT_CORES[n.nome]||'#B8B8B8'),borderWidth:2,borderColor:'#fff'}]},
+      options:{cutout:'58%',onClick:chartDrill('natureza',i=>({value:s.natArr[i].nome,label:s.natArr[i].nome})),onHover:chartHover,
+        plugins:{legend:{position:'bottom',labels:{boxWidth:11,font:{size:10.5}}},
+        tooltip:{callbacks:{label:c=>c.label+': '+c.parsed+'h'}}}}
+    });
+  }
+  // tipos de peça (nº de lançamentos)
+  if(document.getElementById('cPecas') && s.pecasPorTipo.length){
+    const pt=s.pecasPorTipo.slice(0,10);
+    charts.pecas=new Chart(document.getElementById('cPecas'),{
+      type:'bar',
+      data:{labels:pt.map(t=>t[0]),datasets:[{data:pt.map(t=>t[1]),backgroundColor:CORES.grafite,borderRadius:3}]},
+      options:{indexAxis:'y',onClick:chartDrill('pecaTipo',i=>({value:pt[i][0],label:pt[i][0]})),onHover:chartHover,
+        plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>c.parsed.x+' lançamentos'}}},
+        scales:{x:{beginAtZero:true,grid:{color:gridC},ticks:{precision:0}},y:{grid:{display:false},ticks:{font:{size:10.5}}}}}
+    });
+  }
+  // subtipos de petição identificados pela descrição
+  if(document.getElementById('cSubtipo') && s.subtipoArr && s.subtipoArr.length){
+    const st=s.subtipoArr.slice(0,14);
+    charts.subtipo=new Chart(document.getElementById('cSubtipo'),{
+      type:'bar',
+      data:{labels:st.map(x=>x.nome),datasets:[{data:st.map(x=>x.count),
+        backgroundColor:st.map(x=>x.nome==='Não especificado'?CORES.amarelo:CORES.grafite),borderRadius:3}]},
+      options:{indexAxis:'y',onClick:chartDrill('subtipo',i=>({value:st[i].nome,label:st[i].nome})),onHover:chartHover,
+        plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>c.parsed.x+' lançamentos'}}},
+        scales:{x:{beginAtZero:true,grid:{color:gridC},ticks:{precision:0}},y:{grid:{display:false},ticks:{font:{size:10}}}}}
+    });
+  }
+  // jornada diária: horas por dia, coloridas por faixa (<6h / 6-8h / >8h)
+  if(document.getElementById('cJornada') && s.diasArr && s.diasArr.length){
+    const dj=s.diasArr;
+    const cor=m=> m<CFG.jornadaBaixaMin?CORES.vermelho : (m>CFG.jornadaAltaMin?CORES.amarelo:CORES.grafite);
+    charts.jornada=new Chart(document.getElementById('cJornada'),{
+      type:'bar',
+      data:{labels:dj.map(x=>{const p=x.data.split('-');return p[2]+'/'+p[1];}),
+        datasets:[{data:dj.map(x=>+(x.min/60).toFixed(2)),backgroundColor:dj.map(x=>cor(x.min)),borderRadius:2}]},
+      options:{onClick:chartDrill('dia',i=>({value:dj[i].data,label:dj[i].data.split('-').reverse().join('/')})),onHover:chartHover,
+        plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>fmtHM(dj[c.dataIndex].min)+' · '+dj[c.dataIndex].tasks+' tarefas'}}},
+        scales:{y:{beginAtZero:true,grid:{color:gridC},title:{display:true,text:'horas'}},x:{grid:{display:false},ticks:{font:{size:9},maxRotation:0,autoSkip:true}}}}
+    });
+  }
+}
+function toggleBtns(){
+  document.getElementById('tgHoras').classList.toggle('on',clientChartMode==='horas');
+  document.getElementById('tgTarefas').classList.toggle('on',clientChartMode==='tarefas');
+}
+function drawClientes(s){
+  if(charts.clientes) charts.clientes.destroy();
+  const src=clientChartMode==='horas'?s.porClienteMin:s.porClienteCount;
+  const top=src.slice(0,10);
+  charts.clientes=new Chart(document.getElementById('cClientes'),{
+    type:'bar',
+    data:{labels:top.map(c=>c[0].length>34?c[0].slice(0,34)+'…':c[0]),
+      datasets:[{data:top.map(c=>clientChartMode==='horas'?+(c[1]/60).toFixed(1):c[1]),
+        backgroundColor:top.map(c=>isInterno(c[0])?CORES.amarelo:CORES.grafite),borderRadius:3}]},
+    options:{indexAxis:'y',onClick:chartDrill('cliente',i=>({value:top[i][0],label:top[i][0]})),onHover:chartHover,
+      plugins:{legend:{display:false},
+      tooltip:{callbacks:{label:c=>clientChartMode==='horas'?c.parsed.x+'h':c.parsed.x+' tarefas'}}},
+      scales:{x:{beginAtZero:true,grid:{color:'#F0F0F0'}},y:{grid:{display:false},ticks:{font:{size:10}}}}}
+  });
+}
+
+/* ============================================================
+   6. FOOTER / METODOLOGIA
+   ============================================================ */
+function renderFooter(){
+  document.getElementById('metodologia').innerHTML=`
+    <b>Como ler este painel.</b> Os itens <b>a</b> a <b>f</b> respondem diretamente à gestão da área:
+    (a) cliente mais atendido por nº de tarefas e por horas; (b) atividade mais frequente; (c) tipos de serviço que mais consumiram horas de cada advogado;
+    (d) principais clientes por tempo dedicado; (e) diagnóstico de falhas de lançamento; (f) descrições incompletas.<br>
+    <b>Análises complementares de gestão:</b> rentabilidade &amp; carteira (faturamento estimado a partir do valor/hora e risco de concentração de clientes); natureza da atividade (mix contencioso × consultivo × captação × gestão);
+    descrições de tarefas mais recorrentes; e elaboração de peças e petições — quantas cada advogado produziu, por tipo, e o tempo gasto em cada peça (somando lançamentos da mesma peça ao longo dos dias).
+    Peça/petição = tipo de serviço de elaboração ou revisão de peça processual (minuta, manifestação, alegações, embargos, agravo, recurso, parecer etc.).<br>
+    <b>Tipo de petição/minuta identificado:</b> como os tipos do ADVWin ("Elaboração de Minuta", "Revisão de Minuta", "Elaborar Petição" etc.) são genéricos, o painel lê a <b>descrição (observações)</b> de cada peça e identifica automaticamente a petição elaborada — alegações finais, resposta à acusação, embargos de declaração, contrarrazões, agravo, habeas corpus, exceção de suspeição, petição inicial, parecer, entre outros. Quando a descrição não permite identificar, o lançamento é marcado como <i>"Não especificado"</i> para que se peça o detalhamento ao advogado.<br>
+    <b>Parâmetros:</b> lançamento curto &lt; ${CFG.curtoMin} min · muito curto ≤ ${CFG.muitoCurtoMin} min · descrição incompleta &lt; ${CFG.descMinChars} caracteres, uma só palavra ou termo genérico ·
+    possível duplicidade = mesmo advogado + cliente + tipo + data · tempo interno = cliente "TPC" (escritório, não faturável) · carga alta &gt; 10h/dia.
+    A coluna de horas do ADVWin vem no formato <i>01/01/1900&nbsp;00:15:00</i>; o painel converte automaticamente para a duração real (00:15 = 15 min).<br>
+    <b>Uso mensal:</b> arraste as novas planilhas na área "Anexar planilhas" no topo — todo o painel é recalculado no seu navegador, sem enviar dados para nenhum servidor.
+    <span id="fonteInfo"></span>`;
+}
+
+/* ============================================================
+   7. BOOT + UPLOAD
+   ============================================================ */
+function showLanding(msg){
+  ANALISE=null; RECORDS=[];
+  document.getElementById('tabs').innerHTML='';
+  document.getElementById('periodoLabel').textContent='Nenhuma planilha carregada — anexe os arquivos para gerar a análise.';
+  document.getElementById('metodologia').innerHTML='';
+  document.getElementById('pdfActions').style.display='none';
+  document.getElementById('app').innerHTML=`
+    <div class="landing">
+      <div class="landing-icon">📊</div>
+      <h2>Comece anexando as planilhas de horas</h2>
+      <p>${msg || 'Este painel abre sempre vazio. Nenhum dado de análises anteriores fica guardado ou visível aqui — tudo é processado no seu navegador e descartado ao fechar a aba.'}</p>
+      <button class="btn-landing" onclick="document.getElementById('fileInput').click()">⤒ Selecionar planilhas (.xlsx)</button>
+      <p class="landing-sub">Aceita as exportações do ADVWin com as colunas <b>Cliente, Tipo de Serviço, Descrição, Advogado, Data</b> e <b>Horas Cobráveis</b>. Você pode anexar vários advogados de uma vez. Também é possível arrastar os arquivos para a área "Anexar planilhas" no topo.</p>
+    </div>`;
+}
+function boot(recs, periodo, fonte){
+  if(!recs || !recs.length){
+    showLanding(recs && !recs.length && RECORDS_LOADED_ONCE ? 'Nenhum lançamento válido foi encontrado na planilha. Confira se é uma exportação do ADVWin com as colunas Cliente, Tipo de Serviço, Descrição, Advogado, Data e Horas Cobráveis.' : null);
+    return;
+  }
+  RECORDS_LOADED_ONCE=true;
+  RECORDS=recs; PERIODO=periodo;
+  ANALISE=analyzeAll(recs);
+  atual='__equipe__';
+  render();
+  renderFooter();
+  document.getElementById('pdfActions').style.display='';
+  if(fonte) document.getElementById('fonteInfo').innerHTML=` · <b>Fonte:</b> ${fonte}`;
+}
+let RECORDS_LOADED_ONCE=false;
+
+const drop=document.getElementById('drop');
+const fileInput=document.getElementById('fileInput');
+['dragover','dragenter'].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.add('drag');}));
+['dragleave','drop'].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.remove('drag');}));
+drop.addEventListener('drop',e=>handleFiles(e.dataTransfer.files));
+fileInput.addEventListener('change',e=>handleFiles(e.target.files));
+function handleFiles(files){
+  if(!files||!files.length) return;
+  if(typeof XLSX==='undefined'||typeof Chart==='undefined'){
+    LIBS_PP.then(()=>handleFiles(files)).catch(()=>alert('Não foi possível carregar as bibliotecas do painel (gráficos e leitura de planilhas). A rede ou o antivírus pode estar bloqueando o download; recarregue a página e, se persistir, avise o administrador do HUB.'));
+    return;
+  }
+  const nomes=[...files].map(f=>f.name).join(', ');
+  readFiles(files).then(recs=>{
+    // detecta período pelas datas
+    const ds=recs.map(r=>r.data).filter(Boolean).sort();
+    let per='Período carregado';
+    if(ds.length){
+      const meses=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+      const a=ds[0], b=ds[ds.length-1];
+      per = a.slice(0,7)===b.slice(0,7)
+        ? `${meses[+a.slice(5,7)-1]}/${a.slice(0,4)}`
+        : `${a.split('-').reverse().join('/')} a ${b.split('-').reverse().join('/')}`;
+    }
+    boot(recs, per, nomes);
+    window.scrollTo({top:0,behavior:'smooth'});
+  }).catch(err=>{
+    alert('Não consegui ler o arquivo: '+err.message+'\n\nConfira se é um .xlsx exportado do ADVWin.');
+    console.error(err);
+  });
+}
+
+/* ============================================================
+   8. GERAÇÃO DE PDF (relatório completo — todas as abas)
+   ============================================================ */
+async function gerarPDF(){
+  if(!ANALISE){ return; }
+  if(typeof Chart==='undefined'){
+    // sem gráficos: imprime mesmo assim (tabelas), avisando
+    if(!confirm('Os gráficos ainda não carregaram (sem conexão?). Gerar o PDF apenas com as tabelas?')) return;
+  }
+  const ov=document.getElementById('pdfOverlay');
+  const area=document.getElementById('printArea');
+  ov.style.display='flex';
+  const prev=atual;
+  area.innerHTML='';
+  const temChart=(typeof Chart!=='undefined');
+  const origAnim=temChart?Chart.defaults.animation:null;
+  if(temChart) Chart.defaults.animation=false;           // desenho síncrono p/ capturar
+  const nextFrame=()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));
+  const ordem=['__equipe__',...ANALISE.__advs__];
+  try{
+    for(const key of ordem){
+      atual=key; render(); await nextFrame();
+      const app=document.getElementById('app');
+      const clone=document.createElement('div');                 // div (não <main>) p/ não cair na regra de impressão
+      clone.className='pdf-body';
+      clone.innerHTML=app.innerHTML;
+      clone.querySelectorAll('.no-pdf').forEach(n=>n.remove());   // tira base de dados bruta
+      // congela cada gráfico como imagem
+      const liveC=app.querySelectorAll('canvas');
+      const cloneC=clone.querySelectorAll('canvas');
+      cloneC.forEach((cv,i)=>{
+        const live=liveC[i];
+        if(live){
+          const img=document.createElement('img'); img.className='pdf-chart';
+          try{ img.src=live.toDataURL('image/png'); }catch(e){}
+          cv.replaceWith(img);
+        }
+      });
+      const label = key==='__equipe__' ? 'Equipe — consolidado' : ANALISE[key].label;
+      const view=document.createElement('div'); view.className='pdf-view';
+      view.innerHTML=`<div class="pdf-head">
+        <div class="t">Painel de Produtividade <span>· TPC Advogados</span></div>
+        <div class="s">${label} · ${PERIODO} · gerado em ${new Date().toLocaleString('pt-BR')}</div></div>`;
+      view.appendChild(clone);
+      area.appendChild(view);
+    }
+  }finally{
+    if(temChart) Chart.defaults.animation=origAnim;
+    atual=prev; render();
+    ov.style.display='none';
+  }
+  window.onafterprint=()=>{ area.innerHTML=''; window.onafterprint=null; };
+  window.print();
+}
+
+/* ============================================================
+   9. RELATÓRIO CRÍTICO DE GESTÃO (individualizado por advogado)
+   ============================================================ */
+function analiseCritica(key){
+  const s=ANALISE[key];
+  const med=ANALISE.__medias__;
+  const nome=primeiroNome(s.label);
+  const F=[], M=[], S=[], R=[];              // manter, melhorar, sugestões, rentabilidade
+  const minDia = s.diasTrab? s.totalMin/s.diasTrab : 0;   // minutos/dia (para fmtH)
+  const horasDia = minDia/60;                              // horas/dia (para comparações)
+  const rs = min => RATE? ` (~<b>${fmtRS(min/60*RATE)}</b>/mês)` : '';
+  const admPct = s.totalMin? s.adminMin/s.totalMin*100 : 0;
+
+  // --- horas faturáveis / tempo interno ---
+  if(s.pctExterno>=70)
+    F.push(`<b>Alto índice de horas faturáveis:</b> ${fmtPct(s.pctExterno)} do tempo em clientes (${fmtH(s.externoMin)}). Excelente aproveitamento comercial — manter o padrão.`);
+  if(s.pctInterno>CFG.internoAltoPct){
+    const excedente=Math.max(0, s.internoMin - s.totalMin*(CFG.internoAltoPct/100));
+    M.push(`<b>Tempo interno acima da meta:</b> ${fmtPct(s.pctInterno)} do tempo (${fmtH(s.internoMin)}) é interno/não faturável, acima do teto de ${CFG.internoAltoPct}%.`);
+    R.push(`Trazer o tempo interno de ${fmtPct(s.pctInterno)} para ${CFG.internoAltoPct}% converteria ~<b>${fmtH(excedente)}</b>/mês em horas faturáveis${rs(excedente)}.`);
+  } else if(s.pctExterno>=60 && s.pctExterno<70){
+    F.push(`<b>Proporção faturável saudável:</b> ${fmtPct(s.pctExterno)} do tempo em clientes.`);
+  }
+
+  // --- tempo administrativo ---
+  if(admPct>20){
+    M.push(`<b>Carga administrativa elevada:</b> ${fmtPct(admPct)} do tempo (${fmtH(s.adminMin)}) em apoio (cadastros, ficha de tempo, relatórios, e-mails internos).`);
+    S.push(`Delegar tarefas administrativas a apoio/estagiário, liberando ${nome} para a atividade-fim${rs(s.adminMin*0.6)}.`);
+  } else if(admPct>0 && admPct<8){
+    F.push(`<b>Baixa sobrecarga administrativa</b> (${fmtPct(admPct)}): foco preservado na atividade jurídica.`);
+  }
+
+  // --- granularidade ---
+  if(s.diag.pctCurta>Math.max(med.pctCurta,20)){
+    M.push(`<b>Fragmentação de apontamentos:</b> ${fmtPct(s.diag.pctCurta)} dos lançamentos têm menos de ${CFG.curtoMin} min (média da equipe ${fmtPct(med.pctCurta)}). Micro-lançamentos dificultam a leitura da fatura e podem subvalorizar o esforço.`);
+    S.push(`Agrupar micro-tarefas do mesmo processo/dia em um lançamento único com descrição consolidada.`);
+  } else if(s.diag.pctCurta<10){
+    F.push(`<b>Boa granularidade de lançamentos</b> (${fmtPct(s.diag.pctCurta)} abaixo de ${CFG.curtoMin} min).`);
+  }
+
+  // --- duplicidade ---
+  if(s.diag.nDup>0 && s.diag.pctDup>med.pctDup)
+    M.push(`<b>Possível duplicidade/fragmentação:</b> ${s.diag.nDup} lançamentos (${fmtPct(s.diag.pctDup)}) repetem cliente + tipo + data no mesmo dia. Revisar para evitar dupla contagem ou consolidar.`);
+
+  // --- lançamentos com falha crítica ---
+  if(s.diag.nSemDur>0){
+    M.push(`<b>Horas não contabilizadas:</b> ${s.diag.nSemDur} lançamento(s) com 00:00 — trabalho feito e não faturado.`);
+    R.push(`Preencher a duração dos ${s.diag.nSemDur} lançamento(s) zerado(s) recupera faturamento direto que hoje se perde.`);
+  }
+  if(s.diag.nSemTipo>0)
+    M.push(`<b>${s.diag.nSemTipo} lançamento(s) sem tipo de serviço</b> — prejudica classificação e relatórios; padronizar o preenchimento.`);
+
+  // --- descrições ---
+  if(s.diag.pctDescRuim>25){
+    M.push(`<b>Qualidade das descrições:</b> ${fmtPct(s.diag.pctDescRuim)} estão incompletas ou genéricas — risco de glosa pelo cliente.`);
+    S.push(`Padronizar a descrição no formato "verbo + objeto + processo/cliente" (ex.: "Elaboração de contestação — Proc. X / Cliente Y") e revisar no fechamento mensal.`);
+  } else if(s.diag.pctDescRuim<12){
+    F.push(`<b>Descrições consistentes</b> (${fmtPct(s.diag.pctDescRuim)} incompletas): boa rastreabilidade do trabalho.`);
+  }
+  if(s.nSubNaoEspec>0)
+    M.push(`<b>${s.nSubNaoEspec} peça(s) sem identificação do tipo</b> pela descrição — impede saber qual petição foi elaborada; pedir detalhamento na observação.`);
+
+  // --- carga diária ---
+  if(s.diag.cargasAltas.length>0){
+    const d=s.diag.cargasAltas[0];
+    M.push(`<b>Picos de carga diária:</b> ${s.diag.cargasAltas.length} dia(s) acima de 10h (pico de ${fmtHM(d.min)} em ${d.data.split('-').reverse().join('/')}), possível apontamento retroativo em bloco. Lançar no próprio dia aumenta a fidelidade.`);
+  }
+  if(horasDia<6 && s.diasTrab>=5)
+    M.push(`<b>Média diária baixa:</b> ${fmtH(minDia)}/dia em ${s.diasTrab} dias — verificar subaproveitamento ou horas não lançadas.`);
+  else if(horasDia>=6 && horasDia<=9)
+    F.push(`<b>Volume diário saudável:</b> ${fmtH(minDia)}/dia em ${s.diasTrab} dias trabalhados.`);
+  else if(horasDia>10)
+    M.push(`<b>Sobrecarga aparente:</b> ${fmtH(minDia)}/dia — atenção à sustentabilidade e à possibilidade de apontamento em bloco.`);
+
+  // --- concentração de carteira ---
+  if(s.carteira.topClientePct>50){
+    M.push(`<b>Concentração de carteira:</b> ${fmtPct(s.carteira.topClientePct)} das horas faturáveis em um único cliente (${s.carteira.topCliente}). Alta dependência — risco de receita.`);
+    R.push(`Diversificar a carteira: ${fmtPct(s.carteira.top3Pct)} das horas faturáveis estão em apenas 3 clientes. Reduzir a dependência protege a receita da área.`);
+  } else if(s.carteira.nClientesExt>=8 && s.carteira.topClientePct<35){
+    F.push(`<b>Carteira diversificada:</b> ${s.carteira.nClientesExt} clientes faturáveis, sem dependência excessiva (maior = ${fmtPct(s.carteira.topClientePct)}).`);
+  }
+
+  // --- captação / crescimento ---
+  const capt=(s.natArr.find(n=>n.nome==='Captação/Prospecção')||{min:0}).min;
+  if(capt===0)
+    S.push(`Nenhum tempo em captação/prospecção no período — reservar uma fração da agenda para desenvolvimento de novos clientes sustenta o crescimento da área.`);
+  else
+    F.push(`<b>Atuação em captação:</b> ${fmtH(capt)} em prospecção — investimento no crescimento da carteira.`);
+
+  // --- peças / eficiência técnica ---
+  if(s.pecas && s.pecas.length){
+    const totMinPeca=s.pecas.reduce((a,p)=>a+p.min,0);
+    F.push(`<b>Produção técnica:</b> ${s.pecas.length} lançamentos de elaboração/revisão de peças (${fmtH(totMinPeca)}) — núcleo da entrega jurídica.`);
+    const topPeca=(s.subtipoArr||[]).filter(x=>x.nome!=='Não especificado')[0];
+    if(topPeca){
+      const medMin=topPeca.min/topPeca.count;
+      S.push(`Peça mais recorrente: <b>${topPeca.nome}</b> (${topPeca.count}× · média ${fmtHM(medMin)}). Criar modelos/checklists para as peças frequentes reduz o tempo de elaboração e padroniza a qualidade${medMin>=60?rs(topPeca.count*medMin*0.2):''}.`);
+    }
+  }
+
+  // --- perfil de atuação (natureza) ---
+  if(s.natArr.length){
+    const perfil=s.natArr[0];
+    F.push(`<b>Perfil de atuação:</b> predomínio <b>${perfil.nome.toLowerCase()}</b> (${fmtPct(s.totalMin?perfil.min/s.totalMin*100:0)} do tempo) — útil para direcionar alocação de casos e treinamento.`);
+  }
+
+  // fallbacks para não deixar bloco vazio
+  if(!F.length) F.push(`Sem destaques positivos marcantes neste período — foco nas melhorias ao lado.`);
+  if(!M.length) M.push(`Nenhum desvio relevante identificado. Indicadores dentro dos parâmetros da equipe.`);
+  if(!S.length) S.push(`Manter a rotina atual de apontamento; sem ajustes estruturais necessários neste período.`);
+  if(!R.length) R.push(`Rentabilidade equilibrada: ${fmtPct(s.pctExterno)} de horas faturáveis${RATE?` (~<b>${fmtRS(s.externoMin/60*RATE)}</b> no período)`:''}. Preserve o índice e o mix de clientes.`);
+
+  const nMel=s.diag.nSemDur + (s.pctInterno>CFG.internoAltoPct?1:0) + (admPct>20?1:0) + (s.diag.pctDescRuim>25?1:0);
+  const verdict = nMel===0 ? 'Indicadores majoritariamente saudáveis; foco em manter o padrão.'
+    : nMel<=2 ? 'Bom desempenho geral, com ajustes pontuais que ampliam a rentabilidade.'
+    : 'Há oportunidades relevantes de eficiência e rentabilidade, detalhadas abaixo.';
+  const resumo=`Em ${PERIODO}, ${nome} apontou <b>${fmtHM(s.totalMin)}</b> em <b>${s.nTasks}</b> tarefas ao longo de <b>${s.diasTrab}</b> dias (${fmtH(minDia)}/dia), com <b>${fmtPct(s.pctExterno)}</b> de horas faturáveis${RATE?` — faturamento estimado de <b>${fmtRS(s.externoMin/60*RATE)}</b>`:''}. ${verdict}`;
+
+  return {nome, label:s.label, resumo, F, M, S, R};
+}
+
+function critLista(arr){ return `<ul>${arr.map(t=>`<li>${t}</li>`).join('')}</ul>`; }
+
+// resumo dos dados (espelho compacto do relatório completo) por advogado
+function resumoDadosAdvogado(s){
+  const cut=(t,n)=> t.length>n ? t.slice(0,n)+'…' : t;
+  const ext=s.porClienteMin.filter(e=>!isInterno(e[0]));
+  const maiorCli=ext[0] || s.porClienteMin[0] || ['—',0];
+  const topClientes=s.porClienteMin.slice(0,5);
+  const topTarefas=s.porTipoCount.slice(0,5);
+  const topPecas=s.pecasPorTipo.slice(0,4);
+  const pecaMin=Object.fromEntries(s.pecasPorTipoMin);
+  const recorrentes=(s.descArr||[]).filter(d=>d.count>1).slice(0,5);
+  const pecaElab=s.pecasPorTipo[0];
+  const pecaTempo=s.pecasPorTipoMin[0];
+  const d=s.diag;
+  const erros=[['sem duração',d.nSemDur],[`curtos (&lt;${CFG.curtoMin}min)`,d.nMuitoCurta+d.nCurta],
+    ['sem tipo',d.nSemTipo],['descrições incompletas',d.nDescRuim],['peças não especificadas',s.nSubNaoEspec||0]];
+  return `<div class="crit-dados">
+    <h4>▤ Resumo dos dados — espelho do relatório completo</h4>
+    <div class="cd-kpis">
+      <div class="cd-kpi"><span>Horas apontadas</span><b>${fmtHM(s.totalMin)}</b></div>
+      <div class="cd-kpi"><span>Horas internas (TPC)</span><b>${fmtPct(s.pctInterno)} · ${fmtH(s.internoMin)}</b></div>
+      <div class="cd-kpi"><span>Horas faturáveis</span><b>${fmtPct(s.pctExterno)} · ${fmtH(s.externoMin)}</b></div>
+      <div class="cd-kpi"><span>Maior tempo dedicado (cliente)</span><b>${cut(maiorCli[0],26)} — ${fmtHM(maiorCli[1])}</b></div>
+    </div>
+    <div class="cd-cols">
+      <div class="cd-list"><h5>Principais clientes (horas)</h5><ol>${topClientes.map(c=>`<li><span>${cut(c[0],30)}${isInterno(c[0])?' (TPC)':''}</span><b>${fmtHM(c[1])}</b></li>`).join('')}</ol></div>
+      <div class="cd-list"><h5>Principais tarefas (nº lançs.)</h5><ol>${topTarefas.map(t=>`<li><span>${cut(t[0],28)}</span><b>${t[1]}</b></li>`).join('')}</ol></div>
+      <div class="cd-list"><h5>Peças mais realizadas (nº · h)</h5><ol>${topPecas.length?topPecas.map(p=>`<li><span>${cut(p[0],24)}</span><b>${p[1]}× · ${fmtHM(pecaMin[p[0]]||0)}</b></li>`).join(''):'<li class="cd-none">Nenhuma peça no período</li>'}</ol></div>
+      <div class="cd-list"><h5>Tarefas mais recorrentes</h5><ol>${recorrentes.length?recorrentes.map(r=>`<li><span>${cut(r.ex,32)}</span><b>${r.count}×</b></li>`).join(''):'<li class="cd-none">Nenhuma repetição</li>'}</ol></div>
+    </div>
+    <div class="cd-pecas">
+      ${pecaElab?`<span>Peça mais elaborada (nº): <b>${pecaElab[0]}</b> — ${pecaElab[1]} lançamentos</span>`:''}
+      ${pecaTempo?`<span>Peça que mais consumiu tempo: <b>${pecaTempo[0]}</b> — ${fmtHM(pecaTempo[1])}</span>`:''}
+    </div>
+    <div class="cd-erros"><b>Possíveis erros de lançamento</b> (exceto tarefas repetidas): ${erros.map(([l,v])=>`<b>${v}</b>&nbsp;${l}`).join(' · ')}</div>
+  </div>`;
+}
+
+function gerarCritico(){
+  if(!ANALISE){ return; }
+  const modal=document.getElementById('criticoModal');
+  const advs=ANALISE.__advs__;
+  const eq=ANALISE['__equipe__'];
+  const intro=`Parecer de gestão gerado a partir das horas apontadas em <b>${PERIODO}</b>. A equipe registrou <b>${fmtHM(eq.totalMin)}</b> em ${eq.nTasks} tarefas, com <b>${fmtPct(eq.pctExterno)}</b> de horas faturáveis${RATE?` (faturamento estimado <b>${fmtRS(eq.externoMin/60*RATE)}</b>)`:' — defina o valor/hora na seção "Rentabilidade & carteira" para ver o impacto em R$'}. A seguir, a análise crítica <b>individualizada</b> de cada advogado: o que manter, o que melhorar, sugestões e alavancas de rentabilidade.`;
+  const blocos=advs.map(a=>{
+    const c=analiseCritica(a);
+    return `<div class="crit-lawyer">
+      <div class="crit-head"><div class="t">${c.nome}</div><div class="s">${c.label}</div></div>
+      <p class="crit-resumo">${c.resumo}</p>
+      ${resumoDadosAdvogado(ANALISE[a])}
+      <div class="crit-cols">
+        <div class="crit-sec sec-manter"><h4>✓ Pontos a manter</h4>${critLista(c.F)}</div>
+        <div class="crit-sec sec-melhorar"><h4>▲ Pontos a melhorar</h4>${critLista(c.M)}</div>
+      </div>
+      <div class="crit-sec sec-sugestao"><h4>➜ Sugestões de melhoria</h4>${critLista(c.S)}</div>
+      <div class="crit-sec sec-rent"><h4>$ Alavancas de rentabilidade</h4>${critLista(c.R)}</div>
+    </div>`;
+  }).join('');
+  modal.innerHTML=`<div class="crit-inner">
+    <div class="crit-toolbar">
+      <div class="crit-title">Relatório Crítico de Gestão <span>— TPC Advogados · ${PERIODO}</span></div>
+      <div class="crit-actions">
+        <button class="b-print" onclick="imprimirCritico()">⤓ Salvar em PDF</button>
+        <button class="b-close" onclick="fecharCritico()">✕ Fechar</button>
+      </div>
+    </div>
+    <div class="crit-body">
+      <div class="crit-intro">${intro}</div>
+      ${blocos}
+      <div class="crit-intro" style="border-left-color:#B8B8B8;margin-top:6px;font-size:12px;color:#8A8A8A">
+        Parecer gerado automaticamente a partir dos indicadores de apontamento (não substitui a avaliação qualitativa do gestor). Metas de referência: tempo interno &lt; ${CFG.internoAltoPct}%, lançamentos curtos &lt; ${CFG.curtoMin} min, descrições completas. Gerado em ${new Date().toLocaleString('pt-BR')}.
+      </div>
+    </div>
+  </div>`;
+  modal.style.display='block';
+  modal.scrollTop=0;
+  document.body.style.overflow='hidden';
+}
+function fecharCritico(){
+  document.getElementById('criticoModal').style.display='none';
+  document.body.style.overflow='';
+}
+function imprimirCritico(){
+  document.body.classList.add('crit-print');
+  window.onafterprint=()=>{ document.body.classList.remove('crit-print'); window.onafterprint=null; };
+  window.print();
+}
+
+/* ============================================================
+   10. DRILL-DOWN — lançamentos por trás de cada item clicado
+   ============================================================ */
+function attr(v){ return String(v==null?'':v).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;'); }
+function drillFilter(kind, value){
+  const recs=(ANALISE && ANALISE[atual]) ? ANALISE[atual].records : [];
+  switch(kind){
+    case 'cliente':   return recs.filter(r=>r.cliente===value);
+    case 'tipo':      return recs.filter(r=>r.tipo===value);
+    case 'natureza':  return recs.filter(r=>classifyNatureza(r.tipo)===value);
+    case 'subtipo':   return recs.filter(r=>isPeca(r.tipo)&&classifySubtipoPeca(r.tipo,r.descricao)===value);
+    case 'pecaTipo':  return recs.filter(r=>isPeca(r.tipo)&&r.tipo===value);
+    case 'descricao': return recs.filter(r=>semAcento(r.descricao)===value);
+    case 'dia':       return recs.filter(r=>r.data===value);
+    default: return [];
+  }
+}
+const DRILL_LABEL={cliente:'Cliente',tipo:'Tipo de serviço',natureza:'Natureza da atividade',subtipo:'Tipo de petição/minuta',pecaTipo:'Tipo de peça',descricao:'Descrição',dia:'Dia'};
+function openDrill(kind, value, label){
+  if(!ANALISE) return;
+  const modal=document.getElementById('drillModal');
+  const recs=drillFilter(kind,value).slice().sort((a,b)=>b.min-a.min);
+  const totMin=recs.reduce((a,r)=>a+r.min,0);
+  const eq=atual==='__equipe__';
+  const body=recs.length?recs.map(r=>`<tr>
+      ${eq?`<td>${primeiroNome(r.advogado)}</td>`:''}
+      <td>${r.data?r.data.split('-').reverse().join('/'):'—'}</td>
+      <td>${r.cliente}${isInterno(r.cliente)?' <span class="pill pill-int">int</span>':''}</td>
+      <td>${r.tipo||'<span class="muted">—</span>'}</td>
+      <td>${r.descricao||'<span class="muted">(vazio)</span>'}</td>
+      <td class="num">${r.min?fmtHM(r.min):'<span class="pill pill-crit">00:00</span>'}</td>
+    </tr>`).join('') : `<tr><td colspan="6" style="text-align:center;color:#9A9A9A;padding:22px">Nenhum lançamento.</td></tr>`;
+  modal.innerHTML=`<div class="drill-inner">
+    <div class="drill-top">
+      <div><div class="drill-k">${DRILL_LABEL[kind]||''}</div><div class="drill-t">${label}</div>
+        <div class="drill-s"><b>${recs.length}</b> lançamento(s) · <b>${fmtHM(totMin)}</b>${eq?' · equipe':''}</div></div>
+      <button onclick="closeDrill()">✕ Fechar</button>
+    </div>
+    <div class="drill-body"><div class="tablewrap" style="max-height:70vh;overflow:auto"><table>
+      <thead><tr>${eq?'<th>Advogado</th>':''}<th>Data</th><th>Cliente</th><th>Tipo</th><th>Descrição</th><th class="num">Tempo</th></tr></thead>
+      <tbody>${body}</tbody></table></div></div>
+  </div>`;
+  modal.style.display='block'; modal.scrollTop=0; document.body.style.overflow='hidden';
+}
+function closeDrill(){ const m=document.getElementById('drillModal'); m.style.display='none'; m.innerHTML=''; document.body.style.overflow=''; }
+// delegação: qualquer elemento com data-drill-kind abre o drill
+document.addEventListener('click', e=>{
+  const el=e.target.closest && e.target.closest('[data-drill-kind]');
+  if(!el) return;
+  openDrill(el.getAttribute('data-drill-kind'), el.getAttribute('data-drill-value'), el.getAttribute('data-drill-label')||el.getAttribute('data-drill-value'));
+});
+document.addEventListener('keydown', e=>{ if(e.key==='Escape') closeDrill(); });
+// clique em gráfico -> drill pelo item clicado
+function chartDrill(kind, valuesFn){
+  return (evt, els, chart)=>{ if(els && els.length){ const v=valuesFn(els[0].index); if(v && v.value!=null) openDrill(kind, v.value, v.label); } };
+}
+function chartHover(evt, els){ const c=evt.native&&evt.native.target; if(c) c.style.cursor = els.length?'pointer':'default'; }
+
+/* abre SEMPRE vazio — sem análises anteriores visíveis */
+showLanding();

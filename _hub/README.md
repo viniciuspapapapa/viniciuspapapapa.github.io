@@ -119,6 +119,9 @@ _hub/  (publicada cifrada em hub/)
                               visualização do PDF do Drive, exportação em Word e botão de atualização (serviço sherlock-tpc)
     motor.js                  Motor de busca (Web Worker): normalização, radicais, expressões exatas, relevância e trechos
     obras.js                  Dados bibliográficos revisados de cada obra (por ID do Drive), usados nas citações
+  produtividade/
+    app.js                    Painel de produtividade e rentabilidade (portado de painel-produtividade.html): leitura das
+                              planilhas do ADVWin, análise da equipe e de cada advogado, gráficos, PDF e relatório crítico
   vendor/                     Bibliotecas abertas hospedadas no HUB (publicadas sem cifra; versões em VERSOES.txt)
   certidoes/
     catalogo.js               Serviços oficiais de certidão criminal (27 TJs, TRF1 a TRF6, STM, TJMs, TSE, STF, STJ, PF, BNMP)
