@@ -97,6 +97,15 @@ _hub/  (publicada cifrada em hub/)
     apresentacao/             Lâminas institucionais (JPG), ícones e logotipo extraídos do modelo do escritório (públicos)
     app.js                    Formulário com rascunho local, anexos com revisão antes de aplicar, panorama, redação pelo
                               Claude, diagnóstico editável (edições salvas no navegador) em Word e apresentação
+  pdf/
+    nucleo.js                 Bibliotecas sob demanda (pdf.js, pdf-lib, qpdf em WebAssembly, Tesseract, mammoth, SheetJS,
+                              PptxGenJS, html2pdf, jsdiff), texto com posição, .docx mínimo, perfil sRGB e downloads
+    visor.js                  Grade de miniaturas (selecionar, girar, reordenar) e visor de página com objetos (texto,
+                              imagem, formas, desenho, assinatura, tarja, recorte e campos), com conversão para o PDF
+    ferramentas.js            As 33 ferramentas: registro, opções e execução
+    office.js                 Word, Excel, PowerPoint e HTML para PDF; PDF para PowerPoint e Excel
+    ia.js                     Resumo, tradução e refino de Markdown pelo Claude (chave do usuário)
+    app.js                    Grade das ferramentas, mesa de trabalho e resultados
   certidoes/
     catalogo.js               Serviços oficiais de certidão criminal (27 TJs, TRF1 a TRF6, STM, TJMs, TSE, STF, STJ, PF, BNMP)
     leitor.js                 Leitura das certidões em PDF: órgão, resultado, datas, números CNJ e conferência do pesquisado
