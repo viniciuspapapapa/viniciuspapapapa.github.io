@@ -114,6 +114,7 @@ for (const rel of arquivos) {
   const origem = path.join(FONTE, rel), destino = path.join(SAIDA, rel);
   await fs.mkdir(path.dirname(destino), { recursive: true });
   if (rel.startsWith("login/")) { await fs.copyFile(origem, destino); nPub++; continue; }
+  if (rel.startsWith("vendor/")) { await fs.copyFile(origem, destino); nPub++; continue; } /* bibliotecas abertas, públicas */
   if (/\.html$/i.test(rel)) {
     const html = await incorporar(rel, await fs.readFile(origem, "utf8"));
     await fs.writeFile(destino, casca(b64(await cifrar(chave, new TextEncoder().encode(html)))));

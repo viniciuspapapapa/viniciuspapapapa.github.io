@@ -179,9 +179,9 @@
     opcoes: [{ id: "lingua", tipo: "select", rot: "Idioma do documento", valores: [["por", "Português"], ["eng", "Inglês"], ["spa", "Espanhol"], ["por+eng", "Português e inglês"]], padrao: "por" },
       { id: "pular", tipo: "check", rot: "Pular as páginas que já têm texto", padrao: true }],
     async executar({ arquivos, op, ui }) {
-      await X.carregar("pdflib", "tesseract"); const f = so1(arquivos), b = await X.bytesDe(f), pdf = await X.abrirJs(b), doc = await X.abrirLib(b);
+      await X.carregar("pdflib"); const f = so1(arquivos), b = await X.bytesDe(f), pdf = await X.abrirJs(b), doc = await X.abrirLib(b);
       ui.prog("Preparando o reconhecimento de texto (na primeira vez, o idioma é baixado)", 0.02);
-      const w = await root.Tesseract.createWorker(op.lingua || "por"); let feitas = 0;
+      const w = await X.tesseract(op.lingua || "por"); let feitas = 0;
       try {
         for (let i = 1; i <= pdf.numPages; i++) {
           const pg = await pdf.getPage(i);
@@ -329,7 +329,7 @@
           else { const [cp] = await doc.copyPages(fonte, [i]); doc.addPage(cp); }
         }
         if (op.ocr) {
-          await X.carregar("tesseract"); const w = await root.Tesseract.createWorker("por");
+          await X.carregar("tesseract"); const w = await X.tesseract("por");
           try {
             for (const i of rasterizar) {
               ui.prog("Reconhecendo o texto da página " + (i + 1) + " para mantê-lo pesquisável", 0.75 + 0.1 * i / fonte.getPageCount());
@@ -648,6 +648,7 @@
     } });
 
   /* ================================================================== Inteligência (IA) */
+  const ia = () => { if (!root.PDF_IA) throw new Error("O módulo de IA não foi carregado: a rede pode estar bloqueando cdn.jsdelivr.net. As demais ferramentas funcionam normalmente."); return root.PDF_IA; };
   const IA_OP = [{ id: "ocr", tipo: "check", rot: "Ler páginas digitalizadas com OCR", padrao: true }];
   def({ id: "resumir", cat: "Inteligência", nome: "Resumir PDF", desc: "Gere um resumo objetivo do documento, com os pontos principais, pelo Claude.", aceita: PDF, botao: "Resumir", ia: true,
     opcoes: [{ id: "tamanho", tipo: "select", rot: "Extensão", valores: [["curto", "Curto (um parágrafo)"], ["medio", "Médio (pontos principais)"], ["detalhado", "Detalhado (por seção)"]], padrao: "medio" },
@@ -656,7 +657,7 @@
       const f = so1(arquivos), texto = (await X.textoTodo(await X.bytesDe(f), { ocr: op.ocr, prog: ui.prog })).texto().slice(0, 600000);
       if (texto.trim().length < 40) throw new Error("O PDF não tem texto suficiente. Marque o OCR para documentos digitalizados.");
       const ext = { curto: "um único parágrafo de até 120 palavras", medio: "uma introdução de duas frases seguida dos pontos principais, em até 400 palavras", detalhado: "um resumo organizado pelas seções do documento, com os pontos relevantes de cada uma, em até 1.200 palavras" }[op.tamanho];
-      const md = await root.PDF_IA.gerar({ sistema: "Você resume documentos com precisão, em português do Brasil, sem inventar informações. Use somente o que está no texto. Responda em Markdown, com títulos curtos quando úteis.", usuario: "Resuma o documento abaixo em " + ext + "." + (op.foco ? " Dê ênfase a: " + op.foco + "." : "") + "\n\n<documento>\n" + texto + "\n</documento>", ui });
+      const md = await ia().gerar({ sistema: "Você resume documentos com precisão, em português do Brasil, sem inventar informações. Use somente o que está no texto. Responda em Markdown, com títulos curtos quando úteis.", usuario: "Resuma o documento abaixo em " + ext + "." + (op.foco ? " Dê ênfase a: " + op.foco + "." : "") + "\n\n<documento>\n" + texto + "\n</documento>", ui });
       return { html: '<div class="md">' + mdHtml(md) + "</div>", saidas: [{ nome: X.base(f.name) + "_resumo.docx", blob: await X.docx(mdBlocos(md)) }, { nome: X.base(f.name) + "_resumo.md", blob: new Blob([md], { type: "text/markdown" }) }] };
     } });
   def({ id: "traduzir", cat: "Inteligência", nome: "Traduzir PDF", desc: "Traduza o documento pelo Claude, preservando títulos, parágrafos e listas.", aceita: PDF, botao: "Traduzir", ia: true,
@@ -669,7 +670,7 @@
       let saida = "";
       for (let i = 0; i < partes.length; i++) {
         ui.prog("Traduzindo a parte " + (i + 1) + " de " + partes.length, (i + 0.5) / partes.length);
-        saida += (await root.PDF_IA.gerar({ sistema: "Você é tradutor jurídico profissional. Traduza fielmente, com terminologia técnica correta, preservando exatamente a marcação Markdown (títulos, listas, tabelas e quebras de página). Não acrescente comentários nem notas.", usuario: "Traduza para " + op.lingua + ":\n\n" + partes[i], ui, silencioso: true })) + "\n\n";
+        saida += (await ia().gerar({ sistema: "Você é tradutor jurídico profissional. Traduza fielmente, com terminologia técnica correta, preservando exatamente a marcação Markdown (títulos, listas, tabelas e quebras de página). Não acrescente comentários nem notas.", usuario: "Traduza para " + op.lingua + ":\n\n" + partes[i], ui, silencioso: true })) + "\n\n";
       }
       return { html: '<div class="md">' + mdHtml(saida) + "</div>", saidas: [{ nome: X.base(f.name) + "_traduzido.docx", blob: await X.docx(mdBlocos(saida)) }, { nome: X.base(f.name) + "_traduzido.md", blob: new Blob([saida], { type: "text/markdown" }) }] };
     } });
@@ -720,7 +721,7 @@
     async executar({ arquivos, op, ui }) {
       const f = so1(arquivos); let md = paraMarkdown(await X.textoTodo(await X.bytesDe(f), { ocr: op.ocr, prog: ui.prog }));
       if (md.trim().length < 2) throw new Error("O PDF não tem texto reconhecível.");
-      if (op.refinar) md = await root.PDF_IA.gerar({ sistema: "Você converte texto extraído de PDF em Markdown limpo, corrigindo quebras de linha, hifenização, títulos, listas e tabelas, sem alterar nem resumir o conteúdo.", usuario: "Reestruture este Markdown extraído de um PDF, preservando todo o conteúdo:\n\n" + md.slice(0, 400000), ui });
+      if (op.refinar) md = await ia().gerar({ sistema: "Você converte texto extraído de PDF em Markdown limpo, corrigindo quebras de linha, hifenização, títulos, listas e tabelas, sem alterar nem resumir o conteúdo.", usuario: "Reestruture este Markdown extraído de um PDF, preservando todo o conteúdo:\n\n" + md.slice(0, 400000), ui });
       return { html: '<div class="md">' + mdHtml(md) + "</div>", saidas: [{ nome: X.base(f.name) + ".md", blob: new Blob([md], { type: "text/markdown" }) }] };
     } });
 

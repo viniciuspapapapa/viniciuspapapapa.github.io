@@ -260,6 +260,18 @@
         <div style="grid-column:span 2;align-self:end"><label class="check"><input type="checkbox" id="apInst" checked> Incluir as lâminas institucionais do escritório</label></div>
       </div>
       <div id="apModal" style="margin-top:10px"></div>
+      <details class="cfg" style="margin-top:10px" id="apContato">
+        <summary>Última lâmina: responsável e endereços</summary>
+        <p class="pequeno mudo" style="margin:8px 0">Dados da pessoa que apresenta e dos escritórios na lâmina final. Ficam guardados neste navegador para as próximas apresentações.</p>
+        <div class="grade g4">
+          <label class="campo">Nome<input type="text" id="apcNome" autocomplete="off"></label>
+          <label class="campo">Cargo<input type="text" id="apcCargo" autocomplete="off"></label>
+          <label class="campo">Telefone<input type="text" id="apcTel" autocomplete="off"></label>
+          <label class="campo">E-mail<input type="text" id="apcEmail" autocomplete="off"></label>
+          <label class="campo" style="grid-column:1/-1">Endereços dos escritórios (cidades em maiúsculas viram títulos; linha em branco separa os blocos)<textarea id="apcEnd" rows="9"></textarea></label>
+        </div>
+        <div class="linha-btns" style="margin-top:8px"><button type="button" class="btn sec peq" id="apcPadrao">Restaurar os dados do modelo</button></div>
+      </details>
       <details class="cfg" style="margin-top:10px">
         <summary>Texto do 3º passo (usufruto)</summary>
         <label class="campo" style="margin-top:8px">Deixe em branco para usar o texto padrão<textarea id="apUsufruto" rows="3"></textarea></label>
