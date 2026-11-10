@@ -150,4 +150,32 @@
     document.querySelector("main").prepend(av);
   });
   window.PDF_APP = { E, abrir, adicionar };
+
+  /* ------------------------------------------------------------------ diagnóstico */
+  async function diagnostico() {
+    const out = $("#diagRes"), linhas = [], add = (n, ok, d) => { linhas.push((ok ? "OK    " : "FALHA ") + n + (d ? ": " + d : "")); out.textContent = linhas.join("\n"); };
+    $("#diag").disabled = true; out.textContent = "Verificando…";
+    add("Navegador", true, navigator.userAgent);
+    add("Endereço", true, location.href.split("#")[0]);
+    add("WebAssembly", typeof WebAssembly === "object", typeof WebAssembly === "object" ? "" : "desativado (segurança reforçada do Edge ou política da empresa); OCR, PDF/A e reparo não funcionarão");
+    add("Web Workers", typeof Worker === "function");
+    for (const [nome, rot] of [["pdflib", "pdf-lib"], ["pdfjs", "pdf.js"], ["jszip", "JSZip"], ["mammoth", "mammoth"], ["xlsx", "SheetJS"], ["pptx", "PptxGenJS"], ["diff", "jsdiff"], ["html2pdf", "html2pdf"], ["qpdf", "qpdf"]]) {
+      const t0 = performance.now();
+      try { await X.carregar(nome); add(rot, true, Math.round(performance.now() - t0) + " ms"); } catch (e) { add(rot, false, e.message); }
+    }
+    try {
+      const doc = await window.PDFLib.PDFDocument.create(); doc.addPage([200, 200]); const bytes = await doc.save();
+      const pdf = await X.abrirJs(bytes); const pag = await pdf.getPage(1); await X.renderizar(pag, 1); add("Leitura e geração de PDF", true, pdf.numPages + " página de teste");
+    } catch (e) { add("Leitura e geração de PDF", false, e.message || String(e)); }
+    if (typeof WebAssembly === "object") {
+      try { const w = await X.tesseract("por"); await w.terminate(); add("OCR (Tesseract)", true); } catch (e) { add("OCR (Tesseract)", false, e.message || String(e)); }
+    }
+    if ((window.PDF_FALHAS || []).length) add("Erros registrados na página", false, window.PDF_FALHAS.join(" · "));
+    linhas.push("", "Data: " + new Date().toLocaleString("pt-BR")); out.textContent = linhas.join("\n");
+    $("#diag").disabled = false; $("#diagCopiar").hidden = false;
+  }
+  $("#diag").addEventListener("click", diagnostico);
+  $("#diagCopiar").addEventListener("click", async () => {
+    try { await navigator.clipboard.writeText($("#diagRes").textContent); window.HUB.toast("Resultado copiado."); } catch (e) { window.HUB.toast("Selecione o texto e copie manualmente."); }
+  });
 })();

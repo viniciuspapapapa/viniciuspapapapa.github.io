@@ -100,7 +100,7 @@ var orig=window.fetch.bind(window),TIPOS={pdf:"application/pdf",docx:"applicatio
 window.fetch=async function(input,init){var url;try{url=new URL(typeof input==="string"?input:(input&&input.url)||String(input),location.href);}catch(e){return orig(input,init);}
 if(url.origin===location.origin&&ENC.indexOf(url.pathname)>=0){var r=await orig(url.pathname+".enc",init);if(!r.ok)return r;var b=await dec(new Uint8Array(await r.arrayBuffer()));return new Response(b,{status:200,headers:{"content-type":TIPOS[url.pathname.split(".").pop().toLowerCase()]||"application/octet-stream"}});}
 return orig(input,init);};
-document.open();document.write(html);document.close();
+try{document.open();document.write(html);document.close();}catch(e2){try{document.close();}catch(_){}(document.body||document.documentElement).innerHTML='<p style="font:16px system-ui,sans-serif;padding:24px;max-width:640px">Não foi possível abrir esta página do HUB neste navegador ('+String(e2&&e2.message||e2).replace(/</g,"&lt;")+'). Atualize a página; se persistir, envie esta mensagem ao administrador do HUB.</p>';}
 }catch(e){try{sessionStorage.removeItem("hub_chave");localStorage.removeItem("hub_chave");}catch(_){}vai();}
 })();`;
 const casca = cifra => `<!DOCTYPE html>
