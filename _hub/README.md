@@ -113,6 +113,12 @@ _hub/  (publicada cifrada em hub/)
     app.js                    Pesquisa por CPF/CNPJ, nome, telefone e placa em fontes públicas (DJEN do CNJ, Querido Diário,
                               Portal da Transparência pelo serviço sherlock-tpc em /publico, BrasilAPI), consultas oficiais
                               com captcha, histórico mascarado e relatório Word com finalidade e horários
+  doutrina/
+    app.js                    Pesquisa doutrinária: base cifrada do ramo doutrina-base (gerada por _ferramentas/doutrina/
+                              no fluxo doutrina.yml), cache no navegador, busca inteligente com Claude, citação ABNT,
+                              visualização do PDF do Drive, exportação em Word e botão de atualização (serviço sherlock-tpc)
+    motor.js                  Motor de busca (Web Worker): normalização, radicais, expressões exatas, relevância e trechos
+    obras.js                  Dados bibliográficos revisados de cada obra (por ID do Drive), usados nas citações
   vendor/                     Bibliotecas abertas hospedadas no HUB (publicadas sem cifra; versões em VERSOES.txt)
   certidoes/
     catalogo.js               Serviços oficiais de certidão criminal (27 TJs, TRF1 a TRF6, STM, TJMs, TSE, STF, STJ, PF, BNMP)

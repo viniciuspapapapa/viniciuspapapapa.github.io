@@ -1,0 +1,86 @@
+# Base da Pesquisa doutrinária do HUB: lê a pasta de livros do Google Drive, extrai o texto (com OCR das páginas
+# escaneadas) e publica a base cifrada no ramo "doutrina-base". Roda pelo botão "Atualizar base" do HUB (via serviço
+# sherlock-tpc), uma vez por dia e quando o indexador muda. O texto em claro fica só no cache privado do Actions.
+name: Base da pesquisa doutrinária
+
+on:
+  workflow_dispatch:
+    inputs:
+      refazer:
+        description: 'IDs do Drive a reprocessar, separados por vírgula (ou "todos")'
+        required: false
+        default: ''
+  schedule:
+    - cron: '41 8 * * *'   # 05:41 em Brasília
+  push:
+    branches: [main]
+    paths:
+      - '_ferramentas/doutrina/**'
+      - '.github/workflows/doutrina.yml'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: doutrina-base
+  cancel-in-progress: false
+
+jobs:
+  indexar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 340
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Recuperar a base publicada
+        run: |
+          mkdir -p base-doutrina
+          if git fetch --depth=1 origin doutrina-base 2>/dev/null; then
+            git archive FETCH_HEAD | tar -x -C base-doutrina
+          fi
+          ls base-doutrina || true
+
+      - name: Recuperar o texto já processado (cache privado)
+        uses: actions/cache/restore@v4
+        with:
+          path: trabalho-doutrina
+          key: doutrina-trabalho-${{ github.run_id }}
+          restore-keys: doutrina-trabalho-
+
+      - name: Instalar Poppler e Tesseract (português)
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq poppler-utils tesseract-ocr tesseract-ocr-por > /dev/null
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Indexar os livros
+        env:
+          HUB_SENHA: ${{ secrets.HUB_SENHA }}
+          DOUTRINA_REFAZER: ${{ github.event.inputs.refazer }}
+          DOUTRINA_LIMITE: '300'
+        run: |
+          if [ -z "$HUB_SENHA" ]; then
+            echo "::error::Cadastre a senha do HUB no segredo HUB_SENHA."
+            exit 1
+          fi
+          node _ferramentas/doutrina/indexar.mjs
+
+      - name: Guardar o texto processado (cache privado)
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: trabalho-doutrina
+          key: doutrina-trabalho-${{ github.run_id }}
+
+      - name: Publicar a base cifrada no ramo doutrina-base
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cd base-doutrina
+          git init -q -b doutrina-base
+          git add -A
+          git -c user.name="HUB TPC" -c user.email="41898282+github-actions[bot]@users.noreply.github.com" commit -q -m "Base da pesquisa doutrinária"
+          git push -q -f "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" doutrina-base
