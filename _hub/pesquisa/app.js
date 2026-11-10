@@ -41,7 +41,7 @@
   /* ------------------------------------------------------------------ montagem das consultas */
   const hoje = () => new Date();
   function tarefas(t) {
-    const L = [], temChave = !!$("#chaveT").value.trim();
+    const L = [], temChave = true; /* a chave pode estar no navegador ou no segredo TRANSPARENCIA_KEY do serviço */
     const T = (titulo, base, fn) => L.push({ titulo, base, fn });
     if (t.cpf) {
       T("CPF: validação e região fiscal", "Cálculo dos dígitos verificadores (Receita Federal)", async () => ({ dl: [["CPF", t.cpfFmt], ["Dígitos verificadores", cpfValido(t.cpf) ? "válidos" : "inválidos"], ["Região fiscal de emissão", REGIAO[+t.cpf[8]] + " (pelo 9º dígito)"]], vazio: false }));
@@ -82,7 +82,6 @@
         return { itens: g.map(x => ({ t: x.territory_name + "/" + x.state_code, s: br(x.date), x: (x.excerpts || []).map(limpa).join(" … ").slice(0, 500), link: x.url })), vazio: !g.length, resumo: g.length ? (d.total_gazettes || g.length) + ((d.total_gazettes || g.length) === 1 ? " edição com o nome" : " edições com o nome") : "" };
       });
       if (temChave) {
-        T("Servidor público federal (por nome)", "CGU, API de dados, servidores", async () => lista(await transp("servidores", { nome: t.nome }), servidor));
         T("Pessoa politicamente exposta (por nome)", "CGU, API de dados, peps", async () => lista(await transp("peps", { nome: t.nome }), pep));
         T("Sanções CEIS, CNEP e CEAF (por nome)", "CGU, cadastros de sanções", async () => lista((await transp("ceis", { nomeSancionado: t.nome })).concat(await transp("cnep", { nomeSancionado: t.nome }), await transp("ceaf", { nomeSancionado: t.nome })), sancao));
       }
@@ -104,7 +103,7 @@
     return L;
   }
   const VINC = { favorecidoDespesas: "favorecido em despesas públicas", servidor: "servidor público", servidorInativo: "servidor inativo", pensionistaOuRepresentante: "pensionista ou representante", beneficiarioDiarias: "beneficiário de diárias", participanteLicitacao: "participante de licitação", contratado: "contratado pelo poder público", sancionadoCEIS: "sancionado no CEIS", sancionadoCNEP: "sancionado no CNEP", sancionadoCEAF: "sancionado no CEAF", permissionario: "permissionário", portadorCPGF: "portador de cartão de pagamento do governo", portadorCPDC: "portador de cartão de defesa civil", favorecidoTransferencias: "favorecido em transferências", favorecidoBolsaFamilia: "Bolsa Família", favorecidoAuxilioEmergencial: "auxílio emergencial", favorecidoSafra: "Garantia-Safra", favorecidoBPC: "BPC", favorecidoPeti: "PETI", favorecidoSeguroDefeso: "Seguro-Defeso", emitenteNfe: "emitente de nota fiscal", instituidorPensao: "instituidor de pensão" };
-  const g = (o, ...ks) => { for (const k of ks) { const v = k.split(".").reduce((a, c) => a && a[c], o); if (v != null && v !== "") return v; } return ""; };
+  const g = (o, ...ks) => { for (const k of ks) { let v = k.split(".").reduce((a, c) => a && a[c], o); if (typeof v === "string") v = v.trim(); if (v != null && v !== "") return v; } return ""; };
   const servidor = o => ({ t: g(o, "servidor.pessoa.nome", "pessoa.nome", "nome"), s: [g(o, "servidor.situacao", "situacao"), g(o, "fichasCargoEfetivo.0.orgaoServidorLotacao", "fichasCargoEfetivo.0.uorgLotacao", "servidor.orgaoServidorLotacao.nome"), g(o, "fichasCargoEfetivo.0.cargo", "fichasFuncao.0.funcao")].filter(Boolean).join(" · ") });
   const pep = o => ({ t: g(o, "nome"), s: [g(o, "descricao_funcao", "descricaoFuncao"), g(o, "nome_orgao", "orgaoServidorLotacao"), g(o, "dt_inicio_exercicio", "dataInicioExercicio") && "desde " + g(o, "dt_inicio_exercicio", "dataInicioExercicio")].filter(Boolean).join(" · ") });
   const sancao = o => ({ t: g(o, "sancionado.nome", "pessoa.nome", "punicao.nomeSancionado", "nomeSancionado", "pessoa.razaoSocialReceita"), s: [g(o, "tipoSancao.descricaoResumida", "tipoPunicao.descricao", "tipoSancao.descricaoPortal"), g(o, "orgaoSancionador.nome", "orgaoLotacao.nome"), g(o, "dataInicioSancao", "dataPublicacao") && "início " + g(o, "dataInicioSancao", "dataPublicacao"), g(o, "dataFimSancao") && "fim " + g(o, "dataFimSancao")].filter(Boolean).join(" · ") });
@@ -163,11 +162,10 @@
     E.termos = t; E.quando = hoje(); E.fontes = []; E.manuais = manuais(t).map(m => Object.assign(m, { feito: false }));
     $("#pesquisar").disabled = true; $("#resBloco").hidden = false; desenharManuais();
     const L = tarefas(t); let n = 0;
-    if (!$("#chaveT").value.trim() && (t.cpf || t.cnpj || t.nome)) E.fontes.push({ titulo: "Portal da Transparência (CGU)", base: "Servidores, PEP, sanções e vínculos", status: "config", msg: "Não consultado: informe a chave gratuita da API em Configuração das fontes.", quando: hoje() });
     await Promise.all(L.map(async f => {
       const reg = { titulo: f.titulo, base: f.base, status: "carregando", quando: null }; E.fontes.push(reg); desenhar();
       try { const r = await f.fn(); Object.assign(reg, r, { status: r.vazio && !r.dl ? "vazio" : "ok", quando: hoje() }); if (r.nome && !t.nome) reg.sugestao = r.nome; }
-      catch (e) { Object.assign(reg, { status: "erro", msg: e.message || String(e), quando: hoje() }); }
+      catch (e) { const m = e.message || String(e), cfg = /Informe a chave/.test(m); Object.assign(reg, { status: cfg ? "config" : "erro", msg: cfg ? "Não consultado: a chave da API do Portal da Transparência não está configurada (em Configuração das fontes ou no serviço)." : m, quando: hoje() }); }
       n++; prog("Consultando as fontes: " + n + " de " + L.length, n / L.length); desenhar();
     }));
     prog("Pesquisa concluída em " + E.quando.toLocaleString("pt-BR") + ".", null); $("#pesquisar").disabled = false;
