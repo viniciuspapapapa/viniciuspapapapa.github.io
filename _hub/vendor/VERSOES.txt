@@ -1,0 +1,4 @@
+Bibliotecas abertas hospedadas no próprio HUB, para que as ferramentas funcionem mesmo em redes que bloqueiam CDNs.
+pdf-lib 1.17.1 (MIT) · pdf.js 3.11.174 (Apache-2.0) · JSZip 3.10.1 (MIT) · Tesseract.js 5.1.1 e tesseract.js-core 5.1.1 (Apache-2.0)
+tessdata 4.0.0_best_int por, eng, spa (Apache-2.0) · mammoth 1.6.0 (BSD-2) · html2pdf.js 0.10.1 (MIT) · PptxGenJS 3.12.0 (MIT)
+SheetJS xlsx 0.18.5 (Apache-2.0) · jsdiff 5.1.0 (BSD-3) · qpdf-wasm 0.3.1 / qpdf (Apache-2.0)

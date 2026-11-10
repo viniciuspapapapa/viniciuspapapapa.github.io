@@ -3,38 +3,51 @@
    Tudo roda no navegador; nenhum arquivo é enviado a servidores, salvo nas ferramentas de IA, por decisão do usuário. */
 (function (root) {
   "use strict";
+  /* As bibliotecas ficam hospedadas no próprio HUB (pasta vendor), para funcionar em redes que bloqueiam CDNs;
+     se a cópia local falhar, tenta a CDN pública. */
+  const V = new URL("../vendor/", location.href).href, CDNJS = "https://cdnjs.cloudflare.com/ajax/libs/", JSD = "https://cdn.jsdelivr.net/npm/";
   const LIBS = {
-    pdflib: { url: "https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js", ok: () => root.PDFLib },
-    pdfjs: { url: "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js", ok: () => root.pdfjsLib },
-    jszip: { url: "https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js", ok: () => root.JSZip },
-    tesseract: { url: "https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js", ok: () => root.Tesseract },
-    mammoth: { url: "https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js", ok: () => root.mammoth },
-    html2pdf: { url: "https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js", ok: () => root.html2pdf },
-    pptx: { url: "https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js", ok: () => root.PptxGenJS },
-    xlsx: { url: "https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js", ok: () => root.XLSX },
-    diff: { url: "https://cdnjs.cloudflare.com/ajax/libs/jsdiff/5.1.0/diff.min.js", ok: () => root.Diff },
-    qpdf: { url: "https://cdn.jsdelivr.net/npm/@neslinesli93/qpdf-wasm@0.3.1/dist/qpdf.js", ok: () => N.qpdfFabrica }
+    pdflib: { urls: [V + "pdf-lib/pdf-lib.min.js", CDNJS + "pdf-lib/1.17.1/pdf-lib.min.js"], ok: () => root.PDFLib },
+    pdfjs: { urls: [V + "pdfjs/pdf.min.js", CDNJS + "pdf.js/3.11.174/pdf.min.js"], ok: () => root.pdfjsLib },
+    jszip: { urls: [V + "jszip/jszip.min.js", CDNJS + "jszip/3.10.1/jszip.min.js"], ok: () => root.JSZip },
+    tesseract: { urls: [V + "tesseract/tesseract.min.js", JSD + "tesseract.js@5.1.1/dist/tesseract.min.js"], ok: () => root.Tesseract },
+    mammoth: { urls: [V + "mammoth/mammoth.browser.min.js", CDNJS + "mammoth/1.6.0/mammoth.browser.min.js"], ok: () => root.mammoth },
+    html2pdf: { urls: [V + "html2pdf/html2pdf.bundle.min.js", CDNJS + "html2pdf.js/0.10.1/html2pdf.bundle.min.js"], ok: () => root.html2pdf },
+    pptx: { urls: [V + "pptxgenjs/pptxgen.bundle.js", JSD + "pptxgenjs@3.12.0/dist/pptxgen.bundle.js"], ok: () => root.PptxGenJS },
+    xlsx: { urls: [V + "xlsx/xlsx.full.min.js", CDNJS + "xlsx/0.18.5/xlsx.full.min.js"], ok: () => root.XLSX },
+    diff: { urls: [V + "jsdiff/diff.min.js", CDNJS + "jsdiff/5.1.0/diff.min.js"], ok: () => root.Diff },
+    qpdf: { urls: [V + "qpdf/qpdf.js", JSD + "@neslinesli93/qpdf-wasm@0.3.1/dist/qpdf.js"], ok: () => N.qpdfFabrica }
   };
-  const QPDF_WASM = "https://cdn.jsdelivr.net/npm/@neslinesli93/qpdf-wasm@0.3.1/dist/qpdf.wasm";
-  const PDFJS_WORKER = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+  const QPDF_WASM = [V + "qpdf/qpdf.wasm", JSD + "@neslinesli93/qpdf-wasm@0.3.1/dist/qpdf.wasm"];
+  const PDFJS_WORKER = V + "pdfjs/pdf.worker.min.js";
+  const H2P = V + "html2pdf/html2pdf.bundle.min.js";
+  const TESS = { workerPath: V + "tesseract/worker.min.js", corePath: V + "tesseract-core", langPath: V + "tessdata" };
   const promessas = {};
 
+  const script = url => new Promise((ok, falha) => { const s = document.createElement("script"); s.src = url; s.async = true; s.onload = ok; s.onerror = () => { s.remove(); falha(); }; document.head.appendChild(s); });
   function carregar(...nomes) {
     return Promise.all(nomes.map(nome => {
       const L = LIBS[nome];
       if (L.ok()) return Promise.resolve();
-      if (!promessas[nome]) promessas[nome] = new Promise((ok, falha) => {
-        const s = document.createElement("script"); s.src = L.url; s.async = true;
-        s.onload = () => {
+      if (!promessas[nome]) promessas[nome] = (async () => {
+        for (const url of L.urls) {
+          try { await script(url); } catch (e) { continue; }
           if (nome === "qpdf") { N.qpdfFabrica = root.Module; try { delete root.Module; } catch (e) { root.Module = undefined; } }
           if (nome === "pdfjs") root.pdfjsLib.GlobalWorkerOptions.workerSrc = PDFJS_WORKER;
-          L.ok() ? ok() : falha(new Error("A biblioteca " + nome + " não foi carregada."));
-        };
-        s.onerror = () => { delete promessas[nome]; falha(new Error("Não foi possível carregar a biblioteca " + nome + ". Verifique a conexão.")); };
-        document.head.appendChild(s);
-      });
+          if (L.ok()) return;
+        }
+        delete promessas[nome];
+        throw new Error("Não foi possível carregar um componente da ferramenta (" + nome + "). A rede, o antivírus ou um bloqueador de anúncios pode estar impedindo o download. Recarregue a página; se persistir, peça à TI para liberar o endereço viniciuspapapapa.github.io.");
+      })();
       return promessas[nome];
     }));
+  }
+  function exigeWasm() { if (typeof WebAssembly !== "object") throw new Error("Este navegador está com o WebAssembly desativado (por exemplo, pelo modo de segurança reforçada do Microsoft Edge ou por política da empresa). Abra o HUB no Google Chrome ou adicione o site às exceções da segurança reforçada do Edge."); }
+  async function tesseract(linguas) {
+    exigeWasm(); await carregar("tesseract");
+    const ls = String(linguas || "por").split("+");
+    try { return await root.Tesseract.createWorker(ls, 1, TESS); }
+    catch (e) { return await root.Tesseract.createWorker(ls); }
   }
 
   /* ------------------------------------------------------------------ arquivos */
@@ -169,8 +182,7 @@
         if (opc.prog) opc.prog("Lendo a página " + i + " de " + pdf.numPages, i / pdf.numPages);
         const L = await layout(pdf, i);
         if (opc.ocr && L.itens.length < 3) {
-          await carregar("tesseract");
-          if (!worker) worker = await root.Tesseract.createWorker(opc.lingua || "por");
+          if (!worker) worker = await tesseract(opc.lingua || "por");
           const cv = await renderizar(await pdf.getPage(i), 2.2);
           const r = await worker.recognize(cv);
           L.ocr = true; L.textoOcr = r.data.text;
@@ -187,7 +199,8 @@
   let wasmBin = null;
   async function qpdf(args, entradas, saidas) {
     await carregar("qpdf");
-    if (!wasmBin) { const r = await fetch(QPDF_WASM); if (!r.ok) throw new Error("Não foi possível baixar o qpdf."); wasmBin = new Uint8Array(await r.arrayBuffer()); }
+    exigeWasm();
+    if (!wasmBin) { for (const u of QPDF_WASM) { try { const r = await fetch(u); if (r.ok) { wasmBin = new Uint8Array(await r.arrayBuffer()); break; } } catch (e) { /* tenta a próxima origem */ } } if (!wasmBin) throw new Error("Não foi possível baixar o componente qpdf. A rede pode estar bloqueando arquivos .wasm."); }
     const msgs = [];
     const m = await N.qpdfFabrica({ wasmBinary: wasmBin.slice(0), noInitialRun: true, print: t => msgs.push(t), printErr: t => msgs.push(t) });
     Object.keys(entradas).forEach(nome => m.FS.writeFile(nome, entradas[nome]));
@@ -274,5 +287,5 @@
     return { bytes: new Uint8Array(await (await blobDe(cv, "image/jpeg", q || 0.92)).arrayBuffer()), w: bmp.width, h: bmp.height, canvas: cv };
   }
 
-  const N = root.PDFX = { carregar, bytesDe, ehPdf, base, tam, abrirLib, abrirJs, renderizar, blobDe, miniaturas, intervalos, grupos, layout, corpoFs, blocos, tabela, textoTodo, qpdf, estaCriptografado, docx, iccSrgb, baixar, zip, pdfBlob, corRgb, imagemParaJpeg, xe };
+  const N = root.PDFX = { H2P, tesseract, exigeWasm, carregar, bytesDe, ehPdf, base, tam, abrirLib, abrirJs, renderizar, blobDe, miniaturas, intervalos, grupos, layout, corpoFs, blocos, tabela, textoTodo, qpdf, estaCriptografado, docx, iccSrgb, baixar, zip, pdfBlob, corRgb, imagemParaJpeg, xe };
 })(window);

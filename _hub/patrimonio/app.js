@@ -8,7 +8,7 @@ import Anthropic from "https://cdn.jsdelivr.net/npm/@anthropic-ai/sdk@1.1.0/+esm
   const $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAll(s)];
   const ler = k => { try { return localStorage.getItem(k); } catch (e) { return null; } };
   const gravar = (k, v) => { try { if (v == null) localStorage.removeItem(k); else localStorage.setItem(k, v); } catch (e) { /* armazenamento indisponível */ } };
-  const K_CHAVE = "hub_claude_chave", K_CONS = "patrimonio_consentimento_anthropic", K_RASC = "patrimonio_rascunho", K_TXT = "patrimonio_texto_editado", K_AP = "patrimonio_apresentacao";
+  const K_CHAVE = "hub_claude_chave", K_CONS = "patrimonio_consentimento_anthropic", K_RASC = "patrimonio_rascunho", K_TXT = "patrimonio_texto_editado", K_AP = "patrimonio_apresentacao", K_CONT = "patrimonio_contato_apresentacao";
   const PRECOS = { "claude-opus-5-5": [4, 20], "claude-sonnet-5-5": [2, 10] }, SAIDA = 22000;
   const E = { r: null, d: null, blocos: null, fonte: "regras", ctrl: null, iaDados: "" };
 
@@ -207,7 +207,13 @@ import Anthropic from "https://cdn.jsdelivr.net/npm/@anthropic-ai/sdk@1.1.0/+esm
   const A = window.PAT_APRES;
   let apCfg = {}; try { apCfg = JSON.parse(ler(K_AP) || "{}") || {}; } catch (e) { apCfg = {}; }
   function restaurarAp(c) { apCfg = c || {}; $("#apHolding").value = apCfg.holding || ""; $("#apInst").checked = apCfg.institucional !== false; $("#apUsufruto").value = apCfg.textoUsufruto || ""; }
-  function lerAp() { apCfg.holding = $("#apHolding").value.trim(); apCfg.institucional = $("#apInst").checked; apCfg.textoUsufruto = $("#apUsufruto").value.trim(); apCfg.modalidades = apCfg.modalidades || {}; $$("[data-mod]").forEach(s => { apCfg.modalidades[s.dataset.mod] = s.value; }); gravar(K_AP, JSON.stringify(apCfg)); }
+  const CAMPOS_CONT = [["nome", "#apcNome"], ["cargo", "#apcCargo"], ["telefone", "#apcTel"], ["email", "#apcEmail"], ["enderecos", "#apcEnd"]];
+  function restaurarContato(c) { const base = Object.assign({}, A.CONTATO, c || {}); CAMPOS_CONT.forEach(([k, sel]) => { $(sel).value = base[k] || ""; }); }
+  function lerContato() { const c = {}; CAMPOS_CONT.forEach(([k, sel]) => { c[k] = $(sel).value.trim(); }); gravar(K_CONT, JSON.stringify(c)); return c; }
+  { let c = null; try { c = JSON.parse(ler(K_CONT) || "null"); } catch (e) { c = null; } restaurarContato(c); }
+  CAMPOS_CONT.forEach(([, sel]) => $(sel).addEventListener("input", agendarApres));
+  $("#apcPadrao").onclick = () => { restaurarContato(null); agendarApres(); };
+  function lerAp() { apCfg.contato = lerContato(); apCfg.holding = $("#apHolding").value.trim(); apCfg.institucional = $("#apInst").checked; apCfg.textoUsufruto = $("#apUsufruto").value.trim(); apCfg.modalidades = apCfg.modalidades || {}; $$("[data-mod]").forEach(s => { apCfg.modalidades[s.dataset.mod] = s.value; }); gravar(K_AP, JSON.stringify(apCfg)); }
   function modalidades() {
     const fs = ((E.d && E.d.filhos) || []).filter(f => f.nome), mod = apCfg.modalidades || {};
     const atual = $$("[data-mod]").map(s => s.dataset.mod).join("|");

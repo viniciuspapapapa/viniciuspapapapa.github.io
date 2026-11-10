@@ -10,6 +10,11 @@
   const FONTE = "Aptos";
   const DIR = "apresentacao/";
   const IC = n => DIR + "icone-" + n + ".png";
+  /* última lâmina: responsável e endereços editáveis; o padrão reproduz o modelo do escritório */
+  const CONTATO = {
+    nome: "Gustavo Cordeiro", cargo: "Sócio", telefone: "(31) 98580-3106", email: "gustavo.cordeiro@tpcadvogados.com.br",
+    enderecos: "BELO HORIZONTE\nRua Yvon Magalhães Pinto, 615, 8º andar | São Bento\nBelo Horizonte | MG | CEP 30350.560 | Tel. (31) 3527.5800\n\nSÃO PAULO\nRua Bandeira Paulista, 726, 17º andar | Itaim Bibi\nSão Paulo | SP | CEP 04532.002 | Tel. (11) 3056.2110\n\nBRASÍLIA\nSHS Quadra 6, Brasil 21, Bloco A, sala 501\nBrasília | DF | CEP 70316.102 | Tel. (61) 2193.1283\n\nCUIABÁ\nAv. das Flores, 945, 10º andar\nJardim Cuiabá | Cuiabá | MT | CEP 78043.172\n\nJOÃO MONLEVADE\nAv. Wilson Alvarenga, 1.059, sala 601 | Carneirinhos\nJoão Monlevade | MG | CEP 35930.001 | Tel. (31) 3193.0191"
+  };
 
   /* ------------------------------------------------------------------ utilidades de texto */
   const tx = r => typeof r === "string" ? r : (r || []).map(x => x[0]).join("");
@@ -279,7 +284,19 @@
       const ps = S.paragrafos(S.achar(/conclus/i));
       if (ps.length) nova("conclusao", "Conclusão", [paragrafo(0.9, 2.2, 11.5, 4.9, ps.slice(0, 3).map(p => corta(tx(p.r), 900)), { max: 16, min: 11 })]);
     }
-    est("18", "Contatos");
+    {
+      const c = Object.assign({}, CONTATO), o = cfg.contato || {};
+      Object.keys(CONTATO).forEach(k => { if (o[k] != null && String(o[k]).trim() !== "") c[k] = String(o[k]).trim(); });
+      const linhasEnd = c.enderecos.split("\n"), ehCidade = t => t.trim() && t === t.toUpperCase() && !/\d/.test(t);
+      const rsEnd = []; linhasEnd.forEach((t, i) => rsEnd.push({ t: (i ? "\n" : "") + t, b: ehCidade(t) }));
+      const pessoaLinhas = [c.nome, c.cargo, c.telefone, c.email].filter(Boolean);
+      const tamPessoa = Math.min(14, caber(pessoaLinhas.reduce((a, t) => a.length > t.length ? a : t, ""), 4.55, 0.3, 14, 9));
+      L.push({ id: "18", tipo: "contato", nota: "Contatos", el: [
+        { k: "img", src: DIR + "lamina-18-fundo.jpg", x: 0, y: 0, w: W, h: H },
+        { k: "txt", x: 0.78, y: 3.1, w: 5.9, h: 4.0, runs: rsEnd, s: Math.max(7, Math.min(11, 4.0 * 72 / (linhasEnd.length * 1.3), 5.9 * 72 / (0.5 * Math.max(...linhasEnd.map(t => t.length)) || 1))), c: COR.branco, ls: 1.3, valign: "top" },
+        { k: "txt", x: 8.55, y: 6.18, w: 4.6, h: 1.22, runs: pessoaLinhas.map((t, i) => ({ t: (i ? "\n" : "") + t })), s: tamPessoa, c: COR.branco, ls: 1.12, valign: "top" }
+      ] });
+    }
     return L;
   }
 
@@ -345,5 +362,5 @@
     return p.writeFile({ fileName: nome + ".pptx" });
   }
 
-  root.PAT_APRES = { montar, htmlLamina, pptx, secoes, _t: { caber, corta, primeiraFrase } };
+  root.PAT_APRES = { montar, htmlLamina, pptx, secoes, CONTATO, _t: { caber, corta, primeiraFrase } };
 })(typeof window !== "undefined" ? window : globalThis);

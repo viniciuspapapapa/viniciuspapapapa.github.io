@@ -144,5 +144,10 @@
   }
 
   grade(); if (location.hash.length > 1) abrir(location.hash.slice(1));
+  /* verificação inicial dos componentes, para avisar logo quando a rede bloqueia algo */
+  X.carregar("pdflib", "pdfjs").catch(e => {
+    const av = document.createElement("p"); av.className = "aviso"; av.setAttribute("role", "alert"); av.textContent = e.message;
+    document.querySelector("main").prepend(av);
+  });
   window.PDF_APP = { E, abrir, adicionar };
 })();

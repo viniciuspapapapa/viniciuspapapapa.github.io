@@ -6,7 +6,7 @@
 
   /* ------------------------------------------------------------------ HTML -> PDF (html2pdf: html2canvas + jsPDF) */
   /* A renderização ocorre num iframe isolado, sem a folha de estilo do HUB (cujas cores OKLCH o html2canvas não lê). */
-  const H2P = "https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js";
+  const H2P = X.H2P;
   async function htmlParaPdf(conteudo, opc) {
     const mm = opc.margem || 15, orient = opc.orient === "paisagem" ? "landscape" : "portrait", larguraPx = Math.round(((orient === "landscape" ? 297 : 210) - 2 * mm) * 96 / 25.4);
     const ifr = document.createElement("iframe"); ifr.setAttribute("aria-hidden", "true"); ifr.tabIndex = -1;
