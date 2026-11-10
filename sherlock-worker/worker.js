@@ -8,6 +8,7 @@
 import DADOS from "./data.json" with { type: "json" };
 import EXCLUSOES from "./exclusoes.json" with { type: "json" };
 import { manifesto, verificar } from "./sherlock.js";
+import { publico } from "./publico.js";
 
 const SITES = manifesto(DADOS, EXCLUSOES);
 const MAX_LOTE = 8;
@@ -15,14 +16,15 @@ const MAX_LOTE = 8;
 export default {
   async fetch(req, env) {
     const origem = req.headers.get("Origin") || "", permitida = env.ALLOWED_ORIGIN || "*";
-    const cors = { "Access-Control-Allow-Origin": permitida === "*" ? "*" : permitida, "Access-Control-Allow-Methods": "GET, POST, OPTIONS", "Access-Control-Allow-Headers": "Content-Type, X-App-Token", "Access-Control-Max-Age": "86400", "Vary": "Origin" };
+    const cors = { "Access-Control-Allow-Origin": permitida === "*" ? "*" : permitida, "Access-Control-Allow-Methods": "GET, POST, OPTIONS", "Access-Control-Allow-Headers": "Content-Type, X-App-Token, X-Transparencia-Chave", "Access-Control-Max-Age": "86400", "Vary": "Origin" };
     const json = (o, st) => new Response(JSON.stringify(o), { status: st || 200, headers: Object.assign({ "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store" }, cors) });
     if (req.method === "OPTIONS") return new Response(null, { status: 204, headers: cors });
     const p = new URL(req.url).pathname.replace(/\/+$/, "") || "/";
-    if (p === "/" || p === "/status") return json({ ok: true, servico: "sherlock", versao: 1, sites: Object.keys(SITES).length });
+    if (p === "/" || p === "/status") return json({ ok: true, servico: "sherlock", versao: 2, sites: Object.keys(SITES).length, publico: ["transparencia", "djen", "diarios"] });
     if (permitida !== "*" && origem && origem !== permitida) return json({ erro: "Origem não autorizada." }, 403);
     if (env.APP_TOKEN && req.headers.get("X-App-Token") !== env.APP_TOKEN) return json({ erro: "Token inválido." }, 401);
 
+    if (p.startsWith("/publico/")) { const r = await publico(p, new URL(req.url), req, env); if (r) return json(r.corpo, r.st); }
     if (p === "/sites") return json({ sites: Object.entries(SITES).map(([nome, s]) => ({ nome, urlMain: s.urlMain || "", url: s.url, nsfw: !!s.isNSFW, tipo: s.errorType })) });
 
     if (p === "/verificar" && req.method === "POST") {

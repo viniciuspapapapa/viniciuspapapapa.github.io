@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Pesquisa em Fontes Públicas · HUB TPC</title>
+<meta name="description" content="Pesquisa por CPF, CNPJ, nome completo, telefone e placa em fontes públicas e oficiais, com registro de finalidade e relatório com data e hora de cada consulta.">
+<meta name="theme-color" content="#f5f1e8">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Red+Hat+Display:wght@500;600&family=Red+Hat+Text:wght@400;500;600&family=Red+Hat+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/hub.css">
+<style>
+  .heroi { padding: 34px 0 6px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 14px; }
+  .chips span { font-size: 13px; padding: 2px 8px; border-radius: var(--radius-chip); background: var(--surface-3); color: var(--ink-2); }
+  .bloco { padding: 18px; margin-bottom: 14px; }
+  .bloco > h2 { font-size: 22px; margin-bottom: 4px; }
+  .bloco > p.mudo { margin: 0 0 12px; font-size: 14px; }
+  .aviso { border-left: 3px solid var(--warn); background: var(--warn-bg); padding: 8px 12px; border-radius: 0 8px 8px 0; font-size: 14px; margin: 8px 0; }
+  .fonte { border-top: 1px solid var(--ink); padding: 12px 0 14px; }
+  .fonte-cab { display: flex; flex-wrap: wrap; gap: 8px; align-items: baseline; justify-content: space-between; }
+  .fonte-cab h3 { font-size: 17px; margin: 0; }
+  .fonte-cab small { color: var(--ink-3); font-family: var(--mono); font-size: 12.5px; }
+  .fonte p { margin: 6px 0; font-size: 15px; }
+  .itens { margin: 8px 0 0; display: grid; gap: 8px; }
+  .item { background: var(--surface-2); border-radius: var(--radius-key); padding: 10px 12px; font-size: 14.5px; }
+  .item b { font-weight: 600; }
+  .item .trecho { color: var(--ink-2); margin-top: 4px; font-size: 14px; }
+  .dl { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 2px 12px; font-size: 14.5px; margin: 6px 0 0; }
+  .dl dt { color: var(--ink-3); } .dl dd { margin: 0; overflow-wrap: anywhere; }
+  .manuais { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr)); gap: 10px; margin-top: 8px; }
+  .manual { background: var(--surface-2); border-radius: var(--radius-key); padding: 10px 12px; display: grid; gap: 6px; font-size: 14px; }
+  .manual b { font-size: 15px; }
+  .manual .linha-btns { margin-top: 2px; }
+  .hist { width: 100%; border-collapse: collapse; font-size: 14px; }
+  .hist th { text-align: left; color: var(--ink-3); font-weight: 500; border-bottom: 1px solid var(--ink); padding: 6px 8px; font-size: 13px; }
+  .hist td { border-bottom: 1px solid var(--line); padding: 6px 8px; vertical-align: top; }
+  .barra { height: 6px; background: var(--line); border-radius: 99px; overflow: hidden; margin-top: 10px; }
+  .barra i { display: block; height: 100%; width: 0; background: var(--ink-2); }
+  details.cfg > summary { cursor: pointer; font-weight: 600; font-size: 15px; }
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body>
+<header class="topo">
+  <div class="topo-in">
+    <a class="marca" href="../" aria-label="HUB TPC, página inicial"><span class="marca-tpc">TPC</span><span class="marca-txt"><b>HUB</b> Criminal</span></a>
+    <nav class="migalha" aria-label="Você está em"><span>/</span><span>Pesquisa em fontes públicas</span></nav>
+    <div class="espaco"></div>
+    <button class="btn-icone" type="button" onclick="HUB.alternarTema()" aria-label="Alternar tema claro ou escuro" title="Tema"><span data-tema-icone>☾</span></button>
+  </div>
+</header>
+<div class="faixa"></div>
+
+<main class="wrap">
+  <section class="heroi">
+    <div class="sobretitulo">Ferramenta 18 · Investigação defensiva</div>
+    <h1>Pesquisa em fontes públicas</h1>
+    <p class="lead">Pesquise por CPF ou CNPJ, nome completo, telefone e placa em fontes públicas e oficiais: comunicações processuais do CNJ, diários oficiais, Portal da Transparência, cadastro de empresas e consultas oficiais. Cada pesquisa registra a finalidade e gera relatório com a data e a hora de cada consulta.</p>
+    <div class="chips"><span>LGPD, art. 7º, VI</span><span>Provimento 188/2018 do CFOAB</span><span>Lei 12.527/2011</span><span>CPP, art. 157</span></div>
+  </section>
+
+  <section class="secao" style="padding-top:18px">
+    <div class="card bloco">
+      <h2>1. Finalidade</h2>
+      <p class="mudo">Exigida em cada pesquisa. Fica no relatório e no histórico deste navegador, como registro de que o tratamento dos dados tem base legal.</p>
+      <div class="grade g4">
+        <label class="campo" style="grid-column:span 2">Finalidade<select id="finalidade"><option value="">Selecione</option><option>Defesa em processo ou inquérito</option><option>Atuação como assistente de acusação</option><option>Localização de testemunha ou parte</option><option>Diligência sobre empresa ou contraparte</option><option>Instrução de peça ou parecer</option><option>Outra (descrever no caso)</option></select></label>
+        <label class="campo" style="grid-column:span 2">Processo, inquérito ou caso<input type="text" id="caso" placeholder="Ex.: 5000001-11.2026.8.13.0024 ou Caso Andrade"></label>
+        <label class="campo" style="grid-column:span 2">Responsável<select id="responsavel"></select></label>
+      </div>
+    </div>
+
+    <div class="card bloco">
+      <h2>2. Dados a pesquisar</h2>
+      <p class="mudo">Preencha um ou mais campos. Cada fonte é consultada com o dado que lhe corresponde.</p>
+      <div class="grade g4">
+        <label class="campo">CPF ou CNPJ<input type="text" id="doc" inputmode="numeric" autocomplete="off" placeholder="000.000.000-00"></label>
+        <label class="campo" style="grid-column:span 2">Nome completo<input type="text" id="nome" autocomplete="off" placeholder="Nome e sobrenomes, sem abreviação"></label>
+        <label class="campo">Telefone<input type="text" id="tel" inputmode="tel" autocomplete="off" placeholder="(31) 99999-9999"></label>
+        <label class="campo">Placa<input type="text" id="placa" autocomplete="off" placeholder="ABC1D23" style="text-transform:uppercase"></label>
+      </div>
+      <div class="linha-btns" style="margin-top:14px"><button type="button" class="btn" id="pesquisar">Pesquisar</button><span class="pequeno mudo" id="estado"></span></div>
+      <div class="barra" id="barra" hidden><i></i></div>
+      <p class="pequeno" id="progresso" style="margin:6px 0 0"></p>
+      <details class="cfg" id="cfg" style="margin-top:12px">
+        <summary>Configuração das fontes</summary>
+        <div class="grade g4" style="margin-top:10px">
+          <label class="campo" style="grid-column:span 2">Chave da API do Portal da Transparência<input type="password" id="chaveT" autocomplete="off" placeholder="Gratuita, obtida com login gov.br"></label>
+          <label class="campo" style="grid-column:span 2">Endereço do serviço de consulta<input type="text" id="url" autocomplete="off"></label>
+        </div>
+        <p class="pequeno mudo" style="margin:8px 0 0">A chave do Portal da Transparência é gratuita: acesse portaldatransparencia.gov.br/api-de-dados/cadastrar-email, entre com a conta gov.br e informe o e-mail. Ela fica apenas neste navegador. Sem a chave, as demais fontes funcionam normalmente.</p>
+      </details>
+    </div>
+
+    <div class="card bloco" id="resBloco" hidden>
+      <div class="linha-btns" style="justify-content:space-between"><h2 style="margin:0">3. Resultados</h2><button type="button" class="btn sec" id="relatorio">Baixar relatório (Word)</button></div>
+      <div id="resumo" class="pequeno mudo" style="margin:6px 0 10px"></div>
+      <div id="fontes"></div>
+      <h3 class="sub-h" style="font-size:17px;margin:18px 0 4px">Consultas oficiais com verificação humana</h3>
+      <p class="pequeno mudo" style="margin:0">Estas fontes exigem captcha ou aplicativo. Os dados já seguem preenchidos ou prontos para copiar; marque as que foram consultadas para que constem do relatório.</p>
+      <div class="manuais" id="manuais"></div>
+      <p class="pequeno mudo" style="margin-top:14px">Somente fontes públicas e oficiais são consultadas. A ferramenta não utiliza bases vazadas nem dados de birôs sem contrato, o que preserva a licitude da prova (CPP, art. 157). Homonímia é frequente: confirme a identidade antes de usar qualquer resultado.</p>
+    </div>
+
+    <div class="card bloco">
+      <details class="cfg"><summary>Histórico de pesquisas neste navegador</summary><div id="historico" style="margin-top:10px"></div></details>
+    </div>
+  </section>
+</main>
+
+<footer class="rodape">
+  <div class="wrap"><b>TPC ADVOGADOS</b> · HUB. Fontes: CNJ (Diário de Justiça Eletrônico Nacional), Querido Diário (Open Knowledge Brasil), Portal da Transparência (CGU), Receita Federal pela BrasilAPI e consultas oficiais.</div>
+</footer>
+<script src="../vendor/jszip/jszip.min.js"></script>
+<script src="../assets/hub.js"></script>
+<script src="../assets/peca.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
