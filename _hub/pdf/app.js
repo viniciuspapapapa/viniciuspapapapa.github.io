@@ -130,17 +130,38 @@
     } catch (e) { if (g === E.gen) $("#erro").textContent = e.message || String(e); console.error(e); }
     finally { if (g === E.gen) { E.ocupado = false; prog("", null); estado(); } }
   };
+  /* nome do arquivo editável antes do download: a extensão fica fixa e os caracteres proibidos são retirados */
+  const partesNome = n => { const m = String(n || "arquivo").match(/^(.*?)(\.[A-Za-z0-9]{1,5})?$/); return [m[1] || "arquivo", m[2] || ""]; };
+  const limparNome = s => String(s || "").replace(/[\\/:*?"<>|\u0000-\u001f]+/g, " ").replace(/\s+/g, " ").replace(/^[\s.]+|[\s.]+$/g, "");
+  function campoNome(nome, attr, rotulo) {
+    const [b, ext] = partesNome(nome);
+    return '<label class="campo nome-arq">' + esc(rotulo) + '<span class="nome-linha"><input type="text" ' + attr + ' value="' + esc(b) + '" data-ext="' + esc(ext) + '" data-padrao="' + esc(b) + '" autocomplete="off" spellcheck="false"><span class="ext">' + esc(ext) + "</span></span></label>";
+  }
+  function nomeDe(inp) { return (limparNome(inp.value) || inp.dataset.padrao) + inp.dataset.ext; }
   function resultado(r) {
-    const s = r.saidas || [], el = $("#res");
+    const s = r.saidas || [], el = $("#res"), varios = s.length > 1;
     el.innerHTML = '<div class="card card-p resultado"><h2>Pronto</h2>' + (r.nota ? '<p class="pequeno">' + esc(r.nota) + "</p>" : "") +
-      '<div class="linha-btns">' + (r.zip && s.length > 1 ? '<button type="button" class="btn" data-zip>Baixar tudo (.zip)</button>' : s.length === 1 ? '<button type="button" class="btn" data-b="0">Baixar ' + esc(s[0].nome) + "</button>" : "") +
+      (s.length === 1 ? campoNome(s[0].nome, 'data-n="0"', "Nome do arquivo") : "") +
+      (r.zip && varios ? campoNome(r.zip, "data-nz", "Nome do arquivo .zip") : "") +
+      '<div class="linha-btns">' + (r.zip && varios ? '<button type="button" class="btn" data-zip>Baixar tudo (.zip)</button>' : s.length === 1 ? '<button type="button" class="btn" data-b="0">Baixar</button>' : "") +
       '<button type="button" class="btn sec" data-novo>Recomeçar</button></div>' +
-      (s.length > 1 ? '<div class="saidas">' + s.map((x, i) => '<div class="arq"><span class="arq-n">' + esc(x.nome) + ' <small class="mudo">' + X.tam(x.blob.size) + '</small></span><button type="button" class="btn sec peq" data-b="' + i + '">Baixar</button></div>').join("") + "</div>" : '<p class="pequeno mudo">' + (s[0] ? X.tam(s[0].blob.size) : "") + "</p>") +
+      (varios ? '<div class="saidas">' + s.map((x, i) => '<div class="arq arq-nome">' + campoNome(x.nome, 'data-n="' + i + '"', "Arquivo " + (i + 1) + " · " + X.tam(x.blob.size)) + '<button type="button" class="btn sec peq" data-b="' + i + '">Baixar</button></div>').join("") + "</div>" : '<p class="pequeno mudo">' + (s[0] ? X.tam(s[0].blob.size) : "") + "</p>") +
       (r.html ? '<div class="previa">' + r.html + "</div>" : "") + "</div>";
-    el.querySelectorAll("[data-b]").forEach(b => { b.onclick = () => X.baixar(s[+b.dataset.b].blob, s[+b.dataset.b].nome); });
-    const z = el.querySelector("[data-zip]"); if (z) z.onclick = async () => X.baixar(await X.zip(s), r.zip);
+    const nomeSaida = i => nomeDe(el.querySelector('[data-n="' + i + '"]'));
+    el.querySelectorAll("[data-b]").forEach(b => { b.onclick = () => X.baixar(s[+b.dataset.b].blob, nomeSaida(b.dataset.b)); });
+    const z = el.querySelector("[data-zip]");
+    if (z) z.onclick = async () => {
+      const usados = new Map();
+      const itens = s.map((x, i) => { let n = nomeSaida(i); const k = n.toLowerCase(), c = usados.get(k) || 0; usados.set(k, c + 1); if (c) { const [b, e] = partesNome(n); n = b + " (" + (c + 1) + ")" + e; } return { nome: n, blob: x.blob }; });
+      X.baixar(await X.zip(itens), nomeDe(el.querySelector("[data-nz]")));
+    };
+    el.querySelectorAll(".nome-arq input").forEach(inp => inp.addEventListener("keydown", e => {
+      if (e.key !== "Enter") return; e.preventDefault();
+      const alvo = inp.hasAttribute("data-nz") ? z : el.querySelector('[data-b="' + inp.dataset.n + '"]'); if (alvo) alvo.click();
+    }));
     el.querySelector("[data-novo]").onclick = () => abrir(E.t.id);
     el.scrollIntoView({ behavior: "smooth", block: "start" });
+    const primeiro = el.querySelector(".nome-arq input"); if (primeiro && !varios) { primeiro.focus({ preventScroll: true }); primeiro.select(); }
   }
 
   grade(); if (location.hash.length > 1) abrir(location.hash.slice(1));

@@ -45,6 +45,13 @@
   .resultado { margin-top: 16px; }
   .resultado h2 { font-size: 22px; }
   .saidas { margin-top: 10px; max-height: 340px; overflow: auto; }
+  .nome-arq { display: block; margin: 10px 0 12px; max-width: 640px; }
+  .nome-linha { display: flex; align-items: stretch; margin-top: 4px; }
+  .nome-linha input { flex: 1; min-width: 0; border-top-right-radius: 0; border-bottom-right-radius: 0; }
+  .nome-linha .ext { display: inline-flex; align-items: center; padding: 0 10px; background: var(--surface-3); border: 1px solid var(--line-2); border-left: 0; border-radius: 0 var(--radius-key) var(--radius-key) 0; font-family: var(--mono); font-size: 14px; color: var(--ink-2); }
+  .nome-linha .ext:empty { display: none; }
+  .arq-nome { align-items: flex-end; }
+  .arq-nome .nome-arq { flex: 1; margin: 0; max-width: none; }
   .previa { margin-top: 14px; border-top: 1px solid var(--line); padding-top: 12px; }
   .md h2, .md h3, .md h4 { font-family: var(--serif); margin: 14px 0 6px; } .md p { margin: 0 0 10px; } .md table { border-collapse: collapse; } .md td, .md th { border: 1px solid var(--line-2); padding: 4px 6px; }
   .cmp-2 { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 14px; }
