@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Busca de Perfis · HUB TPC</title>
+<meta name="description" content="Localiza perfis públicos por nome de usuário em mais de 400 sites e redes sociais, com a mesma metodologia do projeto Sherlock, e gera relatório com data e hora de cada verificação.">
+<meta name="theme-color" content="#f5f1e8">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Red+Hat+Display:wght@500;600&family=Red+Hat+Text:wght@400;500;600&family=Red+Hat+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/hub.css">
+<style>
+  .heroi { padding: 34px 0 6px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 14px; }
+  .chips span { font-size: 13px; padding: 2px 8px; border-radius: var(--radius-chip); background: var(--surface-3); color: var(--ink-2); }
+  .bloco { padding: 18px; margin-bottom: 14px; }
+  .bloco > h2 { font-size: 22px; margin-bottom: 4px; }
+  .bloco > p.mudo { margin: 0 0 12px; font-size: 14px; }
+  .dica { font-size: 12.5px; color: var(--ink-3); font-weight: 400; }
+  .aviso { border-left: 3px solid var(--warn); background: var(--warn-bg); padding: 8px 12px; border-radius: 0 8px 8px 0; font-size: 14px; margin: 8px 0; }
+  .placar { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin: 12px 0; }
+  @media (max-width: 760px) { .placar { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  .placar > div { border-top: 1px solid var(--ink); padding: 8px 0 0; min-width: 0; }
+  .placar span { display: block; font-size: 13px; color: var(--ink-3); }
+  .placar b { display: block; font-family: var(--mono); font-size: 26px; font-weight: 500; font-variant-numeric: tabular-nums; }
+  .barra { height: 6px; background: var(--line); border-radius: 99px; overflow: hidden; margin-top: 10px; }
+  .barra i { display: block; height: 100%; width: 0; background: var(--ink-2); }
+  .tw { overflow-x: auto; }
+  table.res { width: 100%; border-collapse: collapse; font-size: 14px; min-width: 620px; }
+  table.res thead th { text-align: left; font-size: 13px; color: var(--ink-3); font-weight: 500; border-bottom: 1px solid var(--ink); padding: 7px 8px; }
+  table.res td { border-bottom: 1px solid var(--line); padding: 7px 8px; vertical-align: top; }
+  table.res td.n { font-family: var(--mono); font-size: 13px; white-space: nowrap; }
+  table.res a { overflow-wrap: anywhere; }
+  .sites { max-height: 320px; overflow: auto; display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 4px 12px; margin-top: 8px; padding: 8px; background: var(--surface-2); border-radius: var(--radius-key); }
+  .sites .check { font-size: 14px; min-height: 26px; }
+  .abas { margin: 10px 0 8px; }
+  details.cfg > summary { cursor: pointer; font-weight: 600; font-size: 15px; }
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body>
+<header class="topo">
+  <div class="topo-in">
+    <a class="marca" href="../" aria-label="HUB TPC, página inicial"><span class="marca-tpc">TPC</span><span class="marca-txt"><b>HUB</b> Criminal</span></a>
+    <nav class="migalha" aria-label="Você está em"><span>/</span><span>Busca de perfis</span></nav>
+    <div class="espaco"></div>
+    <button class="btn-icone" type="button" onclick="HUB.alternarTema()" aria-label="Alternar tema claro ou escuro" title="Tema"><span data-tema-icone>☾</span></button>
+  </div>
+</header>
+<div class="faixa"></div>
+
+<main class="wrap">
+  <section class="heroi">
+    <div class="sobretitulo">Ferramenta 17 · Investigação defensiva</div>
+    <h1>Busca de perfis por usuário</h1>
+    <p class="lead">Informe um ou mais nomes de usuário e veja em quais dos mais de 400 sites e redes sociais existe um perfil com esse nome, pela mesma metodologia do projeto aberto Sherlock, com data e hora de cada verificação e relatório no padrão TPC.</p>
+    <div class="chips"><span>Provimento 188/2018 do CFOAB</span><span>CPP, art. 158-A a 158-F</span><span>CPC, art. 384 (ata notarial)</span><span>LGPD, art. 7º, VI</span></div>
+  </section>
+
+  <section class="secao" style="padding-top:18px">
+    <div class="card bloco">
+      <h2>1. Pesquisa</h2>
+      <p class="mudo">Um usuário por linha (ou separados por vírgula). Use <span class="mono">{?}</span> para testar também as variações com “_”, “-” e “.”, como em <span class="mono">joao{?}silva</span>.</p>
+      <div class="grade g4">
+        <label class="campo" style="grid-column:span 2;grid-row:span 2">Nomes de usuário<textarea id="usuarios" rows="4" placeholder="joaosilva&#10;joao{?}silva" spellcheck="false" autocomplete="off"></textarea></label>
+        <label class="campo">Tempo limite por site<select id="timeout"><option value="15">15 segundos</option><option value="20" selected>20 segundos</option><option value="30">30 segundos</option></select></label>
+        <label class="campo">Sites<select id="escopo"><option value="todos">Todos os sites</option><option value="selecionados">Somente os escolhidos</option></select></label>
+        <label class="check" style="grid-column:span 2"><input type="checkbox" id="nsfw"> Incluir sites de conteúdo adulto</label>
+      </div>
+      <details class="cfg" id="escolha" style="margin-top:10px" hidden>
+        <summary>Escolher os sites (<span id="nSel">0</span> escolhidos)</summary>
+        <div class="linha-btns" style="margin-top:8px"><label class="campo" style="flex:1;min-width:200px">Filtrar<input type="search" id="filtro" placeholder="Ex.: instagram, git, tiktok"></label><button type="button" class="btn sec peq" id="marcarVis">Marcar os exibidos</button><button type="button" class="btn sec peq" id="limparSel">Limpar</button></div>
+        <div class="sites" id="listaSites"></div>
+      </details>
+      <div class="linha-btns" style="margin-top:14px"><button type="button" class="btn" id="buscar">Buscar perfis</button><button type="button" class="btn sec" id="parar" hidden>Interromper</button><span class="pequeno mudo" id="estado"></span></div>
+      <div class="barra" id="barra" hidden><i></i></div>
+      <p class="pequeno" id="progresso" style="margin:6px 0 0"></p>
+      <p class="aviso" id="erro" hidden role="alert"></p>
+      <details class="cfg" id="servico" style="margin-top:12px">
+        <summary>Serviço de consulta</summary>
+        <p class="pequeno mudo" style="margin:8px 0">O navegador não pode ler as respostas de outros sites. As consultas passam pelo serviço do escritório no Cloudflare, que não guarda nenhum dado.</p>
+        <div class="grade g4">
+          <label class="campo" style="grid-column:span 2">Endereço do serviço<input type="text" id="url" autocomplete="off"></label>
+          <label class="campo">Chave do serviço (APP_TOKEN)<input type="password" id="token" autocomplete="off" placeholder="Opcional"></label>
+          <div style="align-self:end"><button type="button" class="btn sec" id="testar">Salvar e testar</button></div>
+        </div>
+        <p class="pequeno" id="servicoEstado" style="margin:8px 0 0"></p>
+      </details>
+    </div>
+
+    <div class="card bloco" id="resBloco" hidden>
+      <h2>2. Resultados</h2>
+      <div class="placar" id="placar"></div>
+      <div class="linha-btns"><button type="button" class="btn sec peq" id="baixarDocx">Relatório (Word)</button><button type="button" class="btn sec peq" id="baixarXlsx">Planilha (Excel)</button><button type="button" class="btn sec peq" id="baixarCsv">CSV</button><button type="button" class="btn sec peq" id="baixarTxt">Lista de endereços (TXT)</button></div>
+      <div class="abas" role="tablist"><button type="button" class="aba" role="tab" aria-selected="true" data-ver="encontrado">Encontrados</button><button type="button" class="aba" role="tab" aria-selected="false" data-ver="inconclusivo">Inconclusivos</button><button type="button" class="aba" role="tab" aria-selected="false" data-ver="todos">Todos</button></div>
+      <div class="tw" id="tabela"></div>
+      <p class="pequeno mudo" style="margin-top:10px">A existência de um perfil com o mesmo nome de usuário não comprova quem é o titular. Para uso processual, abra cada perfil, preserve o conteúdo com data e hora (ata notarial ou coleta com cadeia de custódia) e confirme a identidade por outros elementos.</p>
+    </div>
+  </section>
+</main>
+
+<footer class="rodape">
+  <div class="wrap"><b>TPC ADVOGADOS</b> · HUB. Metodologia e base de sites do projeto aberto Sherlock (licença MIT). Somente perfis públicos são consultados.</div>
+</footer>
+<script src="../vendor/jszip/jszip.min.js"></script>
+<script src="../assets/hub.js"></script>
+<script src="../assets/peca.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

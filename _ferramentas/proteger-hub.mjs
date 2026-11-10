@@ -26,7 +26,8 @@ if (senha.length < 10) { console.error("Defina HUB_SENHA com pelo menos 10 carac
 
 const CONFIG = {
   datajud: { url: process.env.HUB_DATAJUD_URL || "https://datajud-tpc.viniciuspapapapa.workers.dev", token: process.env.HUB_DATAJUD_TOKEN || senha },
-  outlook: { clientId: process.env.HUB_OUTLOOK_CLIENT_ID || "", tenant: process.env.HUB_OUTLOOK_TENANT || "common" }
+  outlook: { clientId: process.env.HUB_OUTLOOK_CLIENT_ID || "", tenant: process.env.HUB_OUTLOOK_TENANT || "common" },
+  sherlock: { url: process.env.HUB_SHERLOCK_URL || "https://sherlock-tpc.viniciuspapapapa.workers.dev", token: process.env.HUB_SHERLOCK_TOKEN || "" }
 };
 const SCRIPT_CONFIG = "<script>window.HUB_CONFIG=" + JSON.stringify(CONFIG).replace(/</g, "\\u003c") + ";</script>";
 

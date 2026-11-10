@@ -106,6 +106,10 @@ _hub/  (publicada cifrada em hub/)
     office.js                 Word, Excel, PowerPoint e HTML para PDF; PDF para PowerPoint e Excel
     ia.js                     Resumo, tradução e refino de Markdown pelo Claude (chave do usuário)
     app.js                    Grade das ferramentas, mesa de trabalho e resultados
+  usuarios/
+    app.js                    Busca de perfis por nome de usuário (porte do Sherlock): lotes paralelos ao serviço
+                              sherlock-tpc (pasta sherlock-worker/ na raiz), resultados, TXT, CSV, Excel e relatório Word
+  vendor/                     Bibliotecas abertas hospedadas no HUB (publicadas sem cifra; versões em VERSOES.txt)
   certidoes/
     catalogo.js               Serviços oficiais de certidão criminal (27 TJs, TRF1 a TRF6, STM, TJMs, TSE, STF, STJ, PF, BNMP)
     leitor.js                 Leitura das certidões em PDF: órgão, resultado, datas, números CNJ e conferência do pesquisado
