@@ -67,7 +67,8 @@
     if (t.nome) {
       T("Comunicações processuais (Diário de Justiça Eletrônico Nacional)", "CNJ, DJEN, busca pelo nome da parte", async () => {
         let d; const qs = "nomeParte=" + encodeURIComponent(t.nome) + "&pagina=1&itensPorPagina=100";
-        try { d = await direto("https://comunicaapi.pje.jus.br/api/v1/comunicacao?" + qs); } catch (e) { d = (await viaServico("/publico/djen", { nome: t.nome })).dados; }
+        try { d = await direto("https://comunicaapi.pje.jus.br/api/v1/comunicacao?" + qs); }
+        catch (e) { try { d = (await viaServico("/publico/djen", { nome: t.nome })).dados; } catch (e2) { throw new Error("O CNJ não liberou a consulta automática a esta fonte (ela só aceita acessos do Brasil e de páginas autorizadas). Use o atalho do portal do DJEN em Consultas oficiais, com o nome já copiado."); } }
         const itens = (d && (d.items || d.itens || d.content || d.data)) || [];
         const proc = new Set();
         const out = itens.map(c => { const n = c.numeroprocessocommascara || c.numero_processo || c.numeroProcesso || ""; proc.add(n); const dest = (c.destinatarios || []).map(x => x.nome + (x.polo ? " (" + x.polo + ")" : "")).join("; "); return { t: [n, c.siglaTribunal, c.nomeClasse].filter(Boolean).join(" · "), s: [br(c.data_disponibilizacao || c.dataDisponibilizacao), c.tipoComunicacao, c.nomeOrgao].filter(Boolean).join(" · "), x: [dest ? "Partes: " + dest : "", limpa(c.texto).slice(0, 360)].filter(Boolean).join(" — "), link: c.link }; });
@@ -75,7 +76,8 @@
       });
       T("Diários oficiais municipais", "Querido Diário (Open Knowledge Brasil)", async () => {
         const qs = "querystring=" + encodeURIComponent('"' + t.nome + '"') + "&excerpt_size=400&number_of_excerpts=2&size=30&sort_by=descending_date";
-        let d; try { d = await direto("https://api.queridodiario.ok.org.br/gazettes?" + qs); } catch (e) { d = (await viaServico("/publico/diarios", { q: t.nome })).dados; }
+        let d; try { d = await direto("https://api.queridodiario.ok.org.br/gazettes?" + qs); }
+        catch (e) { try { d = (await viaServico("/publico/diarios", { q: t.nome })).dados; } catch (e2) { throw new Error("O serviço do Querido Diário não respondeu agora. Use o atalho do portal em Consultas oficiais, com o nome já copiado."); } }
         const g = (d && d.gazettes) || [];
         return { itens: g.map(x => ({ t: x.territory_name + "/" + x.state_code, s: br(x.date), x: (x.excerpts || []).map(limpa).join(" … ").slice(0, 500), link: x.url })), vazio: !g.length, resumo: g.length ? (d.total_gazettes || g.length) + ((d.total_gazettes || g.length) === 1 ? " edição com o nome" : " edições com o nome") : "" };
       });
@@ -118,6 +120,7 @@
     if (t.nome || t.cpf) M.push({ id: "certidoes", t: "Certidões criminais (Central do HUB)", d: "Todos os tribunais, com os dados prontos para colar.", url: "../certidoes/", copiar: t.nome || t.cpfFmt, interno: true });
     if (t.nome) {
       M.push({ id: "djen", t: "Diário de Justiça Eletrônico Nacional (portal)", d: "Conferência no portal oficial do CNJ.", url: "https://comunica.pje.jus.br/", copiar: t.nome });
+      M.push({ id: "qd", t: "Diários oficiais municipais (Querido Diário)", d: "Busca pelo nome entre aspas nos diários de centenas de municípios.", url: "https://queridodiario.ok.org.br/", copiar: '"' + t.nome + '"' });
       M.push({ id: "tse", t: "Candidaturas e contas eleitorais (TSE)", d: "Candidatos, bens declarados e doações.", url: "https://divulgacandcontas.tse.jus.br/divulga/#/home", copiar: t.nome });
       M.push({ id: "cna", t: "Cadastro Nacional dos Advogados (OAB)", d: "Se a pessoa for advogada.", url: "https://cna.oab.org.br/", copiar: t.nome });
       M.push({ id: "busca-processos", t: "Processos e publicações (buscadores)", d: "Jusbrasil e Escavador pelo nome exato.", url: G('"' + t.nome + '" (site:jusbrasil.com.br OR site:escavador.com)'), copiar: t.nome });
