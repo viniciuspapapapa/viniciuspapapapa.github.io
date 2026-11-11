@@ -8,7 +8,9 @@
    II: vida sexual e saúde), como sites adultos, de relacionamento e de saúde.
 
    Além dos sites, /publico/email/extras reúne fontes públicas sobre o e-mail: provedor (registros MX), registro do
-   domínio (RDAP, inclusive Registro.br), chaves PGP publicadas (keys.openpgp.org) e commits públicos no GitHub. */
+   domínio (RDAP, inclusive Registro.br), chaves PGP publicadas (keys.openpgp.org) e commits públicos no GitHub.
+
+   Facebook, Netflix, Etsy, Emirates e Quizlet foram retirados: recusam as consultas vindas da Cloudflare. */
 
 const UA = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36";
 const UA_MOB = "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Mobile Safari/537.36";
@@ -81,20 +83,6 @@ export const SITES_EMAIL = {
     if (r.st === 400 && r.json && r.json.spam === true) return NAO;
     bloqueio(r); falha("Resposta inesperada (HTTP " + r.st + ")");
   } },
-  "Facebook": { cat: "Redes e perfis", url: "https://facebook.com", fn: async email => {
-    const pote = new Map(), nav = { Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8" };
-    await req("https://m.facebook.com/login/", { headers: nav, pote, redirecionar: false });
-    const r1 = await req("https://www.facebook.com/?_rdr", { headers: Object.assign({ Referer: "https://www.google.com/" }, nav), pote, redirecionar: false });
-    const html = r1.txt, lsd = (html.match(/\["LSD",\[\],\{"token":"([^"]+)"\}/) || html.match(/name="lsd"\s+value="([^"]+)"/) || html.match(/"lsd":"([^"]+)"/) || [])[1];
-    const jz = (html.match(/jazoest=(\d+)/) || html.match(/name="jazoest"\s+value="(\d+)"/) || [])[1];
-    if (!lsd || !jz) falha("Não foi possível obter o token do Facebook");
-    const r = await req("https://www.facebook.com/ajax/login/help/identify.php?ctx=recover", { form: { jazoest: jz, lsd, email, did_submit: "1", __user: "0", __a: "1", __req: "7" }, pote, headers: { "x-fb-lsd": lsd, "x-asbd-id": "359341", Origin: "https://www.facebook.com", Referer: "https://www.facebook.com/login/identify/?ctx=recover&ars=facebook_login&from_login_screen=0" } });
-    const b = r.txt;
-    if (/error\\?":3252001|temporarily blocked/.test(b)) falha("Bloqueio temporário do Facebook");
-    if (b.includes("These accounts matched your search") || b.includes("redirectPageTo")) return SIM;
-    if (b.includes("No search results") || b.includes("Your search did not return any results.")) return NAO;
-    bloqueio(r); falha("Resposta inesperada do Facebook");
-  } },
   "Pinterest": { cat: "Redes e perfis", url: "https://pinterest.com", fn: async email => {
     const data = JSON.stringify({ options: { url: "/v3/register/exists/", data: { email } }, context: {} });
     const r = await req(q("https://www.pinterest.com/resource/ApiResource/get/", { source_url: "/signup/step1/", data, _: String(Date.now()) }), { headers: { "User-Agent": UA_MOB, Accept: "application/json, text/javascript, */*, q=0.01", "x-pinterest-pws-handler": "www/signup/[step].js", "x-app-version": "2503cde", "x-requested-with": "XMLHttpRequest", "x-pinterest-source-url": "/signup/step1/", "x-pinterest-appstate": "active", Origin: "https://www.pinterest.com", Referer: "https://www.pinterest.com/" } });
@@ -159,13 +147,6 @@ export const SITES_EMAIL = {
     const r = await req("https://sm-prod2.any.do/check_email", { json: { email }, headers: { "Content-Type": "application/json; charset=UTF-8", Origin: "https://desktop.any.do", Referer: "https://desktop.any.do/" } });
     bloqueio(r); return bool(r.json && r.json.user_exists);
   } },
-  "Netflix": { cat: "Entretenimento", url: "https://netflix.com", fn: async email => {
-    const pote = new Map(), h = { Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8", Origin: "https://www.netflix.com", Referer: "https://www.netflix.com/" };
-    await req("https://www.netflix.com/", { headers: h, pote });
-    const f = pote.get("flwssn"); if (!f) falha("Não foi possível obter a sessão da Netflix");
-    const r = await req("https://web.prod.cloud.netflix.com/graphql", { pote, headers: Object.assign({}, h, { Accept: "*/*", "x-netflix.context.operation-name": "CLCSWebInitSignup", "x-netflix.request.clcs.bucket": "high" }), json: { operationName: "CLCSWebInitSignup", variables: { inputUserJourneyNode: "WELCOME", locale: "en-US", inputFields: [{ name: "flwssn", value: { stringValue: f } }, { name: "email", value: { stringValue: email } }] }, extensions: { persistedQuery: { id: "f6e8ddc6-79fb-4ff2-8e55-893d707887a4", version: 102 } } } });
-    bloqueio(r); if (r.txt.includes("Welcome back!")) return SIM; if (r.txt.includes("sign-up link") || r.txt.includes("create your account")) return NAO; falha("Resposta inesperada da Netflix");
-  } },
   "Spotify": { cat: "Entretenimento", url: "https://spotify.com", fn: async email => {
     const r = await req("https://spclient.wg.spotify.com/signup/public/v2/account/validate", { json: { fields: [{ field: "FIELD_EMAIL", value: email }], client_info: { api_key: "a1e486e2729f46d6bb368d6b2bcda326", app_version: "v2", capabilities: [1], installation_id: crypto.randomUUID(), platform: "www", client_id: "" }, tracking: { creation_flow: "", creation_point: "https://www.spotify.com/us/signup", referrer: "", origin_vertical: "", origin_surface: "" } }, headers: { Origin: "https://www.spotify.com", Referer: "https://www.spotify.com/" } });
     bloqueio(r); const d = r.json || {}; if (d.error && JSON.stringify(d.error).includes("already_exists")) return SIM; if ("success" in d) return NAO; falha("Resposta inesperada do Spotify");
@@ -187,13 +168,6 @@ export const SITES_EMAIL = {
     const r = await req("https://myanimelist.net/signup/email/validate", { form: { email }, headers: { "x-requested-with": "XMLHttpRequest", Origin: "https://myanimelist.net", Referer: "https://myanimelist.net/register.php?" } });
     bloqueio(r); const d = r.json || {}; if ((d.errors || []).some(e => /already have an account/.test(e.message || ""))) return SIM; if (Array.isArray(d.data) && !d.data.length) return NAO; falha("HTTP " + r.st);
   } },
-  "Etsy": { cat: "Compras e serviços", url: "https://etsy.com", fn: async email => {
-    const r = await req(q("https://www.etsy.com/api/v3/ajax/public/users/by-identity-optional", { identity: email, features: "api.oauth2.consent_page:on,design_systems.signin_flow_experiment:on" }), { headers: { "User-Agent": "Mozilla/5.0 (Linux; Android 11; RMX2193 Build/RP1A.200720.011; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/155.0.8059.46 Mobile Safari/537.36 Mobile/1 EtsyInc/8.1.0 Android/1", "x-etsy-protection": "1", "x-requested-with": "com.etsy.android", "content-type": "application/json", Referer: "https://www.etsy.com/oauth2/signin" } });
-    bloqueio(r); if (r.st !== 200) falha("HTTP " + r.st); if (r.txt.trim() === "null") return NAO;
-    const d = r.json; if (!d || typeof d !== "object" || !d.user_id) falha("Resposta inesperada do Etsy");
-    const extra = {}; if (d.real_name || d.display_name) extra.nome = d.real_name || d.display_name; if (d.login_name) extra.usuario = d.login_name; if (d.location) extra.local = d.location;
-    return { st: SIM, extra, url: d.login_name ? "https://www.etsy.com/people/" + encodeURIComponent(d.login_name) : "https://etsy.com" };
-  } },
   "Rappi": { cat: "Compras e serviços", url: "https://rappi.com.br", fn: async email => {
     const ts = String(Date.now());
     const r = await req("https://services.rappi.com.ar/api/rocket/user/account/check-email", { json: { email }, timeout: 10, headers: { "User-Agent": "okhttp/4.12.0", user_id: "", custom_country_code: "AR", deviceid: hex(), "app-version": "88721", "app-version-name": "8.35.20260724-88721", "store-platform": "google", "amplitude-session-id": ts, timestamp: ts, request_timestamp: ts, language: "en", "country-code": "AR", "content-type": "application/json; charset=UTF-8" } });
@@ -211,11 +185,6 @@ export const SITES_EMAIL = {
     const d = r.json || {};
     if (r.st === 200 && Array.isArray(d.providers) && d.providers.length) return SIM; if (r.st === 404 && (d.code === 404 || /Not Found/.test(d.message || ""))) return NAO;
     bloqueio(r); falha("HTTP " + r.st);
-  } },
-  "Emirates (Skywards)": { cat: "Viagens e esportes", url: "https://emirates.com", fn: async email => {
-    const r = await req("https://www.emirates.com/service/ekl/validate-email?data=null", { json: { emailAddress: email }, headers: { Origin: "https://www.emirates.com" } });
-    bloqueio(r); if (r.st !== 200 || !r.json) falha("HTTP " + r.st); const errs = (r.json.body && r.json.body.errors) || [];
-    if (errs.some(e => e.code === "program.member.EmailExistsForAnotherMember")) return SIM; if (r.json.status === true) return NAO; falha("Resposta inesperada da Emirates");
   } },
   "Komoot": { cat: "Viagens e esportes", url: "https://komoot.com", fn: async email => {
     const r = await req("https://www.komoot.com/v1/signin", { json: { email, reason: "header", new_tab: false }, headers: { Origin: "https://www.komoot.com", Referer: "https://www.komoot.com/signin?referrer=www.google.com&reason=header" } });
@@ -239,11 +208,6 @@ export const SITES_EMAIL = {
     const r = await req(q("https://www.coursera.org/api/userAccounts.v1", { action: "getLoginMethods", email }), { json: {}, headers: { Accept: "application/json", "X-Requested-With": "XMLHttpRequest", "X-Coursera-Application": "front-page", Origin: "https://www.coursera.org", Referer: "https://www.coursera.org/?authMode=signup" } });
     bloqueio(r); const m = r.json && r.json.loginMethods; if (!Array.isArray(m)) falha("HTTP " + r.st); return m.length ? SIM : NAO;
   } },
-  "Quizlet": { cat: "Educação", url: "https://quizlet.com", fn: async email => {
-    const r = await req("https://api.quizlet.com/3.11/validate-email?client_id=XbSGGchEnA", { json: { email }, timeout: 10, headers: { "User-Agent": "QuizletAndroid/10.47 Dalvik/2.1.0 (Linux; U; Android 13; Pixel 6 Build/TQ3A.230901.001)", "content-type": "application/json; charset=UTF-8" } });
-    bloqueio(r); const v = r.json && r.json.responses && r.json.responses[0] && r.json.responses[0].data && r.json.responses[0].data.validateEmail;
-    if (!v || !("isValid" in v)) falha("HTTP " + r.st); return v.isValid === false ? SIM : NAO;
-  } }
 };
 
 export async function verificarEmail(nome, email) {
