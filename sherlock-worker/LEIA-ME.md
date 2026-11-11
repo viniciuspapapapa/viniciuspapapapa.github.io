@@ -18,3 +18,8 @@ Este projeto não interfere no serviço do DataJud, que continua sendo implantad
 ## Atualizar a base de sites
 
 Substitua `data.json` pelo arquivo `sherlock_project/resources/data.json` do repositório do Sherlock. Atualize também `exclusoes.json` a partir do ramo `exclusions`, arquivo `false_positive_exclusions.txt`.
+
+## Pesquisa por e-mail (/publico/email)
+
+A ferramenta "Pesquisa em fontes públicas" do HUB usa três rotas deste serviço: `/publico/email/sites` (lista dos serviços), `POST /publico/email` (verifica até 6 serviços por chamada) e `/publico/email/extras` (provedor pelo DNS, registro do domínio por RDAP e Registro.br, chave PGP publicada e commits públicos no GitHub). As verificações por serviço, em `email.js`, foram portadas do projeto aberto user-scanner (licença MIT, em `LICENSE-user-scanner.txt`), apenas na modalidade não intrusiva: perguntam se o e-mail está cadastrado, sem enviar código ou aviso ao titular, sem tentar entrar na conta e sem criar cadastro. Ficam de fora os serviços cujo cadastro revelaria dados sensíveis (LGPD, art. 5º, II).
+

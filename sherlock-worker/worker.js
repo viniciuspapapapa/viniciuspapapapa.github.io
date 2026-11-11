@@ -12,6 +12,7 @@ import EXCLUSOES from "./exclusoes.json" with { type: "json" };
 import { manifesto, verificar } from "./sherlock.js";
 import { publico } from "./publico.js";
 import { doutrina, doutrinaPdf } from "./doutrina.js";
+import { SITES_EMAIL, verificarEmail, extrasEmail } from "./email.js";
 
 const SITES = manifesto(DADOS, EXCLUSOES);
 const MAX_LOTE = 8;
@@ -23,11 +24,23 @@ export default {
     const json = (o, st) => new Response(JSON.stringify(o), { status: st || 200, headers: Object.assign({ "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store" }, cors) });
     if (req.method === "OPTIONS") return new Response(null, { status: 204, headers: cors });
     const p = new URL(req.url).pathname.replace(/\/+$/, "") || "/";
-    if (p === "/" || p === "/status") return json({ ok: true, servico: "sherlock", versao: 3, sites: Object.keys(SITES).length, publico: ["transparencia", "djen", "diarios"], doutrina: !!env.GITHUB_TOKEN });
+    if (p === "/" || p === "/status") return json({ ok: true, servico: "sherlock", versao: 4, sites: Object.keys(SITES).length, publico: ["transparencia", "djen", "diarios", "email"], emailSites: Object.keys(SITES_EMAIL).length, doutrina: !!env.GITHUB_TOKEN });
     if (permitida !== "*" && origem && origem !== permitida) return json({ erro: "Origem não autorizada." }, 403);
     if (env.APP_TOKEN && req.headers.get("X-App-Token") !== env.APP_TOKEN) return json({ erro: "Token inválido." }, 401);
 
     if (p.startsWith("/publico/")) { const r = await publico(p, new URL(req.url), req, env); if (r) return json(r.corpo, r.st); }
+    if (p.startsWith("/publico/email")) {
+      const valido = e => /^[^\s@]{1,64}@[^\s@]+\.[^\s@]{2,}$/.test(e) && e.length <= 254;
+      if (p === "/publico/email/sites") return json({ sites: Object.entries(SITES_EMAIL).map(([nome, s]) => ({ nome, cat: s.cat, url: s.url })) });
+      if (p === "/publico/email/extras") { const e = String(new URL(req.url).searchParams.get("email") || "").trim(); if (!valido(e)) return json({ erro: "E-mail inválido." }, 400); return json(await extrasEmail(e, env)); }
+      if (p === "/publico/email" && req.method === "POST") {
+        let c; try { c = await req.json(); } catch (x) { return json({ erro: "JSON inválido." }, 400); }
+        const e = String(c.email || "").trim(); if (!valido(e)) return json({ erro: "E-mail inválido." }, 400);
+        const nomes = (Array.isArray(c.sites) ? c.sites : []).filter(n => SITES_EMAIL[n]).slice(0, 6);
+        if (!nomes.length) return json({ erro: "Nenhum site válido no lote." }, 400);
+        return json({ email: e, resultados: await Promise.all(nomes.map(n => verificarEmail(n, e))) });
+      }
+    }
     if (p === "/doutrina/pdf") return doutrinaPdf(new URL(req.url), env, Object.assign({ "Access-Control-Expose-Headers": "Content-Length" }, cors));
     if (p.startsWith("/doutrina/")) { const r = await doutrina(p, req, env); if (r) return json(r.corpo, r.st); }
     if (p === "/sites") return json({ sites: Object.entries(SITES).map(([nome, s]) => ({ nome, urlMain: s.urlMain || "", url: s.url, nsfw: !!s.isNSFW, tipo: s.errorType })) });

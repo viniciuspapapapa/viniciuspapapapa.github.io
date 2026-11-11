@@ -1,4 +1,4 @@
-/* Pesquisa em fontes públicas e oficiais por CPF/CNPJ, nome, telefone e placa, com registro de finalidade.
+/* Pesquisa em fontes públicas e oficiais por CPF/CNPJ, nome, telefone, placa e e-mail, com registro de finalidade.
    Consultas diretas quando a fonte permite (BrasilAPI); as demais passam pelo serviço do escritório no Cloudflare
    (sherlock-worker, rotas /publico). Fontes com captcha ou aplicativo aparecem como consultas oficiais prontas. */
 (function () {
@@ -34,6 +34,11 @@
     if (!r.ok) throw new Error(j.erro || "Serviço de consulta indisponível (" + r.status + ").");
     if (j.erro && !j.dados) throw new Error(j.http === 403 ? "A fonte bloqueou a consulta (" + j.erro + ")." : j.http === 401 ? "Chave do Portal da Transparência inválida." : j.erro);
     return j;
+  }
+  async function postServico(caminho, corpo) {
+    const h = { "Content-Type": "application/json" }; const tok = ler("sherlock_token") || CFG.token; if (tok) h["X-App-Token"] = tok;
+    const r = await fetch(servico() + caminho, { method: "POST", headers: h, body: JSON.stringify(corpo) }); const j = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(j.erro || "Serviço de consulta indisponível (" + r.status + ")."); return j;
   }
   async function direto(url) { const r = await fetch(url, { headers: { Accept: "application/json" } }); if (!r.ok) throw Object.assign(new Error("HTTP " + r.status), { http: r.status }); return r.json(); }
   async function transp(rota, params) { const ch = $("#chaveT").value.trim(); return (await viaServico("/publico/transparencia", Object.assign({ rota }, params), ch ? { "X-Transparencia-Chave": ch } : {})).dados; }
@@ -86,6 +91,38 @@
         T("Sanções CEIS, CNEP e CEAF (por nome)", "CGU, cadastros de sanções", async () => lista((await transp("ceis", { nomeSancionado: t.nome })).concat(await transp("cnep", { nomeSancionado: t.nome }), await transp("ceaf", { nomeSancionado: t.nome })), sancao));
       }
     }
+    if (t.email) {
+      let extras = null; const ex = () => extras || (extras = viaServico("/publico/email/extras", { email: t.email }));
+      T("E-mail: contas vinculadas em sites e serviços", "Verificação de cadastro pelas páginas de entrada de cada serviço (método do projeto aberto user-scanner), sem enviar código ou aviso ao titular", async () => {
+        const sites = (await viaServico("/publico/email/sites", {})).sites || [], lotes = [];
+        for (let i = 0; i < sites.length; i += 6) lotes.push(sites.slice(i, i + 6).map(s => s.nome));
+        const res = []; let k = 0;
+        await Promise.all(Array.from({ length: 3 }, async () => { while (k < lotes.length) { const l = lotes[k++]; try { res.push(...((await postServico("/publico/email", { email: t.email, sites: l })).resultados || [])); } catch (e) { l.forEach(n => res.push({ site: n, status: "desconhecido", detalhe: e.message })); } } }));
+        const achados = res.filter(r => r.status === "encontrado").sort((a, b) => a.site.localeCompare(b.site, "pt-BR")), nao = res.filter(r => r.status === "nao_encontrado"), ind = res.filter(r => r.status === "desconhecido");
+        const ROT = { nome: "nome", usuario: "usuário", local: "local", cargo: "cargo", empresa: "empresa", bio: "descrição", contas: "contas verificadas", observacao: "observação" };
+        const itens = achados.map(r => ({ t: r.site + " · cadastro encontrado", s: [r.cat].concat(Object.entries(r.extra || {}).filter(([c]) => ROT[c]).map(([c, v]) => ROT[c] + ": " + v)).join(" · "), link: r.url }));
+        return { resumo: achados.length + (achados.length === 1 ? " serviço com cadastro" : " serviços com cadastro") + " entre " + res.length + " verificados" + (ind.length ? " (" + ind.length + " sem resposta conclusiva)" : ""), itens, rotItens: "Serviços em que o e-mail está cadastrado", vazio: !achados.length, nadaConsta: !achados.length,
+          dl: [["Sem cadastro", nao.map(r => r.site).join(", ") || "nenhum"], ["Sem resposta conclusiva", ind.map(r => r.site + (r.detalhe ? " (" + r.detalhe + ")" : "")).join("; ") || "nenhum"]] };
+      });
+      T("E-mail: domínio, provedor e registro do domínio", "DNS público (registros MX) e RDAP (Registro.br ou registro internacional)", async () => {
+        const d = await ex(), dl = [["Domínio", d.dominio], ["Provedor de e-mail", d.provedor || "não identificado"], ["Recebe e-mails", d.aceitaEmail === false ? "não: o domínio não tem servidor de e-mail (MX)" : d.aceitaEmail ? "sim" : "não verificado"]];
+        if (d.mx && d.mx.length) dl.push(["Servidores MX", d.mx.join(", ")]);
+        if (d.livre) dl.push(["Tipo", "provedor gratuito de uso pessoal: o domínio não indica empresa ou instituição"]);
+        else if (d.rdap) { if (d.rdap.erro) dl.push(["Registro do domínio", d.rdap.erro]); else { dl.push(["Registro do domínio", (d.rdap.fonte || "RDAP") + (d.rdap.registro ? ", registrado em " + br(d.rdap.registro) : "") + (d.rdap.expiracao ? ", expira em " + br(d.rdap.expiracao) : "")]); (d.rdap.entidades || []).forEach(e => dl.push(["Titular ou responsável", e])); if ((d.rdap.servidores || []).length) dl.push(["Servidores DNS", d.rdap.servidores.join(", ")]); } }
+        return { dl, vazio: false };
+      });
+      T("E-mail: chave PGP e commits públicos no GitHub", "keys.openpgp.org e busca pública de commits do GitHub", async () => {
+        const d = await ex(), itens = [], dl = [];
+        dl.push(["Chave PGP publicada", d.pgp ? (d.pgp.publicada ? "sim" : "não") : "não verificado"]);
+        if (d.pgp && d.pgp.publicada) itens.push({ t: "Chave PGP pública vinculada ao e-mail", s: "keys.openpgp.org", link: d.pgp.url });
+        if (d.github && !d.github.erro) {
+          dl.push(["Commits públicos no GitHub", String(d.github.commits)]);
+          (d.github.contas || []).forEach(c => itens.push({ t: "Conta no GitHub: " + c.login, s: "autora de commits com este e-mail" + (d.github.nomes && d.github.nomes.length ? " · nome nos commits: " + d.github.nomes.join(", ") : ""), link: c.url }));
+          if (!(d.github.contas || []).length && (d.github.nomes || []).length) itens.push({ t: "Commits sem conta vinculada", s: "nome nos commits: " + d.github.nomes.join(", ") + (d.github.repositorios.length ? " · repositórios: " + d.github.repositorios.join(", ") : "") });
+        } else dl.push(["Commits públicos no GitHub", d.github ? d.github.erro : "não verificado"]);
+        return { dl, itens, rotItens: "Registros públicos vinculados", vazio: !itens.length, nadaConsta: !itens.length };
+      });
+    }
     if (t.tel) {
       T("Telefone: DDD, região e tipo de linha", "Plano de numeração da Anatel; municípios pela BrasilAPI", async () => {
         const ddd = t.tel.slice(0, 2), num = t.tel.slice(2), cel = num.length === 9 && num[0] === "9";
@@ -127,6 +164,13 @@
       M.push({ id: "perfis", t: "Perfis por nome de usuário (HUB)", d: "Use um apelido ou usuário conhecido.", url: "../usuarios/", copiar: t.nome.split(/\s+/)[0].toLowerCase(), interno: true });
     }
     if (t.cpf) M.push({ id: "busca-cpf", t: "Busca aberta pelo CPF", d: "Publicações oficiais que trazem o CPF.", url: G('"' + t.cpfFmt + '"'), copiar: t.cpfFmt });
+    if (t.email) {
+      const loc = t.email.split("@")[0];
+      M.push({ id: "busca-email", t: "Busca aberta pelo e-mail", d: "Páginas, documentos e publicações que citam o endereço.", url: G('"' + t.email + '"'), copiar: t.email });
+      M.push({ id: "hibp", t: "Exposição em incidentes de segurança (Have I Been Pwned)", d: "Informa apenas em quais incidentes públicos o e-mail apareceu, sem dados.", url: "https://haveibeenpwned.com/", copiar: t.email });
+      M.push({ id: "epieos", t: "Epieos (contas Google e outras)", d: "Consulta complementar gratuita, com verificação humana.", url: "https://epieos.com/?q=" + encodeURIComponent(t.email) + "&t=email", copiar: t.email });
+      if (loc.length >= 3) M.push({ id: "perfis-email", t: "Perfis pelo usuário do e-mail (HUB)", d: "Muitas pessoas usam a parte antes do @ como usuário nas redes.", url: "../usuarios/", interno: true, copiar: loc });
+    }
     if (t.tel) {
       M.push({ id: "abr", t: "Operadora e portabilidade (ABR Telecom)", d: "Consulta oficial do número, com captcha.", url: "https://consultanumero.abrtelecom.com.br/consultanumero/consulta/consultaSituacaoAtualCtg", copiar: t.tel });
       M.push({ id: "whatsapp", t: "WhatsApp", d: "Abre a conversa e mostra se o número usa o aplicativo.", url: "https://wa.me/55" + t.tel, copiar: t.tel });
@@ -142,7 +186,8 @@
   /* ------------------------------------------------------------------ execução */
   function termos() {
     const d = dig($("#doc").value), nome = $("#nome").value.trim().replace(/\s+/g, " "), tel = dig($("#tel").value).replace(/^55(?=\d{10,11}$)/, "").replace(/^0/, ""), placa = $("#placa").value.trim().toUpperCase();
-    const t = { cpf: "", cnpj: "", nome: nome.split(" ").length >= 2 ? nome : "", tel: tel.length >= 10 && tel.length <= 11 ? tel : "", placa: placa.length === 7 ? placa : "" };
+    const em = $("#email").value.trim().toLowerCase();
+    const t = { email: /^[^\s@]{1,64}@[^\s@]+\.[^\s@]{2,}$/.test(em) && em.length <= 254 ? em : "", cpf: "", cnpj: "", nome: nome.split(" ").length >= 2 ? nome : "", tel: tel.length >= 10 && tel.length <= 11 ? tel : "", placa: placa.length === 7 ? placa : "" };
     if (d.length === 11) { t.cpf = d; t.cpfFmt = d.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4"); }
     if (d.length === 14) { t.cnpj = d; t.cnpjFmt = d.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/, "$1.$2.$3/$4-$5"); }
     return t;
@@ -157,14 +202,15 @@
     if ($("#nome").value.trim() && !t.nome) avisos.push("informe o nome completo, com sobrenome");
     if ($("#tel").value && !t.tel) avisos.push("o telefone deve ter DDD e número");
     if ($("#placa").value && !t.placa) avisos.push("a placa deve ter 7 caracteres");
-    if (!t.cpf && !t.cnpj && !t.nome && !t.tel && !t.placa) { $("#estado").textContent = "Preencha ao menos um dado para pesquisar" + (avisos.length ? ": " + avisos.join("; ") : ".") ; return; }
+    if ($("#email").value.trim() && !t.email) avisos.push("o e-mail informado é inválido");
+    if (!t.cpf && !t.cnpj && !t.nome && !t.tel && !t.placa && !t.email) { $("#estado").textContent = "Preencha ao menos um dado para pesquisar" + (avisos.length ? ": " + avisos.join("; ") : ".") ; return; }
     $("#estado").textContent = avisos.length ? "Atenção: " + avisos.join("; ") + "." : "";
     E.termos = t; E.quando = hoje(); E.fontes = []; E.manuais = manuais(t).map(m => Object.assign(m, { feito: false }));
     $("#pesquisar").disabled = true; $("#resBloco").hidden = false; desenharManuais();
     const L = tarefas(t); let n = 0;
     await Promise.all(L.map(async f => {
       const reg = { titulo: f.titulo, base: f.base, status: "carregando", quando: null }; E.fontes.push(reg); desenhar();
-      try { const r = await f.fn(); Object.assign(reg, r, { status: r.vazio && !r.dl ? "vazio" : "ok", quando: hoje() }); if (r.nome && !t.nome) reg.sugestao = r.nome; }
+      try { const r = await f.fn(); Object.assign(reg, r, { status: r.nadaConsta || (r.vazio && !r.dl) ? "vazio" : "ok", quando: hoje() }); if (r.nome && !t.nome) reg.sugestao = r.nome; }
       catch (e) { const m = e.message || String(e), cfg = /Informe a chave/.test(m); Object.assign(reg, { status: cfg ? "config" : "erro", msg: cfg ? "Não consultado: a chave da API do Portal da Transparência não está configurada (em Configuração das fontes ou no serviço)." : m, quando: hoje() }); }
       n++; prog("Consultando as fontes: " + n + " de " + L.length, n / L.length); desenhar();
     }));
@@ -198,7 +244,7 @@
   /* ------------------------------------------------------------------ histórico (dados mascarados) */
   function historico(t) {
     let h = []; try { h = JSON.parse(ler("pesquisa_historico") || "[]"); } catch (e) { h = []; }
-    h.unshift({ quando: E.quando.toISOString(), finalidade: $("#finalidade").value, caso: $("#caso").value.trim(), responsavel: $("#responsavel").value, termos: [t.cpf && "CPF " + mascCpf(t.cpf), t.cnpj && "CNPJ " + t.cnpjFmt, t.nome && t.nome, t.tel && "tel. " + t.tel.slice(0, 2) + "****" + t.tel.slice(-2), t.placa && "placa " + t.placa].filter(Boolean).join(", ") });
+    h.unshift({ quando: E.quando.toISOString(), finalidade: $("#finalidade").value, caso: $("#caso").value.trim(), responsavel: $("#responsavel").value, termos: [t.cpf && "CPF " + mascCpf(t.cpf), t.cnpj && "CNPJ " + t.cnpjFmt, t.nome && t.nome, t.tel && "tel. " + t.tel.slice(0, 2) + "****" + t.tel.slice(-2), t.placa && "placa " + t.placa, t.email && "e-mail " + t.email[0] + "***@" + t.email.split("@")[1]].filter(Boolean).join(", ") });
     gravar("pesquisa_historico", JSON.stringify(h.slice(0, 200))); mostrarHist();
   }
   function mostrarHist() {
@@ -212,7 +258,7 @@
   $("#relatorio").onclick = async () => {
     const t = E.termos; if (!t) return;
     const b = [{ t: "tit", texto: "RELATÓRIO DE PESQUISA EM FONTES PÚBLICAS" }];
-    b.push({ t: "tab", larg: [1.4, 3], linhas: [["Finalidade", $("#finalidade").value], ["Processo ou caso", $("#caso").value.trim()], ["Responsável", $("#responsavel").value], ["Data e hora", E.quando.toLocaleString("pt-BR")], ["Dados pesquisados", [t.cpf && "CPF " + t.cpfFmt, t.cnpj && "CNPJ " + t.cnpjFmt, t.nome && "Nome: " + t.nome, t.tel && "Telefone: " + t.tel, t.placa && "Placa: " + t.placa].filter(Boolean).join("; ")]] });
+    b.push({ t: "tab", larg: [1.4, 3], linhas: [["Finalidade", $("#finalidade").value], ["Processo ou caso", $("#caso").value.trim()], ["Responsável", $("#responsavel").value], ["Data e hora", E.quando.toLocaleString("pt-BR")], ["Dados pesquisados", [t.cpf && "CPF " + t.cpfFmt, t.cnpj && "CNPJ " + t.cnpjFmt, t.nome && "Nome: " + t.nome, t.tel && "Telefone: " + t.tel, t.placa && "Placa: " + t.placa, t.email && "E-mail: " + t.email].filter(Boolean).join("; ")]] });
     b.push({ t: "h", texto: "Base legal e metodologia" });
     b.push({ t: "p", r: "A pesquisa foi realizada exclusivamente em fontes públicas e oficiais, para o exercício regular de direitos em processo judicial ou administrativo (Lei 13.709/2018, art. 7º, VI, e art. 11, II, “d”), no âmbito da investigação defensiva (Provimento 188/2018 do Conselho Federal da OAB). Não foram utilizadas bases de dados obtidas ilicitamente, o que preserva a licitude dos elementos colhidos (CPP, art. 157)." });
     b.push({ t: "p", r: "Os resultados indicam registros associados aos dados pesquisados, mas a coincidência de nome não comprova identidade. Antes do uso processual, os registros relevantes devem ser conferidos na fonte original e, quando necessário, preservados por certidão, ata notarial (CPC, art. 384) ou coleta com cadeia de custódia (CPP, arts. 158-A a 158-F)." });
