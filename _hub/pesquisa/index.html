@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Pesquisa em Fontes Públicas · HUB TPC</title>
-<meta name="description" content="Pesquisa por CPF, CNPJ, nome completo, telefone e placa em fontes públicas e oficiais, com registro de finalidade e relatório com data e hora de cada consulta.">
+<meta name="description" content="Pesquisa por CPF, CNPJ, nome completo, telefone, placa e e-mail em fontes públicas e oficiais, com registro de finalidade e relatório com data e hora de cada consulta.">
 <meta name="theme-color" content="#f5f1e8">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -57,7 +57,7 @@
   <section class="heroi">
     <div class="sobretitulo">Ferramenta 18 · Investigação defensiva</div>
     <h1>Pesquisa em fontes públicas</h1>
-    <p class="lead">Pesquise por CPF ou CNPJ, nome completo, telefone e placa em fontes públicas e oficiais: comunicações processuais do CNJ, diários oficiais, Portal da Transparência, cadastro de empresas e consultas oficiais. Cada pesquisa registra a finalidade e gera relatório com a data e a hora de cada consulta.</p>
+    <p class="lead">Pesquise por CPF ou CNPJ, nome completo, telefone, placa e e-mail em fontes públicas e oficiais: comunicações processuais do CNJ, diários oficiais, Portal da Transparência, cadastro de empresas, consultas oficiais e as contas, perfis e domínios vinculados a um e-mail. Cada pesquisa registra a finalidade e gera relatório com a data e a hora de cada consulta.</p>
     <div class="chips"><span>LGPD, art. 7º, VI</span><span>Provimento 188/2018 do CFOAB</span><span>Lei 12.527/2011</span><span>CPP, art. 157</span></div>
   </section>
 
@@ -80,6 +80,7 @@
         <label class="campo" style="grid-column:span 2">Nome completo<input type="text" id="nome" autocomplete="off" placeholder="Nome e sobrenomes, sem abreviação"></label>
         <label class="campo">Telefone<input type="text" id="tel" inputmode="tel" autocomplete="off" placeholder="(31) 99999-9999"></label>
         <label class="campo">Placa<input type="text" id="placa" autocomplete="off" placeholder="ABC1D23" style="text-transform:uppercase"></label>
+        <label class="campo" style="grid-column:span 2">E-mail<input type="email" id="email" inputmode="email" autocomplete="off" spellcheck="false" placeholder="nome@provedor.com.br"></label>
       </div>
       <div class="linha-btns" style="margin-top:14px"><button type="button" class="btn" id="pesquisar">Pesquisar</button><span class="pequeno mudo" id="estado"></span></div>
       <div class="barra" id="barra" hidden><i></i></div>
@@ -101,7 +102,7 @@
       <h3 class="sub-h" style="font-size:17px;margin:18px 0 4px">Consultas oficiais com verificação humana</h3>
       <p class="pequeno mudo" style="margin:0">Estas fontes exigem captcha ou aplicativo. Os dados já seguem preenchidos ou prontos para copiar; marque as que foram consultadas para que constem do relatório.</p>
       <div class="manuais" id="manuais"></div>
-      <p class="pequeno mudo" style="margin-top:14px">Somente fontes públicas e oficiais são consultadas. A ferramenta não utiliza bases vazadas nem dados de birôs sem contrato, o que preserva a licitude da prova (CPP, art. 157). Homonímia é frequente: confirme a identidade antes de usar qualquer resultado.</p>
+      <p class="pequeno mudo" style="margin-top:14px">Somente fontes públicas e oficiais são consultadas. A ferramenta não utiliza bases vazadas nem dados de birôs sem contrato, o que preserva a licitude da prova (CPP, art. 157). Na pesquisa por e-mail, cada serviço é consultado apenas sobre a existência do cadastro, sem envio de código, aviso ou tentativa de acesso à conta, e ficam de fora os serviços cujo cadastro revelaria dados sensíveis (LGPD, art. 5º, II). Homonímia é frequente: confirme a identidade antes de usar qualquer resultado.</p>
     </div>
 
     <div class="card bloco">
@@ -111,7 +112,7 @@
 </main>
 
 <footer class="rodape">
-  <div class="wrap"><b>TPC ADVOGADOS</b> · HUB. Fontes: CNJ (Diário de Justiça Eletrônico Nacional), Querido Diário (Open Knowledge Brasil), Portal da Transparência (CGU), Receita Federal pela BrasilAPI e consultas oficiais.</div>
+  <div class="wrap"><b>TPC ADVOGADOS</b> · HUB. Fontes: CNJ (Diário de Justiça Eletrônico Nacional), Querido Diário (Open Knowledge Brasil), Portal da Transparência (CGU), Receita Federal pela BrasilAPI, Registro.br, keys.openpgp.org, GitHub, verificação de cadastros pelo método do projeto aberto user-scanner (MIT) e consultas oficiais.</div>
 </footer>
 <script src="../vendor/jszip/jszip.min.js"></script>
 <script src="../assets/hub.js"></script>
