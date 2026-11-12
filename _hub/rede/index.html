@@ -35,6 +35,27 @@
   table.t td { border-bottom: 1px solid var(--line); padding: 4px 6px; vertical-align: top; }
   .barra { height: 6px; background: var(--line); border-radius: 99px; overflow: hidden; margin-top: 10px; }
   .barra i { display: block; height: 100%; width: 0; background: var(--ink-2); }
+  .modos { display: flex; flex-wrap: wrap; gap: 6px 18px; margin-top: 8px; font-size: 15px; }
+  .modos label { display: inline-flex; gap: 6px; align-items: center; }
+  #lista { min-height: 140px; font-family: var(--mono); font-size: 14px; line-height: 1.5; resize: vertical; }
+  #grafo .aresta.caminho { stroke: #EB6834; stroke-width: 2.6; }
+  .vinc { margin-top: 14px; }
+  .vinc h3 { font-size: 17px; margin: 0 0 6px; }
+  .par { border-top: 1px solid var(--line); padding: 10px 0; }
+  .par-cab { display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: baseline; justify-content: space-between; }
+  .par-cab b { font-size: 15px; }
+  .selo { font-size: 12.5px; border-radius: 99px; padding: 1px 9px; background: var(--surface-3); color: var(--ink-2); white-space: nowrap; }
+  .selo.direto { background: #EB6834; color: #fff; }
+  .selo.indireto { background: var(--accent-soft); color: var(--ink); }
+  .cadeia { font-size: 14px; margin: 6px 0 0; line-height: 1.6; }
+  .cadeia i { font-style: normal; color: var(--ink-3); font-size: 12.5px; }
+  .cadeia .n { font-weight: 600; }
+  .matriz { border-collapse: collapse; font-size: 13px; margin: 6px 0 12px; }
+  .matriz th, .matriz td { border: 1px solid var(--line); padding: 4px 8px; text-align: center; }
+  .matriz th { font-weight: 500; color: var(--ink-2); }
+  .matriz th.rot { text-align: left; white-space: nowrap; max-width: 280px; overflow: hidden; text-overflow: ellipsis; }
+  .matriz td.d { background: #EB6834; color: #fff; font-weight: 600; }
+  .matriz td.i { background: var(--accent-soft); }
   [hidden] { display: none !important; }
 </style>
 </head>
@@ -53,17 +74,31 @@
   <section class="heroi">
     <div class="sobretitulo">Ferramenta 26 · Investigação societária</div>
     <h1>Rede de empresas e sócios</h1>
-    <p class="lead">A partir do nome, do CPF ou do CNPJ, encontra todas as empresas em que a pessoa figura como sócia ou administradora na base aberta da Receita Federal e desenha a rede de ligações: sócios em comum, administradores e endereços compartilhados. Revela grupos econômicos, sucessão empresarial e possíveis interpostas pessoas.</p>
+    <p class="lead">A partir do nome, do CPF ou do CNPJ, encontra todas as empresas em que a pessoa figura como sócia ou administradora na base aberta da Receita Federal e desenha a rede de ligações: sócios em comum, administradores e endereços compartilhados. Com várias pessoas e empresas, aponta os vínculos existentes entre elas, diretos ou por intermediários. Revela grupos econômicos, sucessão empresarial e possíveis interpostas pessoas.</p>
     <div class="chips"><span>Dados abertos do CNPJ (Receita Federal)</span><span>Lei 12.527/2011</span><span>LGPD, art. 7º, VI</span></div>
   </section>
 
   <section class="secao" style="padding-top:18px">
     <div class="card bloco">
       <h2>Ponto de partida</h2>
+      <div class="modos" role="radiogroup" aria-label="Modo de pesquisa">
+        <label><input type="radio" name="modo" value="um" checked> Uma pessoa ou empresa</label>
+        <label><input type="radio" name="modo" value="varios"> Várias pessoas e empresas: análise de vínculos</label>
+      </div>
+      <div id="modoUm">
       <div class="grade g4" style="margin-top:8px">
         <label class="campo" style="grid-column:span 2">Nome completo (pessoa) ou razão social<input type="text" id="nome" autocomplete="off" placeholder="Nome exatamente como no cadastro, sem abreviações"></label>
         <label class="campo">CPF ou CNPJ<input type="text" id="doc" inputmode="numeric" autocomplete="off" placeholder="Opcional com o nome"></label>
         <label class="campo">Processo ou caso<input type="text" id="caso" autocomplete="off"></label>
+      </div>
+      </div>
+      <div id="modoVarios" hidden>
+        <label class="campo" style="margin-top:8px">Pessoas e empresas, uma por linha<textarea id="lista" rows="6" autocomplete="off" spellcheck="false" placeholder="FULANO DE TAL DA SILVA; 123.456.789-00&#10;BELTRANA DE SOUZA&#10;12.345.678/0001-90"></textarea></label>
+        <p class="pequeno mudo" style="margin:6px 0 0">Nome completo como no cadastro, seguido do CPF quando conhecido (separado por ponto e vírgula), ou o CNPJ de uma empresa. O CPF evita confusão com homônimos. Até 12 linhas.</p>
+        <div class="grade g4" style="margin-top:8px">
+          <label class="campo" style="grid-column:span 2">Processo ou caso<input type="text" id="caso2" autocomplete="off"></label>
+          <label class="campo" style="grid-column:span 2">Homônimos sem CPF<select id="homonimos"><option value="todos">Analisar todos (até 5 por nome), identificando cada um</option><option value="nenhum">Pular o nome e pedir o CPF</option></select></label>
+        </div>
       </div>
       <div class="linha-btns" style="margin-top:12px"><button type="button" class="btn" id="buscar">Montar a rede</button><span class="pequeno mudo" id="baseInfo"></span></div>
       <div class="barra" id="barra" hidden><i></i></div>
@@ -73,7 +108,9 @@
 
     <div class="card bloco" id="resBloco" hidden>
       <div class="linha-btns" style="justify-content:space-between;margin:0"><h2 style="margin:0">Rede</h2><span class="linha-btns" style="margin:0"><button type="button" class="btn sec" id="reorganizar">Reorganizar</button><button type="button" class="btn sec" id="relatorio">Relatório (Word)</button></span></div>
-      <div class="legenda"><span><i style="background:#2B2B2B"></i>Pessoa pesquisada</span><span><i style="background:#2A78D6"></i>Empresa ativa</span><span><i style="background:#B8B8B8"></i>Empresa baixada, inapta ou suspensa</span><span><i style="background:#E8E347"></i>Outras pessoas</span><span><i style="background:#1BAF7A"></i>Pessoa jurídica sócia</span><span>— — endereço em comum</span></div>
+      <div id="vinculos"></div>
+      <label class="pequeno" id="soCaminhosRot" hidden style="display:inline-flex;gap:6px;align-items:center;margin-top:10px"><input type="checkbox" id="soCaminhos" checked> Mostrar no grafo só as pessoas pesquisadas e os caminhos entre elas</label>
+      <div class="legenda"><span><i style="background:#2B2B2B"></i>Pessoa pesquisada</span><span><i style="background:#2A78D6"></i>Empresa ativa</span><span><i style="background:#B8B8B8"></i>Empresa baixada, inapta ou suspensa</span><span><i style="background:#E8E347"></i>Outras pessoas</span><span><i style="background:#1BAF7A"></i>Pessoa jurídica sócia</span><span>— — endereço em comum</span><span><b style="color:#EB6834">━</b> caminho entre pessoas pesquisadas</span></div>
       <div class="grafo-wrap"><svg id="grafo" role="img" aria-label="Grafo de pessoas e empresas"></svg><div class="painel" id="painel"><p class="pequeno mudo">Clique numa pessoa ou empresa para ver os detalhes. Arraste para reorganizar. Em uma pessoa, use Expandir para incluir as empresas dela.</p></div></div>
       <h3 style="font-size:17px;margin:18px 0 4px">Empresas na rede</h3>
       <div id="tabela" style="overflow-x:auto"></div>
@@ -82,6 +119,7 @@
     <div class="card bloco">
       <details class="cfg"><summary>Fontes e limites</summary>
         <p class="pequeno" style="margin-top:10px">O vínculo entre pessoas e empresas vem da base aberta de sócios da Receita Federal, atualizada mensalmente e guardada cifrada com a senha do HUB. Os dados de cada empresa (razão social, situação, capital, endereço e quadro societário atual) vêm da Receita pela BrasilAPI. A Receita divulga o CPF de sócios só parcialmente (seis dígitos centrais) e com faixa etária, o que ajuda a separar homônimos; ainda assim, confirme a identidade antes de usar o resultado.</p>
+        <p class="pequeno">Na análise de vínculos, a ferramenta monta as empresas de cada pessoa ou empresa informada, com o quadro societário atual de cada uma, e procura os caminhos de até quatro passos entre elas: sociedade ou administração na mesma empresa, empresa sócia de outra, sócio em comum entre empresas de uma e de outra e empresas no mesmo endereço. Ligações mais distantes, que dependem das demais empresas dos intermediários, podem ser exploradas no grafo com o botão Expandir.</p>
         <p class="pequeno">A busca é feita pelo nome exato, normalizado (sem acentos e sem pontuação). Nomes grafados de outra forma no cadastro não serão encontrados: na dúvida, parta do CNPJ de uma empresa conhecida e expanda a rede pelos sócios.</p>
       </details>
     </div>
