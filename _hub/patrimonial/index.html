@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Investigação Patrimonial · HUB TPC</title>
+<meta name="description" content="Mapeamento de bens, participações societárias e dívidas a partir de fontes públicas e oficiais, com roteiro guiado e relatório em Word.">
+<meta name="theme-color" content="#f5f1e8">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Red+Hat+Display:wght@500;600&family=Red+Hat+Text:wght@400;500;600&family=Red+Hat+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/hub.css">
+<style>
+  .heroi { padding: 34px 0 6px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 14px; }
+  .chips span { font-size: 13px; padding: 2px 8px; border-radius: var(--radius-chip); background: var(--surface-3); color: var(--ink-2); }
+  .bloco { padding: 18px; margin-bottom: 14px; }
+  .bloco > h2 { font-size: 22px; margin-bottom: 4px; }
+  .bloco > p.mudo { margin: 0 0 12px; font-size: 14px; }
+  .fonte { border-top: 1px solid var(--ink); padding: 12px 0 14px; }
+  .fonte-cab { display: flex; flex-wrap: wrap; gap: 8px; align-items: baseline; justify-content: space-between; }
+  .fonte-cab h3 { font-size: 17px; margin: 0; }
+  .fonte-cab small { color: var(--ink-3); font-family: var(--mono); font-size: 12.5px; }
+  .fonte p { margin: 6px 0; font-size: 15px; }
+  .itens { margin: 8px 0 0; display: grid; gap: 8px; }
+  .item { background: var(--surface-2); border-radius: var(--radius-key); padding: 10px 12px; font-size: 14.5px; }
+  .item b { font-weight: 600; }
+  .item .pequeno { margin-top: 3px; }
+  .item.destaque { box-shadow: inset 3px 0 0 var(--accent); }
+  .dl { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 2px 12px; font-size: 14.5px; margin: 6px 0 0; }
+  .dl dt { color: var(--ink-3); } .dl dd { margin: 0; overflow-wrap: anywhere; }
+  .roteiro h3 { font-size: 16px; margin: 16px 0 6px; }
+  .passo { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 4px 12px; padding: 10px 0; border-top: 1px solid var(--line); }
+  .passo:first-of-type { border-top: 0; }
+  .passo .txt b { font-size: 15px; }
+  .passo .txt .mudo { font-size: 13.5px; }
+  .passo .linha-btns { margin: 6px 0 0; }
+  .passo textarea { width: 100%; min-height: 38px; margin-top: 6px; font: inherit; font-size: 14px; padding: 6px 8px; border: 1px solid var(--line-2); border-radius: var(--radius-key); background: var(--surface); color: var(--ink); resize: vertical; }
+  .passo input[type=checkbox] { margin-top: 4px; width: 18px; height: 18px; }
+  .barra { height: 6px; background: var(--line); border-radius: 99px; overflow: hidden; margin-top: 10px; }
+  .barra i { display: block; height: 100%; width: 0; background: var(--ink-2); }
+  .aviso { border-left: 3px solid var(--warn); background: var(--warn-bg, var(--surface-2)); padding: 8px 12px; border-radius: 0 8px 8px 0; font-size: 14px; margin: 8px 0; }
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body>
+<header class="topo">
+  <div class="topo-in">
+    <a class="marca" href="../" aria-label="HUB TPC, página inicial"><span class="marca-tpc">TPC</span><span class="marca-txt"><b>HUB</b> Criminal</span></a>
+    <nav class="migalha" aria-label="Você está em"><span>/</span><span>Investigação patrimonial</span></nav>
+    <div class="espaco"></div>
+    <button class="btn-icone" type="button" onclick="HUB.alternarTema()" aria-label="Alternar tema claro ou escuro" title="Tema"><span data-tema-icone>☾</span></button>
+  </div>
+</header>
+<div class="faixa"></div>
+
+<main class="wrap">
+  <section class="heroi">
+    <div class="sobretitulo">Ferramenta 21 · Investigação defensiva</div>
+    <h1>Investigação patrimonial e de dívidas</h1>
+    <p class="lead">Mapeamento de bens, participações societárias e dívidas de pessoas e empresas em fontes públicas e oficiais: aeronaves no registro da ANAC, empresas e quadro de sócios na Receita Federal, dívida ativa da União e um roteiro guiado de imóveis, veículos, protestos, certidões e execuções, com registro do que foi encontrado e relatório em Word.</p>
+    <div class="chips"><span>LGPD, art. 7º, VI</span><span>Provimento 188/2018 do CFOAB</span><span>CPC, art. 774, V</span><span>Lei 12.527/2011</span></div>
+  </section>
+
+  <section class="secao" style="padding-top:18px">
+    <div class="card bloco">
+      <h2>1. Finalidade</h2>
+      <p class="mudo">Fica registrada no relatório e no histórico deste navegador.</p>
+      <div class="grade g4">
+        <label class="campo" style="grid-column:span 2">Finalidade<select id="finalidade"><option value="">Selecione</option><option>Execução ou cumprimento de sentença</option><option>Reparação do dano à vítima</option><option>Medidas assecuratórias (sequestro, arresto, hipoteca legal)</option><option>Defesa em processo ou inquérito</option><option>Diligência sobre contraparte</option><option>Instrução de peça ou parecer</option></select></label>
+        <label class="campo" style="grid-column:span 2">Processo, inquérito ou caso<input type="text" id="caso" placeholder="Número do processo ou nome do caso"></label>
+        <label class="campo" style="grid-column:span 2">Responsável<select id="responsavel"></select></label>
+      </div>
+    </div>
+
+    <div class="card bloco">
+      <h2>2. Investigado</h2>
+      <p class="mudo">Informe o nome e o documento da pessoa ou empresa. As empresas relacionadas (de que o investigado é sócio, administrador ou que integram o grupo) ampliam o mapeamento societário e de dívidas.</p>
+      <div class="grade g4">
+        <label class="campo" style="grid-column:span 2">Nome completo ou razão social<input type="text" id="nome" autocomplete="off" placeholder="Nome e sobrenomes, sem abreviação"></label>
+        <label class="campo">CPF ou CNPJ<input type="text" id="doc" inputmode="numeric" autocomplete="off" placeholder="000.000.000-00"></label>
+        <label class="campo">UF de atuação<select id="uf"><option>MG</option><option>AC</option><option>AL</option><option>AM</option><option>AP</option><option>BA</option><option>CE</option><option>DF</option><option>ES</option><option>GO</option><option>MA</option><option>MS</option><option>MT</option><option>PA</option><option>PB</option><option>PE</option><option>PI</option><option>PR</option><option>RJ</option><option>RN</option><option>RO</option><option>RR</option><option>RS</option><option>SC</option><option>SE</option><option>SP</option><option>TO</option></select></label>
+        <label class="campo" style="grid-column:1 / -1">Empresas relacionadas (CNPJ, um por linha ou separados por vírgula)<textarea id="cnpjs" rows="2" autocomplete="off" placeholder="00.000.000/0001-00"></textarea></label>
+      </div>
+      <div class="linha-btns" style="margin-top:14px"><button type="button" class="btn" id="investigar">Investigar</button><span class="pequeno mudo" id="estado"></span></div>
+      <div class="barra" id="barra" hidden><i></i></div>
+      <p class="pequeno" id="progresso" style="margin:6px 0 0"></p>
+    </div>
+
+    <div class="card bloco" id="resBloco" hidden>
+      <div class="linha-btns" style="justify-content:space-between;margin:0"><h2 style="margin:0">3. Resultados</h2><button type="button" class="btn sec" id="relatorio">Baixar relatório (Word)</button></div>
+      <div id="resumo" class="pequeno mudo" style="margin:6px 0 10px"></div>
+      <div id="fontes"></div>
+    </div>
+
+    <div class="card bloco roteiro" id="rotBloco" hidden>
+      <h2>4. Roteiro de diligências</h2>
+      <p class="mudo">Consultas oficiais que exigem captcha, certificado digital, cadastro ou pagamento. Os dados do investigado já seguem copiados ao abrir cada link. Marque o que foi consultado e anote o resultado: tudo entra no relatório.</p>
+      <div id="roteiro"></div>
+    </div>
+
+    <div class="card bloco">
+      <details class="cfg"><summary>Histórico de investigações neste navegador</summary><div id="historico" style="margin-top:10px"></div></details>
+    </div>
+  </section>
+</main>
+
+<footer class="rodape">
+  <div class="wrap"><b>TPC ADVOGADOS</b> · HUB. Fontes: Registro Aeronáutico Brasileiro (ANAC, dados abertos, atualização diária), Receita Federal pela BrasilAPI, base de dívida ativa da União do escritório (PGFN, dados abertos) e consultas oficiais. Somente fontes públicas e oficiais; nenhuma base vazada é utilizada.</div>
+</footer>
+<script src="../vendor/jszip/jszip.min.js"></script>
+<script src="../assets/hub.js"></script>
+<script src="../assets/peca.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

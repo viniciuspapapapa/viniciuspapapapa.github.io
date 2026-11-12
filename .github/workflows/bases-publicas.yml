@@ -1,0 +1,49 @@
+# Bases públicas da Investigação patrimonial do HUB (hoje: Registro Aeronáutico Brasileiro, da ANAC).
+# Baixa os dados abertos, cifra com a chave do HUB e publica no ramo "bases-publicas". Roda diariamente e quando o
+# script muda.
+name: Bases públicas do HUB
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '23 9 * * *'   # 06:23 em Brasília
+  push:
+    branches: [main]
+    paths:
+      - '_ferramentas/bases/**'
+      - '.github/workflows/bases-publicas.yml'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: bases-publicas
+  cancel-in-progress: false
+
+jobs:
+  gerar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Gerar as bases cifradas
+        env:
+          HUB_SENHA: ${{ secrets.HUB_SENHA }}
+        run: |
+          if [ -z "$HUB_SENHA" ]; then
+            echo "::error::Cadastre a senha do HUB no segredo HUB_SENHA."
+            exit 1
+          fi
+          node _ferramentas/bases/publicas.mjs
+      - name: Publicar no ramo bases-publicas
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cd base-publica
+          git init -q -b bases-publicas
+          git add -A
+          git -c user.name="HUB TPC" -c user.email="41898282+github-actions[bot]@users.noreply.github.com" commit -q -m "Bases públicas do HUB"
+          git push -q -f "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" bases-publicas

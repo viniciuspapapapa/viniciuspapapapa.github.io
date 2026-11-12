@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Análise de Imagens · HUB TPC</title>
+<meta name="description" content="Verificação de fotos usadas como prova: hash para a cadeia de custódia, metadados e localização, indícios de edição, comparação entre imagens e pesquisa reversa guiada.">
+<meta name="theme-color" content="#f5f1e8">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Red+Hat+Display:wght@500;600&family=Red+Hat+Text:wght@400;500;600&family=Red+Hat+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/hub.css">
+<style>
+  .heroi { padding: 34px 0 6px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 14px; }
+  .chips span { font-size: 13px; padding: 2px 8px; border-radius: var(--radius-chip); background: var(--surface-3); color: var(--ink-2); }
+  .bloco { padding: 18px; margin-bottom: 14px; }
+  .bloco > h2 { font-size: 22px; margin-bottom: 4px; }
+  .zona { display: grid; place-items: center; gap: 4px; text-align: center; border: 1.5px dashed var(--line-2); border-radius: var(--radius); padding: 28px 16px; cursor: pointer; background: var(--surface); }
+  .zona.sobre { border-color: var(--accent); background: var(--surface-2); }
+  .img { border-top: 1px solid var(--ink); padding: 16px 0; display: grid; grid-template-columns: 220px minmax(0, 1fr); gap: 16px; }
+  @media (max-width: 760px) { .img { grid-template-columns: 1fr; } }
+  .img .miniatura { width: 100%; max-height: 260px; object-fit: contain; background: var(--surface-3); border-radius: var(--radius-key); }
+  .img h3 { font-size: 17px; margin: 0 0 4px; overflow-wrap: anywhere; }
+  .dl { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 2px 12px; font-size: 14px; margin: 6px 0 0; }
+  .dl dt { color: var(--ink-3); } .dl dd { margin: 0; overflow-wrap: anywhere; }
+  .mono { font-family: var(--mono); font-size: 12.5px; }
+  .ind { margin: 8px 0 0; display: grid; gap: 6px; }
+  .ind div { font-size: 14px; padding: 6px 10px; border-radius: var(--radius-key); background: var(--surface-2); }
+  .ind .alerta { box-shadow: inset 3px 0 0 var(--accent); }
+  .ela { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px; }
+  .ela canvas, .ela img { width: 100%; border-radius: var(--radius-key); background: #000; }
+  .cmp { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-top: 10px; }
+  .cmp canvas, .cmp img { width: 100%; border-radius: var(--radius-key); background: var(--surface-3); }
+  details.meta > summary { cursor: pointer; font-size: 14px; font-weight: 600; margin-top: 8px; }
+  .meta table { width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 6px; }
+  .meta td { border-bottom: 1px solid var(--line); padding: 3px 6px; vertical-align: top; overflow-wrap: anywhere; }
+  .meta td:first-child { color: var(--ink-3); width: 38%; }
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body>
+<header class="topo">
+  <div class="topo-in">
+    <a class="marca" href="../" aria-label="HUB TPC, página inicial"><span class="marca-tpc">TPC</span><span class="marca-txt"><b>HUB</b> Criminal</span></a>
+    <nav class="migalha" aria-label="Você está em"><span>/</span><span>Análise de imagens</span></nav>
+    <div class="espaco"></div>
+    <button class="btn-icone" type="button" onclick="HUB.alternarTema()" aria-label="Alternar tema claro ou escuro" title="Tema"><span data-tema-icone>☾</span></button>
+  </div>
+</header>
+<div class="faixa"></div>
+
+<main class="wrap">
+  <section class="heroi">
+    <div class="sobretitulo">Ferramenta 22 · Prova digital</div>
+    <h1>Análise e verificação de imagens</h1>
+    <p class="lead">Verificação de fotos e capturas de tela usadas como prova: hash para a cadeia de custódia, metadados de câmera, data e localização, indícios de edição, análise de nível de erro, comparação entre duas imagens e pesquisa reversa guiada para encontrar a origem e outras publicações da mesma imagem.</p>
+    <div class="chips"><span>CPP, arts. 158-A a 158-F</span><span>CPP, art. 157</span><span>Processado no navegador</span></div>
+  </section>
+
+  <section class="secao" style="padding-top:18px">
+    <div class="card bloco">
+      <h2>1. Imagens</h2>
+      <p class="pequeno mudo" style="margin:0 0 10px">As imagens são analisadas neste navegador e não são enviadas a nenhum servidor. Só a pesquisa reversa, por iniciativa sua, leva a imagem ao buscador escolhido.</p>
+      <label class="zona" id="zona"><b>Arraste as imagens aqui ou clique para selecionar</b><span class="pequeno mudo">JPG, PNG, WEBP, HEIC ou TIFF; de preferência o arquivo original, e não o reenviado por aplicativo</span><input type="file" id="arquivo" accept="image/*,.heic,.heif,.tif,.tiff" multiple hidden></label>
+      <div class="grade g4" style="margin-top:12px">
+        <label class="campo" style="grid-column:span 2">Processo, inquérito ou caso<input type="text" id="caso" placeholder="Número do processo ou nome do caso"></label>
+        <label class="campo" style="grid-column:span 2">Responsável<select id="responsavel"></select></label>
+      </div>
+      <p class="pequeno" id="estado" style="margin:10px 0 0"></p>
+    </div>
+
+    <div class="card bloco" id="cmpBloco" hidden>
+      <h2>2. Comparação entre duas imagens</h2>
+      <p class="pequeno mudo" style="margin:0 0 10px">Indica se duas imagens são a mesma fotografia, mesmo depois de recorte leve, compressão ou redimensionamento, e mostra onde diferem. Não faz reconhecimento facial.</p>
+      <div class="grade g4">
+        <label class="campo" style="grid-column:span 2">Imagem A<select id="cmpA"></select></label>
+        <label class="campo" style="grid-column:span 2">Imagem B<select id="cmpB"></select></label>
+      </div>
+      <div class="linha-btns" style="margin-top:10px"><button type="button" class="btn sec" id="comparar">Comparar</button></div>
+      <div id="cmpRes"></div>
+    </div>
+
+    <div class="card bloco" id="resBloco" hidden>
+      <div class="linha-btns" style="justify-content:space-between;margin:0"><h2 style="margin:0">3. Análise de cada imagem</h2><button type="button" class="btn sec" id="relatorio">Baixar relatório (Word)</button></div>
+      <div id="lista"></div>
+    </div>
+
+    <div class="card bloco">
+      <details class="cfg"><summary>Como interpretar</summary>
+        <p class="pequeno" style="margin-top:10px">O hash SHA-256 identifica o arquivo de forma única: qualquer alteração, mesmo de um único pixel ou metadado, muda o valor. Registrado no momento da coleta, permite demonstrar que o arquivo juntado é o mesmo analisado, o que importa à cadeia de custódia da prova digital (CPP, arts. 158-A a 158-F).</p>
+        <p class="pequeno">A ausência de metadados não indica fraude: WhatsApp, Instagram e a maioria das redes removem os dados da câmera e da localização ao enviar a imagem. Por isso, a análise é mais útil sobre o arquivo original, extraído do aparelho ou da nuvem de quem fotografou.</p>
+        <p class="pequeno">A análise de nível de erro (ELA) recomprime a imagem e realça as regiões que reagem de forma diferente do restante. Áreas coladas ou retocadas tendem a destoar, mas bordas, textos e superfícies lisas também se destacam naturalmente. É indício que orienta o exame, e não conclusão; a demonstração de adulteração exige perícia.</p>
+      </details>
+    </div>
+  </section>
+</main>
+
+<footer class="rodape">
+  <div class="wrap"><b>TPC ADVOGADOS</b> · HUB. Metadados lidos pela biblioteca aberta exifr (MIT). Hashes e análises calculados neste navegador.</div>
+</footer>
+<script src="../vendor/jszip/jszip.min.js"></script>
+<script src="../assets/hub.js"></script>
+<script src="../assets/peca.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

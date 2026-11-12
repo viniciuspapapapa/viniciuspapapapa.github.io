@@ -123,6 +123,13 @@ _hub/  (publicada cifrada em hub/)
   produtividade/
     app.js                    Painel de produtividade e rentabilidade (portado de painel-produtividade.html): leitura das
                               planilhas do ADVWin, análise da equipe e de cada advogado, gráficos, PDF e relatório crítico
+  patrimonial/
+    app.js                    Investigação patrimonial e de dívidas: aeronaves (base RAB cifrada do ramo bases-publicas, gerada
+                              por _ferramentas/bases/ no fluxo bases-publicas.yml), empresas e QSA (BrasilAPI), dívida ativa
+                              (dados-captacao.json), roteiro guiado com anotações e relatório Word
+  imagens/
+    app.js                    Análise de imagens: SHA-256/512, metadados EXIF/XMP/IPTC/GPS (exifr), indícios de edição, ELA,
+                              comparação perceptual (pHash e dHash), pesquisa reversa guiada e relatório Word
   vendor/                     Bibliotecas abertas hospedadas no HUB (publicadas sem cifra; versões em VERSOES.txt)
   certidoes/
     catalogo.js               Serviços oficiais de certidão criminal (27 TJs, TRF1 a TRF6, STM, TJMs, TSE, STF, STJ, PF, BNMP)
