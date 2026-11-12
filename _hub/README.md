@@ -130,6 +130,20 @@ _hub/  (publicada cifrada em hub/)
   imagens/
     app.js                    Análise de imagens: SHA-256/512, metadados EXIF/XMP/IPTC/GPS (exifr), indícios de edição, ELA,
                               comparação perceptual (pHash e dHash), pesquisa reversa guiada e relatório Word
+  jurisprudencia/
+    app.js                    Pesquisa de jurisprudência: base local cifrada (acervo Advocacia Aberta, gerada por
+                              _ferramentas/bases/juris.mjs no fluxo bases-publicas.yml), motor da doutrina e busca ao vivo
+                              pelo sherlock-tpc em /juris/busca (método Garimpo-Jurídico); citação e Word
+  sigilo/
+    app.js                    Quebra de sigilo bancário: SIMBA e extratos, mapeamento de colunas, fluxo, contrapartes,
+                              espécie, fracionamento, passagem rápida, renda declarada, Excel e Word
+  erb/
+    app.js                    Mapa por ERB: bilhetagem, coordenadas e azimutes, Leaflet, local dos fatos e conferência
+                              na Anatel pelo sherlock-tpc em /erb/anatel e /erb/geo; relatório Word
+  rede/
+    app.js                    Rede de empresas e sócios: índice cifrado da base de sócios da Receita (release
+                              bases-socios, fluxo bases-socios.yml, lido pelo sherlock-tpc em /socios/parte), BrasilAPI,
+                              grafo em SVG e relatório Word
   vendor/                     Bibliotecas abertas hospedadas no HUB (publicadas sem cifra; versões em VERSOES.txt)
   certidoes/
     catalogo.js               Serviços oficiais de certidão criminal (27 TJs, TRF1 a TRF6, STM, TJMs, TSE, STF, STJ, PF, BNMP)

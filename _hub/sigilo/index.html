@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Quebra de Sigilo Bancário · HUB TPC</title>
+<meta name="description" content="Análise de afastamento de sigilo bancário a partir dos arquivos do SIMBA ou de extratos: fluxo, contrapartes, espécie, fracionamento, passagem de recursos e compatibilidade com a renda declarada.">
+<meta name="theme-color" content="#f5f1e8">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Red+Hat+Display:wght@500;600&family=Red+Hat+Text:wght@400;500;600&family=Red+Hat+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/hub.css">
+<style>
+  .heroi { padding: 34px 0 6px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 14px; }
+  .chips span { font-size: 13px; padding: 2px 8px; border-radius: var(--radius-chip); background: var(--surface-3); color: var(--ink-2); }
+  .bloco { padding: 18px; margin-bottom: 14px; }
+  .bloco > h2 { font-size: 22px; margin-bottom: 4px; }
+  .zona { display: grid; place-items: center; gap: 4px; text-align: center; border: 1.5px dashed var(--line-2); border-radius: var(--radius); padding: 26px 16px; cursor: pointer; background: var(--surface); }
+  .zona.sobre { border-color: var(--accent); background: var(--surface-2); }
+  .kpis { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 190px), 1fr)); gap: 10px; margin-top: 10px; }
+  .kpi { background: var(--surface-2); border-radius: var(--radius-key); padding: 10px 12px; }
+  .kpi small { display: block; color: var(--ink-3); font-size: 12.5px; }
+  .kpi b { font-size: 19px; font-family: var(--sans); }
+  .kpi.alerta { box-shadow: inset 3px 0 0 var(--accent); }
+  table.t { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+  table.t th { text-align: left; color: var(--ink-3); font-weight: 500; border-bottom: 1px solid var(--ink); padding: 5px 6px; position: sticky; top: 0; background: var(--surface); }
+  table.t td { border-bottom: 1px solid var(--line); padding: 4px 6px; vertical-align: top; }
+  table.t td.n, table.t th.n { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .rolagem { max-height: 420px; overflow: auto; border: 1px solid var(--line); border-radius: var(--radius-key); margin-top: 8px; }
+  .secao-a h3 { font-size: 17px; margin: 22px 0 4px; }
+  .secao-a p.mudo { font-size: 13.5px; margin: 0 0 6px; }
+  .mapa-col { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 210px), 1fr)); gap: 8px; margin-top: 8px; }
+  .cred { color: var(--ok); } .deb { color: var(--bad); }
+  canvas#graf { width: 100%; max-height: 300px; margin-top: 8px; }
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body>
+<header class="topo">
+  <div class="topo-in">
+    <a class="marca" href="../" aria-label="HUB TPC, página inicial"><span class="marca-tpc">TPC</span><span class="marca-txt"><b>HUB</b> Criminal</span></a>
+    <nav class="migalha" aria-label="Você está em"><span>/</span><span>Quebra de sigilo bancário</span></nav>
+    <div class="espaco"></div>
+    <button class="btn-icone" type="button" onclick="HUB.alternarTema()" aria-label="Alternar tema claro ou escuro" title="Tema"><span data-tema-icone>☾</span></button>
+  </div>
+</header>
+<div class="faixa"></div>
+
+<main class="wrap">
+  <section class="heroi">
+    <div class="sobretitulo">Ferramenta 24 · Prova financeira</div>
+    <h1>Análise de quebra de sigilo bancário</h1>
+    <p class="lead">A partir dos arquivos do SIMBA ou dos extratos bancários juntados aos autos: fluxo de recursos por conta e por mês, contrapartes mais relevantes, operações em espécie, fracionamento abaixo do limite de comunicação, passagem rápida de valores e compatibilidade com a renda ou o faturamento declarados, com planilha e relatório em Word. Tudo processado neste navegador.</p>
+    <div class="chips"><span>LC 105/2001</span><span>Lei 9.613/1998</span><span>Circular BCB 3.978/2020</span><span>Processado no navegador</span></div>
+  </section>
+
+  <section class="secao" style="padding-top:18px">
+    <div class="card bloco">
+      <h2>1. Arquivos</h2>
+      <label class="zona" id="zona"><b>Arraste os arquivos aqui ou clique para selecionar</b><span class="pequeno mudo">Arquivos do SIMBA (EXTRATO, ORIGEM_DESTINO, CONTAS, TITULARES) em .txt, ou extratos em .xlsx, .xls, .csv e .txt; vários de uma vez</span><input type="file" id="arquivo" accept=".txt,.csv,.xlsx,.xls,.ods" multiple hidden></label>
+      <p class="pequeno" id="estado" style="margin:10px 0 0"></p>
+      <div id="arqs"></div>
+    </div>
+
+    <div class="card bloco" id="mapBloco" hidden>
+      <h2>2. Colunas reconhecidas</h2>
+      <p class="pequeno mudo" style="margin:0 0 6px">Confira o que cada coluna representa. Ajuste se necessário e clique em Analisar.</p>
+      <div id="mapas"></div>
+      <div class="grade g4" style="margin-top:12px">
+        <label class="campo">Investigado (nome, para relatório)<input type="text" id="investigado" autocomplete="off"></label>
+        <label class="campo">Renda ou faturamento mensal declarado (R$)<input type="text" id="renda" inputmode="decimal" placeholder="Ex.: 12.000,00"></label>
+        <label class="campo">Limite de comunicação de espécie (R$)<input type="text" id="limite" inputmode="decimal" value="50.000,00"></label>
+        <label class="campo">Processo ou caso<input type="text" id="caso" autocomplete="off"></label>
+      </div>
+      <div class="linha-btns" style="margin-top:12px"><button type="button" class="btn" id="analisar">Analisar</button></div>
+    </div>
+
+    <div class="card bloco secao-a" id="resBloco" hidden>
+      <div class="linha-btns" style="justify-content:space-between;margin:0"><h2 style="margin:0">3. Análise</h2><span class="linha-btns" style="margin:0"><button type="button" class="btn sec" id="xlsx">Planilha (Excel)</button><button type="button" class="btn sec" id="relatorio">Relatório (Word)</button></span></div>
+      <div id="resultado"></div>
+    </div>
+
+    <div class="card bloco">
+      <details class="cfg"><summary>Critérios e limites da análise</summary>
+        <p class="pequeno" style="margin-top:10px">Operações em espécie são reconhecidas pelo histórico do lançamento (saque, depósito em dinheiro, espécie, caixa) e, nos arquivos do SIMBA, também pelo código de tipo de lançamento. O fracionamento é apontado quando operações em espécie de mesma natureza, cada uma abaixo do limite de comunicação, somam valor igual ou superior a ele no mesmo dia ou em janela de sete dias. A passagem rápida aponta créditos seguidos, em até dois dias, de débitos de valor semelhante (diferença de até 5%).</p>
+        <p class="pequeno">São indicadores para orientar a leitura dos dados e a crítica ao laudo, e não conclusão: operações fracionadas e de passagem têm explicações lícitas frequentes (pagamentos de folha, repasses, sazonalidade), que devem ser confrontadas com documentos do investigado.</p>
+      </details>
+    </div>
+  </section>
+</main>
+
+<footer class="rodape">
+  <div class="wrap"><b>TPC ADVOGADOS</b> · HUB. Os arquivos são lidos e analisados somente neste navegador; nada é enviado a servidores.</div>
+</footer>
+<script src="../vendor/jszip/jszip.min.js"></script>
+<script src="../assets/hub.js"></script>
+<script src="../assets/peca.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

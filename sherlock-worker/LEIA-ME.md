@@ -23,3 +23,7 @@ Substitua `data.json` pelo arquivo `sherlock_project/resources/data.json` do rep
 
 A ferramenta "Pesquisa em fontes públicas" do HUB usa três rotas deste serviço: `/publico/email/sites` (lista dos serviços), `POST /publico/email` (verifica até 6 serviços por chamada) e `/publico/email/extras` (provedor pelo DNS, registro do domínio por RDAP e Registro.br, chave PGP publicada e commits públicos no GitHub). As verificações por serviço, em `email.js`, foram portadas do projeto aberto user-scanner (licença MIT, em `LICENSE-user-scanner.txt`), apenas na modalidade não intrusiva: perguntam se o e-mail está cadastrado, sem enviar código ou aviso ao titular, sem tentar entrar na conta e sem criar cadastro. Ficam de fora os serviços cujo cadastro revelaria dados sensíveis (LGPD, art. 5º, II).
 
+## Jurisprudência, ERB e sócios (/juris, /erb, /socios)
+
+`/juris/busca` faz a busca ao vivo da Pesquisa de jurisprudência pelo método do Garimpo-Jurídico (licença MIT, em `LICENSE-garimpo.txt`). `/erb/anatel` consulta as estações do Serviço Móvel Pessoal licenciadas pela Anatel num raio, e `/erb/geo` localiza endereços pelo OpenStreetMap. `/socios/parte` lê, da release `bases-socios` do repositório, o trecho cifrado do índice de sócios da Receita pedido pela Rede de empresas e sócios; o conteúdo só é decifrado no navegador.
+

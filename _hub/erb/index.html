@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Mapa por ERB · HUB TPC</title>
+<meta name="description" content="Mapa de localização por estação rádio base a partir da bilhetagem da operadora, com conferência na base de estações licenciadas da Anatel, local dos fatos e relatório em Word.">
+<meta name="theme-color" content="#f5f1e8">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Red+Hat+Display:wght@500;600&family=Red+Hat+Text:wght@400;500;600&family=Red+Hat+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/hub.css">
+<link rel="stylesheet" href="../vendor/leaflet/leaflet.css">
+<style>
+  .heroi { padding: 34px 0 6px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 14px; }
+  .chips span { font-size: 13px; padding: 2px 8px; border-radius: var(--radius-chip); background: var(--surface-3); color: var(--ink-2); }
+  .bloco { padding: 18px; margin-bottom: 14px; }
+  .bloco > h2 { font-size: 22px; margin-bottom: 4px; }
+  .zona { display: grid; place-items: center; gap: 4px; text-align: center; border: 1.5px dashed var(--line-2); border-radius: var(--radius); padding: 26px 16px; cursor: pointer; background: var(--surface); }
+  .zona.sobre { border-color: var(--accent); background: var(--surface-2); }
+  .mapa-col { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 210px), 1fr)); gap: 8px; margin-top: 8px; }
+  #mapa { height: 560px; border-radius: var(--radius-key); border: 1px solid var(--line); margin-top: 10px; z-index: 0; }
+  @media (max-width: 720px) { #mapa { height: 420px; } }
+  .kpis { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 190px), 1fr)); gap: 10px; margin-top: 10px; }
+  .kpi { background: var(--surface-2); border-radius: var(--radius-key); padding: 10px 12px; }
+  .kpi small { display: block; color: var(--ink-3); font-size: 12.5px; } .kpi b { font-size: 18px; }
+  .kpi.alerta { box-shadow: inset 3px 0 0 var(--accent); }
+  table.t { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+  table.t th { text-align: left; color: var(--ink-3); font-weight: 500; border-bottom: 1px solid var(--ink); padding: 5px 6px; position: sticky; top: 0; background: var(--surface); }
+  table.t td { border-bottom: 1px solid var(--line); padding: 4px 6px; vertical-align: top; }
+  table.t td.n { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .rolagem { max-height: 380px; overflow: auto; border: 1px solid var(--line); border-radius: var(--radius-key); margin-top: 8px; }
+  .leaflet-container { font-family: var(--sans); }
+  .aviso { border-left: 3px solid var(--warn); background: var(--warn-bg, var(--surface-2)); padding: 8px 12px; border-radius: 0 8px 8px 0; font-size: 14px; margin: 8px 0; }
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body>
+<header class="topo">
+  <div class="topo-in">
+    <a class="marca" href="../" aria-label="HUB TPC, página inicial"><span class="marca-tpc">TPC</span><span class="marca-txt"><b>HUB</b> Criminal</span></a>
+    <nav class="migalha" aria-label="Você está em"><span>/</span><span>Mapa por ERB</span></nav>
+    <div class="espaco"></div>
+    <button class="btn-icone" type="button" onclick="HUB.alternarTema()" aria-label="Alternar tema claro ou escuro" title="Tema"><span data-tema-icone>☾</span></button>
+  </div>
+</header>
+<div class="faixa"></div>
+
+<main class="wrap">
+  <section class="heroi">
+    <div class="sobretitulo">Ferramenta 25 · Prova telemática</div>
+    <h1>Mapa de localização por ERB</h1>
+    <p class="lead">A partir da bilhetagem com localização de antenas entregue pela operadora: mapa das estações rádio base usadas pelo aparelho, com setores de cobertura e deslocamento no tempo, conferência na base oficial de estações licenciadas da Anatel e confronto com o local e o horário dos fatos, para confirmar ou afastar a presença do investigado.</p>
+    <div class="chips"><span>Lei 9.296/1996</span><span>Marco Civil, art. 22</span><span>CPP, art. 157</span><span>Anatel (estações SMP)</span></div>
+  </section>
+
+  <section class="secao" style="padding-top:18px">
+    <div class="card bloco">
+      <h2>1. Bilhetagem</h2>
+      <label class="zona" id="zona"><b>Arraste as planilhas da operadora aqui ou clique para selecionar</b><span class="pequeno mudo">.xlsx, .xls, .csv ou .txt, com data e hora, ERB (CGI, código ou endereço) e, se houver, latitude, longitude e azimute; também a relação de ERBs, quando vier em arquivo separado</span><input type="file" id="arquivo" accept=".txt,.csv,.xlsx,.xls,.ods" multiple hidden></label>
+      <p class="pequeno" id="estado" style="margin:10px 0 0"></p>
+    </div>
+
+    <div class="card bloco" id="mapBloco" hidden>
+      <h2>2. Colunas reconhecidas</h2>
+      <p class="pequeno mudo" style="margin:0 0 6px">Confira e ajuste o que cada coluna representa. ERBs sem coordenadas serão localizadas pelo endereço (OpenStreetMap).</p>
+      <div id="mapas"></div>
+      <div class="grade g4" style="margin-top:12px">
+        <label class="campo">UF padrão das ERBs<select id="uf"><option>MG</option><option>AC</option><option>AL</option><option>AM</option><option>AP</option><option>BA</option><option>CE</option><option>DF</option><option>ES</option><option>GO</option><option>MA</option><option>MS</option><option>MT</option><option>PA</option><option>PB</option><option>PE</option><option>PI</option><option>PR</option><option>RJ</option><option>RN</option><option>RO</option><option>RR</option><option>RS</option><option>SC</option><option>SE</option><option>SP</option><option>TO</option></select></label>
+        <label class="campo">Raio de cobertura no mapa (km)<input type="number" id="raio" value="1" min="0.2" max="30" step="0.1"></label>
+        <label class="campo">Processo ou caso<input type="text" id="caso" autocomplete="off"></label>
+        <label class="campo">Linha investigada (número)<input type="text" id="linha" autocomplete="off"></label>
+      </div>
+      <div class="linha-btns" style="margin-top:12px"><button type="button" class="btn" id="mapear">Gerar o mapa</button></div>
+      <div class="barra" id="barra" hidden style="height:6px;background:var(--line);border-radius:99px;overflow:hidden;margin-top:10px"><i style="display:block;height:100%;width:0;background:var(--ink-2)"></i></div>
+    </div>
+
+    <div class="card bloco" id="resBloco" hidden>
+      <div class="linha-btns" style="justify-content:space-between;margin:0"><h2 style="margin:0">3. Mapa</h2><span class="linha-btns" style="margin:0"><button type="button" class="btn sec" id="anatel">Conferir ERBs na Anatel</button><button type="button" class="btn sec" id="relatorio">Relatório (Word)</button></span></div>
+      <div class="grade g4" style="margin-top:10px">
+        <label class="campo">De<input type="datetime-local" id="de"></label>
+        <label class="campo">Até<input type="datetime-local" id="ate"></label>
+        <label class="campo" style="grid-column:span 2">Local dos fatos (endereço ou "latitude, longitude")<input type="text" id="local" placeholder="Ex.: Rua da Bahia, 1000, Belo Horizonte, MG"></label>
+      </div>
+      <div class="linha-btns" style="margin-top:10px"><button type="button" class="btn sec" id="filtrar">Aplicar intervalo e local</button><label class="check" style="font-size:14px"><input type="checkbox" id="trajeto" checked> Trajeto em ordem cronológica</label><label class="check" style="font-size:14px"><input type="checkbox" id="setores" checked> Setores de azimute</label></div>
+      <div id="resumo"></div>
+      <div id="mapa" role="application" aria-label="Mapa das estações rádio base"></div>
+      <div id="tabelas"></div>
+    </div>
+
+    <div class="card bloco">
+      <details class="cfg"><summary>Como interpretar</summary>
+        <p class="pequeno" style="margin-top:10px">A ERB indica a antena que atendeu o aparelho, e não a sua posição exata. A cobertura de uma antena vai de algumas centenas de metros, nos centros urbanos, a dezenas de quilômetros, na zona rural, e o aparelho nem sempre se conecta à antena mais próxima (carga da rede, relevo, tecnologia). O azimute indica a direção para a qual o setor da antena aponta.</p>
+        <p class="pequeno">A conferência na Anatel confronta as coordenadas informadas pela operadora com as da estação licenciada mais próxima, da mesma operadora, e mostra as estações que existem ao redor do local dos fatos. Divergências relevantes de endereço ou de coordenadas, e o uso de antenas distantes do local no horário dos fatos, são pontos a explorar na impugnação do laudo ou na construção do álibi.</p>
+      </details>
+    </div>
+  </section>
+</main>
+
+<footer class="rodape">
+  <div class="wrap"><b>TPC ADVOGADOS</b> · HUB. Estações licenciadas: Anatel (consulta pública do licenciamento, SMP). Mapas e endereços: OpenStreetMap. A bilhetagem é lida somente neste navegador; só coordenadas e endereços de antenas são enviados para consulta.</div>
+</footer>
+<script src="../vendor/jszip/jszip.min.js"></script>
+<script src="../assets/hub.js"></script>
+<script src="../assets/peca.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

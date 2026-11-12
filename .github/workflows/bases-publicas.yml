@@ -1,4 +1,5 @@
-# Bases públicas da Investigação patrimonial do HUB (hoje: Registro Aeronáutico Brasileiro, da ANAC).
+# Bases públicas do HUB: Registro Aeronáutico Brasileiro (ANAC), para a Investigação patrimonial, e o acervo de
+# jurisprudência e legislação do projeto Advocacia Aberta, para a Pesquisa de jurisprudência.
 # Baixa os dados abertos, cifra com a chave do HUB e publica no ramo "bases-publicas". Roda diariamente e quando o
 # script muda.
 name: Bases públicas do HUB
@@ -38,6 +39,12 @@ jobs:
             exit 1
           fi
           node _ferramentas/bases/publicas.mjs
+      - name: Baixar o acervo aberto do Advocacia Aberta
+        run: git clone -q --depth 1 https://github.com/emidio-trancoso/advocacia-aberta.git /tmp/advocacia-aberta
+      - name: Gerar a base de jurisprudência
+        env:
+          HUB_SENHA: ${{ secrets.HUB_SENHA }}
+        run: node _ferramentas/bases/juris.mjs /tmp/advocacia-aberta
       - name: Publicar no ramo bases-publicas
         env:
           GH_TOKEN: ${{ github.token }}
