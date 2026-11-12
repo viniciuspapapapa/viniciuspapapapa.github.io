@@ -88,8 +88,18 @@
     prog(null);
   }
 
+  /* ------------------------------------------------------------------ modo */
+  const modo = () => (document.querySelector('input[name="modo"]:checked') || {}).value || "um";
+  const casoAtual = () => (modo() === "varios" ? $("#caso2") : $("#caso")).value.trim();
+  document.querySelectorAll('input[name="modo"]').forEach(r => r.addEventListener("change", () => {
+    const v = modo() === "varios"; $("#modoUm").hidden = v; $("#modoVarios").hidden = !v; $("#buscar").textContent = v ? "Analisar vínculos" : "Montar a rede";
+  }));
+  function limparVinculos() { M.ativo = false; M.pares = []; NO_CAM.clear(); ARE_CAM.clear(); $("#vinculos").innerHTML = ""; $("#soCaminhosRot").hidden = true; }
+
   /* ------------------------------------------------------------------ busca */
   $("#buscar").onclick = async () => {
+    if (modo() === "varios") { $("#buscar").disabled = true; try { await analisarVarios(); } catch (e) { $("#estado").textContent = e.message || String(e); prog(null); } finally { $("#buscar").disabled = false; } return; }
+    limparVinculos();
     const nome = $("#nome").value.trim(), d = dig($("#doc").value);
     if (!nome && d.length !== 14) { $("#estado").textContent = "Informe o nome completo, ou o CNPJ de uma empresa."; return; }
     G.nos.clear(); G.arestas.clear(); $("#pessoas").innerHTML = ""; $("#buscar").disabled = true;
@@ -132,8 +142,140 @@
       n.expandido = true; await adicionarEmpresas(n.id, novos);
       $("#estado").textContent = novos.length ? novos.length + (novos.length === 1 ? " empresa acrescentada." : " empresas acrescentadas.") : "Nenhuma outra empresa encontrada para " + n.rotulo + " na base.";
     } catch (e) { $("#estado").textContent = e.message || String(e); prog(null); }
+    if (M.ativo) { calcularVinculos(); desenharVinculos(); }
     desenhar(); tabela();
   }
+
+  /* ------------------------------------------------------------------ análise de vínculos entre várias pessoas e empresas */
+  const M = { ativo: false, alvos: [], avisos: [], pares: [] };
+  const NO_CAM = new Set(), ARE_CAM = new Set();
+  const chaveAresta = (a, b) => a < b ? a + ">" + b : b + ">" + a;
+  function lerLista(txt) {
+    const out = [];
+    for (const bruta of String(txt || "").split(/\n+/)) {
+      const l = bruta.trim(); if (!l) continue;
+      const so = dig(l);
+      if (so.length === 14 && !/[A-Za-zÀ-ÿ]{3}/.test(l)) { out.push({ cnpj: so, rot: fmtCnpj(so) }); continue; }
+      const m = l.match(/^(.*?)[;,\t|]\s*([\d.\-*\s]{6,})\s*$/);
+      const nome = (m ? m[1] : l).replace(/\s+/g, " ").trim(), cpf = m ? dig(m[2]) : "";
+      if (!nome) continue;
+      out.push({ nome, curto: nome, cpf6: cpf.length === 11 ? cpf.slice(3, 9) : cpf.length === 6 ? cpf : "", rot: nome + (cpf ? " (CPF " + (cpf.length === 11 ? cpf.replace(/^(\d{3})(\d{3})(\d{3})(\d{2})$/, "$1.$2.$3-$4") : "***" + cpf + "**") + ")" : "") });
+    }
+    return out;
+  }
+  async function analisarVarios() {
+    const lista = lerLista($("#lista").value);
+    if (lista.length < 2) { $("#estado").textContent = "Informe ao menos duas pessoas ou empresas, uma por linha."; return; }
+    if (lista.length > 12) { $("#estado").textContent = "São até 12 linhas por análise; divida a lista."; return; }
+    G.nos.clear(); G.arestas.clear(); G.raiz = null; $("#pessoas").innerHTML = ""; limparVinculos();
+    M.ativo = true; M.alvos = []; M.avisos = []; mostrarRede();
+    for (let k = 0; k < lista.length; k++) {
+      const a = lista[k]; a.idx = k; a.nos = []; M.alvos.push(a);
+      $("#estado").textContent = "(" + (k + 1) + "/" + lista.length + ") " + (a.cnpj ? "Consultando a empresa " + a.rot : "Procurando " + a.nome) + "…";
+      if (a.cnpj) {
+        const dados = await empresa(a.cnpj).catch(() => null);
+        if (!dados) { M.avisos.push(a.rot + ": CNPJ não encontrado na Receita."); continue; }
+        const id = "E:" + a.cnpj.slice(0, 8); a.rot = dados.razao_social + " (" + fmtCnpj(a.cnpj) + ")"; a.curto = dados.razao_social;
+        no(id, { tipo: "empresa", raiz: true, alvo: k, cnpj: a.cnpj, rotulo: dados.razao_social, dados, situacao: dados.descricao_situacao_cadastral, end: endNorm(dados), carregando: false });
+        a.nos.push(id);
+        for (const s of dados.qsa || []) { const pj = /^\d{14}$/.test(dig(s.cnpj_cpf_do_socio)), sid = pj ? "E:" + dig(s.cnpj_cpf_do_socio).slice(0, 8) : idPessoa(s.nome_socio, s.cnpj_cpf_do_socio); if (!G.nos.has(sid)) no(sid, pj ? { tipo: "empresa", pjSocia: true, cnpj: dig(s.cnpj_cpf_do_socio), rotulo: s.nome_socio } : { tipo: "pessoa", nome: s.nome_socio, doc: s.cnpj_cpf_do_socio, rotulo: s.nome_socio, faixa: s.faixa_etaria }); aresta(sid, id, { rotulo: s.qualificacao_socio, entrada: s.data_entrada_sociedade }); }
+        /* a empresa pesquisada como sócia de outras: aparece no índice pela razão social */
+        const comoSocia = (await vinculos(dados.razao_social).catch(() => [])).filter(x => dig(x.doc) === a.cnpj);
+        if (comoSocia.length) await adicionarEmpresas(id, comoSocia);
+        continue;
+      }
+      let v = await vinculos(a.nome);
+      if (a.cpf6) v = v.filter(x => dig(x.doc) === a.cpf6);
+      if (!v.length) { M.avisos.push(a.rot + ": nenhum vínculo societário com esse nome exato" + (a.cpf6 ? " e esse CPF" : "") + " na base da Receita."); continue; }
+      const grupos = new Map(); v.forEach(x => { const g = x.doc + "|" + x.faixa; if (!grupos.has(g)) grupos.set(g, []); grupos.get(g).push(x); });
+      if (grupos.size > 1 && !a.cpf6) {
+        if ($("#homonimos").value === "nenhum" || grupos.size > 5) { M.avisos.push(a.nome + ": " + grupos.size + " pessoas com esse nome na base; informe o CPF para analisar." ); continue; }
+        M.avisos.push(a.nome + ": " + grupos.size + " homônimos na base (CPF parcial e faixa etária diferentes); todos foram analisados e cada vínculo indica o documento de quem o tem.");
+      }
+      for (const l of grupos.values()) {
+        const id = idPessoa(l[0].nome, l[0].doc);
+        no(id, { tipo: "raiz", alvo: k, nome: l[0].nome, doc: l[0].doc, faixa: l[0].faixa, rotulo: l[0].nome + (grupos.size > 1 ? " (" + (l[0].doc || "s/ doc.") + ")" : "") });
+        a.nos.push(id); await adicionarEmpresas(id, l);
+      }
+    }
+    $("#estado").textContent = "Procurando os caminhos entre as pessoas e empresas…";
+    calcularVinculos(); desenharVinculos(); tabela(); desenhar();
+    const n = M.pares.filter(p => p.caminhos.length).length;
+    $("#estado").textContent = "Análise concluída: " + M.alvos.length + " pesquisados, " + [...G.nos.values()].filter(x => x.tipo === "empresa").length + " empresas na rede e " + (n ? n + (n === 1 ? " par com vínculo." : " pares com vínculo.") : "nenhum vínculo encontrado entre eles.");
+  }
+  /* caminhos simples de até 4 passos entre nós de pesquisados diferentes, sem atravessar outro pesquisado */
+  function calcularVinculos() {
+    const adj = new Map(), alvoDe = new Map();
+    for (const a of M.alvos) for (const id of a.nos) alvoDe.set(id, a.idx);
+    for (const e of G.arestas.values()) { if (!G.nos.has(e.a) || !G.nos.has(e.b)) continue; (adj.get(e.a) || adj.set(e.a, []).get(e.a)).push([e.b, e]); (adj.get(e.b) || adj.set(e.b, []).get(e.b)).push([e.a, e]); }
+    const pares = new Map();
+    for (const a of M.alvos) for (const ini of a.nos) {
+      const visit = new Set([ini]), cam = [ini], ars = [];
+      (function dfs(u, prof) {
+        for (const [w, e] of adj.get(u) || []) {
+          if (visit.has(w)) continue;
+          const t = alvoDe.get(w);
+          if (t != null) {
+            if (t > a.idx) { const k = a.idx + ":" + t; if (!pares.has(k)) pares.set(k, []); const l = pares.get(k); if (l.length < 60) l.push({ nos: cam.concat(w), ars: ars.concat(e) }); }
+            continue; /* não atravessa outro pesquisado */
+          }
+          if (prof + 1 >= 4) continue;
+          visit.add(w); cam.push(w); ars.push(e); dfs(w, prof + 1); cam.pop(); ars.pop(); visit.delete(w);
+        }
+      })(ini, 0);
+    }
+    M.pares = [];
+    for (let i = 0; i < M.alvos.length; i++) for (let j = i + 1; j < M.alvos.length; j++) {
+      const l = (pares.get(i + ":" + j) || []).map(c => Object.assign(c, classificar(c))).sort((x, y) => x.peso - y.peso || x.nos.length - y.nos.length);
+      M.pares.push({ i, j, caminhos: l.slice(0, 12), total: l.length });
+    }
+    NO_CAM.clear(); ARE_CAM.clear();
+    for (const a of M.alvos) a.nos.forEach(id => NO_CAM.add(id));
+    for (const p of M.pares) for (const c of p.caminhos) { c.nos.forEach(id => NO_CAM.add(id)); c.ars.forEach(e => ARE_CAM.add(chaveAresta(e.a, e.b))); }
+  }
+  function classificar(c) {
+    const passos = c.ars.length, end = c.ars.some(e => e.tipo === "end"), meio = c.nos.slice(1, -1).map(id => G.nos.get(id));
+    let tipo, grau;
+    if (passos === 1) { tipo = "Participação direta na empresa pesquisada"; grau = "direto"; }
+    else if (passos === 2 && meio[0].tipo === "empresa") { tipo = "Sócios ou administradores da mesma empresa"; grau = "direto"; }
+    else if (passos === 2) { tipo = "Sócio ou administrador em comum"; grau = "direto"; }
+    else if (end && passos === 3) { tipo = "Empresas no mesmo endereço"; grau = "indireto"; }
+    else if (end) { tipo = "Por intermediário e endereço em comum"; grau = "indireto"; }
+    else if (meio.every(n => n.tipo === "empresa")) { tipo = "Participação societária entre empresas"; grau = "indireto"; }
+    else { tipo = "Por intermediário: " + meio.filter(n => n.tipo !== "empresa").map(n => n.rotulo).join(", "); grau = "indireto"; }
+    return { tipo, grau, peso: passos + (end ? 1.5 : 0) };
+  }
+  function cadeiaTexto(c, html) {
+    let o = "";
+    c.nos.forEach((id, k) => {
+      const n = G.nos.get(id) || {}, r = n.rotulo + (n.tipo === "empresa" && n.cnpj ? ", CNPJ " + fmtCnpj(n.cnpj.length === 14 ? n.cnpj : cnpjMatriz(n.cnpj)) : "");
+      o += html ? '<span class="n">' + esc(r) + "</span>" : r;
+      const e = c.ars[k];
+      if (e) { const q = (e.rotulo || "vínculo") + (e.entrada ? " desde " + br(e.entrada) : ""); o += html ? " <i>— " + esc(q) + " —</i> " : " [" + q + "] "; }
+    });
+    return o;
+  }
+  const nomeAlvo = i => M.alvos[i].rot;
+  function desenharVinculos() {
+    const comV = M.pares.filter(p => p.caminhos.length), alv = M.alvos;
+    let h = '<div class="vinc"><h3>Vínculos entre os pesquisados</h3>';
+    if (M.avisos.length) h += M.avisos.map(a => '<p class="pequeno" style="margin:2px 0;color:var(--ink-2)">⚠ ' + esc(a) + "</p>").join("");
+    if (alv.length > 2) {
+      h += '<div style="overflow-x:auto"><table class="matriz"><thead><tr><th></th>' + alv.map((a, k) => '<th title="' + esc(a.rot) + '">' + (k + 1) + "</th>").join("") + "</tr></thead><tbody>" + alv.map((a, i) => "<tr><th class=\"rot\" title=\"" + esc(a.rot) + "\">" + (i + 1) + ". " + esc(a.curto || a.rot) + "</th>" + alv.map((b, j) => { if (i === j) return "<td>·</td>"; const p = M.pares.find(x => x.i === Math.min(i, j) && x.j === Math.max(i, j)); if (!p || !p.caminhos.length) return "<td></td>"; const d = p.caminhos.some(c => c.grau === "direto"); return '<td class="' + (d ? "d" : "i") + '" title="' + p.total + ' caminho(s)">' + (d ? "direto" : "indireto") + "</td>"; }).join("") + "</tr>").join("") + "</tbody></table></div>";
+    }
+    h += comV.length ? comV.map(p => {
+      const d = p.caminhos.some(c => c.grau === "direto");
+      return '<div class="par"><div class="par-cab"><b>' + esc(nomeAlvo(p.i)) + " × " + esc(nomeAlvo(p.j)) + '</b><span class="selo ' + (d ? "direto" : "indireto") + '">' + (d ? "vínculo direto" : "vínculo indireto") + " · " + p.total + (p.total === 1 ? " caminho" : " caminhos") + "</span></div>" +
+        p.caminhos.map(c => '<p class="cadeia"><span class="selo' + (c.grau === "direto" ? " direto" : " indireto") + '">' + esc(c.tipo) + "</span> " + cadeiaTexto(c, true) + "</p>").join("") + (p.total > p.caminhos.length ? '<p class="pequeno mudo">e mais ' + (p.total - p.caminhos.length) + " caminhos semelhantes.</p>" : "") + "</div>";
+    }).join("") : '<p class="pequeno">Nenhum vínculo societário ou de endereço foi encontrado entre os pesquisados até quatro passos de distância. Use Expandir nos sócios do grafo para explorar ligações mais distantes.</p>';
+    const sem = M.pares.filter(p => !p.caminhos.length);
+    if (comV.length && sem.length) h += '<p class="pequeno mudo" style="margin-top:8px">Sem vínculo encontrado: ' + sem.map(p => esc(nomeAlvo(p.i)) + " × " + esc(nomeAlvo(p.j))).join("; ") + ".</p>";
+    $("#vinculos").innerHTML = h + "</div>";
+    $("#soCaminhosRot").hidden = !comV.length; $("#soCaminhos").checked = !!comV.length && G.nos.size > 30;
+  }
+  $("#soCaminhos").addEventListener("change", () => iniciar(200));
+  const filtrando = () => M.ativo && $("#soCaminhos").checked && NO_CAM.size > 0;
+  const vis = n => !filtrando() || NO_CAM.has(n.id);
 
   /* ------------------------------------------------------------------ desenho e layout de forças */
   const svg = $("#grafo"); let W = 800, Hh = 600, anim = null, arrastando = null, sel = null;
@@ -141,22 +283,22 @@
   const cor = n => n.tipo === "raiz" ? "#2B2B2B" : n.tipo === "pessoa" ? "#E8E347" : n.pjSocia ? "#1BAF7A" : /ATIVA/i.test(n.situacao || "ATIVA") ? "#2A78D6" : "#B8B8B8";
   const raio = n => n.tipo === "raiz" ? 13 : n.tipo === "empresa" ? 9 : 7;
   function passo() {
-    const ns = [...G.nos.values()], k = 90;
+    const ns = [...G.nos.values()].filter(vis), k = 90;
     for (const a of ns) { a.fx = 0; a.fy = 0; }
     for (let i = 0; i < ns.length; i++) for (let j = i + 1; j < ns.length; j++) { const a = ns[i], b = ns[j]; let dx = a.x - b.x, dy = a.y - b.y, d2 = dx * dx + dy * dy + 0.01, f = (k * k) / d2; if (d2 > 160000) continue; a.fx += dx * f * 0.05; a.fy += dy * f * 0.05; b.fx -= dx * f * 0.05; b.fy -= dy * f * 0.05; }
-    for (const e of G.arestas.values()) { const a = G.nos.get(e.a), b = G.nos.get(e.b); if (!a || !b) continue; const dx = b.x - a.x, dy = b.y - a.y, d = Math.sqrt(dx * dx + dy * dy) + 0.01, f = (d - (e.tipo === "end" ? 120 : k)) * 0.02; a.fx += dx / d * f * d * 0.05; a.fy += dy / d * f * d * 0.05; b.fx -= dx / d * f * d * 0.05; b.fy -= dy / d * f * d * 0.05; }
+    for (const e of G.arestas.values()) { const a = G.nos.get(e.a), b = G.nos.get(e.b); if (!a || !b || !vis(a) || !vis(b)) continue; const dx = b.x - a.x, dy = b.y - a.y, d = Math.sqrt(dx * dx + dy * dy) + 0.01, f = (d - (e.tipo === "end" ? 120 : k)) * 0.02; a.fx += dx / d * f * d * 0.05; a.fy += dy / d * f * d * 0.05; b.fx -= dx / d * f * d * 0.05; b.fy -= dy / d * f * d * 0.05; }
     for (const a of ns) { if (a === arrastando) continue; a.fx += (W / 2 - a.x) * 0.004; a.fy += (Hh / 2 - a.y) * 0.004; a.vx = (a.vx + a.fx) * 0.6; a.vy = (a.vy + a.fy) * 0.6; a.x = Math.max(20, Math.min(W - 20, a.x + Math.max(-20, Math.min(20, a.vx)))); a.y = Math.max(20, Math.min(Hh - 20, a.y + Math.max(-20, Math.min(20, a.vy)))); }
   }
   function iniciar(it) { let n = it || 300; cancelAnimationFrame(anim); const f = () => { for (let i = 0; i < 3; i++) passo(); render(); if (--n > 0) anim = requestAnimationFrame(f); }; f(); }
   function desenhar() { if (!$("#resBloco").hidden) iniciar(160); }
   function render() {
-    const ns = [...G.nos.values()], NS = "http://www.w3.org/2000/svg";
+    const ns = [...G.nos.values()].filter(vis), NS = "http://www.w3.org/2000/svg";
     svg.innerHTML = "";
-    for (const e of G.arestas.values()) { const a = G.nos.get(e.a), b = G.nos.get(e.b); if (!a || !b) continue; const l = document.createElementNS(NS, "line"); l.setAttribute("x1", a.x); l.setAttribute("y1", a.y); l.setAttribute("x2", b.x); l.setAttribute("y2", b.y); l.setAttribute("class", "aresta" + (e.tipo === "end" ? " end" : "")); svg.appendChild(l); }
+    for (const e of G.arestas.values()) { const a = G.nos.get(e.a), b = G.nos.get(e.b); if (!a || !b || !vis(a) || !vis(b)) continue; const l = document.createElementNS(NS, "line"); l.setAttribute("x1", a.x); l.setAttribute("y1", a.y); l.setAttribute("x2", b.x); l.setAttribute("y2", b.y); l.setAttribute("class", "aresta" + (e.tipo === "end" ? " end" : "") + (M.ativo && ARE_CAM.has(chaveAresta(e.a, e.b)) ? " caminho" : "")); svg.appendChild(l); }
     for (const n of ns) {
       const g = document.createElementNS(NS, "g"); g.setAttribute("class", "no"); g.dataset.id = n.id;
-      const c = document.createElementNS(NS, "circle"); c.setAttribute("cx", n.x); c.setAttribute("cy", n.y); c.setAttribute("r", raio(n)); c.setAttribute("fill", cor(n)); c.setAttribute("stroke", n === sel ? "#EB6834" : n.expandido ? "#2B2B2B" : "#fff"); c.setAttribute("stroke-width", n === sel ? 3 : 1.5); g.appendChild(c);
-      if (ns.length <= 80 || n.tipo !== "pessoa" || n === sel) { const t = document.createElementNS(NS, "text"); t.setAttribute("x", n.x + raio(n) + 3); t.setAttribute("y", n.y + 4); t.textContent = String(n.rotulo || "").slice(0, 34) + (n.carregando ? "…" : ""); g.appendChild(t); }
+      const c = document.createElementNS(NS, "circle"); c.setAttribute("cx", n.x); c.setAttribute("cy", n.y); c.setAttribute("r", raio(n)); c.setAttribute("fill", cor(n)); c.setAttribute("stroke", n === sel || n.alvo != null ? "#EB6834" : n.expandido ? "#2B2B2B" : "#fff"); c.setAttribute("stroke-width", n === sel ? 3 : n.alvo != null ? 2.5 : 1.5); g.appendChild(c);
+      if (ns.length <= 80 || n.tipo !== "pessoa" || n === sel || n.alvo != null) { const t = document.createElementNS(NS, "text"); t.setAttribute("x", n.x + raio(n) + 3); t.setAttribute("y", n.y + 4); t.textContent = String(n.rotulo || "").slice(0, 34) + (n.carregando ? "…" : ""); g.appendChild(t); }
       svg.appendChild(g);
     }
   }
@@ -186,10 +328,19 @@
   $("#relatorio").onclick = async () => {
     const es = [...G.nos.values()].filter(n => n.tipo === "empresa" && n.dados), raizes = [...G.nos.values()].filter(n => n.tipo === "raiz" || n.raiz);
     const b = [{ t: "tit", texto: "RELATÓRIO DE REDE SOCIETÁRIA" }];
-    b.push({ t: "tab", larg: [1.4, 3], linhas: [["Processo ou caso", $("#caso").value.trim() || "não informado"], ["Ponto de partida", raizes.map(r => r.rotulo + (r.doc ? " (" + r.doc + ")" : r.cnpj ? " (" + fmtCnpj(r.cnpj) + ")" : "")).join("; ")], ["Data", new Date().toLocaleString("pt-BR")], ["Empresas na rede", String(es.length)]] });
+    b.push({ t: "tab", larg: [1.4, 3], linhas: [["Processo ou caso", casoAtual() || "não informado"], [M.ativo ? "Pesquisados" : "Ponto de partida", M.ativo ? M.alvos.map((a, k) => (k + 1) + ". " + a.rot).join("; ") : raizes.map(r => r.rotulo + (r.doc ? " (" + r.doc + ")" : r.cnpj ? " (" + fmtCnpj(r.cnpj) + ")" : "")).join("; ")], ["Data", new Date().toLocaleString("pt-BR")], ["Empresas na rede", String(es.length)]] });
     b.push({ t: "h", texto: "Metodologia" });
     b.push({ t: "p", r: "Os vínculos entre pessoas e empresas foram extraídos da base aberta de sócios do Cadastro Nacional da Pessoa Jurídica, divulgada pela Receita Federal, pela coincidência exata do nome normalizado e, quando disponível, dos dígitos do CPF divulgados pela Receita. Os dados de cada empresa e o quadro societário atual foram obtidos da Receita Federal. Os endereços em comum consideram logradouro, número e CEP coincidentes." });
     b.push({ t: "p", r: [["Ressalva: ", "bo"], ["a coincidência de nome não comprova identidade, e a base reflete o cadastro na data de sua divulgação. Os vínculos relevantes devem ser confirmados por certidão da junta comercial.", "n"]] });
+    if (M.ativo) {
+      const comV = M.pares.filter(p => p.caminhos.length);
+      b.push({ t: "h", texto: "Vínculos entre os pesquisados" });
+      b.push({ t: "p", r: "Foram procurados caminhos de até quatro passos entre cada par de pesquisados: sociedade ou administração na mesma empresa (vínculo direto), empresa sócia de outra, sócio ou administrador em comum entre empresas de um e de outro e empresas no mesmo endereço (vínculos indiretos). " + (comV.length ? comV.length + (comV.length === 1 ? " par apresentou vínculo." : " pares apresentaram vínculo.") : "Nenhum par apresentou vínculo nesses termos.") });
+      M.avisos.forEach(a => b.push({ t: "p", r: [["Observação: ", "bo"], [a, "n"]] }));
+      if (comV.length) b.push({ t: "tab", cab: ["Pesquisados", "Natureza", "Caminho"], larg: [1.6, 1.3, 3.1], linhas: comV.flatMap(p => p.caminhos.map((c, k) => [k ? "" : nomeAlvo(p.i) + " × " + nomeAlvo(p.j), c.tipo + (c.grau === "direto" ? " (direto)" : " (indireto)"), cadeiaTexto(c, false)])) });
+      const sem = M.pares.filter(p => !p.caminhos.length);
+      if (sem.length) b.push({ t: "p", r: [["Sem vínculo encontrado: ", "bo"], [sem.map(p => nomeAlvo(p.i) + " × " + nomeAlvo(p.j)).join("; ") + ".", "n"]] });
+    }
     b.push({ t: "h", texto: "Empresas" });
     b.push({ t: "tab", cab: ["Empresa e CNPJ", "Situação e abertura", "Capital", "Sócios e administradores"], larg: [1.8, 1.1, 0.9, 2.2], linhas: es.map(n => { const d = n.dados; return [n.rotulo + " · " + fmtCnpj(n.cnpj), (d.descricao_situacao_cadastral || "") + ", desde " + br(d.data_inicio_atividade), moeda(d.capital_social), (d.qsa || []).map(s => s.nome_socio + " (" + (s.qualificacao_socio || "") + ")").join("; ")]; }) });
     const ends = [...G.arestas.values()].filter(e => e.tipo === "end");
@@ -197,6 +348,6 @@
     const pessoas = [...G.nos.values()].filter(n => n.tipo === "pessoa").map(p => ({ p, n: [...G.arestas.values()].filter(e => e.a === p.id || e.b === p.id).length })).filter(x => x.n > 1).sort((a, b) => b.n - a.n);
     if (pessoas.length) { b.push({ t: "h", texto: "Pessoas presentes em mais de uma empresa" }); b.push({ t: "tab", cab: ["Pessoa", "Empresas"], larg: [2.4, 3], linhas: pessoas.map(x => [x.p.rotulo + (x.p.doc ? " (" + x.p.doc + ")" : ""), [...G.arestas.values()].filter(e => e.a === x.p.id || e.b === x.p.id).map(e => (G.nos.get(e.a === x.p.id ? e.b : e.a) || {}).rotulo).join("; ")]) }); }
     b.push({ t: "data", texto: "Belo Horizonte, " + P.dataExtenso(new Date()) + "." });
-    try { P.baixar(await P.docx(b), "Rede societaria - " + ($("#caso").value.trim() || "caso").replace(/[\\/:*?"<>|]+/g, " ")); } catch (e) { window.HUB.toast(e.message || "Não foi possível gerar o Word.", 5000); }
+    try { P.baixar(await P.docx(b), (M.ativo ? "Vinculos societarios - " : "Rede societaria - ") + (casoAtual() || "caso").replace(/[\\/:*?"<>|]+/g, " ")); } catch (e) { window.HUB.toast(e.message || "Não foi possível gerar o Word.", 5000); }
   };
 })();
