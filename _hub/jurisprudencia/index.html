@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Pesquisa de Jurisprudência · HUB TPC</title>
+<meta name="description" content="Súmulas, temas, teses, informativos, acórdãos e legislação em base oficial local, com busca ao vivo nos tribunais, citação pronta e exportação em Word.">
+<meta name="theme-color" content="#f5f1e8">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Red+Hat+Display:wght@500;600&family=Red+Hat+Text:wght@400;500;600&family=Red+Hat+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/hub.css">
+<style>
+  .heroi { padding: 34px 0 6px; }
+  .bloco { padding: 18px; margin-bottom: 14px; }
+  .bloco > h2 { font-size: 22px; margin-bottom: 4px; }
+  .busca-linha { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; align-items: end; }
+  @media (max-width: 720px) { .busca-linha { grid-template-columns: 1fr; } }
+  .busca-linha input { font-size: 17px; }
+  .dica { font-size: 13px; color: var(--ink-3); margin: 6px 0 0; }
+  .marcas { display: flex; flex-wrap: wrap; gap: 6px 14px; margin-top: 8px; font-size: 14px; }
+  .marcas label { display: inline-flex; gap: 6px; align-items: center; }
+  .grupo h3 { font-size: 17px; margin: 18px 0 4px; }
+  .res { border-top: 1px solid var(--line); padding: 12px 0; }
+  .res-cab { display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: baseline; justify-content: space-between; }
+  .res-cab b { font-size: 15.5px; }
+  .res-cab small { color: var(--ink-3); font-family: var(--mono); font-size: 12.5px; }
+  .res .det { color: var(--ink-2); font-size: 13.5px; margin-top: 2px; }
+  .res .txt { margin: 6px 0 0; font-size: 15px; line-height: 1.6; }
+  .res .txt p { margin: 0 0 6px; }
+  .res mark { background: var(--accent-soft); color: inherit; border-radius: 3px; padding: 0 1px; }
+  .res .acoes { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-top: 8px; }
+  .res .acoes .btn { padding: 5px 10px; font-size: 13.5px; }
+  .res .acoes label { margin-left: auto; font-size: 14px; display: inline-flex; gap: 6px; align-items: center; }
+  .aviso { border-left: 3px solid var(--warn); background: var(--warn-bg, var(--surface-2)); padding: 8px 12px; border-radius: 0 8px 8px 0; font-size: 14px; margin: 8px 0; }
+  .selbar { position: sticky; bottom: 10px; z-index: 5; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: space-between; background: var(--surface); border: 1px solid var(--ink); border-radius: var(--radius-key); padding: 8px 12px; margin-top: 12px; }
+  .colunas { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+  @media (max-width: 1000px) { .colunas { grid-template-columns: 1fr; } }
+  .barra { height: 6px; background: var(--line); border-radius: 99px; overflow: hidden; margin-top: 10px; }
+  .barra i { display: block; height: 100%; width: 0; background: var(--ink-2); }
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body>
+<header class="topo">
+  <div class="topo-in">
+    <a class="marca" href="../" aria-label="HUB TPC, página inicial"><span class="marca-tpc">TPC</span><span class="marca-txt"><b>HUB</b> Criminal</span></a>
+    <nav class="migalha" aria-label="Você está em"><span>/</span><span>Pesquisa de jurisprudência</span></nav>
+    <div class="espaco"></div>
+    <button class="btn-icone" type="button" onclick="HUB.alternarTema()" aria-label="Alternar tema claro ou escuro" title="Tema"><span data-tema-icone>☾</span></button>
+  </div>
+</header>
+<div class="faixa"></div>
+
+<main class="wrap">
+  <section class="heroi">
+    <div class="sobretitulo">Ferramenta 23 · Jurisprudência</div>
+    <h1>Pesquisa de jurisprudência</h1>
+    <p class="lead">Precedentes qualificados, súmulas, teses, informativos e legislação numa base oficial local, junto com a busca ao vivo de acórdãos no STF, no STJ e nos tribunais de justiça, com o link oficial de cada decisão, a citação pronta e a exportação em Word.</p>
+  </section>
+
+  <section class="secao" style="padding-top:18px">
+    <div class="card bloco">
+      <div class="busca-linha">
+        <label class="campo">Tema ou expressão<input type="search" id="q" autocomplete="off" placeholder="Ex.: cadeia de custódia prova digital; reconhecimento fotográfico art. 226"></label>
+        <button type="button" class="btn" id="buscar">Pesquisar</button>
+      </div>
+      <p class="dica">Na base local, valem aspas para a expressão exata e o sinal de menos para excluir termos. A busca ao vivo entende a frase em linguagem natural.</p>
+      <p class="pequeno" style="margin:12px 0 2px"><b>Base oficial local</b> <span class="mudo" id="baseInfo">carregando…</span></p>
+      <div class="marcas" id="colecoes"></div>
+      <p class="pequeno" style="margin:12px 0 2px"><b>Busca ao vivo nos tribunais</b> <span class="mudo">(até 6 por vez; acórdãos com link oficial)</span></p>
+      <div class="marcas" id="tribunais"></div>
+      <div class="grade g4" style="margin-top:10px">
+        <label class="campo">Julgados desde<input type="date" id="de"></label>
+        <label class="campo">Até<input type="date" id="ate"></label>
+        <label class="campo">Acórdãos por tribunal<select id="limite"><option>5</option><option selected>10</option><option>20</option></select></label>
+      </div>
+      <div class="barra" id="barra" hidden><i></i></div>
+      <p class="pequeno" id="estado" style="margin:8px 0 0"></p>
+    </div>
+
+    <div class="card bloco" id="resBloco" hidden>
+      <div class="colunas">
+        <div><h2 style="font-size:20px;margin:0">Base oficial local</h2><p class="pequeno mudo" id="resLocalInfo" style="margin:2px 0 0"></p><div id="resLocal"></div></div>
+        <div><h2 style="font-size:20px;margin:0">Tribunais, ao vivo</h2><p class="pequeno mudo" id="resVivoInfo" style="margin:2px 0 0"></p><div id="resVivo"></div></div>
+      </div>
+      <div class="selbar" id="selbar" hidden><span id="selInfo" class="pequeno"></span><span class="linha-btns" style="margin:0"><button type="button" class="btn sec" id="limparSel">Limpar seleção</button><button type="button" class="btn" id="word">Exportar seleção em Word</button></span></div>
+    </div>
+
+    <div class="card bloco">
+      <details class="cfg"><summary>Fontes e limites</summary>
+        <p class="pequeno" style="margin-top:10px">A base local reúne o acervo aberto do projeto Advocacia Aberta (licença MIT), extraído dos portais oficiais do STF, do STJ e do Planalto: súmulas vinculantes, súmulas do STF e do STJ, temas de repercussão geral, temas repetitivos, Jurisprudência em Teses, Informativo do STF, espelhos de acórdãos da Corte Especial e das Seções do STJ e a legislação penal e processual. É atualizada diariamente e cifrada com a senha do HUB.</p>
+        <p class="pequeno">A busca ao vivo segue o método do projeto aberto Garimpo-Jurídico (licença MIT) e consulta a busca direta do JurisprudênciaIA, fonte não oficial e sem documentação pública, que pode mudar sem aviso. Os resultados trazem a ementa como veio e o link do próprio tribunal: confira sempre o inteiro teor no portal oficial antes de citar.</p>
+      </details>
+    </div>
+  </section>
+</main>
+
+<footer class="rodape">
+  <div class="wrap"><b>TPC ADVOGADOS</b> · HUB. Fontes: STF, STJ e Planalto (acervo Advocacia Aberta) e tribunais pela busca do JurisprudênciaIA (método Garimpo-Jurídico).</div>
+</footer>
+<script src="../vendor/jszip/jszip.min.js"></script>
+<script src="../assets/hub.js"></script>
+<script src="../assets/peca.js"></script>
+<script src="../doutrina/motor.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

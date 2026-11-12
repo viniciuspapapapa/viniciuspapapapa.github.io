@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Rede de Sócios · HUB TPC</title>
+<meta name="description" content="Empresas de uma pessoa e rede de sócios, administradores e endereços em comum, a partir da base aberta de sócios da Receita Federal, com grafo e relatório.">
+<meta name="theme-color" content="#f5f1e8">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Red+Hat+Display:wght@500;600&family=Red+Hat+Text:wght@400;500;600&family=Red+Hat+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/hub.css">
+<style>
+  .heroi { padding: 34px 0 6px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 14px; }
+  .chips span { font-size: 13px; padding: 2px 8px; border-radius: var(--radius-chip); background: var(--surface-3); color: var(--ink-2); }
+  .bloco { padding: 18px; margin-bottom: 14px; }
+  .bloco > h2 { font-size: 22px; margin-bottom: 4px; }
+  .grafo-wrap { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 12px; margin-top: 10px; }
+  @media (max-width: 960px) { .grafo-wrap { grid-template-columns: 1fr; } }
+  svg#grafo { width: 100%; height: 600px; border: 1px solid var(--line); border-radius: var(--radius-key); background: var(--surface); touch-action: none; }
+  @media (max-width: 720px) { svg#grafo { height: 440px; } }
+  #grafo .no { cursor: grab; }
+  #grafo text { font-family: var(--sans); font-size: 11px; fill: var(--ink-2); pointer-events: none; }
+  #grafo .aresta { stroke: var(--line-2); stroke-width: 1.4; }
+  #grafo .aresta.end { stroke: var(--accent); stroke-dasharray: 5 4; }
+  .painel { border: 1px solid var(--line); border-radius: var(--radius-key); padding: 12px; font-size: 14px; max-height: 600px; overflow: auto; }
+  .painel h3 { font-size: 16px; margin: 0 0 6px; }
+  .legenda { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 13px; color: var(--ink-2); margin-top: 8px; }
+  .legenda i { display: inline-block; width: 12px; height: 12px; border-radius: 50%; margin-right: 5px; vertical-align: -1px; }
+  .pessoas { display: grid; gap: 6px; margin-top: 8px; }
+  .pessoas label { display: flex; gap: 8px; align-items: baseline; background: var(--surface-2); padding: 8px 10px; border-radius: var(--radius-key); font-size: 14px; }
+  table.t { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+  table.t th { text-align: left; color: var(--ink-3); font-weight: 500; border-bottom: 1px solid var(--ink); padding: 5px 6px; }
+  table.t td { border-bottom: 1px solid var(--line); padding: 4px 6px; vertical-align: top; }
+  .barra { height: 6px; background: var(--line); border-radius: 99px; overflow: hidden; margin-top: 10px; }
+  .barra i { display: block; height: 100%; width: 0; background: var(--ink-2); }
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body>
+<header class="topo">
+  <div class="topo-in">
+    <a class="marca" href="../" aria-label="HUB TPC, página inicial"><span class="marca-tpc">TPC</span><span class="marca-txt"><b>HUB</b> Criminal</span></a>
+    <nav class="migalha" aria-label="Você está em"><span>/</span><span>Rede de empresas e sócios</span></nav>
+    <div class="espaco"></div>
+    <button class="btn-icone" type="button" onclick="HUB.alternarTema()" aria-label="Alternar tema claro ou escuro" title="Tema"><span data-tema-icone>☾</span></button>
+  </div>
+</header>
+<div class="faixa"></div>
+
+<main class="wrap">
+  <section class="heroi">
+    <div class="sobretitulo">Ferramenta 26 · Investigação societária</div>
+    <h1>Rede de empresas e sócios</h1>
+    <p class="lead">A partir do nome, do CPF ou do CNPJ, encontra todas as empresas em que a pessoa figura como sócia ou administradora na base aberta da Receita Federal e desenha a rede de ligações: sócios em comum, administradores e endereços compartilhados. Revela grupos econômicos, sucessão empresarial e possíveis interpostas pessoas.</p>
+    <div class="chips"><span>Dados abertos do CNPJ (Receita Federal)</span><span>Lei 12.527/2011</span><span>LGPD, art. 7º, VI</span></div>
+  </section>
+
+  <section class="secao" style="padding-top:18px">
+    <div class="card bloco">
+      <h2>Ponto de partida</h2>
+      <div class="grade g4" style="margin-top:8px">
+        <label class="campo" style="grid-column:span 2">Nome completo (pessoa) ou razão social<input type="text" id="nome" autocomplete="off" placeholder="Nome exatamente como no cadastro, sem abreviações"></label>
+        <label class="campo">CPF ou CNPJ<input type="text" id="doc" inputmode="numeric" autocomplete="off" placeholder="Opcional com o nome"></label>
+        <label class="campo">Processo ou caso<input type="text" id="caso" autocomplete="off"></label>
+      </div>
+      <div class="linha-btns" style="margin-top:12px"><button type="button" class="btn" id="buscar">Montar a rede</button><span class="pequeno mudo" id="baseInfo"></span></div>
+      <div class="barra" id="barra" hidden><i></i></div>
+      <p class="pequeno" id="estado" style="margin:8px 0 0"></p>
+      <div id="pessoas"></div>
+    </div>
+
+    <div class="card bloco" id="resBloco" hidden>
+      <div class="linha-btns" style="justify-content:space-between;margin:0"><h2 style="margin:0">Rede</h2><span class="linha-btns" style="margin:0"><button type="button" class="btn sec" id="reorganizar">Reorganizar</button><button type="button" class="btn sec" id="relatorio">Relatório (Word)</button></span></div>
+      <div class="legenda"><span><i style="background:#2B2B2B"></i>Pessoa pesquisada</span><span><i style="background:#2A78D6"></i>Empresa ativa</span><span><i style="background:#B8B8B8"></i>Empresa baixada, inapta ou suspensa</span><span><i style="background:#E8E347"></i>Outras pessoas</span><span><i style="background:#1BAF7A"></i>Pessoa jurídica sócia</span><span>— — endereço em comum</span></div>
+      <div class="grafo-wrap"><svg id="grafo" role="img" aria-label="Grafo de pessoas e empresas"></svg><div class="painel" id="painel"><p class="pequeno mudo">Clique numa pessoa ou empresa para ver os detalhes. Arraste para reorganizar. Em uma pessoa, use Expandir para incluir as empresas dela.</p></div></div>
+      <h3 style="font-size:17px;margin:18px 0 4px">Empresas na rede</h3>
+      <div id="tabela" style="overflow-x:auto"></div>
+    </div>
+
+    <div class="card bloco">
+      <details class="cfg"><summary>Fontes e limites</summary>
+        <p class="pequeno" style="margin-top:10px">O vínculo entre pessoas e empresas vem da base aberta de sócios da Receita Federal, atualizada mensalmente e guardada cifrada com a senha do HUB. Os dados de cada empresa (razão social, situação, capital, endereço e quadro societário atual) vêm da Receita pela BrasilAPI. A Receita divulga o CPF de sócios só parcialmente (seis dígitos centrais) e com faixa etária, o que ajuda a separar homônimos; ainda assim, confirme a identidade antes de usar o resultado.</p>
+        <p class="pequeno">A busca é feita pelo nome exato, normalizado (sem acentos e sem pontuação). Nomes grafados de outra forma no cadastro não serão encontrados: na dúvida, parta do CNPJ de uma empresa conhecida e expanda a rede pelos sócios.</p>
+      </details>
+    </div>
+  </section>
+</main>
+
+<footer class="rodape">
+  <div class="wrap"><b>TPC ADVOGADOS</b> · HUB. Fontes: Receita Federal (dados abertos do CNPJ e BrasilAPI). Somente dados públicos e oficiais.</div>
+</footer>
+<script src="../vendor/jszip/jszip.min.js"></script>
+<script src="../assets/hub.js"></script>
+<script src="../assets/peca.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

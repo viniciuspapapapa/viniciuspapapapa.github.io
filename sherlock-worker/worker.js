@@ -13,6 +13,9 @@ import { manifesto, verificar } from "./sherlock.js";
 import { publico } from "./publico.js";
 import { doutrina, doutrinaPdf } from "./doutrina.js";
 import { SITES_EMAIL, verificarEmail, extrasEmail } from "./email.js";
+import { juris } from "./juris.js";
+import { erb } from "./erb.js";
+import { socios } from "./socios.js";
 
 const SITES = manifesto(DADOS, EXCLUSOES);
 const MAX_LOTE = 8;
@@ -24,11 +27,14 @@ export default {
     const json = (o, st) => new Response(JSON.stringify(o), { status: st || 200, headers: Object.assign({ "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store" }, cors) });
     if (req.method === "OPTIONS") return new Response(null, { status: 204, headers: cors });
     const p = new URL(req.url).pathname.replace(/\/+$/, "") || "/";
-    if (p === "/" || p === "/status") return json({ ok: true, servico: "sherlock", versao: 4, sites: Object.keys(SITES).length, publico: ["transparencia", "djen", "diarios", "email"], emailSites: Object.keys(SITES_EMAIL).length, doutrina: !!env.GITHUB_TOKEN });
+    if (p === "/" || p === "/status") return json({ ok: true, servico: "sherlock", versao: 5, sites: Object.keys(SITES).length, publico: ["transparencia", "djen", "diarios", "email"], emailSites: Object.keys(SITES_EMAIL).length, juris: true, erb: true, socios: true, doutrina: !!env.GITHUB_TOKEN });
     if (permitida !== "*" && origem && origem !== permitida) return json({ erro: "Origem não autorizada." }, 403);
     if (env.APP_TOKEN && req.headers.get("X-App-Token") !== env.APP_TOKEN) return json({ erro: "Token inválido." }, 401);
 
     if (p.startsWith("/publico/")) { const r = await publico(p, new URL(req.url), req, env); if (r) return json(r.corpo, r.st); }
+    if (p.startsWith("/juris/")) { const r = await juris(p, req); if (r) return json(r.corpo, r.st); }
+    if (p.startsWith("/erb/")) { const r = await erb(p, req); if (r) return json(r.corpo, r.st); }
+    if (p.startsWith("/socios/")) { const r = await socios(p, req, cors); if (r) return r; }
     if (p.startsWith("/publico/email")) {
       const valido = e => /^[^\s@]{1,64}@[^\s@]+\.[^\s@]{2,}$/.test(e) && e.length <= 254;
       if (p === "/publico/email/sites") return json({ sites: Object.entries(SITES_EMAIL).map(([nome, s]) => ({ nome, cat: s.cat, url: s.url })) });

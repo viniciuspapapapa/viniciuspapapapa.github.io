@@ -1,0 +1,58 @@
+# Índice de sócios da Receita Federal para a Rede de empresas e sócios do HUB. Baixa os arquivos de sócios dos dados
+# abertos do CNPJ (WebDAV público da Receita), monta o índice cifrado com a chave do HUB e o publica como arquivos da
+# release "bases-socios" (fora do histórico do repositório). A Receita atualiza a base uma vez por mês.
+name: Base de sócios da Receita
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '17 7 22 * *'   # dia 22 de cada mês, 04:17 em Brasília
+  push:
+    branches: [main]
+    paths:
+      - '_ferramentas/bases/socios.mjs'
+      - '.github/workflows/bases-socios.yml'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: bases-socios
+  cancel-in-progress: false
+
+jobs:
+  gerar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Baixar os arquivos de sócios da Receita Federal
+        run: |
+          set -e
+          TOKEN=YggdBLfdninEJX9
+          BASE=https://arquivos.receitafederal.gov.br/public.php/webdav
+          MES=$(curl -s -u "$TOKEN:" -X PROPFIND -H "Depth: 1" "$BASE/" | grep -oE '[0-9]{4}-[0-9]{2}/' | sort | tail -1 | tr -d /)
+          echo "Mês mais recente: $MES"
+          echo "MES=$MES" >> "$GITHUB_ENV"
+          mkdir -p socios-zip
+          for i in 0 1 2 3 4 5 6 7 8 9; do
+            for t in 1 2 3 4; do
+              curl -sS --fail --retry 3 --max-time 1800 -u "$TOKEN:" -o "socios-zip/Socios$i.zip" "$BASE/$MES/Socios$i.zip" && break
+              sleep $((t * 20))
+            done
+            ls -la "socios-zip/Socios$i.zip"
+          done
+      - name: Montar o índice cifrado
+        env:
+          HUB_SENHA: ${{ secrets.HUB_SENHA }}
+          NODE_OPTIONS: --max-old-space-size=6144
+        run: node _ferramentas/bases/socios.mjs socios-zip "$MES" socios-saida
+      - name: Publicar na release bases-socios
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release view bases-socios >/dev/null 2>&1 || gh release create bases-socios --title "Base de sócios da Receita (HUB)" --notes "Índice cifrado da base de sócios dos dados abertos do CNPJ, usado pela Rede de empresas e sócios do HUB. Gerado automaticamente; não edite." --latest=false
+          gh release upload bases-socios socios-saida/socios.bin socios-saida/socios.idx --clobber
