@@ -122,10 +122,188 @@ function DOUTRINA_MOTOR(escopo) {
     }
     return { itens, porLivro, total: achados.length, termos: termos.map(t => (t.neg ? "-" : "") + t.rot), parcial };
   }
+  /* ---------------------------------------------------------------- pesquisa booleana no padrão do STJ
+     Operadores: e, ou, não, adj[n] (na ordem, até n palavras), prox[n] (em qualquer ordem), com (mesmo parágrafo),
+     mesmo (mesmo registro), $ ou * (truncamento), "expressão exata" e parênteses. Sem operador entre dois termos vale
+     o e. Palavras vazias (de, da, do...) não contam na distância, como no STJ. Singular, plural e gênero são
+     tolerados (concedido, concedida, concedidos); o truncamento amplia (custod$). */
+  const OPS = { e: 1, ou: 1, nao: 1, com: 1, mesmo: 1 };
+  const ehOp = w => OPS[w] || /^(adj|prox)\d{0,2}$/.test(w);
+  function lexar(q) {
+    const orig = String(q || ""), nq = norm(orig), out = [], re = /\(|\)|"([^"]*)"?|(-?)([a-z0-9$*?][a-z0-9$*?.ºª§/-]*)/g; let m;
+    while ((m = re.exec(nq))) {
+      if (m[0] === "(" || m[0] === ")") out.push({ k: m[0] });
+      else if (m[1] !== undefined) { const ws = m[1].split(/[^a-z0-9$*]+/).filter(Boolean); if (ws.length) out.push({ k: "termo", frase: ws, rot: orig.substr(m.index + 1, m[1].length).trim() }); }
+      else {
+        const w = m[3].replace(/[.ºª§/-]+$/g, ""); if (!w) continue;
+        if (!m[2] && ehOp(w)) { out.push({ k: "op", op: w }); continue; }
+        const partes = w.split(/[^a-z0-9$*]+/).filter(Boolean); if (!partes.length) continue;
+        if (m[2]) out.push({ k: "op", op: "nao" });
+        out.push({ k: "termo", frase: partes.length > 1 ? partes : null, w: partes.length > 1 ? null : partes[0], rot: orig.substr(m.index + m[2].length, w.length) });
+      }
+    }
+    return out;
+  }
+  function folha(t) {
+    const ws = t.frase || [t.w];
+    const pal = ws.map(w => {
+      const trunc = /[$*]$/.test(w), base = w.replace(/[$*]+$/g, "");
+      return { base, trunc, stop: !trunc && PARADAS.has(base), rad: trunc ? base : raiz(base), num: /^\d+$/.test(base) };
+    }).filter(p => p.base);
+    if (!pal.length) return null;
+    if (!t.frase && (pal[0].stop || (pal[0].base.length < 2 && !pal[0].num))) return null;
+    /* chave do pré-filtro: o trecho comum a todas as formas aceitas da palavra mais longa */
+    const conteudo = pal.filter(p => !p.stop), maior = (conteudo.length ? conteudo : pal).reduce((a, b) => b.base.length > a.base.length ? b : a);
+    let chave = maior.num || maior.trunc || maior.stop ? maior.base : maior.rad;
+    if (!maior.num && !maior.trunc && !maior.stop) { const comum = (x, y) => { let k = 0; while (k < x.length && x[k] === y[k]) k++; return x.slice(0, k); }; chave = comum(comum(chave, maior.base), maior.base.replace(/ao$/, "o")); }
+    return { tipo: "folha", pal, frase: !!t.frase || pal.length > 1, rot: t.rot, chave: chave.length >= 2 ? chave : maior.base };
+  }
+  /* precedência: adj/prox > com > mesmo > não > e > ou; termos vizinhos sem operador = e */
+  function analisar(q) {
+    const tk = lexar(q); let i = 0;
+    const nivelDe = op => op === "ou" ? 0 : op === "e" || op === "nao" ? 1 : op === "mesmo" ? 2 : op === "com" ? 3 : 4;
+    function primario() {
+      const t = tk[i]; if (!t) return null;
+      if (t.k === "(") { i++; const n = expr(0); if (tk[i] && tk[i].k === ")") i++; return n; }
+      if (t.k === "termo") { i++; return folha(t); }
+      if (t.k === "op" && t.op === "nao") { i++; const n = expr(2); return n ? { tipo: "nao", a: null, b: n } : null; }
+      i++; return null; /* operador solto ou parêntese de fechamento sobrando */
+    }
+    function expr(nivel) {
+      if (nivel > 4) return primario();
+      let a = expr(nivel + 1);
+      for (;;) {
+        const t = tk[i]; if (!t || t.k === ")") break;
+        let op;
+        if (t.k === "op") { if (nivelDe(t.op.replace(/\d+$/, "")) !== nivel) { if (nivelDe(t.op.replace(/\d+$/, "")) < nivel) break; i++; continue; } op = t.op; i++; }
+        else if (nivel === 1) op = "e"; else break;
+        const b = expr(nivel + 1);
+        if (!b) continue; if (!a) { a = op === "nao" ? { tipo: "nao", a: null, b } : b; continue; }
+        const m = /^(adj|prox)(\d*)$/.exec(op);
+        a = m ? { tipo: m[1], n: m[2] ? Math.min(+m[2], 99) : 1, a, b } : { tipo: op, a, b };
+      }
+      return a;
+    }
+    let raiz = expr(0);
+    while (i < tk.length) { i++; const resto = expr(0); if (resto) raiz = raiz ? { tipo: "e", a: raiz, b: resto } : resto; }
+    return raiz;
+  }
+  const folhas = (n, neg, out) => { if (!n) return out; if (n.tipo === "folha") { (neg ? out.neg : out.pos).push(n); return out; } if (n.tipo === "nao") { folhas(n.a, neg, out); folhas(n.b, !neg, out); return out; } folhas(n.a, neg, out); folhas(n.b, neg, out); return out; };
+  const ROT_OP = { e: "E", ou: "OU", nao: "NÃO", com: "COM", mesmo: "MESMO" };
+  function descrever(n, pai) {
+    if (!n) return "";
+    if (n.tipo === "folha") return n.frase ? "“" + n.rot + "”" : n.rot;
+    if (n.tipo === "nao" && !n.a) return "NÃO " + descrever(n.b, "nao");
+    const op = n.tipo === "adj" || n.tipo === "prox" ? n.tipo.toUpperCase() + (n.n > 1 ? n.n : "") : ROT_OP[n.tipo];
+    const s = descrever(n.a, n.tipo) + " " + op + " " + descrever(n.b, n.tipo);
+    return pai && pai !== n.tipo ? "(" + s + ")" : s;
+  }
+  /* pré-filtro barato por substring: o registro pode atender à expressão? */
+  function talvez(n, t) {
+    if (!n) return true;
+    if (n.tipo === "folha") return t.indexOf(n.chave) >= 0;
+    if (n.tipo === "ou") return talvez(n.a, t) || talvez(n.b, t);
+    if (n.tipo === "nao") return n.a ? talvez(n.a, t) : true;
+    return talvez(n.a, t) && talvez(n.b, t);
+  }
+  /* palavras do texto normalizado, com o índice que ignora as palavras vazias e o parágrafo */
+  function tokens(t) {
+    const out = [], re = /[a-z0-9]+/g; let m, w = -1, par = 0, ult = 0;
+    while ((m = re.exec(t))) {
+      for (let k = t.indexOf("\n", ult); k >= 0 && k < m.index; k = t.indexOf("\n", k + 1)) par++;
+      ult = m.index + m[0].length;
+      const stop = PARADAS.has(m[0]); if (!stop) w++;
+      out.push({ s: m[0], a: m.index, b: ult, w: Math.max(w, 0), par, stop });
+    }
+    return out;
+  }
+  /* raiz para comparar palavra a palavra: une singular e plural (decisão, decisões; penal, penais; lei, leis) e gênero */
+  function raiz(w) {
+    if (/^\d+$/.test(w)) return w;
+    if (w.length > 4) w = w.replace(/oes$|aes$/, "ao").replace(/ais$/, "al").replace(/eis$/, "el").replace(/ois$/, "ol");
+    else if (w.length === 4 && /[aeiou]s$/.test(w)) w = w.slice(0, -1);
+    return radical(w);
+  }
+  const casa = (p, s) => p.num ? s === p.base : p.trunc ? s.startsWith(p.base) : p.stop ? s === p.base : (s === p.base || raiz(s) === p.rad);
+  function ocorrencias(f, tk) {
+    const out = [], P = f.pal;
+    for (let i = 0; i < tk.length; i++) {
+      if (!casa(P[0], tk[i].s)) continue;
+      let j = i, ok = true;
+      for (let k = 1; k < P.length; k++) { j++; if (!f.frase) break; if (j >= tk.length || !casa(P[k], tk[j].s)) { ok = false; break; } }
+      if (!ok) continue;
+      out.push({ w0: tk[i].w, w1: tk[j].w, par: tk[i].par, m: [[tk[i].a, tk[j].b]] });
+      if (out.length > 400) break;
+    }
+    return out;
+  }
+  function avaliarNo(n, tk, cache) {
+    if (!n) return [];
+    if (n.tipo === "folha") { if (!cache.has(n)) cache.set(n, ocorrencias(n, tk)); return cache.get(n); }
+    if (n.tipo === "nao") { const b = avaliarNo(n.b, tk, cache); if (!n.a) return b.length ? [] : [{ w0: -1, w1: -1, par: -1, m: [] }]; return b.length ? [] : avaliarNo(n.a, tk, cache); }
+    const A = avaliarNo(n.a, tk, cache); if (!A.length && n.tipo !== "ou") return [];
+    const B = avaliarNo(n.b, tk, cache);
+    if (n.tipo === "ou") return A.concat(B);
+    if (!B.length) return [];
+    if (n.tipo === "e" || n.tipo === "mesmo") return A.concat(B);
+    const out = [];
+    for (const x of A) for (const y of B) {
+      let ok;
+      if (n.tipo === "com") ok = x.par === y.par || x.par < 0 || y.par < 0;
+      else if (n.tipo === "adj") ok = y.w0 > x.w1 && y.w0 - x.w1 <= n.n;
+      else ok = (y.w0 > x.w1 && y.w0 - x.w1 <= n.n) || (x.w0 > y.w1 && x.w0 - y.w1 <= n.n);
+      if (ok) { out.push({ w0: Math.min(x.w0, y.w0), w1: Math.max(x.w1, y.w1), par: x.par, m: x.m.concat(y.m) }); if (out.length > 400) return out; }
+    }
+    return out;
+  }
+  /* avalia um texto avulso (usado também na conferência da busca ao vivo) */
+  function conferir(arvore, texto) {
+    const n = norm(String(texto || "")); if (!arvore) return { ok: false, marcas: [], achados: [] };
+    if (!talvez(arvore, n)) return { ok: false, marcas: [], achados: [] };
+    const tk = tokens(n), cache = new Map(), r = avaliarNo(arvore, tk, cache);
+    const fl = folhas(arvore, false, { pos: [], neg: [] }), achados = [], marcas = [];
+    for (const f of fl.pos) { const oc = cache.has(f) ? cache.get(f) : ocorrencias(f, tk); if (oc.length) { achados.push(f.rot); oc.forEach(o => o.m.forEach(x => marcas.push(x))); } }
+    marcas.sort((a, b) => a[0] - b[0]);
+    return { ok: r.length > 0, marcas, achados, termos: fl.pos.map(f => f.rot), listas: fl.pos.map(f => (cache.get(f) || []).map(o => o.m[0])) };
+  }
+  function datar(s) { s = String(s || ""); let m = /(\d{2})\/(\d{2})\/(\d{4})/.exec(s); if (m) return m[3] + m[2] + m[1]; m = /(\d{4})-(\d{2})-(\d{2})/.exec(s); return m ? m[1] + m[2] + m[3] : ""; }
+  /* busca booleana em toda a base: devolve a lista ordenada de [id, i, pontuação, data] e a contagem por coleção */
+  function buscarBool(o) {
+    const arvore = analisar(o.consulta); if (!arvore) return { erro: "Informe ao menos um termo.", lista: [], porLivro: {}, total: 0 };
+    const fl = folhas(arvore, false, { pos: [], neg: [] }); if (!fl.pos.length) return { erro: "A expressão só exclui termos; informe o que deve constar.", lista: [], porLivro: {}, total: 0 };
+    const ids = (o.ids && o.ids.length ? o.ids : [...LIVROS.keys()]).filter(id => LIVROS.has(id));
+    const lista = [], porLivro = {}, df = fl.pos.map(() => 0); let docs = 0;
+    for (const id of ids) {
+      const L = LIVROS.get(id); docs += L.norm.length;
+      for (let i = 0; i < L.norm.length; i++) {
+        const n = L.norm[i]; fl.pos.forEach((f, k) => { if (n.indexOf(f.chave) >= 0) df[k]++; });
+        if (!talvez(arvore, n)) continue;
+        const c = conferir(arvore, L.paginas[i][2]); if (!c.ok) continue;
+        lista.push({ id, i, c });
+      }
+    }
+    const idf = df.map(d => Math.log(1 + (docs || 1) / (1 + d)));
+    const saida = lista.map(({ id, i, c }) => {
+      let score = 0; c.listas.forEach((l, k) => { if (l.length) score += idf[k] * (1 + Math.log(l.length)); });
+      const presentes = c.listas.filter(l => l.length).length;
+      if (presentes > 1) { const [ja, jb] = janela(c.listas.filter(l => l.length)), larg = jb - ja; score *= larg < 250 ? 2.2 : larg < 700 ? 1.6 : larg < 1600 ? 1.15 : 1; }
+      porLivro[id] = (porLivro[id] || 0) + 1;
+      return [id, i, +score.toFixed(3), datar(L_meta(id, i))];
+    });
+    if (o.ordem === "data") saida.sort((a, b) => (b[3] || "").localeCompare(a[3] || "") || b[2] - a[2]); else saida.sort((a, b) => b[2] - a[2]);
+    return { lista: saida, porLivro, total: saida.length, expressao: descrever(arvore), termos: fl.pos.map(f => f.rot), excluidos: fl.neg.map(f => f.rot) };
+  }
+  const L_meta = (id, i) => { const p = LIVROS.get(id).paginas[i]; return p[3] || ""; };
+  /* texto de um registro com as marcas da expressão */
+  function marcarBool(o) {
+    const arvore = analisar(o.consulta);
+    return (o.itens || []).map(([id, i]) => { const L = LIVROS.get(id); if (!L || !L.paginas[i]) return null; const t = L.paginas[i][2], c = conferir(arvore, t); return { id, i, texto: t, marcas: c.marcas, achados: c.achados }; });
+  }
+
   function pagina(id, i) { const L = LIVROS.get(id); if (!L || !L.paginas[i]) return null; const p = L.paginas[i]; return { id, i, pdf: p[0], imp: p[1], texto: p[2], total: L.paginas.length }; }
   function guardar(id, paginas) { LIVROS.set(id, { paginas, norm: paginas.map(p => norm(p[2] || "")) }); }
 
-  const api = { norm, radical, interpretar, buscar, pagina, guardar, remover: id => LIVROS.delete(id), livros: () => [...LIVROS.keys()] };
+  const api = { norm, radical, interpretar, buscar, pagina, guardar, analisar, descrever, conferir, buscarBool, marcarBool, remover: id => LIVROS.delete(id), livros: () => [...LIVROS.keys()] };
   if (escopo && typeof escopo.postMessage === "function" && typeof escopo.document === "undefined") {
     escopo.onmessage = e => {
       const d = e.data || {};
@@ -133,6 +311,8 @@ function DOUTRINA_MOTOR(escopo) {
         if (d.tipo === "livro") { guardar(d.id, d.paginas); escopo.postMessage({ tipo: "livro", id: d.id, req: d.req }); }
         else if (d.tipo === "remover") api.remover(d.id);
         else if (d.tipo === "buscar") escopo.postMessage(Object.assign({ tipo: "resultado", req: d.req }, buscar(d)));
+        else if (d.tipo === "buscarBool") escopo.postMessage(Object.assign({ tipo: "resultado", req: d.req }, buscarBool(d)));
+        else if (d.tipo === "marcarBool") escopo.postMessage({ tipo: "marcas", req: d.req, itens: marcarBool(d) });
         else if (d.tipo === "pagina") escopo.postMessage({ tipo: "pagina", req: d.req, pagina: pagina(d.id, d.i) });
       } catch (x) { escopo.postMessage({ tipo: "erro", req: d.req, erro: String(x && x.message || x) }); }
     };

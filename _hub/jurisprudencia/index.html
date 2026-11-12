@@ -38,6 +38,17 @@
   @media (max-width: 1000px) { .colunas { grid-template-columns: 1fr; } }
   .barra { height: 6px; background: var(--line); border-radius: 99px; overflow: hidden; margin-top: 10px; }
   .barra i { display: block; height: 100%; width: 0; background: var(--ink-2); }
+  .ops { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-top: 8px; }
+  .ops > button { min-width: 44px; padding: 5px 10px; border: 1px solid var(--line-2); background: var(--surface-2); color: var(--ink); border-radius: 6px; font: 500 14px var(--sans); cursor: pointer; }
+  .ops > button:hover { border-color: var(--ink-2); }
+  .ajuda { flex-basis: 100%; font-size: 14px; color: var(--ink-2); }
+  .ajuda summary { cursor: pointer; font-size: 13.5px; color: var(--ink-3); }
+  .ajuda p { margin: 6px 0; line-height: 1.55; }
+  .achados { display: flex; flex-wrap: wrap; gap: 4px 6px; align-items: center; font-size: 12.5px; color: var(--ink-3); margin-top: 4px; }
+  .achados span { background: var(--accent-soft); color: var(--ink); border-radius: 99px; padding: 0 8px; }
+  .res.nao-atende { opacity: .72; }
+  .grupo .mais { margin-top: 8px; }
+  button.link { background: none; border: 0; padding: 0; color: var(--ink); text-decoration: underline; cursor: pointer; font: inherit; }
   [hidden] { display: none !important; }
 </style>
 </head>
@@ -62,10 +73,17 @@
   <section class="secao" style="padding-top:18px">
     <div class="card bloco">
       <div class="busca-linha">
-        <label class="campo">Tema ou expressão<input type="search" id="q" autocomplete="off" placeholder="Ex.: cadeia de custódia prova digital; reconhecimento fotográfico art. 226"></label>
+        <label class="campo">Tema ou expressão<input type="search" id="q" autocomplete="off" placeholder="Ex.: cadeia adj2 custódia e (quebra ou violação) e concedid$"></label>
         <button type="button" class="btn" id="buscar">Pesquisar</button>
       </div>
-      <p class="dica">Na base local, valem aspas para a expressão exata e o sinal de menos para excluir termos. A busca ao vivo entende a frase em linguagem natural.</p>
+      <div class="ops" id="ops" aria-label="Operadores de pesquisa">
+        <button type="button" data-op="e" title="Os dois termos no mesmo documento">e</button><button type="button" data-op="ou" title="Um ou outro termo">ou</button><button type="button" data-op="adj" title="O segundo termo logo depois do primeiro (adj3: até 3 palavras depois, na ordem)">adj</button><button type="button" data-op="não" title="Exclui os documentos com o termo seguinte">não</button><button type="button" data-op="prox" title="Termos próximos, em qualquer ordem (prox3: até 3 palavras)">prox</button><button type="button" data-op="mesmo" title="Termos no mesmo documento (equivale ao e)">mesmo</button><button type="button" data-op="com" title="Termos no mesmo parágrafo">com</button><button type="button" data-op="$" title="Truncamento: custod$ encontra custódia, custodiado, custodial">$</button><button type="button" data-op='"' title="Expressão exata">“ ”</button><button type="button" data-op="()" title="Agrupa uma parte da expressão">( )</button>
+        <details class="ajuda"><summary>Como pesquisar</summary>
+          <p>Os operadores seguem a pesquisa de jurisprudência do STJ. Sem operador entre dois termos, vale o <b>e</b>: todos os termos precisam constar. <b>ou</b> aceita qualquer um deles; <b>não</b> exclui o termo seguinte. <b>adj</b> exige o segundo termo logo depois do primeiro e <b>adj3</b> admite até três palavras entre eles, na ordem; <b>prox</b> e <b>prox3</b> fazem o mesmo em qualquer ordem. <b>com</b> exige os termos no mesmo parágrafo e <b>mesmo</b>, no mesmo documento. As palavras vazias (de, da, do, a, o) não contam na distância.</p>
+          <p>O sinal <b>$</b> trunca a palavra (custod$ encontra custódia, custodiado e custodial), as aspas buscam a expressão exata e os parênteses agrupam: <i>cadeia adj2 custódia e (quebra ou violação) e concedid$ não denegad$</i>. Singular e plural, masculino e feminino já são reconhecidos sem o truncamento.</p>
+          <p>A busca ao vivo nos tribunais recebe os termos, traz até 30 acórdãos por tribunal e mostra apenas os que atendem à expressão completa; os demais ficam ocultos, com a opção de exibi-los.</p>
+        </details>
+      </div>
       <p class="pequeno" style="margin:12px 0 2px"><b>Base oficial local</b> <span class="mudo" id="baseInfo">carregando…</span></p>
       <div class="marcas" id="colecoes"></div>
       <p class="pequeno" style="margin:12px 0 2px"><b>Busca ao vivo nos tribunais</b> <span class="mudo">(até 6 por vez; acórdãos com link oficial)</span></p>
@@ -73,7 +91,8 @@
       <div class="grade g4" style="margin-top:10px">
         <label class="campo">Julgados desde<input type="date" id="de"></label>
         <label class="campo">Até<input type="date" id="ate"></label>
-        <label class="campo">Acórdãos por tribunal<select id="limite"><option>5</option><option selected>10</option><option>20</option></select></label>
+        <label class="campo">Acórdãos por tribunal<select id="limite"><option>5</option><option selected>10</option><option>20</option><option>30</option></select></label>
+        <label class="campo">Ordenar a base local<select id="ordem"><option value="relevancia">Por relevância</option><option value="data">Mais recentes primeiro</option></select></label>
       </div>
       <div class="barra" id="barra" hidden><i></i></div>
       <p class="pequeno" id="estado" style="margin:8px 0 0"></p>
