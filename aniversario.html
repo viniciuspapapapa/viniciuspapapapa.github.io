@@ -1,0 +1,873 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#f6f2ec" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#131215" media="(prefers-color-scheme: dark)">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Festa">
+<title>Festa de Aniversário</title>
+<meta name="description" content="Controle de pagamentos e custos da festa de aniversário: convidados, acompanhantes, rateio e cobranças.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@1,9..144,600&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f6f2ec;--surface:#ffffff;--surface2:#efe9e0;--ink:#1d1a17;--mute:#776f66;--line:#e5ddd2;
+  --acc:#b0186f;--acc-ink:#ffffff;--acc-soft:#f8e3ef;
+  --ok:#237a39;--ok-soft:#e1f2e5;--warn:#a85d00;--warn-soft:#fbeed8;--bad:#b42323;--bad-soft:#f9e1e1;
+  --shadow:0 1px 2px rgba(40,30,20,.06),0 6px 20px rgba(40,30,20,.06);
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#131215;--surface:#1d1c20;--surface2:#26252a;--ink:#f2efe9;--mute:#9e978e;--line:#2f2e33;
+    --acc:#ec5ca8;--acc-ink:#1a0c14;--acc-soft:#3a1d2d;
+    --ok:#5fd17a;--ok-soft:#173222;--warn:#f2b54b;--warn-soft:#3a2c12;--bad:#ff7b7b;--bad-soft:#3d1a1a;
+    --shadow:0 1px 2px rgba(0,0,0,.3),0 6px 20px rgba(0,0,0,.25);
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#131215;--surface:#1d1c20;--surface2:#26252a;--ink:#f2efe9;--mute:#9e978e;--line:#2f2e33;
+  --acc:#ec5ca8;--acc-ink:#1a0c14;--acc-soft:#3a1d2d;
+  --ok:#5fd17a;--ok-soft:#173222;--warn:#f2b54b;--warn-soft:#3a2c12;--bad:#ff7b7b;--bad-soft:#3d1a1a;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 6px 20px rgba(0,0,0,.25);
+  color-scheme:dark;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html{-webkit-text-size-adjust:100%}
+body{background:var(--bg);color:var(--ink);font-family:"Plus Jakarta Sans",system-ui,-apple-system,sans-serif;font-size:15px;line-height:1.4;min-height:100vh;padding-bottom:calc(env(safe-area-inset-bottom) + 84px)}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer;border:0;background:none}
+.wrap{max-width:600px;margin:0 auto;padding:0 16px}
+.num{font-variant-numeric:tabular-nums}
+.hidden{display:none!important}
+
+/* Cabeçalho */
+header{padding:calc(env(safe-area-inset-top) + 18px) 0 6px}
+.top{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+.eyebrow{font-size:11.5px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--acc)}
+h1{font-family:Fraunces,Georgia,serif;font-style:italic;font-weight:600;font-size:clamp(28px,8vw,36px);line-height:1.05;letter-spacing:-.01em;margin-top:4px;word-break:break-word}
+.meta{color:var(--mute);font-size:13.5px;margin-top:6px}
+.iconbtn{width:42px;height:42px;flex:0 0 42px;border-radius:50%;display:grid;place-items:center;background:var(--surface);border:1px solid var(--line);box-shadow:var(--shadow)}
+.iconbtn svg{width:20px;height:20px}
+
+/* Faixa de números */
+.strip{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:16px 0 4px}
+.kpi{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:11px 12px;box-shadow:var(--shadow);min-width:0}
+.kpi .l{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--mute);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.kpi .v{font-size:17px;font-weight:800;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.progress{height:8px;background:var(--surface2);border-radius:99px;overflow:hidden;margin-top:12px}
+.progress>i{display:block;height:100%;background:var(--ok);border-radius:99px;transition:width .4s}
+.plabel{display:flex;justify-content:space-between;font-size:12.5px;color:var(--mute);margin-top:6px}
+
+/* Barra de abas inferior */
+nav.tabs{position:fixed;left:0;right:0;bottom:0;z-index:20;background:color-mix(in srgb,var(--surface) 92%,transparent);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);border-top:1px solid var(--line);padding:6px 8px calc(env(safe-area-inset-bottom) + 6px)}
+nav.tabs .in{max-width:600px;margin:0 auto;display:grid;grid-template-columns:repeat(3,1fr);gap:4px}
+nav.tabs button{display:flex;flex-direction:column;align-items:center;gap:3px;padding:7px 4px;border-radius:12px;font-size:12px;font-weight:700;color:var(--mute)}
+nav.tabs button svg{width:22px;height:22px}
+nav.tabs button[aria-selected="true"]{color:var(--acc);background:var(--acc-soft)}
+
+/* Seções */
+section.tab{padding-top:14px}
+.sechead{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:6px 0 12px}
+.sechead h2{font-size:19px;font-weight:800;letter-spacing:-.01em}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:10px 16px;border-radius:999px;font-weight:700;font-size:14px;background:var(--surface);border:1px solid var(--line);white-space:nowrap}
+.btn svg{width:17px;height:17px}
+.btn.pri{background:var(--acc);color:var(--acc-ink);border-color:transparent}
+.btn.ok{background:var(--ok-soft);color:var(--ok);border-color:transparent}
+.btn.danger{color:var(--bad);border-color:color-mix(in srgb,var(--bad) 35%,transparent)}
+.btn.block{width:100%}
+.btn:active{transform:scale(.97)}
+
+.search{position:relative;margin-bottom:10px}
+.search input{width:100%;padding:12px 14px 12px 42px;border-radius:14px;border:1px solid var(--line);background:var(--surface);outline:none}
+.search input:focus{border-color:var(--acc)}
+.search svg{position:absolute;left:14px;top:50%;transform:translateY(-50%);width:18px;height:18px;color:var(--mute)}
+.chips{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;margin-bottom:12px;scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.chip{flex:0 0 auto;padding:7px 13px;border-radius:999px;font-size:13px;font-weight:700;background:var(--surface);border:1px solid var(--line);color:var(--mute)}
+.chip[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.chip .c{opacity:.7;margin-left:3px}
+
+/* Listas */
+.letter{font-size:12px;font-weight:800;color:var(--mute);letter-spacing:.08em;margin:14px 4px 6px}
+.group{background:var(--surface);border:1px solid var(--line);border-radius:20px;overflow:hidden;box-shadow:var(--shadow)}
+.row{display:flex;align-items:center;gap:12px;padding:11px 12px;width:100%;text-align:left;border-bottom:1px solid var(--line)}
+.row:last-child{border-bottom:0}
+.row.off{opacity:.55}
+.av{width:42px;height:42px;flex:0 0 42px;border-radius:50%;display:grid;place-items:center;font-weight:800;font-size:14.5px;color:#fff;letter-spacing:.02em}
+.who{flex:1;min-width:0}
+.who .n{font-weight:700;font-size:15.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.who .s{font-size:12.5px;color:var(--mute);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px}
+.amt{text-align:right;flex:0 0 auto}
+.amt .a{font-weight:800;font-size:14.5px}
+.amt .b{font-size:11.5px;color:var(--mute);margin-top:1px}
+.pill{display:inline-block;font-size:11px;font-weight:800;padding:3px 8px;border-radius:999px;letter-spacing:.02em;white-space:nowrap}
+.pill.ok{background:var(--ok-soft);color:var(--ok)}
+.pill.warn{background:var(--warn-soft);color:var(--warn)}
+.pill.bad{background:var(--bad-soft);color:var(--bad)}
+.pill.mute{background:var(--surface2);color:var(--mute)}
+.check{width:34px;height:34px;flex:0 0 34px;border-radius:50%;border:2px solid var(--line);display:grid;place-items:center;color:transparent;transition:.15s}
+.check svg{width:18px;height:18px}
+.check.on{background:var(--ok);border-color:var(--ok);color:#fff}
+.check.part{border-color:var(--warn);color:var(--warn)}
+.rowmain{display:flex;align-items:center;gap:12px;flex:1;min-width:0;text-align:left}
+
+.empty{text-align:center;color:var(--mute);padding:34px 20px;background:var(--surface);border:1px dashed var(--line);border-radius:20px}
+.empty b{display:block;color:var(--ink);font-size:16px;margin-bottom:4px}
+
+/* Resumo */
+.hero{background:var(--surface);border:1px solid var(--line);border-radius:22px;padding:18px;box-shadow:var(--shadow)}
+.hero .l{font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--mute)}
+.hero .big{font-size:34px;font-weight:800;letter-spacing:-.02em;margin-top:4px}
+.hero .big small{font-size:15px;font-weight:600;color:var(--mute);letter-spacing:0}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+.grid2 .kpi .v{font-size:18px}
+.kpi .h{font-size:11.5px;color:var(--mute);margin-top:2px}
+.v.pos{color:var(--ok)}.v.neg{color:var(--bad)}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:16px;box-shadow:var(--shadow);margin-top:12px}
+.card h3{font-size:15.5px;font-weight:800;margin-bottom:4px}
+.card p{font-size:13.5px;color:var(--mute)}
+.btnrow{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.bar{display:flex;align-items:center;gap:10px;margin-top:10px;font-size:13.5px}
+.bar .nm{flex:0 0 96px;color:var(--mute);font-weight:600}
+.bar .tr{flex:1;height:10px;background:var(--surface2);border-radius:99px;overflow:hidden}
+.bar .tr i{display:block;height:100%;background:var(--acc);border-radius:99px}
+.bar .vl{flex:0 0 auto;font-weight:700;min-width:84px;text-align:right}
+
+/* Diálogos */
+dialog{border:0;padding:0;background:transparent;color:var(--ink);max-width:none;max-height:none;width:100%;height:100%;margin:0}
+dialog::backdrop{background:rgba(10,8,12,.45);-webkit-backdrop-filter:blur(2px);backdrop-filter:blur(2px)}
+.sheet{position:fixed;left:0;right:0;bottom:0;margin:0 auto;max-width:600px;background:var(--bg);border-radius:24px 24px 0 0;max-height:92vh;overflow-y:auto;padding:8px 16px calc(env(safe-area-inset-bottom) + 18px);animation:up .22s ease-out}
+@keyframes up{from{transform:translateY(30px);opacity:.4}to{transform:none;opacity:1}}
+.grab{width:42px;height:5px;border-radius:9px;background:var(--line);margin:4px auto 10px}
+.sheet h2{font-size:20px;font-weight:800;margin-bottom:14px;display:flex;justify-content:space-between;align-items:center;gap:10px}
+.field{margin-bottom:14px}
+.field>label:not(.toggle),.field>.lab{display:block;font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--mute);margin-bottom:6px}
+.input{width:100%;padding:12px 14px;border-radius:14px;border:1px solid var(--line);background:var(--surface);outline:none;font-size:16px}
+.input:focus{border-color:var(--acc)}
+.money{position:relative}
+.money span{position:absolute;left:14px;top:50%;transform:translateY(-50%);color:var(--mute);font-weight:700}
+.money .input{padding-left:44px;font-weight:700}
+.seg{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;background:var(--surface2);border-radius:14px;padding:4px;gap:4px}
+.seg button{padding:9px 6px;border-radius:11px;font-weight:700;font-size:13.5px;color:var(--mute)}
+.seg button[aria-pressed="true"]{background:var(--surface);color:var(--ink);box-shadow:var(--shadow)}
+.toggle{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 14px;background:var(--surface);border:1px solid var(--line);border-radius:14px;cursor:pointer}
+.toggle .tx{font-weight:600}
+.toggle .tx small{display:block;font-weight:500;color:var(--mute);font-size:12.5px;margin-top:1px}
+.sw{display:inline-block;position:relative;width:46px;height:28px;flex:0 0 46px}
+.sw input{opacity:0;position:absolute;inset:0;cursor:pointer;margin:0}
+.sw i{position:absolute;inset:0;border-radius:99px;background:var(--line);transition:.2s;pointer-events:none}
+.sw i::after{content:"";position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.25);transition:.2s}
+.sw input:checked+i{background:var(--ok)}
+.sw input:checked+i::after{transform:translateX(18px)}
+.due{display:flex;justify-content:space-between;align-items:center;padding:12px 14px;background:var(--acc-soft);border-radius:14px;margin-bottom:14px}
+.due .l{font-size:13px;font-weight:600}
+.due .v{font-size:20px;font-weight:800}
+.actions{display:flex;gap:8px;margin-top:6px}
+.actions .btn{flex:1;padding:13px 16px;font-size:15px}
+.quick{display:flex;gap:6px;margin-top:8px}
+.quick .btn{flex:1;padding:8px 10px;font-size:13px}
+.hint{font-size:12.5px;color:var(--mute);margin-top:6px}
+
+.toast{position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom) + 92px);transform:translateX(-50%) translateY(20px);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:999px;font-weight:700;font-size:14px;opacity:0;pointer-events:none;transition:.25s;z-index:60;max-width:calc(100% - 32px);text-align:center}
+.toast.show{opacity:1;transform:translateX(-50%)}
+.foot{color:var(--mute);font-size:12px;text-align:center;margin:22px 0 8px}
+</style>
+</head>
+<body>
+
+<header class="wrap">
+  <div class="top">
+    <div style="min-width:0">
+      <div class="eyebrow">Controle da festa</div>
+      <h1 id="titulo">Meu aniversário</h1>
+      <div class="meta" id="meta"></div>
+    </div>
+    <button class="iconbtn" id="btnCfg" aria-label="Configurações da festa">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+    </button>
+  </div>
+  <div class="strip">
+    <div class="kpi"><div class="l">Por pessoa</div><div class="v num" id="kPor">R$ 0</div></div>
+    <div class="kpi"><div class="l">Pessoas</div><div class="v num" id="kPes">0</div></div>
+    <div class="kpi"><div class="l">A receber</div><div class="v num" id="kRec">R$ 0</div></div>
+  </div>
+  <div class="progress"><i id="prog" style="width:0"></i></div>
+  <div class="plabel num"><span id="pl1"></span><span id="pl2"></span></div>
+</header>
+
+<main class="wrap">
+
+  <!-- CONVIDADOS -->
+  <section class="tab" id="tab-convidados">
+    <div class="sechead">
+      <h2>Convidados</h2>
+      <button class="btn pri" id="btnAddPessoa"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>Adicionar</button>
+    </div>
+    <div class="search">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      <input id="busca" type="search" placeholder="Buscar convidado" autocomplete="off">
+    </div>
+    <div class="chips" id="filtros"></div>
+    <div id="listaPessoas"></div>
+  </section>
+
+  <!-- CUSTOS -->
+  <section class="tab hidden" id="tab-custos">
+    <div class="sechead">
+      <h2>Custos da festa</h2>
+      <button class="btn pri" id="btnAddCusto"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>Adicionar</button>
+    </div>
+    <div class="grid2" style="margin:0 0 12px">
+      <div class="kpi"><div class="l">Total previsto</div><div class="v num" id="cTot">R$ 0</div></div>
+      <div class="kpi"><div class="l">Já pago a fornecedores</div><div class="v num" id="cPago">R$ 0</div></div>
+    </div>
+    <div id="listaCustos"></div>
+  </section>
+
+  <!-- RESUMO -->
+  <section class="tab hidden" id="tab-resumo">
+    <div class="sechead"><h2>Resumo</h2></div>
+    <div class="hero">
+      <div class="l">Arrecadado</div>
+      <div class="big num" id="rArr">R$ 0</div>
+      <div class="progress"><i id="rProg" style="width:0"></i></div>
+      <div class="plabel num"><span id="rPl1"></span><span id="rPl2"></span></div>
+    </div>
+    <div class="grid2">
+      <div class="kpi"><div class="l">Custo total</div><div class="v num" id="rCus">R$ 0</div><div class="h" id="rCusH"></div></div>
+      <div class="kpi"><div class="l">Valor por pessoa</div><div class="v num" id="rPor">R$ 0</div><div class="h" id="rPorH"></div></div>
+      <div class="kpi"><div class="l">A receber</div><div class="v num" id="rRec">R$ 0</div><div class="h" id="rRecH"></div></div>
+      <div class="kpi"><div class="l">Caixa atual</div><div class="v num" id="rCaixa">R$ 0</div><div class="h">arrecadado − custos pagos</div></div>
+      <div class="kpi"><div class="l">Fornecedores a pagar</div><div class="v num" id="rFor">R$ 0</div><div class="h" id="rForH"></div></div>
+      <div class="kpi"><div class="l">Saldo ao final</div><div class="v num" id="rSaldo">R$ 0</div><div class="h" id="rSaldoH"></div></div>
+    </div>
+
+    <div class="card" id="cardCat">
+      <h3>Custos por categoria</h3>
+      <div id="rCats"></div>
+    </div>
+
+    <div class="card">
+      <h3>Cobrança</h3>
+      <p id="rCobTx">Gere a lista de quem ainda falta pagar, pronta para colar no grupo.</p>
+      <div class="btnrow">
+        <button class="btn pri" id="btnCopiarPend">Copiar lista de pendentes</button>
+        <button class="btn" id="btnWaPend">Enviar no WhatsApp</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Backup</h3>
+      <p>Os dados ficam salvos neste aparelho. Exporte um arquivo para guardar uma cópia ou abrir em outro celular.</p>
+      <div class="btnrow">
+        <button class="btn" id="btnExport">Exportar</button>
+        <button class="btn" id="btnImport">Importar</button>
+        <button class="btn danger" id="btnReset">Recomeçar</button>
+        <input type="file" id="fileImport" accept="application/json,.json" class="hidden">
+      </div>
+    </div>
+    <div class="foot">Os valores são recalculados automaticamente a cada alteração.</div>
+  </section>
+</main>
+
+<nav class="tabs" role="tablist">
+  <div class="in">
+    <button role="tab" data-tab="convidados" aria-selected="true">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>Convidados</button>
+    <button role="tab" data-tab="custos" aria-selected="false">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 2v20l3-2 3 2 3-2 3 2 3-2 1 .7V2l-1 .7-3-2-3 2-3-2-3 2-3-2z"/><path d="M8 7h8M8 11h8M8 15h5"/></svg>Custos</button>
+    <button role="tab" data-tab="resumo" aria-selected="false">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 15l4-4 3 3 6-6"/></svg>Resumo</button>
+  </div>
+</nav>
+
+<!-- Diálogo: pessoa -->
+<dialog id="dlgPessoa">
+  <form class="sheet" method="dialog" id="formPessoa">
+    <div class="grab"></div>
+    <h2><span id="dpTitulo">Convidado</span></h2>
+    <div class="field">
+      <label for="pNome">Nome</label>
+      <input class="input" id="pNome" required autocomplete="off" maxlength="60">
+    </div>
+    <div class="field">
+      <label class="toggle"><span class="tx">Leva acompanhante<small>Namorada ou acompanhante entra na conta</small></span>
+        <span class="sw"><input type="checkbox" id="pAcomp"><i></i></span></label>
+    </div>
+    <div class="field" id="pAcompNomeWrap">
+      <label for="pAcompNome">Nome da acompanhante (opcional)</label>
+      <input class="input" id="pAcompNome" autocomplete="off" maxlength="60">
+    </div>
+    <div class="field">
+      <span class="lab">Presença</span>
+      <div class="seg" id="pPresenca">
+        <button type="button" data-v="sim">Confirmado</button>
+        <button type="button" data-v="talvez">Talvez</button>
+        <button type="button" data-v="nao">Não vai</button>
+      </div>
+    </div>
+    <div class="field">
+      <label class="toggle"><span class="tx">Isento de pagamento<small>Convidado não entra na divisão</small></span>
+        <span class="sw"><input type="checkbox" id="pIsento"><i></i></span></label>
+    </div>
+    <div class="due"><span class="l" id="pDueL">Valor da parte</span><span class="v num" id="pDue">R$ 0</span></div>
+    <div class="field">
+      <label for="pPago">Valor já pago</label>
+      <div class="money"><span>R$</span><input class="input num" id="pPago" inputmode="decimal" autocomplete="off" placeholder="0,00"></div>
+      <div class="quick">
+        <button type="button" class="btn ok" id="pQuitar">Quitar total</button>
+        <button type="button" class="btn" id="pMetade">Metade</button>
+        <button type="button" class="btn" id="pZerar">Zerar</button>
+      </div>
+    </div>
+    <div class="field">
+      <label for="pObs">Observação</label>
+      <input class="input" id="pObs" autocomplete="off" maxlength="120" placeholder="Ex.: pagou em dinheiro">
+    </div>
+    <div class="actions">
+      <button type="button" class="btn danger" id="pExcluir">Excluir</button>
+      <button type="button" class="btn" id="pCobrar">Cobrar</button>
+      <button type="submit" class="btn pri">Salvar</button>
+    </div>
+  </form>
+</dialog>
+
+<!-- Diálogo: custo -->
+<dialog id="dlgCusto">
+  <form class="sheet" method="dialog" id="formCusto">
+    <div class="grab"></div>
+    <h2><span id="dcTitulo">Custo</span></h2>
+    <div class="field">
+      <label for="cDesc">Descrição</label>
+      <input class="input" id="cDesc" required autocomplete="off" maxlength="80" placeholder="Ex.: Aluguel do espaço">
+    </div>
+    <div class="field">
+      <label for="cCat">Categoria</label>
+      <select class="input" id="cCat"></select>
+    </div>
+    <div class="field">
+      <label for="cValor">Valor</label>
+      <div class="money"><span>R$</span><input class="input num" id="cValor" inputmode="decimal" required autocomplete="off" placeholder="0,00"></div>
+    </div>
+    <div class="field">
+      <label class="toggle"><span class="tx">Já pago ao fornecedor<small>Sai do caixa da festa</small></span>
+        <span class="sw"><input type="checkbox" id="cPagoChk"><i></i></span></label>
+    </div>
+    <div class="actions">
+      <button type="button" class="btn danger" id="cExcluir">Excluir</button>
+      <button type="submit" class="btn pri">Salvar</button>
+    </div>
+  </form>
+</dialog>
+
+<!-- Diálogo: configurações -->
+<dialog id="dlgCfg">
+  <form class="sheet" method="dialog" id="formCfg">
+    <div class="grab"></div>
+    <h2>Configurações</h2>
+    <div class="field">
+      <label for="gTitulo">Nome da festa</label>
+      <input class="input" id="gTitulo" maxlength="60" autocomplete="off">
+    </div>
+    <div class="field" style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+      <div><label class="lab" for="gData" style="display:block;font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--mute);margin-bottom:6px">Data</label><input class="input" id="gData" type="date"></div>
+      <div><label class="lab" for="gLocal" style="display:block;font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--mute);margin-bottom:6px">Local</label><input class="input" id="gLocal" maxlength="60" autocomplete="off"></div>
+    </div>
+    <div class="field">
+      <span class="lab">Como calcular a parte de cada um</span>
+      <div class="seg" id="gModo">
+        <button type="button" data-v="rateio">Dividir custos</button>
+        <button type="button" data-v="fixo">Valor fixo</button>
+      </div>
+      <p class="hint" id="gModoHint"></p>
+    </div>
+    <div class="field" id="gFixoWrap">
+      <label for="gFixo">Valor fixo por pessoa</label>
+      <div class="money"><span>R$</span><input class="input num" id="gFixo" inputmode="decimal" autocomplete="off" placeholder="0,00"></div>
+    </div>
+    <div id="gRateioWrap">
+      <div class="field">
+        <label class="toggle"><span class="tx">Arredondar para cima<small>Valor por pessoa em reais inteiros</small></span>
+          <span class="sw"><input type="checkbox" id="gArred"><i></i></span></label>
+      </div>
+      <div class="field">
+        <label class="toggle"><span class="tx">Aniversariante entra na divisão<small>Você e sua namorada contam como 2 pessoas no rateio</small></span>
+          <span class="sw"><input type="checkbox" id="gAniv"><i></i></span></label>
+      </div>
+      <div class="field">
+        <label class="toggle"><span class="tx">Contar os "Talvez" na divisão<small>Desligado, só os confirmados dividem a conta</small></span>
+          <span class="sw"><input type="checkbox" id="gTalvez"><i></i></span></label>
+      </div>
+    </div>
+    <div class="field">
+      <label for="gPix">Chave Pix para cobrança</label>
+      <input class="input" id="gPix" maxlength="80" autocomplete="off" placeholder="CPF, e-mail, telefone ou chave aleatória">
+    </div>
+    <div class="field">
+      <span class="lab">Aparência</span>
+      <div class="seg" id="gTema">
+        <button type="button" data-v="auto">Automática</button>
+        <button type="button" data-v="light">Clara</button>
+        <button type="button" data-v="dark">Escura</button>
+      </div>
+    </div>
+    <div class="actions">
+      <button type="submit" class="btn pri">Salvar</button>
+    </div>
+  </form>
+</dialog>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+'use strict';
+
+const KEY = 'festa-aniversario-v1';
+const NOMES = ['Aurim','Rodrigo Atalla','Bruno Cirino','Dilly','Mateus Diniz','Felippe Lima','Felippe Rodrigues',
+  'Luiz Felippe Quites','Guilherme Martins','Horácio Dias','LR','Math Costa','Mauro Figueiredo','Ricardo Mazzei',
+  'Igor Oliveira','Lucas Paiva','Pinheiro','Poneis','Yuri Guadalupe'];
+const CATS = ['Local','Comida','Bebida','Música','Decoração','Bolo e doces','Serviços','Outros'];
+const AVC = ['#b0186f','#7048e8','#1c7ed6','#0c8599','#2b8a3e','#e8590c','#c2255c','#5c940d','#ae3ec9','#d9480f'];
+
+const $ = s => document.querySelector(s);
+const $$ = s => Array.from(document.querySelectorAll(s));
+const uid = () => Math.random().toString(36).slice(2,10) + Date.now().toString(36).slice(-4);
+const brl = new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'});
+const fmt = v => brl.format(Math.round((v||0)*100)/100);
+const fmtCurto = v => { const r = Math.round((v||0)*100)/100; return Number.isInteger(r) ? 'R$ ' + r.toLocaleString('pt-BR') : fmt(r); };
+const r2 = v => Math.round((v||0)*100)/100;
+const esc = s => String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const cmp = (a,b) => a.localeCompare(b,'pt-BR',{sensitivity:'base'});
+const sortKey = n => { const p = String(n).trim().split(/\s+/); return p.length>1 ? p[p.length-1] : p[0]; };
+
+function parseMoney(s){
+  s = String(s||'').replace(/R\$|\s/g,'');
+  if(!s) return 0;
+  if(s.includes(',')) s = s.replace(/\./g,'').replace(',','.');
+  const v = parseFloat(s);
+  return isFinite(v) && v > 0 ? r2(v) : 0;
+}
+const moneyInput = v => v ? r2(v).toFixed(2).replace('.',',') : '';
+
+function novoEstado(){
+  return {
+    v:1,
+    cfg:{titulo:'Meu aniversário',data:'',local:'',modo:'rateio',fixo:0,arred:true,aniv:false,talvez:true,pix:'',tema:'auto'},
+    pessoas: NOMES.map(n => ({id:uid(),nome:n,acomp:true,acompNome:'',presenca:'sim',isento:false,pago:0,obs:''})),
+    custos: []
+  };
+}
+function normalizar(s){
+  const base = novoEstado();
+  if(!s || typeof s!=='object' || !Array.isArray(s.pessoas)) return null;
+  s.cfg = Object.assign({}, base.cfg, s.cfg||{});
+  s.pessoas = s.pessoas.filter(p=>p && p.nome).map(p => ({
+    id:p.id||uid(), nome:String(p.nome), acomp:p.acomp!==false, acompNome:p.acompNome||'',
+    presenca:['sim','talvez','nao'].includes(p.presenca)?p.presenca:'sim', isento:!!p.isento,
+    pago:Math.max(0,+p.pago||0), obs:p.obs||''
+  }));
+  s.custos = (Array.isArray(s.custos)?s.custos:[]).filter(c=>c && c.desc).map(c => ({
+    id:c.id||uid(), desc:String(c.desc), cat:CATS.includes(c.cat)?c.cat:'Outros', valor:Math.max(0,+c.valor||0), pago:!!c.pago
+  }));
+  s.v = 1;
+  return s;
+}
+function carregar(){
+  try{ const raw = localStorage.getItem(KEY); if(raw){ const s = normalizar(JSON.parse(raw)); if(s) return s; } }catch(e){}
+  return novoEstado();
+}
+let S = carregar();
+function salvar(){ try{ localStorage.setItem(KEY, JSON.stringify(S)); }catch(e){} render(); }
+
+/* ---------- cálculo ---------- */
+function cabecas(p){
+  if(p.presenca==='nao') return 0;
+  if(p.presenca==='talvez' && !S.cfg.talvez && S.cfg.modo==='rateio') return 0;
+  return 1 + (p.acomp?1:0);
+}
+function calc(){
+  const totalCustos = r2(S.custos.reduce((a,c)=>a+c.valor,0));
+  const custosPagos = r2(S.custos.filter(c=>c.pago).reduce((a,c)=>a+c.valor,0));
+  const pagantes = S.pessoas.filter(p=>!p.isento).reduce((a,p)=>a+cabecas(p),0);
+  const presentes = S.pessoas.reduce((a,p)=>a+(p.presenca==='nao'?0:1+(p.acomp?1:0)),0);
+  const divisor = pagantes + (S.cfg.aniv ? 2 : 0);
+  let por = 0;
+  if(S.cfg.modo==='fixo') por = r2(S.cfg.fixo);
+  else if(divisor>0){ por = totalCustos/divisor; por = S.cfg.arred ? Math.ceil(por - 1e-9) : r2(por); }
+  const linhas = S.pessoas.map(p => {
+    const devido = p.isento ? 0 : r2(cabecas(p)*por);
+    const falta = r2(Math.max(devido - p.pago, 0));
+    const sobra = r2(Math.max(p.pago - devido, 0));
+    let st;
+    if(p.presenca==='nao' && p.pago>0) st = {k:'bad',t:'Devolver'};
+    else if(p.presenca==='nao') st = {k:'mute',t:'Não vai'};
+    else if(p.isento) st = {k:'mute',t:'Isento'};
+    else if(devido<=0) st = p.pago>0 ? {k:'ok',t:'Adiantou'} : {k:'mute',t:'Sem valor'};
+    else if(falta<=0.004) st = sobra>0.004 ? {k:'ok',t:'Pago +'} : {k:'ok',t:'Pago'};
+    else if(p.pago>0) st = {k:'warn',t:'Parcial'};
+    else st = {k:'bad',t:'Pendente'};
+    return {p,devido,falta,sobra,st};
+  });
+  const arrecadado = r2(S.pessoas.reduce((a,p)=>a+p.pago,0));
+  const esperado = r2(linhas.reduce((a,l)=>a+l.devido,0));
+  const aReceber = r2(linhas.reduce((a,l)=>a+l.falta,0));
+  const devolver = r2(linhas.filter(l=>l.p.presenca==='nao').reduce((a,l)=>a+l.p.pago,0));
+  const recebidoUtil = r2(linhas.filter(l=>l.p.presenca!=='nao').reduce((a,l)=>a+Math.min(l.p.pago,l.devido),0));
+  const receitaFinal = r2(linhas.filter(l=>l.p.presenca!=='nao').reduce((a,l)=>a+Math.max(l.p.pago,l.devido),0));
+  return {recebidoUtil,receitaFinal,totalCustos,custosPagos,pagantes,presentes,divisor,por,linhas,arrecadado,esperado,aReceber,devolver,
+    convites:S.pessoas.filter(p=>p.presenca!=='nao').length};
+}
+
+/* ---------- render ---------- */
+let aba = 'convidados', filtro = 'todos', busca = '';
+
+function iniciais(n){ const p = String(n).trim().split(/\s+/); return ((p[0]||'')[0]||'' ) + (p.length>1 ? p[p.length-1][0] : (p[0]||'')[1]||''); }
+function corDe(n){ let h=0; for(const ch of n) h=(h*31+ch.charCodeAt(0))>>>0; return AVC[h%AVC.length]; }
+function dataBR(d){ if(!d) return ''; const [y,m,dd] = d.split('-'); const dt = new Date(+y,+m-1,+dd); return dt.toLocaleDateString('pt-BR',{weekday:'short',day:'2-digit',month:'long'}); }
+
+function aplicarTema(){
+  const t = S.cfg.tema;
+  if(t==='light'||t==='dark') document.documentElement.setAttribute('data-theme',t); else document.documentElement.removeAttribute('data-theme');
+}
+
+function render(){
+  aplicarTema();
+  const C = calc();
+  $('#titulo').textContent = S.cfg.titulo || 'Meu aniversário';
+  document.title = (S.cfg.titulo || 'Festa de Aniversário');
+  const meta = [dataBR(S.cfg.data), S.cfg.local].filter(Boolean).join(' · ');
+  const dias = (()=>{ if(!S.cfg.data) return ''; const [y,m,d]=S.cfg.data.split('-'); const alvo=new Date(+y,+m-1,+d); const hoje=new Date(); hoje.setHours(0,0,0,0); const n=Math.round((alvo-hoje)/864e5); return n>1?`faltam ${n} dias`:n===1?'é amanhã':n===0?'é hoje!':''; })();
+  $('#meta').textContent = [meta,dias].filter(Boolean).join(' · ') || `${C.convites} convites · toque na engrenagem para configurar`;
+
+  $('#kPor').textContent = fmtCurto(C.por);
+  $('#kPes').textContent = C.presentes;
+  $('#kRec').textContent = fmtCurto(C.aReceber);
+  const pct = C.esperado>0 ? Math.min(100, C.recebidoUtil/C.esperado*100) : 0;
+  $('#prog').style.width = pct+'%';
+  $('#pl1').textContent = `${fmt(C.arrecadado)} recebidos`;
+  $('#pl2').textContent = C.esperado>0 ? `${Math.round(pct)}% de ${fmt(C.esperado)}` : 'lance os custos para calcular';
+
+  renderPessoas(C); renderCustos(C); renderResumo(C);
+}
+
+function renderPessoas(C){
+  const cont = {todos:0,pendentes:0,pagos:0,talvez:0,nao:0};
+  C.linhas.forEach(l => {
+    cont.todos++;
+    if(l.p.presenca==='nao') cont.nao++;
+    else { if(l.falta>0.004) cont.pendentes++; else if(l.devido>0) cont.pagos++; if(l.p.presenca==='talvez') cont.talvez++; }
+  });
+  const F = [['todos','Todos'],['pendentes','Pendentes'],['pagos','Pagos'],['talvez','Talvez'],['nao','Não vão']];
+  $('#filtros').innerHTML = F.map(([k,t]) => `<button class="chip" data-f="${k}" aria-pressed="${filtro===k}">${t}<span class="c">${cont[k]}</span></button>`).join('');
+
+  const q = busca.trim().toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'');
+  let ls = C.linhas.filter(l => {
+    if(filtro==='pendentes' && !(l.p.presenca!=='nao' && l.falta>0.004)) return false;
+    if(filtro==='pagos' && !(l.p.presenca!=='nao' && l.falta<=0.004 && l.devido>0)) return false;
+    if(filtro==='talvez' && l.p.presenca!=='talvez') return false;
+    if(filtro==='nao' && l.p.presenca!=='nao') return false;
+    if(q){ const h = (l.p.nome+' '+l.p.acompNome).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,''); if(!h.includes(q)) return false; }
+    return true;
+  });
+  ls.sort((a,b)=>cmp(sortKey(a.p.nome),sortKey(b.p.nome)) || cmp(a.p.nome,b.p.nome));
+
+  if(!ls.length){
+    $('#listaPessoas').innerHTML = `<div class="empty"><b>Ninguém por aqui</b>${q?'Nenhum convidado com esse nome.':'Nenhum convidado neste filtro.'}</div>`;
+    return;
+  }
+  const grupos = new Map();
+  ls.forEach(l => { const L = sortKey(l.p.nome)[0].toUpperCase().normalize('NFD').replace(/[̀-ͯ]/g,''); if(!grupos.has(L)) grupos.set(L,[]); grupos.get(L).push(l); });
+  let html = '';
+  for(const [L,arr] of grupos){
+    html += `<div class="letter">${esc(L)}</div><div class="group">`;
+    for(const l of arr){
+      const p = l.p;
+      const sub = p.presenca==='nao' ? 'Não vai' :
+        (p.acomp ? (p.acompNome ? `+ ${esc(p.acompNome)}` : '+ acompanhante') : 'Sozinho') + (p.presenca==='talvez' ? ' · talvez' : '') + (p.obs ? ' · '+esc(p.obs) : '');
+      const quit = l.devido>0 && l.falta<=0.004;
+      const chk = p.presenca==='nao'||p.isento ? '' :
+        `<button class="check ${quit?'on':(p.pago>0?'part':'')}" data-quitar="${p.id}" aria-label="${quit?'Desmarcar pagamento de':'Marcar como pago'} ${esc(p.nome)}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></button>`;
+      const valor = l.devido>0 ? `<div class="a num">${fmtCurto(l.falta>0.004?l.falta:l.devido)}</div><div class="b">${l.falta>0.004 ? (p.pago>0?'faltam':'a pagar') : `<span class="pill ${l.st.k}">${l.st.t}</span>`}</div>` :
+        `<div class="b"><span class="pill ${l.st.k}">${l.st.t}</span></div>`;
+      html += `<div class="row ${p.presenca==='nao'?'off':''}">
+        <button class="rowmain" data-pessoa="${p.id}">
+          <div class="av" style="background:${corDe(p.nome)}">${esc(iniciais(p.nome).toUpperCase())}</div>
+          <div class="who"><div class="n">${esc(p.nome)}</div><div class="s">${sub}</div></div>
+          <div class="amt">${valor}</div>
+        </button>${chk}</div>`;
+    }
+    html += `</div>`;
+  }
+  $('#listaPessoas').innerHTML = html;
+}
+
+function renderCustos(C){
+  $('#cTot').textContent = fmt(C.totalCustos);
+  $('#cPago').textContent = fmt(C.custosPagos);
+  if(!S.custos.length){
+    $('#listaCustos').innerHTML = `<div class="empty"><b>Nenhum custo lançado</b>Inclua o espaço, a comida, as bebidas e o que mais tiver. A parte de cada convidado é recalculada na hora.</div>`;
+    return;
+  }
+  let html = '';
+  for(const cat of CATS){
+    const arr = S.custos.filter(c=>c.cat===cat);
+    if(!arr.length) continue;
+    const sub = arr.reduce((a,c)=>a+c.valor,0);
+    html += `<div class="letter" style="display:flex;justify-content:space-between"><span>${esc(cat.toUpperCase())}</span><span class="num">${fmt(sub)}</span></div><div class="group">`;
+    for(const c of arr){
+      html += `<div class="row"><button class="rowmain" data-custo="${c.id}">
+        <div class="who"><div class="n">${esc(c.desc)}</div><div class="s"><span class="pill ${c.pago?'ok':'warn'}">${c.pago?'Pago':'A pagar'}</span></div></div>
+        <div class="amt"><div class="a num">${fmt(c.valor)}</div></div></button></div>`;
+    }
+    html += `</div>`;
+  }
+  $('#listaCustos').innerHTML = html;
+}
+
+function renderResumo(C){
+  $('#rArr').innerHTML = `${fmt(C.arrecadado)} <small>de ${fmt(C.esperado)}</small>`;
+  const pct = C.esperado>0 ? Math.min(100, C.recebidoUtil/C.esperado*100) : 0;
+  $('#rProg').style.width = pct+'%';
+  const quitados = C.linhas.filter(l=>l.p.presenca!=='nao' && l.devido>0 && l.falta<=0.004).length;
+  const devedores = C.linhas.filter(l=>l.p.presenca!=='nao' && l.devido>0).length;
+  $('#rPl1').textContent = `${quitados} de ${devedores} convites quitados`;
+  $('#rPl2').textContent = `${Math.round(pct)}%`;
+  $('#rCus').textContent = fmt(C.totalCustos);
+  $('#rCusH').textContent = `${S.custos.length} ${S.custos.length===1?'item':'itens'}`;
+  $('#rPor').textContent = fmt(C.por);
+  $('#rPorH').textContent = S.cfg.modo==='fixo' ? 'valor fixo' : `${C.divisor} pessoas na divisão`;
+  $('#rRec').textContent = fmt(C.aReceber);
+  $('#rRecH').textContent = C.devolver>0 ? `devolver ${fmt(C.devolver)} a quem não vai` : `${devedores-quitados} convites em aberto`;
+  const caixa = r2(C.arrecadado - C.custosPagos);
+  $('#rCaixa').textContent = fmt(caixa);
+  $('#rCaixa').className = 'v num ' + (caixa<0?'neg':'');
+  $('#rFor').textContent = fmt(C.totalCustos - C.custosPagos);
+  $('#rForH').textContent = `${S.custos.filter(c=>!c.pago).length} pendentes`;
+  const saldo = r2(C.receitaFinal - C.totalCustos);
+  $('#rSaldo').textContent = (saldo>0?'+':'') + fmt(saldo);
+  $('#rSaldo').className = 'v num ' + (saldo<-0.004?'neg':saldo>0.004?'pos':'');
+  $('#rSaldoH').textContent = saldo<-0.004 ? 'falta para cobrir os custos' : saldo>0.004 ? 'sobra se todos pagarem' : 'conta fechada';
+
+  const cats = CATS.map(c=>[c, S.custos.filter(x=>x.cat===c).reduce((a,x)=>a+x.valor,0)]).filter(x=>x[1]>0).sort((a,b)=>b[1]-a[1]);
+  $('#cardCat').classList.toggle('hidden', !cats.length);
+  const max = cats.length ? cats[0][1] : 1;
+  $('#rCats').innerHTML = cats.map(([c,v]) => `<div class="bar"><span class="nm">${esc(c)}</span><span class="tr"><i style="width:${v/max*100}%"></i></span><span class="vl num">${fmt(v)}</span></div>`).join('');
+
+  const pend = C.linhas.filter(l=>l.p.presenca!=='nao' && l.falta>0.004);
+  $('#rCobTx').textContent = pend.length ? `${pend.length} ${pend.length===1?'convidado ainda deve':'convidados ainda devem'} ${fmt(C.aReceber)}. Gere a lista pronta para colar no grupo.` : 'Ninguém com pagamento pendente.';
+}
+
+/* ---------- mensagens ---------- */
+function primeiroNome(n){ return String(n).trim().split(/\s+/)[0]; }
+function msgPendentes(){
+  const C = calc();
+  const pend = C.linhas.filter(l=>l.p.presenca!=='nao' && l.falta>0.004).sort((a,b)=>cmp(a.p.nome,b.p.nome));
+  if(!pend.length) return '';
+  let t = `🎉 ${S.cfg.titulo||'Festa de aniversário'}\n`;
+  if(S.cfg.data) t += `📅 ${dataBR(S.cfg.data)}${S.cfg.local?' · '+S.cfg.local:''}\n`;
+  t += `\nValor por pessoa: ${fmt(C.por)}\n\nAinda falta acertar:\n`;
+  pend.forEach(l => { t += `• ${l.p.nome}${l.p.acomp?' (+1)':''}: ${fmt(l.falta)}\n`; });
+  if(S.cfg.pix) t += `\nPix: ${S.cfg.pix}`;
+  return t.trim();
+}
+function msgPessoa(l){
+  const p = l.p;
+  let t = `Fala, ${primeiroNome(p.nome)}! Passando para lembrar da sua parte na festa (${S.cfg.titulo||'meu aniversário'}): ${fmt(l.falta)}`;
+  t += p.acomp ? ' (você + acompanhante).' : '.';
+  if(S.cfg.pix) t += ` Pix: ${S.cfg.pix}.`;
+  return t + ' Valeu!';
+}
+async function copiar(t){
+  try{ await navigator.clipboard.writeText(t); return true; }
+  catch(e){ const ta = document.createElement('textarea'); ta.value=t; ta.style.position='fixed'; ta.style.opacity='0'; document.body.appendChild(ta); ta.select(); let ok=false; try{ ok=document.execCommand('copy'); }catch(_){} ta.remove(); return ok; }
+}
+function whats(t){ window.open('https://wa.me/?text='+encodeURIComponent(t),'_blank','noopener'); }
+
+let toastT;
+function toast(t){ const el=$('#toast'); el.textContent=t; el.classList.add('show'); clearTimeout(toastT); toastT=setTimeout(()=>el.classList.remove('show'),2200); }
+
+/* ---------- abas ---------- */
+function irPara(t){
+  aba = t;
+  $$('nav.tabs button').forEach(b=>b.setAttribute('aria-selected', b.dataset.tab===t));
+  $$('section.tab').forEach(s=>s.classList.toggle('hidden', s.id!=='tab-'+t));
+  try{ sessionStorage.setItem(KEY+'-aba',t); }catch(e){}
+  window.scrollTo({top:0});
+}
+$$('nav.tabs button').forEach(b=>b.addEventListener('click',()=>irPara(b.dataset.tab)));
+
+$('#filtros').addEventListener('click', e => { const b=e.target.closest('[data-f]'); if(!b) return; filtro=b.dataset.f; render(); });
+$('#busca').addEventListener('input', e => { busca=e.target.value; render(); });
+
+/* ---------- diálogo pessoa ---------- */
+let editP = null, presSel = 'sim';
+function setSeg(sel, v){ $$(sel+' button').forEach(b=>b.setAttribute('aria-pressed', b.dataset.v===v)); }
+function atualizarDevido(){
+  if(!editP) return;
+  const tmp = Object.assign({}, editP, {acomp:$('#pAcomp').checked, presenca:presSel, isento:$('#pIsento').checked});
+  const idx = S.pessoas.findIndex(x=>x.id===editP.id);
+  const orig = idx>=0 ? S.pessoas[idx] : null;
+  if(idx>=0) S.pessoas[idx] = tmp; else S.pessoas.push(tmp);
+  const C = calc();
+  const l = C.linhas.find(x=>x.p.id===tmp.id);
+  if(idx>=0) S.pessoas[idx] = orig; else S.pessoas.pop();
+  $('#pDue').textContent = fmt(l.devido);
+  $('#pDueL').textContent = tmp.isento ? 'Isento' : tmp.presenca==='nao' ? 'Não vai' : `Valor da parte${tmp.acomp?' (2 pessoas)':''}`;
+  $('#pAcompNomeWrap').classList.toggle('hidden', !tmp.acomp);
+  return l.devido;
+}
+function abrirPessoa(id){
+  const p = id ? S.pessoas.find(x=>x.id===id) : null;
+  editP = p ? Object.assign({},p) : {id:uid(),nome:'',acomp:true,acompNome:'',presenca:'sim',isento:false,pago:0,obs:''};
+  $('#dpTitulo').textContent = p ? 'Editar convidado' : 'Novo convidado';
+  $('#pNome').value = editP.nome; $('#pAcomp').checked = editP.acomp; $('#pAcompNome').value = editP.acompNome;
+  presSel = editP.presenca; setSeg('#pPresenca', presSel);
+  $('#pIsento').checked = editP.isento; $('#pPago').value = moneyInput(editP.pago); $('#pObs').value = editP.obs;
+  $('#pExcluir').classList.toggle('hidden', !p); $('#pCobrar').classList.toggle('hidden', !p);
+  atualizarDevido();
+  $('#dlgPessoa').showModal();
+  if(!p) setTimeout(()=>$('#pNome').focus(),50);
+}
+$('#pPresenca').addEventListener('click', e => { const b=e.target.closest('button'); if(!b) return; presSel=b.dataset.v; setSeg('#pPresenca',presSel); atualizarDevido(); });
+$('#pAcomp').addEventListener('change', atualizarDevido);
+$('#pIsento').addEventListener('change', atualizarDevido);
+$('#pQuitar').addEventListener('click', ()=>{ $('#pPago').value = moneyInput(atualizarDevido()); });
+$('#pMetade').addEventListener('click', ()=>{ $('#pPago').value = moneyInput(r2(atualizarDevido()/2)); });
+$('#pZerar').addEventListener('click', ()=>{ $('#pPago').value = ''; });
+$('#formPessoa').addEventListener('submit', e => {
+  e.preventDefault();
+  const nome = $('#pNome').value.trim();
+  if(!nome){ $('#pNome').focus(); return; }
+  const novo = Object.assign(editP, {nome, acomp:$('#pAcomp').checked, acompNome:$('#pAcomp').checked?$('#pAcompNome').value.trim():'',
+    presenca:presSel, isento:$('#pIsento').checked, pago:parseMoney($('#pPago').value), obs:$('#pObs').value.trim()});
+  const i = S.pessoas.findIndex(x=>x.id===novo.id);
+  if(i>=0) S.pessoas[i] = novo; else S.pessoas.push(novo);
+  $('#dlgPessoa').close(); salvar(); toast(i>=0 ? 'Convidado atualizado' : `${primeiroNome(nome)} entrou na lista`);
+});
+$('#pExcluir').addEventListener('click', ()=>{
+  if(!editP || !confirm(`Remover ${editP.nome} da lista?`)) return;
+  S.pessoas = S.pessoas.filter(x=>x.id!==editP.id); $('#dlgPessoa').close(); salvar(); toast('Convidado removido');
+});
+$('#pCobrar').addEventListener('click', ()=>{
+  const l = calc().linhas.find(x=>x.p.id===editP.id);
+  if(!l || l.falta<=0.004){ toast('Nada pendente para cobrar'); return; }
+  whats(msgPessoa(l));
+});
+$('#btnAddPessoa').addEventListener('click', ()=>abrirPessoa(null));
+
+$('#listaPessoas').addEventListener('click', e => {
+  const q = e.target.closest('[data-quitar]');
+  if(q){
+    const C = calc(); const l = C.linhas.find(x=>x.p.id===q.dataset.quitar); if(!l) return;
+    const p = S.pessoas.find(x=>x.id===l.p.id);
+    if(l.devido<=0){ toast('Lance os custos ou defina o valor fixo primeiro'); return; }
+    if(l.falta<=0.004){ p.pago = 0; salvar(); toast(`Pagamento de ${primeiroNome(p.nome)} desmarcado`); }
+    else { p.pago = l.devido; salvar(); toast(`${primeiroNome(p.nome)} quitou ${fmt(l.devido)}`); }
+    return;
+  }
+  const r = e.target.closest('[data-pessoa]'); if(r) abrirPessoa(r.dataset.pessoa);
+});
+
+/* ---------- diálogo custo ---------- */
+let editC = null;
+$('#cCat').innerHTML = CATS.map(c=>`<option>${esc(c)}</option>`).join('');
+function abrirCusto(id){
+  const c = id ? S.custos.find(x=>x.id===id) : null;
+  editC = c ? Object.assign({},c) : {id:uid(),desc:'',cat:'Local',valor:0,pago:false};
+  $('#dcTitulo').textContent = c ? 'Editar custo' : 'Novo custo';
+  $('#cDesc').value = editC.desc; $('#cCat').value = editC.cat; $('#cValor').value = moneyInput(editC.valor); $('#cPagoChk').checked = editC.pago;
+  $('#cExcluir').classList.toggle('hidden', !c);
+  $('#dlgCusto').showModal();
+  if(!c) setTimeout(()=>$('#cDesc').focus(),50);
+}
+$('#formCusto').addEventListener('submit', e => {
+  e.preventDefault();
+  const desc = $('#cDesc').value.trim(), valor = parseMoney($('#cValor').value);
+  if(!desc){ $('#cDesc').focus(); return; }
+  if(!valor){ $('#cValor').focus(); toast('Informe o valor'); return; }
+  Object.assign(editC,{desc,cat:$('#cCat').value,valor,pago:$('#cPagoChk').checked});
+  const i = S.custos.findIndex(x=>x.id===editC.id);
+  if(i>=0) S.custos[i] = editC; else S.custos.push(editC);
+  $('#dlgCusto').close(); salvar(); toast(i>=0 ? 'Custo atualizado' : 'Custo incluído');
+});
+$('#cExcluir').addEventListener('click', ()=>{
+  if(!editC || !confirm(`Excluir "${editC.desc}"?`)) return;
+  S.custos = S.custos.filter(x=>x.id!==editC.id); $('#dlgCusto').close(); salvar(); toast('Custo excluído');
+});
+$('#btnAddCusto').addEventListener('click', ()=>abrirCusto(null));
+$('#listaCustos').addEventListener('click', e => { const r=e.target.closest('[data-custo]'); if(r) abrirCusto(r.dataset.custo); });
+
+/* ---------- configurações ---------- */
+let modoSel = 'rateio', temaSel = 'auto';
+function atualizarModo(){
+  setSeg('#gModo', modoSel);
+  $('#gFixoWrap').classList.toggle('hidden', modoSel!=='fixo');
+  $('#gRateioWrap').classList.toggle('hidden', modoSel!=='rateio');
+  $('#gModoHint').textContent = modoSel==='rateio'
+    ? 'O total dos custos é dividido igualmente entre todos os que vão, contando as acompanhantes.'
+    : 'Cada pessoa paga o mesmo valor, independentemente dos custos lançados.';
+}
+$('#btnCfg').addEventListener('click', ()=>{
+  const g = S.cfg;
+  $('#gTitulo').value = g.titulo; $('#gData').value = g.data; $('#gLocal').value = g.local;
+  modoSel = g.modo; atualizarModo();
+  $('#gFixo').value = moneyInput(g.fixo); $('#gArred').checked = g.arred; $('#gAniv').checked = g.aniv; $('#gTalvez').checked = g.talvez;
+  $('#gPix').value = g.pix; temaSel = g.tema; setSeg('#gTema', temaSel);
+  $('#dlgCfg').showModal();
+});
+$('#gModo').addEventListener('click', e=>{ const b=e.target.closest('button'); if(!b) return; modoSel=b.dataset.v; atualizarModo(); });
+$('#gTema').addEventListener('click', e=>{ const b=e.target.closest('button'); if(!b) return; temaSel=b.dataset.v; setSeg('#gTema',temaSel); });
+$('#formCfg').addEventListener('submit', e=>{
+  e.preventDefault();
+  Object.assign(S.cfg,{titulo:$('#gTitulo').value.trim()||'Meu aniversário',data:$('#gData').value,local:$('#gLocal').value.trim(),
+    modo:modoSel,fixo:parseMoney($('#gFixo').value),arred:$('#gArred').checked,aniv:$('#gAniv').checked,talvez:$('#gTalvez').checked,
+    pix:$('#gPix').value.trim(),tema:temaSel});
+  $('#dlgCfg').close(); salvar(); toast('Configurações salvas');
+});
+
+/* fechar diálogos tocando fora */
+$$('dialog').forEach(d => d.addEventListener('click', e => { if(e.target===d) d.close(); }));
+
+/* ---------- cobrança e backup ---------- */
+$('#btnCopiarPend').addEventListener('click', async ()=>{
+  const t = msgPendentes(); if(!t){ toast('Ninguém pendente'); return; }
+  toast(await copiar(t) ? 'Lista copiada' : 'Não foi possível copiar');
+});
+$('#btnWaPend').addEventListener('click', ()=>{ const t = msgPendentes(); if(!t){ toast('Ninguém pendente'); return; } whats(t); });
+$('#btnExport').addEventListener('click', ()=>{
+  const blob = new Blob([JSON.stringify(S,null,2)],{type:'application/json'});
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+  a.download = `festa-${new Date().toISOString().slice(0,10)}.json`; document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(a.href),2000); toast('Backup exportado');
+});
+$('#btnImport').addEventListener('click', ()=>$('#fileImport').click());
+$('#fileImport').addEventListener('change', e=>{
+  const f = e.target.files[0]; if(!f) return;
+  const rd = new FileReader();
+  rd.onload = ()=>{
+    try{ const s = normalizar(JSON.parse(rd.result)); if(!s) throw 0;
+      if(!confirm('Substituir os dados atuais pelos do arquivo?')) return;
+      S = s; salvar(); toast('Backup importado');
+    }catch(err){ toast('Arquivo inválido'); }
+    e.target.value='';
+  };
+  rd.readAsText(f);
+});
+$('#btnReset').addEventListener('click', ()=>{
+  if(!confirm('Apagar pagamentos e custos e voltar à lista original do grupo?')) return;
+  S = novoEstado(); salvar(); toast('Tudo recomeçado');
+});
+
+try{ const a = sessionStorage.getItem(KEY+'-aba'); if(a && ['convidados','custos','resumo'].includes(a)) irPara(a); }catch(e){}
+render();
+})();
+</script>
+</body>
+</html>
