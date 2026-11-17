@@ -59,7 +59,7 @@ h1{font-family:Fraunces,Georgia,serif;font-style:italic;font-weight:600;font-siz
 .strip{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:16px 0 4px}
 .kpi{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:11px 12px;box-shadow:var(--shadow);min-width:0}
 .kpi .l{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--mute);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.kpi .v{font-size:17px;font-weight:800;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.kpi .v{font-size:clamp(13.5px,4vw,17px);font-weight:800;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .progress{height:8px;background:var(--surface2);border-radius:99px;overflow:hidden;margin-top:12px}
 .progress>i{display:block;height:100%;background:var(--ok);border-radius:99px;transition:width .4s}
 .plabel{display:flex;justify-content:space-between;font-size:12.5px;color:var(--mute);margin-top:6px}
@@ -525,10 +525,25 @@ function aplicarTema(){ const t = S.cfg.tema; if(t==='light'||t==='dark') docume
 function contaHTML(C){
   const sf = C.saldoFinal;
   const fc = C.faltaCobrir;
-  return `<div class="ln"><span class="k"><b></b>Total dos custos</span><span class="x num">${fmt(C.totalCustos)}</span></div>
+  const V = C.V;
+  const pessoasTxt = n => { const q = n/V; return V>0 && Math.abs(q-Math.round(q))<1e-6 ? ` <small style="font-weight:500">(${Math.round(q)} ${Math.round(q)===1?'pessoa':'pessoas'})</small>` : ''; };
+  const isentos = C.linhas.filter(l=>l.p.isento);
+  const nomesIsentos = isentos.map(l=>esc(l.p.nome)+(l.qtd>1?' + acompanhante':'')).join(', ');
+  const cotaPrevista = r2(C.pagantes*V);
+  const pagoNaCota = r2(C.linhas.filter(l=>!l.p.isento).reduce((a,l)=>a+Math.min(l.p.pago,l.devido),0));
+  const extra = r2(C.recebido - pagoNaCota);
+  return `<div class="cap">Contribuições dos convidados</div>
+    <div class="ln"><span class="k"><b></b>Pessoas na lista</span><span class="x num">${C.pessoas}</span></div>
+    <div class="ln"><span class="k"><b>−</b>Isentos${isentos.length?` <small style="font-weight:500">(${nomesIsentos})</small>`:''}</span><span class="x num">${C.isentos}</span></div>
+    <div class="ln"><span class="k"><b>=</b>Pagantes: ${C.pagantes} × ${fmtCurto(V)}</span><span class="x num">${fmt(cotaPrevista)}</span></div>
+    <div class="ln"><span class="k"><b>−</b>Já pago${pessoasTxt(pagoNaCota)}</span><span class="x num">${fmt(pagoNaCota)}</span></div>
+    <div class="ln tot"><span class="k"><b>=</b>Ainda a receber${pessoasTxt(C.aReceber)}</span><span class="x num">${fmt(C.aReceber)}</span></div>
+    ${extra>0.004?`<div class="ln"><span class="k"><b></b>Recebido além da cota ou de isentos</span><span class="x num">${fmt(extra)}</span></div>`:''}
+    <div class="cap">Conta da festa</div>
+    <div class="ln"><span class="k"><b></b>Total dos custos</span><span class="x num">${fmt(C.totalCustos)}</span></div>
     <div class="ln"><span class="k"><b>−</b>Já pago pelos convidados</span><span class="x num">${fmt(C.recebido)}</span></div>
     <div class="ln tot"><span class="k"><b>=</b>${fc>=0?'Falta cobrir':'Sobra no caixa'}</span><span class="x num ${fc>0.004?'neg':fc<-0.004?'pos':''}">${fmt(Math.abs(fc))}</span></div>
-    <div class="ln"><span class="k"><b>−</b>Ainda a receber <small style="font-weight:500">(${C.pagantes} × ${fmtCurto(C.V)} previstos)</small></span><span class="x num">${fmt(C.aReceber)}</span></div>
+    <div class="ln"><span class="k"><b>−</b>Ainda a receber</span><span class="x num">${fmt(C.aReceber)}</span></div>
     <div class="ln tot"><span class="k"><b>=</b>${sf>0.004?'Fica por sua conta':sf<-0.004?'Sobra ao final':'Conta fechada'}</span><span class="x num ${sf>0.004?'neg':sf<-0.004?'pos':''}">${fmt(Math.abs(sf))}</span></div>`;
 }
 
