@@ -252,7 +252,7 @@ dialog::backdrop{background:rgba(10,8,12,.45);-webkit-backdrop-filter:blur(2px);
     <div class="conta" id="contaResumo" style="margin-top:12px"></div>
 
     <div class="grid2">
-      <div class="kpi"><div class="l">Caixa atual</div><div class="v num" id="rCaixa">R$ 0</div><div class="h">recebido − custos já pagos</div></div>
+      <div class="kpi"><div class="l">Caixa atual</div><div class="v num" id="rCaixa">R$ 0</div><div class="h">recebido − custos divididos já pagos</div></div>
       <div class="kpi"><div class="l">Fornecedores a pagar</div><div class="v num" id="rFor">R$ 0</div><div class="h" id="rForH"></div></div>
     </div>
 
@@ -363,6 +363,10 @@ dialog::backdrop{background:rgba(10,8,12,.45);-webkit-backdrop-filter:blur(2px);
       <label class="toggle"><span class="tx">Já pago ao fornecedor<small>Sai do caixa da festa</small></span>
         <span class="sw"><input type="checkbox" id="cPagoChk"><i></i></span></label>
     </div>
+    <div class="field">
+      <label class="toggle"><span class="tx">Por minha conta<small>Fica fora da divisão com os convidados</small></span>
+        <span class="sw"><input type="checkbox" id="cMeuChk"><i></i></span></label>
+    </div>
     <div class="actions">
       <button type="button" class="btn danger" id="cExcluir">Excluir</button>
       <button type="submit" class="btn pri">Salvar</button>
@@ -446,18 +450,18 @@ const moneyInput = v => v ? r2(v).toFixed(2).replace('.',',') : '';
    - Convidado: {id, nome, acomp, isento, pago, obs, de:null}
    - Acompanhante com nome: {id, nome, isento, pago, obs, de:<id do convidado>}
    Convidado com acomp=true e sem acompanhante nomeada paga por 2 pessoas. */
+const CFG_BASE = {titulo:'Meu aniversário',data:'',local:'',valor:VALOR_PADRAO,pix:'',tema:'auto'};
+/* Última versão dos dados enviada (backup de 17/11/2026), usada ao abrir em um aparelho novo e ao recomeçar. */
+const DADOS_PUBLICADOS = {"v":2,"cfg":{"titulo":"Vini 32","data":"2026-12-19","local":"Uba","valor":150,"pix":"","tema":"light"},"pessoas":[{"id":"vivyjj01zp4f","nome":"Aurim","acomp":true,"isento":false,"pago":150,"obs":"","de":null},{"id":"v8ubfdluzp4f","nome":"Rodrigo Atalla","acomp":true,"isento":false,"pago":150,"obs":"","de":null},{"id":"01fxhoibzp4f","nome":"Bruno Cirino","acomp":true,"isento":false,"pago":0,"obs":"","de":null},{"id":"1q0cabymzp4f","nome":"Dilly","acomp":true,"isento":false,"pago":0,"obs":"","de":null},{"id":"13ik3iu0zp4f","nome":"Mateus Diniz","acomp":false,"isento":false,"pago":0,"obs":"","de":null},{"id":"oh85u8kbzp4f","nome":"Felippe Lima","acomp":true,"isento":false,"pago":0,"obs":"","de":null},{"id":"bxc4a9y5zp4f","nome":"Felippe Rodrigues","acomp":false,"isento":false,"pago":150,"obs":"","de":null},{"id":"rvw6r92yzp4f","nome":"Luiz Felippe Quites","acomp":false,"isento":false,"pago":0,"obs":"","de":null},{"id":"ybarzryjzp4f","nome":"Guilherme Martins","acomp":true,"isento":false,"pago":150,"obs":"","de":null},{"id":"gpihmvfxzp4f","nome":"Horácio Dias","acomp":false,"isento":false,"pago":0,"obs":"","de":null},{"id":"u7fsmkdkzp4f","nome":"Lucas Rufino","acomp":true,"isento":false,"pago":0,"obs":"","de":null},{"id":"g110eap4zp4f","nome":"Math Costa","acomp":true,"isento":false,"pago":150,"obs":"","de":null},{"id":"1maxg4pgzp4f","nome":"Mauro Figueiredo","acomp":true,"isento":false,"pago":0,"obs":"","de":null},{"id":"wjss15kdzp4f","nome":"Ricardo Mazzei","acomp":true,"isento":false,"pago":150,"obs":"","de":null},{"id":"zg3n3xqkzp4f","nome":"Igor Oliveira","acomp":true,"isento":false,"pago":150,"obs":"","de":null},{"id":"5sjj202vzp4f","nome":"Lucas Paiva","acomp":true,"isento":false,"pago":150,"obs":"","de":null},{"id":"7m1poyaxzp4f","nome":"Pinheiro","acomp":true,"isento":false,"pago":150,"obs":"","de":null},{"id":"vdaky44fzp4f","nome":"Poneis","acomp":false,"isento":false,"pago":0,"obs":"","de":null},{"id":"3zgp74j3zp4f","nome":"Yuri Guadalupe","acomp":false,"isento":false,"pago":0,"obs":"","de":null},{"id":"1ehwwfqz83l9","nome":"Laís azevedo","acomp":false,"isento":true,"pago":0,"obs":"","de":null},{"id":"7ki2vxvv8caq","nome":"Gustavo Papa","acomp":true,"isento":true,"pago":0,"obs":"","de":null},{"id":"jem3bab292le","nome":"Pai","acomp":false,"isento":true,"pago":0,"obs":"","de":null},{"id":"up9wpmdn9cfu","nome":"Mae","acomp":false,"isento":true,"pago":0,"obs":"","de":null},{"id":"kemu2am2d4gs","nome":"Vinicius (eu)","acomp":false,"isento":true,"pago":0,"obs":"","de":null},{"id":"d2jklbkl4h69","nome":"Camila","isento":false,"pago":150,"obs":"","de":"v8ubfdluzp4f"},{"id":"rh8mnijk4kik","nome":"Camila","isento":false,"pago":150,"obs":"","de":"vivyjj01zp4f"},{"id":"bg2xw58a57vi","nome":"Karyne","isento":false,"pago":0,"obs":"","de":"01fxhoibzp4f"},{"id":"y9p00jbs5edw","nome":"Rebeca","isento":false,"pago":0,"obs":"","de":"1q0cabymzp4f"},{"id":"u62qxqji5ljn","nome":"Letícia","isento":false,"pago":0,"obs":"","de":"1maxg4pgzp4f"},{"id":"p3od5pqn5xka","nome":"Julia","isento":false,"pago":0,"obs":"","de":"oh85u8kbzp4f"},{"id":"jt8da8qq653b","nome":"Marcella","isento":false,"pago":0,"obs":"","de":"u7fsmkdkzp4f"},{"id":"m9khb5ai6bmb","nome":"Marcela","isento":false,"pago":150,"obs":"","de":"wjss15kdzp4f"},{"id":"o9f1fdcs6fnk","nome":"Anna","isento":false,"pago":150,"obs":"","de":"zg3n3xqkzp4f"},{"id":"1kyrhzwg6k5n","nome":"Andreza","isento":false,"pago":150,"obs":"","de":"5sjj202vzp4f"},{"id":"q6u77een6oj4","nome":"Lays","isento":false,"pago":150,"obs":"","de":"7m1poyaxzp4f"},{"id":"uk4dotzj7g1t","nome":"Isabela","isento":false,"pago":150,"obs":"","de":"g110eap4zp4f"},{"id":"upd1h0k98jgc","nome":"Renata Rodrigues","isento":true,"pago":0,"obs":"","de":"7ki2vxvv8caq"},{"id":"zlc71jwucu8c","nome":"Acompanhante Gui Martins","isento":false,"pago":150,"obs":"","de":"ybarzryjzp4f"}],"custos":[{"id":"wfzowj71anjo","desc":"Bebidas quentes Amazon","cat":"Bebida","valor":1216.47,"pago":true},{"id":"jy5d9x3pb3bp","desc":"Samba","cat":"Música","valor":1800,"pago":false},{"id":"85brp0n7beyb","desc":"Chopp (3) (4=3560)","cat":"Bebida","valor":2670,"pago":false},{"id":"i5lj5ym6c7ud","desc":"Som","cat":"Música","valor":1300,"pago":false},{"id":"nc2tc0xkovmv","desc":"Espumante (Garibaldi Vero 10un)","cat":"Bebida","valor":290,"pago":false},{"id":"ybl81gf8e474","desc":"Comida","cat":"Comida","valor":2000,"pago":false},{"id":"efzkp7itx340","desc":"Barman","cat":"Bebida","valor":1190,"pago":false}]};
 function novoEstado(){
-  return {
-    v:2,
-    cfg:{titulo:'Meu aniversário',data:'',local:'',valor:VALOR_PADRAO,pix:'',tema:'auto'},
-    pessoas: NOMES.map(n => ({id:uid(),nome:n,acomp:true,isento:false,pago:0,obs:'',de:null})),
-    custos: []
-  };
+  const s = normalizar(JSON.parse(JSON.stringify(DADOS_PUBLICADOS)));
+  if(s) return s;
+  return {v:2, cfg:Object.assign({},CFG_BASE),
+    pessoas: NOMES.map(n => ({id:uid(),nome:n,acomp:true,isento:false,pago:0,obs:'',de:null})), custos: []};
 }
 function normalizar(s){
   if(!s || typeof s!=='object' || !Array.isArray(s.pessoas)) return null;
-  const base = novoEstado();
-  const cfg = Object.assign({}, base.cfg);
+  const cfg = Object.assign({}, CFG_BASE);
   ['titulo','data','local','pix','tema'].forEach(k => { if(s.cfg && s.cfg[k]!=null) cfg[k] = s.cfg[k]; });
   cfg.valor = s.cfg && +s.cfg.valor > 0 ? r2(+s.cfg.valor) : VALOR_PADRAO;
   const out = [];
@@ -472,7 +476,7 @@ function normalizar(s){
       out.push({id:p.id||uid(), nome:String(p.nome), isento:!!p.isento, pago:Math.max(0,+p.pago||0), obs:p.obs||'', de:m.id});
   });
   const custos = (Array.isArray(s.custos)?s.custos:[]).filter(c=>c && c.desc).map(c => ({
-    id:c.id||uid(), desc:String(c.desc), cat:CATS.includes(c.cat)?c.cat:'Outros', valor:Math.max(0,+c.valor||0), pago:!!c.pago
+    id:c.id||uid(), desc:String(c.desc), cat:CATS.includes(c.cat)?c.cat:'Outros', valor:Math.max(0,+c.valor||0), pago:!!c.pago, meu:!!c.meu
   }));
   return {v:2, cfg, pessoas:out, custos};
 }
@@ -492,6 +496,9 @@ function calc(){
   const V = S.cfg.valor;
   const totalCustos = r2(S.custos.reduce((a,c)=>a+c.valor,0));
   const custosPagos = r2(S.custos.filter(c=>c.pago).reduce((a,c)=>a+c.valor,0));
+  const custosMeus = r2(S.custos.filter(c=>c.meu).reduce((a,c)=>a+c.valor,0));      // arcados pelo aniversariante
+  const custosDivididos = r2(totalCustos - custosMeus);                                // entram na conta com os convidados
+  const pagosDivididos = r2(S.custos.filter(c=>c.pago && !c.meu).reduce((a,c)=>a+c.valor,0));
   const linhas = S.pessoas.map(p => {
     const qtd = pessoasNaEntrada(p);
     const devido = p.isento ? 0 : r2(qtd*V);
@@ -509,9 +516,9 @@ function calc(){
   const recebido = r2(S.pessoas.reduce((a,p)=>a+p.pago,0));
   const previsto = r2(linhas.reduce((a,l)=>a+Math.max(l.devido,l.p.pago),0));
   const aReceber = r2(linhas.reduce((a,l)=>a+l.falta,0));
-  const faltaCobrir = r2(totalCustos - recebido);          // custos − já pago
-  const saldoFinal = r2(totalCustos - previsto);            // custos − tudo o que será pago
-  return {V,totalCustos,custosPagos,linhas,pessoas,pagantes,isentos,recebido,previsto,aReceber,faltaCobrir,saldoFinal};
+  const faltaCobrir = r2(custosDivididos - recebido);       // custos divididos − já pago
+  const saldoFinal = r2(custosDivididos - previsto);         // custos divididos − tudo o que será pago
+  return {V,totalCustos,custosPagos,custosMeus,custosDivididos,pagosDivididos,linhas,pessoas,pagantes,isentos,recebido,previsto,aReceber,faltaCobrir,saldoFinal};
 }
 
 /* ---------- render ---------- */
@@ -541,10 +548,16 @@ function contaHTML(C){
     ${extra>0.004?`<div class="ln"><span class="k"><b></b>Recebido além da cota ou de isentos</span><span class="x num">${fmt(extra)}</span></div>`:''}
     <div class="cap">Conta da festa</div>
     <div class="ln"><span class="k"><b></b>Total dos custos</span><span class="x num">${fmt(C.totalCustos)}</span></div>
+    <div class="ln"><span class="k"><b>−</b>Por sua conta <small style="font-weight:500">(fora da divisão)</small></span><span class="x num">${fmt(C.custosMeus)}</span></div>
+    <div class="ln tot"><span class="k"><b>=</b>Custos a cobrir dos convidados</span><span class="x num">${fmt(C.custosDivididos)}</span></div>
     <div class="ln"><span class="k"><b>−</b>Já pago pelos convidados</span><span class="x num">${fmt(C.recebido)}</span></div>
     <div class="ln tot"><span class="k"><b>=</b>${fc>=0?'Falta cobrir':'Sobra no caixa'}</span><span class="x num ${fc>0.004?'neg':fc<-0.004?'pos':''}">${fmt(Math.abs(fc))}</span></div>
     <div class="ln"><span class="k"><b>−</b>Ainda a receber</span><span class="x num">${fmt(C.aReceber)}</span></div>
-    <div class="ln tot"><span class="k"><b>=</b>${sf>0.004?'Fica por sua conta':sf<-0.004?'Sobra ao final':'Conta fechada'}</span><span class="x num ${sf>0.004?'neg':sf<-0.004?'pos':''}">${fmt(Math.abs(sf))}</span></div>`;
+    <div class="ln tot"><span class="k"><b>=</b>${sf>0.004?'Faltará cobrir':sf<-0.004?'Sobra ao final':'Conta fechada'}</span><span class="x num ${sf>0.004?'neg':sf<-0.004?'pos':''}">${fmt(Math.abs(sf))}</span></div>
+    <div class="cap">Seu desembolso</div>
+    <div class="ln"><span class="k"><b></b>Custos por sua conta</span><span class="x num">${fmt(C.custosMeus)}</span></div>
+    <div class="ln"><span class="k"><b>${sf<-0.004?'−':'+'}</b>${sf<-0.004?'Sobra das contribuições':'Faltará cobrir'}</span><span class="x num">${fmt(Math.abs(sf))}</span></div>
+    <div class="ln tot"><span class="k"><b>=</b>Total que sai do seu bolso</span><span class="x num">${fmt(Math.max(r2(C.custosMeus+sf),0))}</span></div>`;
 }
 
 function render(){
@@ -559,11 +572,11 @@ function render(){
   $('#kPor').textContent = fmtCurto(C.V);
   $('#kPes').textContent = C.pessoas;
   $('#kFalta').textContent = fmtCurto(Math.max(C.faltaCobrir,0));
-  const base = C.totalCustos || C.previsto;
+  const base = C.custosDivididos || C.previsto;
   const pct = base>0 ? Math.min(100, C.recebido/base*100) : 0;
   $('#prog').style.width = pct+'%';
   $('#pl1').textContent = `${fmt(C.recebido)} recebidos`;
-  $('#pl2').textContent = C.totalCustos>0 ? `${Math.round(pct)}% dos custos (${fmt(C.totalCustos)})` : 'lance os custos na aba Custos';
+  $('#pl2').textContent = C.custosDivididos>0 ? `${Math.round(pct)}% dos custos divididos (${fmt(C.custosDivididos)})` : 'lance os custos na aba Custos';
 
   renderPessoas(C); renderCustos(C); renderResumo(C);
 }
@@ -636,7 +649,7 @@ function renderCustos(C){
     html += `<div class="letter" style="display:flex;justify-content:space-between"><span>${esc(cat.toUpperCase())}</span><span class="num">${fmt(sub)}</span></div><div class="group">`;
     for(const c of arr){
       html += `<div class="row"><button class="rowmain" data-custo="${c.id}">
-        <div class="who"><div class="n">${esc(c.desc)}</div><div class="s"><span class="pill ${c.pago?'ok':'warn'}">${c.pago?'Pago':'A pagar'}</span></div></div>
+        <div class="who"><div class="n">${esc(c.desc)}</div><div class="s"><span class="pill ${c.pago?'ok':'warn'}">${c.pago?'Pago':'A pagar'}</span>${c.meu?' <span class="pill mute">Por sua conta</span>':''}</div></div>
         <div class="amt"><div class="a num">${fmt(c.valor)}</div></div></button></div>`;
     }
     html += `</div>`;
@@ -654,7 +667,7 @@ function renderResumo(C){
   $('#rPl1').textContent = `${quitados} de ${devedores.length} quitados · ${C.pagantes} pessoas × ${fmtCurto(C.V)}${C.isentos?` · ${C.isentos} isento${C.isentos>1?'s':''}`:''}`;
   $('#rPl2').textContent = `${Math.round(pct)}%`;
   $('#contaResumo').innerHTML = contaHTML(C);
-  const caixa = r2(C.recebido - C.custosPagos);
+  const caixa = r2(C.recebido - C.pagosDivididos);
   $('#rCaixa').textContent = fmt(caixa);
   $('#rCaixa').className = 'v num ' + (caixa<0?'neg':'');
   $('#rFor').textContent = fmt(C.totalCustos - C.custosPagos);
@@ -811,9 +824,9 @@ let editC = null;
 $('#cCat').innerHTML = CATS.map(c=>`<option>${esc(c)}</option>`).join('');
 function abrirCusto(id){
   const c = id ? S.custos.find(x=>x.id===id) : null;
-  editC = c ? Object.assign({},c) : {id:uid(),desc:'',cat:'Local',valor:0,pago:false};
+  editC = c ? Object.assign({},c) : {id:uid(),desc:'',cat:'Local',valor:0,pago:false,meu:false};
   $('#dcTitulo').textContent = c ? 'Editar custo' : 'Novo custo';
-  $('#cDesc').value = editC.desc; $('#cCat').value = editC.cat; $('#cValor').value = moneyInput(editC.valor); $('#cPagoChk').checked = editC.pago;
+  $('#cDesc').value = editC.desc; $('#cCat').value = editC.cat; $('#cValor').value = moneyInput(editC.valor); $('#cPagoChk').checked = editC.pago; $('#cMeuChk').checked = !!editC.meu;
   $('#cExcluir').classList.toggle('hidden', !c);
   $('#dlgCusto').showModal();
   if(!c) setTimeout(()=>$('#cDesc').focus(),50);
@@ -823,7 +836,7 @@ $('#formCusto').addEventListener('submit', e => {
   const desc = $('#cDesc').value.trim(), valor = parseMoney($('#cValor').value);
   if(!desc){ $('#cDesc').focus(); return; }
   if(!valor){ $('#cValor').focus(); toast('Informe o valor'); return; }
-  Object.assign(editC,{desc,cat:$('#cCat').value,valor,pago:$('#cPagoChk').checked});
+  Object.assign(editC,{desc,cat:$('#cCat').value,valor,pago:$('#cPagoChk').checked,meu:$('#cMeuChk').checked});
   const i = S.custos.findIndex(x=>x.id===editC.id);
   if(i>=0) S.custos[i] = editC; else S.custos.push(editC);
   $('#dlgCusto').close(); salvar(); toast(i>=0 ? 'Custo atualizado' : 'Custo incluído');
@@ -880,7 +893,7 @@ $('#fileImport').addEventListener('change', e=>{
   rd.readAsText(f);
 });
 $('#btnReset').addEventListener('click', ()=>{
-  if(!confirm('Apagar pagamentos, acompanhantes e custos e voltar à lista original do grupo?')) return;
+  if(!confirm('Descartar as alterações deste aparelho e voltar aos dados publicados?')) return;
   S = novoEstado(); salvar(); toast('Tudo recomeçado');
 });
 
