@@ -187,6 +187,9 @@ dialog::backdrop{background:rgba(10,8,12,.45);-webkit-backdrop-filter:blur(2px);
 .conta .ln.tot .k{color:var(--ink);font-weight:800}
 .conta .ln.tot .x.pos{color:var(--ok)}.conta .ln.tot .x.neg{color:var(--bad)}
 .conta .cap{font-size:11.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--mute);padding:10px 0 2px}
+.step{display:flex;align-items:center;gap:6px}
+.step button{width:34px;height:34px;border-radius:50%;background:var(--surface2);font-weight:800;font-size:18px;line-height:1}
+.step .n{min-width:34px;text-align:center;font-weight:800;font-size:17px;color:var(--ink);letter-spacing:0}
 .info{padding:12px 14px;background:var(--surface2);border-radius:14px;font-size:13.5px;color:var(--mute);margin-bottom:14px}
 .info b{color:var(--ink)}
 </style>
@@ -236,6 +239,7 @@ dialog::backdrop{background:rgba(10,8,12,.45);-webkit-backdrop-filter:blur(2px);
       <button class="btn pri" id="btnAddCusto"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>Adicionar</button>
     </div>
     <div class="conta" id="contaCustos"></div>
+    <div class="conta" data-prog></div>
     <div id="listaCustos"></div>
   </section>
 
@@ -250,6 +254,7 @@ dialog::backdrop{background:rgba(10,8,12,.45);-webkit-backdrop-filter:blur(2px);
     </div>
 
     <div class="conta" id="contaResumo" style="margin-top:12px"></div>
+    <div class="conta" data-prog></div>
 
     <div class="grid2">
       <div class="kpi"><div class="l">Caixa atual</div><div class="v num" id="rCaixa">R$ 0</div><div class="h">recebido − custos divididos já pagos</div></div>
@@ -450,7 +455,7 @@ const moneyInput = v => v ? r2(v).toFixed(2).replace('.',',') : '';
    - Convidado: {id, nome, acomp, isento, pago, obs, de:null}
    - Acompanhante com nome: {id, nome, isento, pago, obs, de:<id do convidado>}
    Convidado com acomp=true e sem acompanhante nomeada paga por 2 pessoas. */
-const CFG_BASE = {titulo:'Meu aniversário',data:'',local:'',valor:VALOR_PADRAO,pix:'',tema:'auto'};
+const CFG_BASE = {titulo:'Meu aniversário',data:'',local:'',valor:VALOR_PADRAO,pix:'',tema:'auto',meta:50};
 /* Última versão dos dados enviada (backup de 17/11/2026), usada ao abrir em um aparelho novo e ao recomeçar. */
 const DADOS_PUBLICADOS = {"v":2,"cfg":{"titulo":"Vini 32","data":"2026-12-19","local":"Uba","valor":150,"pix":"","tema":"light"},"pessoas":[{"id":"vivyjj01zp4f","nome":"Aurim","acomp":true,"isento":false,"pago":150,"obs":"","de":null},{"id":"v8ubfdluzp4f","nome":"Rodrigo Atalla","acomp":true,"isento":false,"pago":150,"obs":"","de":null},{"id":"01fxhoibzp4f","nome":"Bruno Cirino","acomp":true,"isento":false,"pago":0,"obs":"","de":null},{"id":"1q0cabymzp4f","nome":"Dilly","acomp":true,"isento":false,"pago":0,"obs":"","de":null},{"id":"13ik3iu0zp4f","nome":"Mateus Diniz","acomp":false,"isento":false,"pago":0,"obs":"","de":null},{"id":"oh85u8kbzp4f","nome":"Felippe Lima","acomp":true,"isento":false,"pago":0,"obs":"","de":null},{"id":"bxc4a9y5zp4f","nome":"Felippe Rodrigues","acomp":false,"isento":false,"pago":150,"obs":"","de":null},{"id":"rvw6r92yzp4f","nome":"Luiz Felippe Quites","acomp":false,"isento":false,"pago":0,"obs":"","de":null},{"id":"ybarzryjzp4f","nome":"Guilherme Martins","acomp":true,"isento":false,"pago":150,"obs":"","de":null},{"id":"gpihmvfxzp4f","nome":"Horácio Dias","acomp":false,"isento":false,"pago":0,"obs":"","de":null},{"id":"u7fsmkdkzp4f","nome":"Lucas Rufino","acomp":true,"isento":false,"pago":0,"obs":"","de":null},{"id":"g110eap4zp4f","nome":"Math Costa","acomp":true,"isento":false,"pago":150,"obs":"","de":null},{"id":"1maxg4pgzp4f","nome":"Mauro Figueiredo","acomp":true,"isento":false,"pago":0,"obs":"","de":null},{"id":"wjss15kdzp4f","nome":"Ricardo Mazzei","acomp":true,"isento":false,"pago":150,"obs":"","de":null},{"id":"zg3n3xqkzp4f","nome":"Igor Oliveira","acomp":true,"isento":false,"pago":150,"obs":"","de":null},{"id":"5sjj202vzp4f","nome":"Lucas Paiva","acomp":true,"isento":false,"pago":150,"obs":"","de":null},{"id":"7m1poyaxzp4f","nome":"Pinheiro","acomp":true,"isento":false,"pago":150,"obs":"","de":null},{"id":"vdaky44fzp4f","nome":"Poneis","acomp":false,"isento":false,"pago":0,"obs":"","de":null},{"id":"3zgp74j3zp4f","nome":"Yuri Guadalupe","acomp":false,"isento":false,"pago":0,"obs":"","de":null},{"id":"1ehwwfqz83l9","nome":"Laís azevedo","acomp":false,"isento":true,"pago":0,"obs":"","de":null},{"id":"7ki2vxvv8caq","nome":"Gustavo Papa","acomp":true,"isento":true,"pago":0,"obs":"","de":null},{"id":"jem3bab292le","nome":"Pai","acomp":false,"isento":true,"pago":0,"obs":"","de":null},{"id":"up9wpmdn9cfu","nome":"Mae","acomp":false,"isento":true,"pago":0,"obs":"","de":null},{"id":"kemu2am2d4gs","nome":"Vinicius (eu)","acomp":false,"isento":true,"pago":0,"obs":"","de":null},{"id":"d2jklbkl4h69","nome":"Camila","isento":false,"pago":150,"obs":"","de":"v8ubfdluzp4f"},{"id":"rh8mnijk4kik","nome":"Camila","isento":false,"pago":150,"obs":"","de":"vivyjj01zp4f"},{"id":"bg2xw58a57vi","nome":"Karyne","isento":false,"pago":0,"obs":"","de":"01fxhoibzp4f"},{"id":"y9p00jbs5edw","nome":"Rebeca","isento":false,"pago":0,"obs":"","de":"1q0cabymzp4f"},{"id":"u62qxqji5ljn","nome":"Letícia","isento":false,"pago":0,"obs":"","de":"1maxg4pgzp4f"},{"id":"p3od5pqn5xka","nome":"Julia","isento":false,"pago":0,"obs":"","de":"oh85u8kbzp4f"},{"id":"jt8da8qq653b","nome":"Marcella","isento":false,"pago":0,"obs":"","de":"u7fsmkdkzp4f"},{"id":"m9khb5ai6bmb","nome":"Marcela","isento":false,"pago":150,"obs":"","de":"wjss15kdzp4f"},{"id":"o9f1fdcs6fnk","nome":"Anna","isento":false,"pago":150,"obs":"","de":"zg3n3xqkzp4f"},{"id":"1kyrhzwg6k5n","nome":"Andreza","isento":false,"pago":150,"obs":"","de":"5sjj202vzp4f"},{"id":"q6u77een6oj4","nome":"Lays","isento":false,"pago":150,"obs":"","de":"7m1poyaxzp4f"},{"id":"uk4dotzj7g1t","nome":"Isabela","isento":false,"pago":150,"obs":"","de":"g110eap4zp4f"},{"id":"upd1h0k98jgc","nome":"Renata Rodrigues","isento":true,"pago":0,"obs":"","de":"7ki2vxvv8caq"},{"id":"zlc71jwucu8c","nome":"Acompanhante Gui Martins","isento":false,"pago":150,"obs":"","de":"ybarzryjzp4f"}],"custos":[{"id":"wfzowj71anjo","desc":"Bebidas quentes Amazon","cat":"Bebida","valor":1216.47,"pago":true},{"id":"jy5d9x3pb3bp","desc":"Samba","cat":"Música","valor":1800,"pago":false},{"id":"85brp0n7beyb","desc":"Chopp (3) (4=3560)","cat":"Bebida","valor":2670,"pago":false},{"id":"i5lj5ym6c7ud","desc":"Som","cat":"Música","valor":1300,"pago":false},{"id":"nc2tc0xkovmv","desc":"Espumante (Garibaldi Vero 10un)","cat":"Bebida","valor":290,"pago":false},{"id":"ybl81gf8e474","desc":"Comida","cat":"Comida","valor":2000,"pago":false},{"id":"efzkp7itx340","desc":"Barman","cat":"Bebida","valor":1190,"pago":false}]};
 function novoEstado(){
@@ -464,6 +469,7 @@ function normalizar(s){
   const cfg = Object.assign({}, CFG_BASE);
   ['titulo','data','local','pix','tema'].forEach(k => { if(s.cfg && s.cfg[k]!=null) cfg[k] = s.cfg[k]; });
   cfg.valor = s.cfg && +s.cfg.valor > 0 ? r2(+s.cfg.valor) : VALOR_PADRAO;
+  cfg.meta = s.cfg && +s.cfg.meta > 0 ? Math.round(+s.cfg.meta) : 50;
   const out = [];
   s.pessoas.filter(p=>p && p.nome && !p.de).forEach(p => {
     const m = {id:p.id||uid(), nome:String(p.nome), acomp:p.acomp!==false, isento:!!p.isento, pago:Math.max(0,+p.pago||0), obs:p.obs||'', de:null};
@@ -560,6 +566,27 @@ function contaHTML(C){
     <div class="ln tot"><span class="k"><b>=</b>Total que sai do seu bolso</span><span class="x num">${fmt(Math.max(r2(C.custosMeus+sf),0))}</span></div>`;
 }
 
+function prognosticoHTML(C){
+  const V = C.V, meta = S.cfg.meta;
+  const totalMeta = r2(meta*V);
+  const pagoNaCota = r2(C.linhas.filter(l=>!l.p.isento).reduce((a,l)=>a+Math.min(l.p.pago,l.devido),0));
+  const aReceberMeta = r2(Math.max(totalMeta - pagoNaCota, 0));
+  const novos = meta - C.pagantes;
+  const saldo = r2(C.custosDivididos - totalMeta);
+  const bolso = r2(C.custosMeus + saldo);
+  return `<div class="cap" style="display:flex;justify-content:space-between;align-items:center;gap:10px">
+      <span>Prognóstico</span>
+      <span class="step"><button type="button" data-meta="-1" aria-label="Menos uma pessoa">−</button><span class="n num">${meta}</span><button type="button" data-meta="1" aria-label="Mais uma pessoa">+</button></span></div>
+    <div class="ln"><span class="k"><b></b>${meta} pessoas × ${fmtCurto(V)} <small style="font-weight:500">(isentos fora)</small></span><span class="x num">${fmt(totalMeta)}</span></div>
+    <div class="ln"><span class="k"><b>−</b>Já recebido</span><span class="x num">${fmt(pagoNaCota)}</span></div>
+    <div class="ln tot"><span class="k"><b>=</b>Teria a receber</span><span class="x num">${fmt(aReceberMeta)}</span></div>
+    <div class="ln"><span class="k"><b></b>${novos>=0?`Pagantes novos além dos ${C.pagantes} atuais`:`Pagantes a menos que os ${C.pagantes} atuais`}</span><span class="x num">${Math.abs(novos)}</span></div>
+    <div class="ln"><span class="k"><b></b>Custos a cobrir dos convidados</span><span class="x num">${fmt(C.custosDivididos)}</span></div>
+    <div class="ln"><span class="k"><b>−</b>Arrecadação com ${meta} pagantes</span><span class="x num">${fmt(totalMeta)}</span></div>
+    <div class="ln tot"><span class="k"><b>=</b>${saldo>0.004?'Faltaria cobrir':saldo<-0.004?'Sobraria':'Conta fechada'}</span><span class="x num ${saldo>0.004?'neg':saldo<-0.004?'pos':''}">${fmt(Math.abs(saldo))}</span></div>
+    <div class="ln tot"><span class="k"><b></b>Total que sairia do seu bolso</span><span class="x num">${fmt(Math.max(bolso,0))}</span></div>`;
+}
+
 function render(){
   aplicarTema();
   const C = calc();
@@ -579,6 +606,7 @@ function render(){
   $('#pl2').textContent = C.custosDivididos>0 ? `${Math.round(pct)}% dos custos divididos (${fmt(C.custosDivididos)})` : 'lance os custos na aba Custos';
 
   renderPessoas(C); renderCustos(C); renderResumo(C);
+  const ph = prognosticoHTML(C); $$('[data-prog]').forEach(el=>el.innerHTML = ph);
 }
 
 function renderPessoas(C){
@@ -866,6 +894,10 @@ $('#formCfg').addEventListener('submit', e=>{
   $('#dlgCfg').close(); salvar(); toast('Configurações salvas');
 });
 
+document.addEventListener('click', e => {
+  const b = e.target.closest('[data-meta]'); if(!b) return;
+  S.cfg.meta = Math.max(1, Math.min(500, S.cfg.meta + (+b.dataset.meta))); salvar();
+});
 $$('dialog').forEach(d => d.addEventListener('click', e => { if(e.target===d) d.close(); }));
 
 /* ---------- cobrança e backup ---------- */
