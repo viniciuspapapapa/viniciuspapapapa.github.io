@@ -9,7 +9,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Festa">
 <title>Festa de Aniversário</title>
-<meta name="description" content="Controle de pagamentos e custos da festa de aniversário: convidados, acompanhantes, rateio e cobranças.">
+<meta name="description" content="Controle de pagamentos e custos da festa de aniversário: convidados, acompanhantes, custos, entradas e cobranças.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@1,9..144,600&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -239,6 +239,7 @@ dialog::backdrop{background:rgba(10,8,12,.45);-webkit-backdrop-filter:blur(2px);
       <button class="btn pri" id="btnAddCusto"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>Adicionar</button>
     </div>
     <div class="conta" id="contaCustos"></div>
+    <div class="conta" id="fornCustos"></div>
     <div class="conta" data-prog></div>
     <div id="listaCustos"></div>
   </section>
@@ -257,7 +258,7 @@ dialog::backdrop{background:rgba(10,8,12,.45);-webkit-backdrop-filter:blur(2px);
     <div class="conta" data-prog></div>
 
     <div class="grid2">
-      <div class="kpi"><div class="l">Caixa atual</div><div class="v num" id="rCaixa">R$ 0</div><div class="h">recebido − custos divididos já pagos</div></div>
+      <div class="kpi"><div class="l">Caixa atual</div><div class="v num" id="rCaixa">R$ 0</div><div class="h">recebido − entradas dos custos divididos</div></div>
       <div class="kpi"><div class="l">Fornecedores a pagar</div><div class="v num" id="rFor">R$ 0</div><div class="h" id="rForH"></div></div>
     </div>
 
@@ -365,13 +366,28 @@ dialog::backdrop{background:rgba(10,8,12,.45);-webkit-backdrop-filter:blur(2px);
       <div class="money"><span>R$</span><input class="input num" id="cValor" inputmode="decimal" required autocomplete="off" placeholder="0,00"></div>
     </div>
     <div class="field">
-      <label class="toggle"><span class="tx">Já pago ao fornecedor<small>Sai do caixa da festa</small></span>
-        <span class="sw"><input type="checkbox" id="cPagoChk"><i></i></span></label>
+      <span class="lab">Quem arca com este custo</span>
+      <div class="seg" id="cResp">
+        <button type="button" data-v="divide">Convidados</button>
+        <button type="button" data-v="meu">Eu</button>
+        <button type="button" data-v="presente">Presente</button>
+      </div>
+      <p class="hint" id="cRespHint"></p>
+    </div>
+    <div class="field" id="cPresWrap">
+      <label for="cPresDe">Presente de</label>
+      <input class="input" id="cPresDe" autocomplete="off" maxlength="60" placeholder="Ex.: Pai e Mãe">
     </div>
     <div class="field">
-      <label class="toggle"><span class="tx">Por minha conta<small>Fica fora da divisão com os convidados</small></span>
-        <span class="sw"><input type="checkbox" id="cMeuChk"><i></i></span></label>
+      <label for="cEntrada">Entrada já paga</label>
+      <div class="money"><span>R$</span><input class="input num" id="cEntrada" inputmode="decimal" autocomplete="off" placeholder="0,00"></div>
+      <div class="quick">
+        <button type="button" class="btn ok" id="cQuitar">Quitado</button>
+        <button type="button" class="btn" id="cMetade">Metade</button>
+        <button type="button" class="btn" id="cZerar">Zerar</button>
+      </div>
     </div>
+    <div class="due"><span class="l">Pendente para o dia da festa</span><span class="v num" id="cPend">R$ 0</span></div>
     <div class="actions">
       <button type="button" class="btn danger" id="cExcluir">Excluir</button>
       <button type="submit" class="btn pri">Salvar</button>
@@ -456,8 +472,8 @@ const moneyInput = v => v ? r2(v).toFixed(2).replace('.',',') : '';
    - Acompanhante com nome: {id, nome, isento, pago, obs, de:<id do convidado>}
    Convidado com acomp=true e sem acompanhante nomeada paga por 2 pessoas. */
 const CFG_BASE = {titulo:'Meu aniversário',data:'',local:'',valor:VALOR_PADRAO,pix:'',tema:'auto',meta:50};
-/* Última versão dos dados enviada (backup de 17/11/2026), usada ao abrir em um aparelho novo e ao recomeçar. */
-const DADOS_PUBLICADOS = {"v":2,"cfg":{"titulo":"Vini 32","data":"2026-12-19","local":"Uba","valor":150,"pix":"","tema":"light"},"pessoas":[{"id":"vivyjj01zp4f","nome":"Aurim","acomp":true,"isento":false,"pago":150,"obs":"","de":null},{"id":"v8ubfdluzp4f","nome":"Rodrigo Atalla","acomp":true,"isento":false,"pago":150,"obs":"","de":null},{"id":"01fxhoibzp4f","nome":"Bruno Cirino","acomp":true,"isento":false,"pago":0,"obs":"","de":null},{"id":"1q0cabymzp4f","nome":"Dilly","acomp":true,"isento":false,"pago":0,"obs":"","de":null},{"id":"13ik3iu0zp4f","nome":"Mateus Diniz","acomp":false,"isento":false,"pago":0,"obs":"","de":null},{"id":"oh85u8kbzp4f","nome":"Felippe Lima","acomp":true,"isento":false,"pago":0,"obs":"","de":null},{"id":"bxc4a9y5zp4f","nome":"Felippe Rodrigues","acomp":false,"isento":false,"pago":150,"obs":"","de":null},{"id":"rvw6r92yzp4f","nome":"Luiz Felippe Quites","acomp":false,"isento":false,"pago":0,"obs":"","de":null},{"id":"ybarzryjzp4f","nome":"Guilherme Martins","acomp":true,"isento":false,"pago":150,"obs":"","de":null},{"id":"gpihmvfxzp4f","nome":"Horácio Dias","acomp":false,"isento":false,"pago":0,"obs":"","de":null},{"id":"u7fsmkdkzp4f","nome":"Lucas Rufino","acomp":true,"isento":false,"pago":0,"obs":"","de":null},{"id":"g110eap4zp4f","nome":"Math Costa","acomp":true,"isento":false,"pago":150,"obs":"","de":null},{"id":"1maxg4pgzp4f","nome":"Mauro Figueiredo","acomp":true,"isento":false,"pago":0,"obs":"","de":null},{"id":"wjss15kdzp4f","nome":"Ricardo Mazzei","acomp":true,"isento":false,"pago":150,"obs":"","de":null},{"id":"zg3n3xqkzp4f","nome":"Igor Oliveira","acomp":true,"isento":false,"pago":150,"obs":"","de":null},{"id":"5sjj202vzp4f","nome":"Lucas Paiva","acomp":true,"isento":false,"pago":150,"obs":"","de":null},{"id":"7m1poyaxzp4f","nome":"Pinheiro","acomp":true,"isento":false,"pago":150,"obs":"","de":null},{"id":"vdaky44fzp4f","nome":"Poneis","acomp":false,"isento":false,"pago":0,"obs":"","de":null},{"id":"3zgp74j3zp4f","nome":"Yuri Guadalupe","acomp":false,"isento":false,"pago":0,"obs":"","de":null},{"id":"1ehwwfqz83l9","nome":"Laís azevedo","acomp":false,"isento":true,"pago":0,"obs":"","de":null},{"id":"7ki2vxvv8caq","nome":"Gustavo Papa","acomp":true,"isento":true,"pago":0,"obs":"","de":null},{"id":"jem3bab292le","nome":"Pai","acomp":false,"isento":true,"pago":0,"obs":"","de":null},{"id":"up9wpmdn9cfu","nome":"Mae","acomp":false,"isento":true,"pago":0,"obs":"","de":null},{"id":"kemu2am2d4gs","nome":"Vinicius (eu)","acomp":false,"isento":true,"pago":0,"obs":"","de":null},{"id":"d2jklbkl4h69","nome":"Camila","isento":false,"pago":150,"obs":"","de":"v8ubfdluzp4f"},{"id":"rh8mnijk4kik","nome":"Camila","isento":false,"pago":150,"obs":"","de":"vivyjj01zp4f"},{"id":"bg2xw58a57vi","nome":"Karyne","isento":false,"pago":0,"obs":"","de":"01fxhoibzp4f"},{"id":"y9p00jbs5edw","nome":"Rebeca","isento":false,"pago":0,"obs":"","de":"1q0cabymzp4f"},{"id":"u62qxqji5ljn","nome":"Letícia","isento":false,"pago":0,"obs":"","de":"1maxg4pgzp4f"},{"id":"p3od5pqn5xka","nome":"Julia","isento":false,"pago":0,"obs":"","de":"oh85u8kbzp4f"},{"id":"jt8da8qq653b","nome":"Marcella","isento":false,"pago":0,"obs":"","de":"u7fsmkdkzp4f"},{"id":"m9khb5ai6bmb","nome":"Marcela","isento":false,"pago":150,"obs":"","de":"wjss15kdzp4f"},{"id":"o9f1fdcs6fnk","nome":"Anna","isento":false,"pago":150,"obs":"","de":"zg3n3xqkzp4f"},{"id":"1kyrhzwg6k5n","nome":"Andreza","isento":false,"pago":150,"obs":"","de":"5sjj202vzp4f"},{"id":"q6u77een6oj4","nome":"Lays","isento":false,"pago":150,"obs":"","de":"7m1poyaxzp4f"},{"id":"uk4dotzj7g1t","nome":"Isabela","isento":false,"pago":150,"obs":"","de":"g110eap4zp4f"},{"id":"upd1h0k98jgc","nome":"Renata Rodrigues","isento":true,"pago":0,"obs":"","de":"7ki2vxvv8caq"},{"id":"zlc71jwucu8c","nome":"Acompanhante Gui Martins","isento":false,"pago":150,"obs":"","de":"ybarzryjzp4f"}],"custos":[{"id":"wfzowj71anjo","desc":"Bebidas quentes Amazon","cat":"Bebida","valor":1216.47,"pago":true},{"id":"jy5d9x3pb3bp","desc":"Samba","cat":"Música","valor":1800,"pago":false},{"id":"85brp0n7beyb","desc":"Chopp (3) (4=3560)","cat":"Bebida","valor":2670,"pago":false},{"id":"i5lj5ym6c7ud","desc":"Som","cat":"Música","valor":1300,"pago":false},{"id":"nc2tc0xkovmv","desc":"Espumante (Garibaldi Vero 10un)","cat":"Bebida","valor":290,"pago":false},{"id":"ybl81gf8e474","desc":"Comida","cat":"Comida","valor":2000,"pago":false},{"id":"efzkp7itx340","desc":"Barman","cat":"Bebida","valor":1190,"pago":false}]};
+/* Última versão dos dados enviada (backup de 17/11/2026, atualizado), usada ao abrir em um aparelho novo e ao recomeçar. */
+const DADOS_PUBLICADOS = {"v":2,"cfg":{"titulo":"Vini 32","data":"2026-12-19","local":"Uba","valor":150,"pix":"","tema":"light","meta":50},"pessoas":[{"id":"vivyjj01zp4f","nome":"Aurim","acomp":true,"isento":false,"pago":150,"obs":"","de":null},{"id":"v8ubfdluzp4f","nome":"Rodrigo Atalla","acomp":true,"isento":false,"pago":150,"obs":"","de":null},{"id":"01fxhoibzp4f","nome":"Bruno Cirino","acomp":true,"isento":false,"pago":0,"obs":"","de":null},{"id":"1q0cabymzp4f","nome":"Dilly","acomp":true,"isento":false,"pago":0,"obs":"","de":null},{"id":"13ik3iu0zp4f","nome":"Mateus Diniz","acomp":false,"isento":false,"pago":0,"obs":"","de":null},{"id":"oh85u8kbzp4f","nome":"Felippe Lima","acomp":true,"isento":false,"pago":0,"obs":"","de":null},{"id":"bxc4a9y5zp4f","nome":"Felippe Rodrigues","acomp":false,"isento":false,"pago":150,"obs":"","de":null},{"id":"rvw6r92yzp4f","nome":"Luiz Felippe Quites","acomp":false,"isento":false,"pago":0,"obs":"","de":null},{"id":"ybarzryjzp4f","nome":"Guilherme Martins","acomp":true,"isento":false,"pago":150,"obs":"","de":null},{"id":"gpihmvfxzp4f","nome":"Horácio Dias","acomp":false,"isento":false,"pago":0,"obs":"","de":null},{"id":"u7fsmkdkzp4f","nome":"Lucas Rufino","acomp":true,"isento":false,"pago":0,"obs":"","de":null},{"id":"g110eap4zp4f","nome":"Math Costa","acomp":true,"isento":false,"pago":150,"obs":"","de":null},{"id":"1maxg4pgzp4f","nome":"Mauro Figueiredo","acomp":true,"isento":false,"pago":0,"obs":"","de":null},{"id":"wjss15kdzp4f","nome":"Ricardo Mazzei","acomp":true,"isento":false,"pago":150,"obs":"","de":null},{"id":"zg3n3xqkzp4f","nome":"Igor Oliveira","acomp":true,"isento":false,"pago":150,"obs":"","de":null},{"id":"5sjj202vzp4f","nome":"Lucas Paiva","acomp":true,"isento":false,"pago":150,"obs":"","de":null},{"id":"7m1poyaxzp4f","nome":"Pinheiro","acomp":true,"isento":false,"pago":150,"obs":"","de":null},{"id":"vdaky44fzp4f","nome":"Poneis","acomp":false,"isento":false,"pago":0,"obs":"","de":null},{"id":"3zgp74j3zp4f","nome":"Yuri Guadalupe","acomp":false,"isento":false,"pago":0,"obs":"","de":null},{"id":"1ehwwfqz83l9","nome":"Laís azevedo","acomp":false,"isento":true,"pago":0,"obs":"","de":null},{"id":"7ki2vxvv8caq","nome":"Gustavo Papa","acomp":true,"isento":true,"pago":0,"obs":"","de":null},{"id":"jem3bab292le","nome":"Pai","acomp":false,"isento":true,"pago":0,"obs":"","de":null},{"id":"up9wpmdn9cfu","nome":"Mae","acomp":false,"isento":true,"pago":0,"obs":"","de":null},{"id":"kemu2am2d4gs","nome":"Vinicius (eu)","acomp":false,"isento":true,"pago":0,"obs":"","de":null},{"id":"d2jklbkl4h69","nome":"Camila","isento":false,"pago":150,"obs":"","de":"v8ubfdluzp4f"},{"id":"rh8mnijk4kik","nome":"Camila","isento":false,"pago":150,"obs":"","de":"vivyjj01zp4f"},{"id":"bg2xw58a57vi","nome":"Karyne","isento":false,"pago":0,"obs":"","de":"01fxhoibzp4f"},{"id":"y9p00jbs5edw","nome":"Rebeca","isento":false,"pago":0,"obs":"","de":"1q0cabymzp4f"},{"id":"u62qxqji5ljn","nome":"Letícia","isento":false,"pago":0,"obs":"","de":"1maxg4pgzp4f"},{"id":"p3od5pqn5xka","nome":"Julia","isento":false,"pago":0,"obs":"","de":"oh85u8kbzp4f"},{"id":"jt8da8qq653b","nome":"Marcella","isento":false,"pago":0,"obs":"","de":"u7fsmkdkzp4f"},{"id":"m9khb5ai6bmb","nome":"Marcela","isento":false,"pago":150,"obs":"","de":"wjss15kdzp4f"},{"id":"o9f1fdcs6fnk","nome":"Anna","isento":false,"pago":150,"obs":"","de":"zg3n3xqkzp4f"},{"id":"1kyrhzwg6k5n","nome":"Andreza","isento":false,"pago":150,"obs":"","de":"5sjj202vzp4f"},{"id":"q6u77een6oj4","nome":"Lays","isento":false,"pago":150,"obs":"","de":"7m1poyaxzp4f"},{"id":"uk4dotzj7g1t","nome":"Isabela","isento":false,"pago":150,"obs":"","de":"g110eap4zp4f"},{"id":"upd1h0k98jgc","nome":"Renata Rodrigues","isento":true,"pago":0,"obs":"","de":"7ki2vxvv8caq"},{"id":"zlc71jwucu8c","nome":"Acompanhante Gui Martins","isento":false,"pago":150,"obs":"","de":"ybarzryjzp4f"},{"id":"5j0esut8u8zs","nome":"Bassoto","acomp":false,"isento":false,"pago":0,"obs":"","de":null}],"custos":[{"id":"wfzowj71anjo","desc":"Bebidas quentes Amazon","cat":"Bebida","valor":1216.47,"pago":true,"meu":true},{"id":"jy5d9x3pb3bp","desc":"Samba","cat":"Música","valor":1800,"pago":false,"meu":false},{"id":"85brp0n7beyb","desc":"Chopp (3) (4=3560)","cat":"Bebida","valor":2670,"pago":false,"meu":false},{"id":"i5lj5ym6c7ud","desc":"Som","cat":"Música","valor":1200,"pago":false,"meu":false},{"id":"nc2tc0xkovmv","desc":"Espumante (Garibaldi Vero 10un)","cat":"Bebida","valor":290,"pago":false,"meu":true},{"id":"ybl81gf8e474","desc":"Comida","cat":"Comida","valor":2000,"pago":false,"meu":true},{"id":"efzkp7itx340","desc":"Barman","cat":"Bebida","valor":1200,"pago":false,"meu":true}]};
 function novoEstado(){
   const s = normalizar(JSON.parse(JSON.stringify(DADOS_PUBLICADOS)));
   if(s) return s;
@@ -481,9 +497,12 @@ function normalizar(s){
     if(m && m.acomp && !out.some(x=>x.de===m.id))
       out.push({id:p.id||uid(), nome:String(p.nome), isento:!!p.isento, pago:Math.max(0,+p.pago||0), obs:p.obs||'', de:m.id});
   });
-  const custos = (Array.isArray(s.custos)?s.custos:[]).filter(c=>c && c.desc).map(c => ({
-    id:c.id||uid(), desc:String(c.desc), cat:CATS.includes(c.cat)?c.cat:'Outros', valor:Math.max(0,+c.valor||0), pago:!!c.pago, meu:!!c.meu
-  }));
+  const custos = (Array.isArray(s.custos)?s.custos:[]).filter(c=>c && c.desc).map(c => {
+    const valor = Math.max(0,+c.valor||0);
+    const resp = ['divide','meu','presente'].includes(c.resp) ? c.resp : (c.meu ? 'meu' : 'divide');
+    const entrada = c.entrada!=null ? Math.min(Math.max(0,+c.entrada||0), valor) : (c.pago ? valor : 0);
+    return {id:c.id||uid(), desc:String(c.desc), cat:CATS.includes(c.cat)?c.cat:'Outros', valor, entrada:r2(entrada), resp, presenteDe:resp==='presente'?String(c.presenteDe||''):''};
+  });
   return {v:2, cfg, pessoas:out, custos};
 }
 function carregar(){
@@ -501,10 +520,15 @@ function pessoasNaEntrada(p){ return p.de ? 1 : 1 + (p.acomp && !parDe(p) ? 1 : 
 function calc(){
   const V = S.cfg.valor;
   const totalCustos = r2(S.custos.reduce((a,c)=>a+c.valor,0));
-  const custosPagos = r2(S.custos.filter(c=>c.pago).reduce((a,c)=>a+c.valor,0));
-  const custosMeus = r2(S.custos.filter(c=>c.meu).reduce((a,c)=>a+c.valor,0));      // arcados pelo aniversariante
-  const custosDivididos = r2(totalCustos - custosMeus);                                // entram na conta com os convidados
-  const pagosDivididos = r2(S.custos.filter(c=>c.pago && !c.meu).reduce((a,c)=>a+c.valor,0));
+  const soma = (f, campo) => r2(S.custos.filter(f).reduce((a,c)=>a+c[campo],0));
+  const custosMeus = soma(c=>c.resp==='meu','valor');                 // arcados pelo aniversariante
+  const custosPresente = soma(c=>c.resp==='presente','valor');        // dados de presente por terceiros
+  const custosDivididos = r2(totalCustos - custosMeus - custosPresente); // entram na conta com os convidados
+  const custosPagos = soma(()=>true,'entrada');                        // entradas já pagas aos fornecedores
+  const pendenteFornecedores = r2(totalCustos - custosPagos);           // a pagar no dia da festa
+  const pagosDivididos = soma(c=>c.resp==='divide','entrada');
+  const pend = f => r2(S.custos.filter(f).reduce((a,c)=>a+c.valor-c.entrada,0));
+  const pendDivide = pend(c=>c.resp==='divide'), pendMeu = pend(c=>c.resp==='meu'), pendPresente = pend(c=>c.resp==='presente');
   const linhas = S.pessoas.map(p => {
     const qtd = pessoasNaEntrada(p);
     const devido = p.isento ? 0 : r2(qtd*V);
@@ -524,7 +548,7 @@ function calc(){
   const aReceber = r2(linhas.reduce((a,l)=>a+l.falta,0));
   const faltaCobrir = r2(custosDivididos - recebido);       // custos divididos − já pago
   const saldoFinal = r2(custosDivididos - previsto);         // custos divididos − tudo o que será pago
-  return {V,totalCustos,custosPagos,custosMeus,custosDivididos,pagosDivididos,linhas,pessoas,pagantes,isentos,recebido,previsto,aReceber,faltaCobrir,saldoFinal};
+  return {V,totalCustos,custosPagos,custosMeus,custosPresente,custosDivididos,pagosDivididos,pendenteFornecedores,pendDivide,pendMeu,pendPresente,linhas,pessoas,pagantes,isentos,recebido,previsto,aReceber,faltaCobrir,saldoFinal};
 }
 
 /* ---------- render ---------- */
@@ -554,6 +578,7 @@ function contaHTML(C){
     ${extra>0.004?`<div class="ln"><span class="k"><b></b>Recebido além da cota ou de isentos</span><span class="x num">${fmt(extra)}</span></div>`:''}
     <div class="cap">Conta da festa</div>
     <div class="ln"><span class="k"><b></b>Total dos custos</span><span class="x num">${fmt(C.totalCustos)}</span></div>
+    <div class="ln"><span class="k"><b>−</b>Presentes <small style="font-weight:500">(pagos por terceiros)</small></span><span class="x num">${fmt(C.custosPresente)}</span></div>
     <div class="ln"><span class="k"><b>−</b>Por sua conta <small style="font-weight:500">(fora da divisão)</small></span><span class="x num">${fmt(C.custosMeus)}</span></div>
     <div class="ln tot"><span class="k"><b>=</b>Custos a cobrir dos convidados</span><span class="x num">${fmt(C.custosDivididos)}</span></div>
     <div class="ln"><span class="k"><b>−</b>Já pago pelos convidados</span><span class="x num">${fmt(C.recebido)}</span></div>
@@ -564,6 +589,17 @@ function contaHTML(C){
     <div class="ln"><span class="k"><b></b>Custos por sua conta</span><span class="x num">${fmt(C.custosMeus)}</span></div>
     <div class="ln"><span class="k"><b>${sf<-0.004?'−':'+'}</b>${sf<-0.004?'Sobra das contribuições':'Faltará cobrir'}</span><span class="x num">${fmt(Math.abs(sf))}</span></div>
     <div class="ln tot"><span class="k"><b>=</b>Total que sai do seu bolso</span><span class="x num">${fmt(Math.max(r2(C.custosMeus+sf),0))}</span></div>`;
+}
+
+function fornHTML(C){
+  const n = S.custos.filter(c=>c.valor-c.entrada>0.004).length;
+  return `<div class="cap">Pagamentos aos fornecedores</div>
+    <div class="ln"><span class="k"><b></b>Total dos custos</span><span class="x num">${fmt(C.totalCustos)}</span></div>
+    <div class="ln"><span class="k"><b>−</b>Entradas já pagas</span><span class="x num">${fmt(C.custosPagos)}</span></div>
+    <div class="ln tot"><span class="k"><b>=</b>Pendente para o dia da festa <small style="font-weight:500">(${n} ${n===1?'item':'itens'})</small></span><span class="x num ${C.pendenteFornecedores>0.004?'neg':''}">${fmt(C.pendenteFornecedores)}</span></div>
+    <div class="ln"><span class="k"><b></b>dos custos divididos</span><span class="x num">${fmt(C.pendDivide)}</span></div>
+    <div class="ln"><span class="k"><b></b>dos custos por sua conta</span><span class="x num">${fmt(C.pendMeu)}</span></div>
+    <div class="ln"><span class="k"><b></b>dos presentes</span><span class="x num">${fmt(C.pendPresente)}</span></div>`;
 }
 
 function prognosticoHTML(C){
@@ -665,6 +701,7 @@ function renderPessoas(C){
 
 function renderCustos(C){
   $('#contaCustos').innerHTML = contaHTML(C);
+  $('#fornCustos').innerHTML = fornHTML(C);
   if(!S.custos.length){
     $('#listaCustos').innerHTML = `<div class="empty"><b>Nenhum custo lançado</b>Inclua o espaço, a comida, as bebidas e o que mais tiver. O saldo acima é atualizado na hora.</div>`;
     return;
@@ -676,9 +713,12 @@ function renderCustos(C){
     const sub = arr.reduce((a,c)=>a+c.valor,0);
     html += `<div class="letter" style="display:flex;justify-content:space-between"><span>${esc(cat.toUpperCase())}</span><span class="num">${fmt(sub)}</span></div><div class="group">`;
     for(const c of arr){
+      const resta = r2(c.valor - c.entrada);
+      const st = resta<=0.004 ? '<span class="pill ok">Quitado</span>' : c.entrada>0 ? `<span class="pill warn">Entrada ${fmtCurto(c.entrada)}</span>` : '<span class="pill bad">A pagar</span>';
+      const rp = c.resp==='meu' ? ' <span class="pill mute">Por sua conta</span>' : c.resp==='presente' ? ` <span class="pill ok">Presente${c.presenteDe?' de '+esc(c.presenteDe):''}</span>` : '';
       html += `<div class="row"><button class="rowmain" data-custo="${c.id}">
-        <div class="who"><div class="n">${esc(c.desc)}</div><div class="s"><span class="pill ${c.pago?'ok':'warn'}">${c.pago?'Pago':'A pagar'}</span>${c.meu?' <span class="pill mute">Por sua conta</span>':''}</div></div>
-        <div class="amt"><div class="a num">${fmt(c.valor)}</div></div></button></div>`;
+        <div class="who"><div class="n">${esc(c.desc)}</div><div class="s">${st}${rp}</div></div>
+        <div class="amt"><div class="a num">${fmt(c.valor)}</div><div class="b">${resta>0.004?'resta '+fmtCurto(resta):'pago'}</div></div></button></div>`;
     }
     html += `</div>`;
   }
@@ -698,8 +738,8 @@ function renderResumo(C){
   const caixa = r2(C.recebido - C.pagosDivididos);
   $('#rCaixa').textContent = fmt(caixa);
   $('#rCaixa').className = 'v num ' + (caixa<0?'neg':'');
-  $('#rFor').textContent = fmt(C.totalCustos - C.custosPagos);
-  $('#rForH').textContent = `${S.custos.filter(c=>!c.pago).length} pendentes`;
+  $('#rFor').textContent = fmt(C.pendenteFornecedores);
+  $('#rForH').textContent = `pendente para o dia da festa`;
 
   const cats = CATS.map(c=>[c, S.custos.filter(x=>x.cat===c).reduce((a,x)=>a+x.valor,0)]).filter(x=>x[1]>0).sort((a,b)=>b[1]-a[1]);
   $('#cardCat').classList.toggle('hidden', !cats.length);
@@ -850,11 +890,28 @@ $('#listaPessoas').addEventListener('click', e => {
 /* ---------- diálogo custo ---------- */
 let editC = null;
 $('#cCat').innerHTML = CATS.map(c=>`<option>${esc(c)}</option>`).join('');
+let respSel = 'divide';
+const RESP_HINT = {divide:'Entra na conta com os convidados.', meu:'Sai do seu bolso e fica fora da divisão.', presente:'Pago por outra pessoa como presente: não sai do seu bolso nem entra na divisão.'};
+function atualizarResp(){
+  $$('#cResp button').forEach(b=>b.setAttribute('aria-pressed', b.dataset.v===respSel));
+  $('#cRespHint').textContent = RESP_HINT[respSel];
+  $('#cPresWrap').classList.toggle('hidden', respSel!=='presente');
+}
+function atualizarPend(){
+  const v = parseMoney($('#cValor').value), e = parseMoney($('#cEntrada').value);
+  $('#cPend').textContent = fmt(Math.max(r2(v-e),0));
+}
+$('#cResp').addEventListener('click', e=>{ const b=e.target.closest('button'); if(!b) return; respSel=b.dataset.v; atualizarResp(); });
+['#cValor','#cEntrada'].forEach(x=>$(x).addEventListener('input', atualizarPend));
+$('#cQuitar').addEventListener('click', ()=>{ $('#cEntrada').value = moneyInput(parseMoney($('#cValor').value)); atualizarPend(); });
+$('#cMetade').addEventListener('click', ()=>{ $('#cEntrada').value = moneyInput(r2(parseMoney($('#cValor').value)/2)); atualizarPend(); });
+$('#cZerar').addEventListener('click', ()=>{ $('#cEntrada').value = ''; atualizarPend(); });
 function abrirCusto(id){
   const c = id ? S.custos.find(x=>x.id===id) : null;
-  editC = c ? Object.assign({},c) : {id:uid(),desc:'',cat:'Local',valor:0,pago:false,meu:false};
+  editC = c ? Object.assign({},c) : {id:uid(),desc:'',cat:'Local',valor:0,entrada:0,resp:'divide',presenteDe:''};
   $('#dcTitulo').textContent = c ? 'Editar custo' : 'Novo custo';
-  $('#cDesc').value = editC.desc; $('#cCat').value = editC.cat; $('#cValor').value = moneyInput(editC.valor); $('#cPagoChk').checked = editC.pago; $('#cMeuChk').checked = !!editC.meu;
+  $('#cDesc').value = editC.desc; $('#cCat').value = editC.cat; $('#cValor').value = moneyInput(editC.valor); $('#cEntrada').value = moneyInput(editC.entrada); $('#cPresDe').value = editC.presenteDe||'';
+  respSel = editC.resp; atualizarResp(); atualizarPend();
   $('#cExcluir').classList.toggle('hidden', !c);
   $('#dlgCusto').showModal();
   if(!c) setTimeout(()=>$('#cDesc').focus(),50);
@@ -864,7 +921,9 @@ $('#formCusto').addEventListener('submit', e => {
   const desc = $('#cDesc').value.trim(), valor = parseMoney($('#cValor').value);
   if(!desc){ $('#cDesc').focus(); return; }
   if(!valor){ $('#cValor').focus(); toast('Informe o valor'); return; }
-  Object.assign(editC,{desc,cat:$('#cCat').value,valor,pago:$('#cPagoChk').checked,meu:$('#cMeuChk').checked});
+  let entrada = parseMoney($('#cEntrada').value);
+  if(entrada>valor){ entrada = valor; toast('Entrada ajustada ao valor total'); }
+  Object.assign(editC,{desc,cat:$('#cCat').value,valor,entrada,resp:respSel,presenteDe:respSel==='presente'?$('#cPresDe').value.trim():''});
   const i = S.custos.findIndex(x=>x.id===editC.id);
   if(i>=0) S.custos[i] = editC; else S.custos.push(editC);
   $('#dlgCusto').close(); salvar(); toast(i>=0 ? 'Custo atualizado' : 'Custo incluído');
