@@ -1,5 +1,6 @@
 # Bases públicas do HUB: Registro Aeronáutico Brasileiro (ANAC), para a Investigação patrimonial, e o acervo de
-# jurisprudência e legislação do projeto Advocacia Aberta, para a Pesquisa de jurisprudência.
+# jurisprudência e legislação do projeto Advocacia Aberta, para a Pesquisa de jurisprudência, e as tabelas oficiais da
+# Calculadora de Tributos da Reforma Tributária (Receita Federal), para a ferramenta de Reforma tributária.
 # Baixa os dados abertos, cifra com a chave do HUB e publica no ramo "bases-publicas". Roda diariamente e quando o
 # script muda.
 name: Bases públicas do HUB
@@ -12,6 +13,7 @@ on:
     branches: [main]
     paths:
       - '_ferramentas/bases/**'
+      - '_ferramentas/rtc/exportar.py'
       - '.github/workflows/bases-publicas.yml'
 
 permissions:
@@ -24,7 +26,7 @@ concurrency:
 jobs:
   gerar:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 40
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -45,6 +47,18 @@ jobs:
         env:
           HUB_SENHA: ${{ secrets.HUB_SENHA }}
         run: node _ferramentas/bases/juris.mjs /tmp/advocacia-aberta
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+      - name: Gerar as tabelas oficiais da Reforma Tributária (Receita Federal)
+        run: |
+          git clone -q --depth 1 https://github.com/ReceitaFederal/calculadora-rtc-regime-regular.git /tmp/rtc
+          cd /tmp/rtc
+          mkdir -p calculadora/db
+          ./mvnw -q flyway:migrate -Dflyway.configFiles=./flyway/flyway-pro.conf --batch-mode --errors
+          cd "$GITHUB_WORKSPACE"
+          python3 -I _ferramentas/rtc/exportar.py /tmp/rtc/calculadora/db/calculadora-pro.db base-publica/rtc.json.gz
       - name: Publicar no ramo bases-publicas
         env:
           GH_TOKEN: ${{ github.token }}

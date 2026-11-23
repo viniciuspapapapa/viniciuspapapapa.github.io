@@ -144,6 +144,16 @@ _hub/  (publicada cifrada em hub/)
     app.js                    Rede de empresas e sócios: índice cifrado da base de sócios da Receita (release
                               bases-socios, fluxo bases-socios.yml, lido pelo sherlock-tpc em /socios/parte), BrasilAPI,
                               grafo em SVG e relatório Word
+  rtc/
+    nucleo.js                 Reforma tributária: tabelas oficiais da Calculadora de Tributos da Receita (rtc.json.gz no
+                              ramo bases-publicas, gerado por _ferramentas/rtc/exportar.py no fluxo bases-publicas.yml),
+                              alíquotas da transição e chamada à calculadora oficial pelo sherlock-tpc (/rtc/...)
+    consulta.js               Classificação tributária por NCM/NBS e cálculo avulso com memória de cálculo
+    diagnostico.js            Diagnóstico de impacto de 2026 a 2033 (planilha ou XMLs), planilha e relatório Word
+    simples.js, simplesui.js  Simples Nacional dentro ou fora do DAS: Anexos XVIII a XXII da LC 214/2025 extraídos por
+                              _ferramentas/rtc/simples_lc214.py, alíquotas pCBSSN/pIBSSN e parecer Word
+    auditoria.js              Auditoria de NF-e, NFC-e e NFS-e pela calculadora oficial, validação do grupo IBS/CBS e
+                              DANFSe pelo gerador oficial em WebAssembly (vendor/danfse)
   vendor/                     Bibliotecas abertas hospedadas no HUB (publicadas sem cifra; versões em VERSOES.txt)
   certidoes/
     catalogo.js               Serviços oficiais de certidão criminal (27 TJs, TRF1 a TRF6, STM, TJMs, TSE, STF, STJ, PF, BNMP)
