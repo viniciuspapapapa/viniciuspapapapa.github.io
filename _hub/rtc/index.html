@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Reforma Tributária · HUB TPC</title>
+<meta name="description" content="CBS, IBS e Imposto Seletivo pela calculadora oficial da Receita Federal: consulta de classificações, diagnóstico de impacto 2026 a 2033, Simples Nacional dentro ou fora do DAS e auditoria de notas com DANFSe.">
+<meta name="theme-color" content="#f5f1e8">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Red+Hat+Display:wght@500;600&family=Red+Hat+Text:wght@400;500;600&family=Red+Hat+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/hub.css">
+<style>
+  .heroi { padding: 34px 0 6px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 14px; }
+  .chips span { font-size: 13px; padding: 2px 8px; border-radius: var(--radius-chip); background: var(--surface-3); color: var(--ink-2); }
+  .bloco { padding: 18px; margin-bottom: 14px; }
+  .bloco > h2 { font-size: 22px; margin-bottom: 4px; }
+  .painel[hidden] { display: none !important; }
+  .zona { display: grid; place-items: center; gap: 4px; text-align: center; border: 1.5px dashed var(--line-2); border-radius: var(--radius); padding: 22px 16px; cursor: pointer; background: var(--surface); }
+  .zona.sobre { border-color: var(--accent); background: var(--surface-2); }
+  .kpis { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 190px), 1fr)); gap: 10px; margin-top: 10px; }
+  .kpi { background: var(--surface-2); border-radius: var(--radius-key); padding: 10px 12px; }
+  .kpi small { display: block; color: var(--ink-3); font-size: 12.5px; }
+  .kpi b { font-size: 19px; font-family: var(--sans); }
+  .kpi.alerta { box-shadow: inset 3px 0 0 var(--accent); }
+  table.t { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+  table.t th { text-align: left; color: var(--ink-3); font-weight: 500; border-bottom: 1px solid var(--ink); padding: 5px 6px; position: sticky; top: 0; background: var(--surface); z-index: 1; }
+  table.t td { border-bottom: 1px solid var(--line); padding: 4px 6px; vertical-align: top; }
+  table.t td.n, table.t th.n { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  table.t tr.tot td { font-weight: 600; border-top: 1px solid var(--ink); }
+  table.t input, table.t select { min-height: 32px; padding: 4px 6px; font-size: 13.5px; }
+  .rolagem { max-height: 460px; overflow: auto; border: 1px solid var(--line); border-radius: var(--radius-key); margin-top: 8px; }
+  .lista { display: grid; gap: 2px; margin-top: 8px; max-height: 340px; overflow: auto; }
+  .lista button { text-align: left; border: 0; background: none; padding: 6px 8px; border-radius: 6px; cursor: pointer; font-size: 14px; color: var(--ink); display: flex; gap: 10px; }
+  .lista button:hover, .lista button.ativo { background: var(--surface-2); }
+  .lista code { font-family: var(--mono); font-size: 13px; color: var(--ink-2); min-width: 92px; }
+  .cc { border-top: 1px solid var(--line); padding: 10px 0; }
+  .cc-cab { display: flex; flex-wrap: wrap; gap: 6px 12px; align-items: baseline; }
+  .cc-cab code { font-family: var(--mono); font-weight: 600; }
+  .selo { font-size: 12.5px; border-radius: 99px; padding: 1px 9px; background: var(--surface-3); color: var(--ink-2); white-space: nowrap; }
+  .selo.red { background: var(--accent-soft); color: var(--ink); }
+  .selo.ok { background: #1BAF7A22; color: #0d7a52; }
+  .selo.erro { background: #D03B3B22; color: #a02424; }
+  .fund { font-size: 13.5px; color: var(--ink-2); white-space: pre-wrap; margin: 6px 0 0; max-height: 220px; overflow: auto; background: var(--surface-2); border-radius: 8px; padding: 8px 10px; }
+  .mem { font-size: 13px; color: var(--ink-2); margin: 4px 0 0; }
+  .aviso { border-left: 3px solid var(--accent); background: var(--surface-2); padding: 8px 12px; border-radius: 0 8px 8px 0; font-size: 14px; margin: 8px 0; }
+  .grafico { height: 300px; margin-top: 12px; }
+  .barra { height: 6px; background: var(--line); border-radius: 99px; overflow: hidden; margin-top: 10px; }
+  .barra i { display: block; height: 100%; width: 0; background: var(--ink-2); }
+  .parametros .grade { margin-top: 8px; }
+  details.cfg summary { cursor: pointer; }
+  .conclusao p { margin: 6px 0; line-height: 1.6; }
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body>
+<header class="topo">
+  <div class="topo-in">
+    <a class="marca" href="../" aria-label="HUB TPC, página inicial"><span class="marca-tpc">TPC</span><span class="marca-txt"><b>HUB</b> Criminal</span></a>
+    <nav class="migalha" aria-label="Você está em"><span>/</span><span>Reforma tributária</span></nav>
+    <div class="espaco"></div>
+    <button class="btn-icone" type="button" onclick="HUB.alternarTema()" aria-label="Alternar tema claro ou escuro" title="Tema"><span data-tema-icone>☾</span></button>
+  </div>
+</header>
+<div class="faixa"></div>
+
+<main class="wrap">
+  <section class="heroi">
+    <div class="sobretitulo">Ferramenta 27 · Tributário</div>
+    <h1>Reforma tributária: CBS, IBS e IS</h1>
+    <p class="lead">Cálculo pela calculadora oficial da Receita Federal, com a mesma lógica, memória de cálculo e fundamentação legal usadas pela administração tributária. Quatro serviços: consulta de classificações e cálculo avulso, diagnóstico de impacto de 2026 a 2033, Simples Nacional dentro ou fora do DAS e auditoria de notas fiscais com geração do DANFSe.</p>
+    <div class="chips"><span>LC 214/2025</span><span>LC 227/2026</span><span>EC 132/2023</span><span>Calculadora oficial da Receita Federal</span></div>
+  </section>
+
+  <section class="secao" style="padding-top:14px">
+    <div class="card bloco parametros">
+      <div class="linha-btns" style="justify-content:space-between;margin:0"><h2 style="margin:0">Base oficial e alíquotas</h2><span class="pequeno mudo" id="baseInfo">carregando as tabelas oficiais…</span></div>
+      <details class="cfg" style="margin-top:8px"><summary>Alíquotas usadas nas simulações de 2027 em diante (editáveis)</summary>
+        <p class="pequeno mudo" style="margin:8px 0 0">As alíquotas de referência da CBS e do IBS ainda serão fixadas por resolução do Senado Federal (LC 214/2025, arts. 353 a 365). Até lá, a calculadora oficial exige que elas sejam informadas e marca o resultado como cálculo simulado. Os valores abaixo são estimativas e podem ser ajustados; em 2026 valem as alíquotas de teste fixadas em lei (CBS de 0,9% e IBS de 0,1%).</p>
+        <div class="grade g4">
+          <label class="campo">CBS de referência (%)<input type="text" id="pCbs" inputmode="decimal" value="8,80"></label>
+          <label class="campo">IBS estadual de referência (%)<input type="text" id="pIbsUf" inputmode="decimal" value="14,16"></label>
+          <label class="campo">IBS municipal de referência (%)<input type="text" id="pIbsMun" inputmode="decimal" value="3,54"></label>
+          <label class="campo">Frações do IBS de 2029 a 2032 (%)<input type="text" id="pFracoes" value="10; 20; 30; 40"></label>
+        </div>
+        <p class="pequeno mudo" style="margin:8px 0 0">Transição aplicada: em 2027 e 2028, CBS de referência menos 0,1 ponto percentual (art. 347) e IBS de 0,05% estadual e 0,05% municipal (art. 344); de 2029 a 2032, IBS nas frações indicadas da referência e ICMS e ISS reduzidos em 10%, 20%, 30% e 40% (LC 87/1996, art. 31-A, e LC 116/2003, com a redação dos arts. 501 e 508); em 2033, IBS e CBS integrais e extinção do ICMS e do ISS. PIS e COFINS deixam de existir em 2027, e o IPI passa a ter alíquota zero, salvo produtos da Zona Franca de Manaus.</p>
+      </details>
+    </div>
+
+    <nav class="abas" role="tablist" aria-label="Serviços">
+      <button class="aba" role="tab" data-aba="consulta" aria-selected="true">Consulta e cálculo</button>
+      <button class="aba" role="tab" data-aba="diagnostico" aria-selected="false">Diagnóstico de impacto</button>
+      <button class="aba" role="tab" data-aba="simples" aria-selected="false">Simples Nacional</button>
+      <button class="aba" role="tab" data-aba="auditoria" aria-selected="false">Auditoria de notas e DANFSe</button>
+      <button class="aba" role="tab" data-aba="sobre" aria-selected="false">Fontes e limites</button>
+    </nav>
+
+    <!-- ===================== CONSULTA ===================== -->
+    <div class="painel" id="p-consulta" style="margin-top:14px">
+      <div class="card bloco">
+        <h2>Classificação tributária de um produto ou serviço</h2>
+        <p class="pequeno mudo" style="margin:0">Pesquise pelo código NCM (bens) ou NBS (serviços), ou pela descrição. A ferramenta mostra as classificações tributárias (cClassTrib) aplicáveis, com o CST, a redução de alíquota, o tratamento e a fundamentação legal da tabela oficial.</p>
+        <label class="campo" style="margin-top:10px">NCM, NBS ou descrição<input type="search" id="cBusca" autocomplete="off" placeholder="Ex.: 1006.30, 1.1301.10.00, arroz, educação, serviços jurídicos"></label>
+        <div class="lista" id="cLista"></div>
+        <div id="cDet"></div>
+      </div>
+      <div class="card bloco">
+        <h2>Cálculo de uma operação</h2>
+        <p class="pequeno mudo" style="margin:0">Informe os itens da operação. O cálculo é feito pela instância oficial da calculadora da Receita Federal, com a memória de cálculo e o enquadramento legal de cada item.</p>
+        <div class="grade g4" style="margin-top:10px">
+          <label class="campo">Data do fato gerador<input type="date" id="cData"></label>
+          <label class="campo">UF<select id="cUf"></select></label>
+          <label class="campo" style="grid-column:span 2">Município da operação<input type="text" id="cMun" list="listaMun" autocomplete="off" placeholder="Nome do município"></label>
+        </div>
+        <div class="rolagem" style="max-height:none"><table class="t" id="cItens"><thead><tr><th>#</th><th>NCM ou NBS</th><th>Classificação (cClassTrib)</th><th class="n">Base de cálculo (R$)</th><th class="n">Quantidade</th><th>Unidade</th><th></th></tr></thead><tbody></tbody></table></div>
+        <div class="linha-btns" style="margin-top:10px"><button type="button" class="btn sec" id="cMais">Adicionar item</button><button type="button" class="btn" id="cCalcular">Calcular pela calculadora oficial</button><button type="button" class="btn sec" id="cWord" hidden>Memória de cálculo (Word)</button></div>
+        <p class="pequeno" id="cEstado" style="margin:8px 0 0"></p>
+        <div id="cResultado"></div>
+      </div>
+    </div>
+
+    <!-- ===================== DIAGNÓSTICO ===================== -->
+    <div class="painel" id="p-diagnostico" style="margin-top:14px" hidden>
+      <div class="card bloco">
+        <h2>1. Cliente e regime atual</h2>
+        <div class="grade g4" style="margin-top:8px">
+          <label class="campo" style="grid-column:span 2">Cliente<input type="text" id="dCliente" autocomplete="off"></label>
+          <label class="campo">CNPJ<input type="text" id="dCnpj" inputmode="numeric" autocomplete="off"></label>
+          <label class="campo">Regime de PIS e COFINS hoje<select id="dRegime"><option value="real">Lucro Real (não cumulativo, 9,25%)</option><option value="presumido">Lucro Presumido (cumulativo, 3,65%)</option></select></label>
+          <label class="campo">UF<select id="dUf"></select></label>
+          <label class="campo">Município<input type="text" id="dMun" list="listaMun" autocomplete="off"></label>
+          <label class="campo">ICMS médio nas vendas (%)<input type="text" id="dIcms" inputmode="decimal" value="18,00"></label>
+          <label class="campo">ISS médio nos serviços (%)<input type="text" id="dIss" inputmode="decimal" value="5,00"></label>
+        </div>
+      </div>
+      <div class="card bloco">
+        <h2>2. Produtos e serviços</h2>
+        <p class="pequeno mudo" style="margin:0">Importe a planilha de faturamento (modelo abaixo) ou os XMLs das notas emitidas (NF-e, NFC-e e NFS-e, inclusive em ZIP). Nos XMLs, os itens são somados por NCM ou NBS e os tributos atuais são lidos das próprias notas. A classificação tributária sugerida pode ser alterada item a item.</p>
+        <div class="zona" id="dZona" style="margin-top:10px"><b>Arraste a planilha (XLSX ou CSV) ou os XMLs aqui</b><span class="pequeno mudo">ou clique para escolher</span><input type="file" id="dArq" multiple accept=".xlsx,.xls,.csv,.xml,.zip" hidden></div>
+        <div class="linha-btns" style="margin-top:10px"><button type="button" class="btn sec" id="dModelo">Baixar o modelo de planilha</button><button type="button" class="btn sec" id="dMais">Adicionar item manualmente</button><button type="button" class="btn sec" id="dLimpar">Limpar itens</button></div>
+        <div class="rolagem"><table class="t" id="dItens"><thead><tr><th>Descrição</th><th>NCM ou NBS</th><th>Classificação (cClassTrib)</th><th class="n">Receita anual (R$)</th><th class="n">ICMS %</th><th class="n">ISS %</th><th class="n">IPI %</th><th class="n" title="PIS e COFINS de hoje; em branco na planilha, vale a alíquota do regime">PIS/COFINS %</th><th></th></tr></thead><tbody></tbody></table></div>
+        <div class="grade g4" style="margin-top:12px">
+          <label class="campo">Compras anuais com direito a crédito (R$)<input type="text" id="dCompras" inputmode="decimal" value="0,00"></label>
+          <label class="campo">ICMS médio nas compras (%)<input type="text" id="dIcmsComp" inputmode="decimal" value="12,00"></label>
+          <label class="campo" style="grid-column:span 2">Processo ou referência interna<input type="text" id="dRef" autocomplete="off"></label>
+        </div>
+        <div class="linha-btns" style="margin-top:12px"><button type="button" class="btn" id="dCalcular">Calcular o impacto de 2026 a 2033</button></div>
+        <div class="barra" id="dBarra" hidden><i></i></div>
+        <p class="pequeno" id="dEstado" style="margin:8px 0 0"></p>
+      </div>
+      <div class="card bloco" id="dRes" hidden>
+        <div class="linha-btns" style="justify-content:space-between;margin:0"><h2 style="margin:0">Resultado</h2><span class="linha-btns" style="margin:0"><button type="button" class="btn sec" id="dXlsx">Planilha (XLSX)</button><button type="button" class="btn" id="dWord">Relatório ao cliente (Word)</button></span></div>
+        <div class="kpis" id="dKpis"></div>
+        <div class="grafico"><canvas id="dGraf"></canvas></div>
+        <h3 style="font-size:17px;margin:16px 0 4px">Carga tributária por ano</h3>
+        <div class="rolagem" style="max-height:none"><table class="t" id="dAnos"></table></div>
+        <h3 style="font-size:17px;margin:16px 0 4px">Itens em 2033 (regime definitivo)</h3>
+        <div class="rolagem"><table class="t" id="dItensRes"></table></div>
+        <div class="conclusao" id="dConclusao"></div>
+      </div>
+    </div>
+
+    <!-- ===================== SIMPLES ===================== -->
+    <div class="painel" id="p-simples" style="margin-top:14px" hidden>
+      <div class="card bloco">
+        <h2>Simples Nacional: IBS e CBS dentro ou fora do DAS</h2>
+        <p class="pequeno mudo" style="margin:0">A partir de 2027, a empresa do Simples pode recolher o IBS e a CBS pelo regime regular, fora do DAS (LC 123/2006, art. 18, §§ 9º e 10, com a redação da LC 227/2026). Dentro do DAS, o cliente que é contribuinte do regime regular só se credita do valor pago no Simples (LC 214/2025, art. 47, § 9º); fora dele, credita-se do valor integral destacado na nota. A simulação usa as tabelas oficiais de alíquotas e partilha dos Anexos XVIII a XXII da LC 214/2025.</p>
+        <div class="grade g4" style="margin-top:10px">
+          <label class="campo" style="grid-column:span 2">Empresa<input type="text" id="sEmpresa" autocomplete="off"></label>
+          <label class="campo">CNPJ<input type="text" id="sCnpj" inputmode="numeric" autocomplete="off"></label>
+          <label class="campo">Anexo<select id="sAnexo"><option value="I">I · Comércio</option><option value="II">II · Indústria</option><option value="III" selected>III · Serviços e locação de bens móveis</option><option value="IV">IV · Serviços do § 5º-C</option><option value="V">V · Serviços do § 5º-I</option></select></label>
+          <label class="campo">Receita bruta dos últimos 12 meses (R$)<input type="text" id="sRbt12" inputmode="decimal" value="1.200.000,00"></label>
+          <label class="campo">Faturamento mensal médio (R$)<input type="text" id="sMensal" inputmode="decimal" value="100.000,00"></label>
+          <label class="campo">Vendas a contribuintes do regime regular (%)<input type="text" id="sB2b" inputmode="decimal" value="70"></label>
+          <label class="campo">Redução de alíquota das vendas<select id="sRed"><option value="0">Sem redução</option><option value="30">30% (profissões regulamentadas)</option><option value="40">40%</option><option value="50">50%</option><option value="60">60% (saúde, educação e outros)</option><option value="70">70%</option><option value="80">80%</option><option value="100">100% (alíquota zero)</option></select></label>
+          <label class="campo">Compras mensais com crédito (R$)<input type="text" id="sCompras" inputmode="decimal" value="20.000,00"></label>
+          <label class="campo">Das compras, de fornecedores do regime regular (%)<input type="text" id="sCompReg" inputmode="decimal" value="80"></label>
+          <label class="campo" style="grid-column:span 2">Processo ou referência interna<input type="text" id="sRef" autocomplete="off"></label>
+        </div>
+        <div class="linha-btns" style="margin-top:12px"><button type="button" class="btn" id="sSimular">Simular de 2027 a 2033</button></div>
+        <p class="pequeno" id="sEstado" style="margin:8px 0 0"></p>
+      </div>
+      <div class="card bloco" id="sRes" hidden>
+        <div class="linha-btns" style="justify-content:space-between;margin:0"><h2 style="margin:0">Resultado</h2><span class="linha-btns" style="margin:0"><button type="button" class="btn sec" id="sXlsx">Planilha (XLSX)</button><button type="button" class="btn" id="sWord">Parecer ao cliente (Word)</button></span></div>
+        <div class="kpis" id="sKpis"></div>
+        <div class="grafico"><canvas id="sGraf"></canvas></div>
+        <h3 style="font-size:17px;margin:16px 0 4px">Comparação anual</h3>
+        <div class="rolagem" style="max-height:none"><table class="t" id="sAnos"></table></div>
+        <h3 style="font-size:17px;margin:16px 0 4px">Alíquotas do documento fiscal dentro do DAS (pCBSSN e pIBSSN)</h3>
+        <p class="pequeno mudo" style="margin:0">São as alíquotas efetivas que a calculadora oficial do Simples Nacional recebe para calcular o IBS e a CBS de cada nota emitida pela empresa.</p>
+        <div class="rolagem" style="max-height:none"><table class="t" id="sDoc"></table></div>
+        <div class="conclusao" id="sConclusao"></div>
+      </div>
+    </div>
+
+    <!-- ===================== AUDITORIA ===================== -->
+    <div class="painel" id="p-auditoria" style="margin-top:14px" hidden>
+      <div class="card bloco">
+        <h2>Auditoria de notas fiscais e DANFSe</h2>
+        <p class="pequeno mudo" style="margin:0">Envie os XMLs de NF-e, NFC-e ou NFS-e (soltos ou em ZIP). Para cada item com o grupo do IBS e da CBS, a ferramenta refaz o cálculo pela calculadora oficial com a classificação, a base e as alíquotas declaradas e aponta as divergências; nas NF-e e NFC-e, valida também o grupo contra o leiaute oficial. Das NFS-e, gera o DANFSe oficial em PDF, no próprio navegador, pelo gerador da Receita Federal.</p>
+        <div class="zona" id="aZona" style="margin-top:10px"><b>Arraste os XMLs ou o ZIP aqui</b><span class="pequeno mudo">ou clique para escolher</span><input type="file" id="aArq" multiple accept=".xml,.zip" hidden></div>
+        <div class="grade g4" style="margin-top:10px">
+          <label class="campo" style="grid-column:span 2">Cliente<input type="text" id="aCliente" autocomplete="off"></label>
+          <label class="campo">Referência interna<input type="text" id="aRef" autocomplete="off"></label>
+          <label class="campo">DANFSe<select id="aCanhoto"><option value="1">Com canhoto</option><option value="0">Sem canhoto</option></select></label>
+        </div>
+        <div class="barra" id="aBarra" hidden><i></i></div>
+        <p class="pequeno" id="aEstado" style="margin:8px 0 0"></p>
+      </div>
+      <div class="card bloco" id="aRes" hidden>
+        <div class="linha-btns" style="justify-content:space-between;margin:0"><h2 style="margin:0">Resultado</h2><span class="linha-btns" style="margin:0"><button type="button" class="btn sec" id="aDanfseTodos">DANFSe de todas as NFS-e (ZIP)</button><button type="button" class="btn sec" id="aXlsx">Planilha (XLSX)</button><button type="button" class="btn" id="aWord">Relatório de auditoria (Word)</button></span></div>
+        <div class="kpis" id="aKpis"></div>
+        <div class="rolagem"><table class="t" id="aNotas"></table></div>
+        <div id="aDet"></div>
+      </div>
+    </div>
+
+    <!-- ===================== SOBRE ===================== -->
+    <div class="painel" id="p-sobre" style="margin-top:14px" hidden>
+      <div class="card bloco">
+        <h2>Fontes e limites</h2>
+        <p>O cálculo do IBS, da CBS e do Imposto Seletivo é feito pela instância oficial da Calculadora de Tributos da Receita Federal (piloto-cbs.tributos.gov.br), que executa o código aberto publicado pela Receita em github.com/ReceitaFederal/calculadora-rtc-regime-regular (licença MIT). Como a instância oficial não aceita chamadas diretas do navegador, o HUB a consulta pelo serviço do escritório na Cloudflare, sem alterar a requisição nem a resposta.</p>
+        <p>As tabelas de consulta (CST, classificações tributárias, reduções, tratamentos, fundamentação legal, NCM, NBS e vínculos) são geradas diariamente a partir do mesmo repositório, pelo processo de migração do próprio projeto, e guardadas no ramo de bases públicas do HUB.</p>
+        <p>A calculadora oficial do Simples Nacional (github.com/ReceitaFederal/calculadora-rtc-simples-nacional) não tem versão online. Suas regras foram reproduzidas no navegador: alíquota efetiva pela receita bruta dos últimos doze meses, partilha do IBS e da CBS pelos Anexos XVIII a XXII da LC 214/2025, teto do ISS na 5ª faixa e arredondamento bancário no centavo, como no código da Receita. Cada linha das tabelas foi extraída do texto consolidado da lei e conferida (as parcelas de cada faixa somam 100%).</p>
+        <p>O DANFSe é gerado pelo gerador oficial da Receita (github.com/ReceitaFederal/calculadora-rtc-gerador-danfse, licença MIT), compilado para WebAssembly e executado no próprio navegador; o XML não sai do computador.</p>
+        <p class="pequeno mudo">Limites: as alíquotas de referência de 2027 em diante ainda não foram fixadas pelo Senado, e os resultados desses anos são simulações com as alíquotas informadas no alto da página. O diagnóstico estima os tributos atuais por alíquotas médias e não considera benefícios fiscais de ICMS, substituição tributária, regimes específicos (combustíveis, serviços financeiros, imóveis, cooperativas) nem o Imposto Seletivo; esses pontos devem ser tratados na análise do caso. A instância online da Receita é um ambiente de testes e pode ficar indisponível.</p>
+      </div>
+    </div>
+  </section>
+</main>
+<datalist id="listaMun"></datalist>
+
+<footer class="rodape">
+  <div class="wrap"><b>TPC ADVOGADOS</b> · HUB. Fontes: Receita Federal (Calculadora de Tributos da Reforma Tributária, gerador de DANFSe e tabelas oficiais), LC 214/2025 e LC 227/2026.</div>
+</footer>
+<script src="../vendor/jszip/jszip.min.js"></script>
+<script src="../assets/hub.js"></script>
+<script src="../assets/peca.js"></script>
+<script src="simples.js"></script>
+<script src="nucleo.js"></script>
+<script src="consulta.js"></script>
+<script src="diagnostico.js"></script>
+<script src="simplesui.js"></script>
+<script src="auditoria.js"></script>
+</body>
+</html>
