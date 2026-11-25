@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>HUB Criminal · TPC Advogados</title>
-<meta name="description" content="HUB de soluções para a advocacia criminal: cadeia de custódia, análise de RIF, degravação de audiências, reconhecimento de pessoas, prescrição penal e outras ferramentas de apoio à defesa.">
+<meta name="description" content="Central de trabalho da área criminal da TPC Advogados: análise de provas, investigação em fontes públicas, pesquisa jurídica, cálculos penais, peças, documentos e gestão da carteira de processos.">
 <meta name="theme-color" content="#f5f1e8">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -33,6 +33,20 @@
   .principios { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
   @media (max-width: 760px) { .principios { grid-template-columns: minmax(0, 1fr); } }
   .principios h3 { font-family: var(--sans); font-weight: 500; font-size: 18px; }
+  .selo a.linha { color: inherit; text-decoration: none; align-items: baseline; }
+  .selo a.linha:hover span { text-decoration: underline; }
+  .selo a.linha b { font-size: 20px; }
+  .busca-ferr { display: grid; gap: 10px; }
+  .busca-ferr input { font-size: 17px; min-height: 48px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chip { border: 1px solid var(--line-2); background: var(--surface); color: var(--ink-2); border-radius: 99px; padding: 4px 12px; cursor: pointer; font: 500 13.5px var(--sans); }
+  .chip[aria-pressed="true"] { background: var(--ink); color: var(--surface); border-color: var(--ink); }
+  .categoria { scroll-margin-top: 16px; }
+  .cat-cab h2 { margin: 0; }
+  .recentes { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+  .recentes a { border: 1px solid var(--line); background: var(--surface); border-radius: var(--radius-key); padding: 8px 12px; text-decoration: none; color: var(--ink); font-size: 14.5px; }
+  .recentes a:hover { border-color: var(--ink); }
+  .recentes a span { color: var(--ink-3); font-family: var(--serif); margin-right: 6px; }
 </style>
 </head>
 <body>
@@ -49,141 +63,46 @@
 <main class="wrap">
   <section class="heroi">
     <div>
-      <div class="sobretitulo">TPC Advogados · Advocacia criminal</div>
-      <h1>Ferramentas para a <em>defesa técnica</em> do dia a dia</h1>
-      <p class="lead">Um conjunto de soluções para análise de provas, investigações e processos criminais, construído sobre a legislação processual penal, a doutrina e a jurisprudência dos tribunais superiores. Os documentos são processados no próprio navegador, preservando o sigilo profissional.</p>
+      <div class="sobretitulo">TPC Advogados · Área criminal</div>
+      <h1>A central de trabalho da <em>área criminal</em></h1>
+      <p class="lead">27 ferramentas para analisar provas, investigar pessoas, empresas e bens, pesquisar jurisprudência e doutrina, calcular prazos e penas, produzir peças e documentos e gerir a carteira de processos e a equipe. Tudo construído sobre a legislação, a doutrina e a jurisprudência dos tribunais superiores, com os documentos processados no próprio navegador para preservar o sigilo profissional.</p>
       <div class="linha-btns" style="margin-top:20px">
-        <a class="btn" href="cadeia-de-custodia/">Verificar cadeia de custódia</a>
-        <a class="btn sec" href="#ferramentas">Ver todas as ferramentas</a>
+        <a class="btn" href="carteira/">Abrir a gestão da carteira</a>
+        <a class="btn sec" href="#ferramentas">Ver as ferramentas</a>
       </div>
     </div>
-    <div class="selo" aria-label="Base da ferramenta de cadeia de custódia">
-      <div class="sobretitulo">Base da primeira ferramenta</div>
-      <div class="linha"><span>Precedentes do STJ</span><b>61</b></div>
-      <div class="linha"><span>Critérios de verificação</span><b>39</b></div>
-      <div class="linha"><span>Tipos de vestígio</span><b>12</b></div>
-      <div class="linha"><span>Etapas do art. 158-B</span><b>10</b></div>
-      <div class="linha"><span>Dados enviados a servidores</span><b>0</b></div>
-    </div>
+    <nav class="selo" aria-label="Categorias de ferramentas">
+      <div class="sobretitulo">27 ferramentas em 8 áreas</div>
+      <a class="linha" href="#cat-gestao"><span>Gestão da área e do escritório</span><b>4</b></a>
+      <a class="linha" href="#cat-provas"><span>Provas e perícias</span><b>6</b></a>
+      <a class="linha" href="#cat-investigacao"><span>Investigação e fontes públicas</span><b>5</b></a>
+      <a class="linha" href="#cat-atuacao"><span>Atuação processual e peças</span><b>4</b></a>
+      <a class="linha" href="#cat-calculos"><span>Cálculos penais</span><b>2</b></a>
+      <a class="linha" href="#cat-pesquisa"><span>Pesquisa jurídica</span><b>2</b></a>
+      <a class="linha" href="#cat-tributario"><span>Tributário e patrimonial</span><b>2</b></a>
+      <a class="linha" href="#cat-documentos"><span>Documentos e utilidades</span><b>2</b></a>
+    </nav>
   </section>
 
-  <section class="secao" id="ferramentas">
-    <div class="sobretitulo">Ferramentas</div>
-    <h2>O que o HUB oferece</h2>
-    <div class="ferramentas" style="margin-top:18px">
-      <a class="card ferr ativa" href="cadeia-de-custodia/">
-        <span class="num">01</span>
-        <h3>Cadeia de custódia</h3>
-        <p>Leitura integral dos autos com OCR, identificação dos vestígios, matriz de conformidade por etapa do art. 158-B, confronto de lacres, IMEIs, hashes e pesos, metadados de imagens, precedentes do STJ, referências por página e ID do processo eletrônico, dossiê completo e minuta de tese.</p>
-        <div class="rodape-f"><span class="tag ok">Disponível</span><span class="seta">→</span></div>
-      </a>
-      <a class="card ferr ativa" href="rif/">
-        <span class="num">02</span>
-        <h3>Análise de RIF</h3>
-        <p>Análise defensiva dos CSV do COAF: reconciliação dos valores, dupla contagem, comunicações automáticas, recursos próprios, inconsistências e integridade dos arquivos, controle de legalidade (Temas 990 e 1.404) e confronto, transação por transação, com o relatório policial em PDF.</p>
-        <div class="rodape-f"><span class="tag ok">Disponível</span><span class="seta">→</span></div>
-      </a>
-      <div class="card ferr ativa">
-        <span class="num">03</span>
-        <h3>Degravação de audiências e mídias</h3>
-        <p>Programa para Windows, instalado no computador do usuário, que transcreve áudios e vídeos de audiências, interceptações e depoimentos com marcação de tempo e identificação de interlocutores, sem enviar as mídias a servidores.</p>
-        <div class="rodape-f"><a class="btn acc" href="https://github.com/viniciuspapapapa/viniciuspapapapa.github.io/releases/download/transcricao/Transcricao.exe" download>Baixar o programa (.exe)</a></div>
-        <p class="pequeno mudo" style="flex:0">Na primeira execução, o modelo de transcrição é baixado uma única vez (cerca de 1,5 GB). O Windows pode exibir um aviso de segurança por se tratar de programa sem assinatura digital.</p>
-      </div>
-      <a class="card ferr ativa" href="reconhecimento/">
-        <span class="num">04</span>
-        <h3>Reconhecimento de pessoas</h3>
-        <p>Verificação do reconhecimento pessoal e fotográfico (CPP, arts. 226 a 228; Resolução CNJ 484/2022): matriz de conformidade por ato, contaminação da memória e ratificação em juízo, fatores de risco à exatidão, validade segundo o HC 598.886/SC e relatório com as teses e os pedidos da fase processual.</p>
-        <div class="rodape-f"><span class="tag ok">Disponível</span><span class="seta">→</span></div>
-      </a>
-      <a class="card ferr ativa" href="prescricao/">
-        <span class="num">05</span>
-        <h3>Prescrição penal</h3>
-        <p>Cálculo da prescrição pela pena em abstrato, retroativa, superveniente e executória, com marcos interruptivos, suspensões (inclusive a limitação da Súmula 415 do STJ), redução do art. 115, linha do tempo e relatório com síntese e pedido.</p>
-        <div class="rodape-f"><span class="tag ok">Disponível</span><span class="seta">→</span></div>
-      </a>
-      <a class="card ferr ativa" href="estudo-de-caso/">
-        <span class="num">06</span>
-        <h3>Estudo de caso criminal</h3>
-        <p>Anexe a cópia integral do processo: leitura de todas as páginas com OCR e estudo gerado pela própria plataforma, sem custo, com mapa dos autos, cronologia, tipicidade, mapeamento probatório, nulidades, teses da mais forte à mais fraca e riscos, ancorado nas páginas dos autos e em Word no padrão do escritório.</p>
-        <div class="rodape-f"><span class="tag ok">Disponível</span><span class="seta">→</span></div>
-      </a>
-      <a class="card ferr ativa" href="proposta/">
-        <span class="num">07</span>
-        <h3>Proposta de honorários</h3>
-        <p>Proposta de atuação criminal em PDF no modelo do escritório: nome do cliente, escopo, serviços, valor dos honorários por extenso e forma de pagamento (à vista, parcelas ou entrada mais parcelas), com pré-visualização de cada página.</p>
-        <div class="rodape-f"><span class="tag ok">Disponível</span><span class="seta">→</span></div>
-      </a>
-      <a class="card ferr ativa" href="organizador/">
-        <span class="num">08</span>
-        <h3>Organizador de documentos</h3>
-        <p>Documentos anexados ou em pastas do Google Drive reunidos em PDF único com capas numeradas na identidade TPC, classificação e ementas por IA, agrupamento de frente e verso e correção de orientação, além da refação das capas de um PDF já montado.</p>
-        <div class="rodape-f"><span class="tag ok">Disponível</span><span class="seta">→</span></div>
-      </a>
-      <a class="card ferr ativa" href="procuracao/">
-        <span class="num">09</span>
-        <h3>Procurações e substabelecimentos</h3>
-        <p>Procuração no padrão institucional, em Word pronto para assinatura: defesa nos autos, cópia dos autos, representação criminal ou notícia-crime e queixa-crime (art. 44 do CPP), com concordância automática. Inclui o substabelecimento, com ou sem reservas, de todos os poderes ou de poderes específicos.</p>
-        <div class="rodape-f"><span class="tag ok">Disponível</span><span class="seta">→</span></div>
-      </a>
-      <a class="card ferr ativa" href="execucao/">
-        <span class="num">10</span>
-        <h3>Execução penal e dosimetria</h3>
-        <p>Dosimetria nas três fases, com regime inicial, substituição e sursis. Na execução, detração, remição, progressão pelas frações vigentes do art. 112 da LEP e livramento condicional, com a data de cada benefício e o requerimento de progressão ou de livramento no padrão do escritório.</p>
-        <div class="rodape-f"><span class="tag ok">Disponível</span><span class="seta">→</span></div>
-      </a>
-      <a class="card ferr ativa" href="relatorio/">
-        <span class="num">11</span>
-        <h3>Relatório processual ao cliente</h3>
-        <p>Consulta das movimentações de cada processo no DataJud, a base pública do CNJ, tradução dos andamentos para linguagem acessível e relatório periódico no padrão TPC, pronto para enviar. Aceita também o texto dos andamentos ou a cópia atualizada dos autos.</p>
-        <div class="rodape-f"><span class="tag ok">Disponível</span><span class="seta">→</span></div>
-      </a>
-      <a class="card ferr ativa" href="risco/">
-        <span class="num">12</span>
-        <h3>Risco penal empresarial</h3>
-        <p>Questionário estruturado sobre a empresa que gera parecer de risco nas áreas de lavagem de dinheiro, crimes tributários, anticorrupção e ambiental, com índice por área e recomendações de compliance priorizadas.</p>
-        <div class="rodape-f"><span class="tag ok">Disponível</span><span class="seta">→</span></div>
-      </a>
-      <a class="card ferr ativa" href="certidoes/">
-        <span class="num">13</span>
-        <h3>Central de certidões</h3>
-        <p>Painel com os serviços oficiais de certidão criminal de todos os tribunais estaduais, das seis regiões federais, da Justiça Militar, da Justiça Eleitoral, do STF, do STJ e da Polícia Federal, com os dados do cliente prontos para colar, leitura automática das certidões e relatório no padrão TPC.</p>
-        <div class="rodape-f"><span class="tag ok">Disponível</span><span class="seta">→</span></div>
-      </a>
-      <a class="card ferr ativa" href="custodia/">
-        <span class="num">14</span>
-        <h3>Audiência de custódia</h3>
-        <p>Leitura do auto de prisão em flagrante, diagnóstico das ilegalidades e dos requisitos da preventiva, e elaboração do requerimento escrito e do roteiro oral: relaxamento, liberdade provisória, cautelares diversas e prisão domiciliar.</p>
-        <div class="rodape-f"><span class="tag ok">Disponível</span><span class="seta">→</span></div>
-      </a>
-      <a class="card ferr ativa" href="patrimonio/">
-        <span class="num">15</span>
-        <h3>Diagnóstico patrimonial e sucessório</h3>
-        <p>Leitura das matrículas, declarações de IR e IPTU com OCR, panorama completo do planejamento (custo da sucessão, aluguéis na transição da reforma tributária, holding, cenários, riscos e roteiro), diagnóstico editável em Word e apresentação em PowerPoint no modelo do escritório.</p>
-        <div class="rodape-f"><span class="tag ok">Disponível</span><span class="seta">→</span></div>
-      </a>
-      <a class="card ferr ativa" href="pdf/">
-        <span class="num">16</span>
-        <h3>Ferramentas de PDF</h3>
-        <p>Trinta e três ferramentas no próprio navegador: juntar, dividir, organizar, comprimir, reparar, OCR, converter de e para Word, Excel, PowerPoint, JPG, HTML e PDF/A, editar, numerar, marca d'água, recortar, formulários, proteger, desbloquear, assinar, tarjar, comparar, resumir e traduzir com IA.</p>
-        <div class="rodape-f"><span class="tag ok">Disponível</span><span class="seta">→</span></div>
-      </a>
-      <a class="card ferr ativa" href="usuarios/">
-        <span class="num">17</span>
-        <h3>Busca de perfis por usuário</h3>
-        <p>Localiza, em mais de 400 sites e redes sociais, perfis públicos com um nome de usuário, pela metodologia do projeto aberto Sherlock, com variações do nome, data e hora de cada verificação e relatório em Word, Excel e CSV.</p>
-        <div class="rodape-f"><span class="tag ok">Disponível</span><span class="seta">→</span></div>
-      </a>
-      <a class="card ferr ativa" href="pesquisa/">
-        <span class="num">18</span>
-        <h3>Pesquisa em fontes públicas</h3>
-        <p>Pesquisa por CPF ou CNPJ, nome completo, telefone e placa em fontes públicas e oficiais: comunicações processuais do CNJ, diários oficiais, Portal da Transparência, cadastro de empresas e consultas oficiais, com registro de finalidade e relatório com data e hora.</p>
-        <div class="rodape-f"><span class="tag ok">Disponível</span><span class="seta">→</span></div>
-      </a>
-      <a class="card ferr ativa" href="doutrina/">
-        <span class="num">19</span>
-        <h3>Pesquisa doutrinária</h3>
-        <p>Busca por tema nos livros de doutrina da pasta do escritório no Drive, com OCR dos digitalizados, busca inteligente com Claude, página da obra, citação ABNT pronta, visualização do livro e exportação dos trechos em Word.</p>
+  <section class="secao" id="ferramentas" style="padding-bottom:0">
+    <div class="busca-ferr">
+      <input type="search" id="buscaFerr" placeholder="Procurar ferramenta: prescrição, CPF, PDF, jurisprudência, cadeia de custódia…" autocomplete="off" aria-label="Procurar ferramenta">
+      <div class="chips" id="chipsCat"><button type="button" class="chip" data-cat="" aria-pressed="true">Todas</button><button type="button" class="chip" data-cat="gestao" aria-pressed="false">Gestão da área e do escritório</button><button type="button" class="chip" data-cat="provas" aria-pressed="false">Provas e perícias</button><button type="button" class="chip" data-cat="investigacao" aria-pressed="false">Investigação e fontes públicas</button><button type="button" class="chip" data-cat="atuacao" aria-pressed="false">Atuação processual e peças</button><button type="button" class="chip" data-cat="calculos" aria-pressed="false">Cálculos penais</button><button type="button" class="chip" data-cat="pesquisa" aria-pressed="false">Pesquisa jurídica</button><button type="button" class="chip" data-cat="tributario" aria-pressed="false">Tributário e patrimonial</button><button type="button" class="chip" data-cat="documentos" aria-pressed="false">Documentos e utilidades</button></div>
+    </div>
+    <section id="recentes" hidden style="margin-top:22px">
+      <div class="sobretitulo">Usadas recentemente neste navegador</div>
+      <div class="recentes" id="listaRecentes"></div>
+    </section>
+    <p class="mudo" id="semResultado" hidden style="margin-top:18px">Nenhuma ferramenta corresponde à busca.</p>
+  </section>
+
+  <section class="secao categoria" id="cat-gestao" data-cat="gestao">
+    <div class="cat-cab"><div><div class="sobretitulo">4 ferramentas</div><h2>Gestão da área e do escritório</h2><p class="mudo" style="margin:4px 0 0">Carteira de processos, equipe, relatórios aos clientes e propostas.</p></div></div>
+    <div class="ferramentas" style="margin-top:16px">
+      <a class="card ferr ativa" href="carteira/">
+        <span class="num">28</span>
+        <h3>Gestão da carteira</h3>
+        <p>Painel interativo dos processos da área a partir da planilha do ADVWin: clientes e grupos, temas, importância, distribuição na equipe, processos físicos e sem numeração CNJ, agenda de verificação, discussões e providências de cada caso, com relatório gerencial.</p>
         <div class="rodape-f"><span class="tag ok">Disponível</span><span class="seta">→</span></div>
       </a>
       <a class="card ferr ativa" href="produtividade/">
@@ -192,10 +111,28 @@
         <p>Produtividade e rentabilidade da equipe a partir das planilhas de horas do ADVWin: visão da equipe e de cada advogado, clientes, natureza das atividades, peças, jornada, tarefas longas, qualidade das descrições, relatório completo em PDF e relatório crítico de gestão.</p>
         <div class="rodape-f"><span class="tag ok">Disponível</span><span class="seta">→</span></div>
       </a>
-      <a class="card ferr ativa" href="patrimonial/">
-        <span class="num">21</span>
-        <h3>Investigação patrimonial e de dívidas</h3>
-        <p>Bens, participações e dívidas em fontes públicas: aeronaves no registro da ANAC, empresas e quadro de sócios, dívida ativa da União e roteiro guiado de imóveis, veículos, protestos, certidões e execuções, com anotação dos resultados e relatório em Word.</p>
+      <a class="card ferr ativa" href="relatorio/">
+        <span class="num">11</span>
+        <h3>Relatório processual ao cliente</h3>
+        <p>Consulta das movimentações de cada processo no DataJud, a base pública do CNJ, tradução dos andamentos para linguagem acessível e relatório periódico no padrão TPC, pronto para enviar. Aceita também o texto dos andamentos ou a cópia atualizada dos autos.</p>
+        <div class="rodape-f"><span class="tag ok">Disponível</span><span class="seta">→</span></div>
+      </a>
+      <a class="card ferr ativa" href="proposta/">
+        <span class="num">07</span>
+        <h3>Proposta de honorários</h3>
+        <p>Proposta de atuação criminal em PDF no modelo do escritório: nome do cliente, escopo, serviços, valor dos honorários por extenso e forma de pagamento (à vista, parcelas ou entrada mais parcelas), com pré-visualização de cada página.</p>
+        <div class="rodape-f"><span class="tag ok">Disponível</span><span class="seta">→</span></div>
+      </a>
+    </div>
+  </section>
+
+  <section class="secao categoria" id="cat-provas" data-cat="provas">
+    <div class="cat-cab"><div><div class="sobretitulo">6 ferramentas</div><h2>Provas e perícias</h2><p class="mudo" style="margin:4px 0 0">Exame técnico da prova: cadeia de custódia, imagens, reconhecimento, dados bancários, financeiros e telefônicos.</p></div></div>
+    <div class="ferramentas" style="margin-top:16px">
+      <a class="card ferr ativa" href="cadeia-de-custodia/">
+        <span class="num">01</span>
+        <h3>Cadeia de custódia</h3>
+        <p>Leitura integral dos autos com OCR, identificação dos vestígios, matriz de conformidade por etapa do art. 158-B, confronto de lacres, IMEIs, hashes e pesos, metadados de imagens, precedentes do STJ, referências por página e ID do processo eletrônico, dossiê completo e minuta de tese.</p>
         <div class="rodape-f"><span class="tag ok">Disponível</span><span class="seta">→</span></div>
       </a>
       <a class="card ferr ativa" href="imagens/">
@@ -204,10 +141,10 @@
         <p>Fotos e capturas usadas como prova: hash para a cadeia de custódia, metadados de câmera, data e GPS, indícios de edição, análise de nível de erro, comparação entre imagens e pesquisa reversa guiada, com relatório em Word.</p>
         <div class="rodape-f"><span class="tag ok">Disponível</span><span class="seta">→</span></div>
       </a>
-      <a class="card ferr ativa" href="jurisprudencia/">
-        <span class="num">23</span>
-        <h3>Pesquisa de jurisprudência</h3>
-        <p>Súmulas, temas de repercussão geral e repetitivos, teses, informativos, acórdãos do STJ e legislação penal numa base oficial local, com busca ao vivo de acórdãos no STF, no STJ e nos tribunais de justiça, citação pronta e Word.</p>
+      <a class="card ferr ativa" href="reconhecimento/">
+        <span class="num">04</span>
+        <h3>Reconhecimento de pessoas</h3>
+        <p>Verificação do reconhecimento pessoal e fotográfico (CPP, arts. 226 a 228; Resolução CNJ 484/2022): matriz de conformidade por ato, contaminação da memória e ratificação em juízo, fatores de risco à exatidão, validade segundo o HC 598.886/SC e relatório com as teses e os pedidos da fase processual.</p>
         <div class="rodape-f"><span class="tag ok">Disponível</span><span class="seta">→</span></div>
       </a>
       <a class="card ferr ativa" href="sigilo/">
@@ -216,10 +153,40 @@
         <p>Arquivos do SIMBA e extratos: fluxo por conta e por mês, contrapartes, operações em espécie, fracionamento abaixo do limite de comunicação, passagem rápida e compatibilidade com a renda declarada, com Excel e Word.</p>
         <div class="rodape-f"><span class="tag ok">Disponível</span><span class="seta">→</span></div>
       </a>
+      <a class="card ferr ativa" href="rif/">
+        <span class="num">02</span>
+        <h3>Análise de RIF</h3>
+        <p>Análise defensiva dos CSV do COAF: reconciliação dos valores, dupla contagem, comunicações automáticas, recursos próprios, inconsistências e integridade dos arquivos, controle de legalidade (Temas 990 e 1.404) e confronto, transação por transação, com o relatório policial em PDF.</p>
+        <div class="rodape-f"><span class="tag ok">Disponível</span><span class="seta">→</span></div>
+      </a>
       <a class="card ferr ativa" href="erb/">
         <span class="num">25</span>
         <h3>Mapa de localização por ERB</h3>
         <p>Bilhetagem da operadora no mapa: antenas usadas, setores de azimute e trajeto no tempo, conferência na base de estações licenciadas da Anatel e distância ao local dos fatos, para confirmar ou afastar a presença do investigado.</p>
+        <div class="rodape-f"><span class="tag ok">Disponível</span><span class="seta">→</span></div>
+      </a>
+    </div>
+  </section>
+
+  <section class="secao categoria" id="cat-investigacao" data-cat="investigacao">
+    <div class="cat-cab"><div><div class="sobretitulo">5 ferramentas</div><h2>Investigação e fontes públicas</h2><p class="mudo" style="margin:4px 0 0">Pesquisa de pessoas, empresas, bens e certidões em fontes públicas e oficiais.</p></div></div>
+    <div class="ferramentas" style="margin-top:16px">
+      <a class="card ferr ativa" href="pesquisa/">
+        <span class="num">18</span>
+        <h3>Pesquisa em fontes públicas</h3>
+        <p>Pesquisa por CPF ou CNPJ, nome completo, telefone e placa em fontes públicas e oficiais: comunicações processuais do CNJ, diários oficiais, Portal da Transparência, cadastro de empresas e consultas oficiais, com registro de finalidade e relatório com data e hora.</p>
+        <div class="rodape-f"><span class="tag ok">Disponível</span><span class="seta">→</span></div>
+      </a>
+      <a class="card ferr ativa" href="usuarios/">
+        <span class="num">17</span>
+        <h3>Busca de perfis por usuário</h3>
+        <p>Localiza, em mais de 400 sites e redes sociais, perfis públicos com um nome de usuário, pela metodologia do projeto aberto Sherlock, com variações do nome, data e hora de cada verificação e relatório em Word, Excel e CSV.</p>
+        <div class="rodape-f"><span class="tag ok">Disponível</span><span class="seta">→</span></div>
+      </a>
+      <a class="card ferr ativa" href="patrimonial/">
+        <span class="num">21</span>
+        <h3>Investigação patrimonial e de dívidas</h3>
+        <p>Bens, participações e dívidas em fontes públicas: aeronaves no registro da ANAC, empresas e quadro de sócios, dívida ativa da União e roteiro guiado de imóveis, veículos, protestos, certidões e execuções, com anotação dos resultados e relatório em Word.</p>
         <div class="rodape-f"><span class="tag ok">Disponível</span><span class="seta">→</span></div>
       </a>
       <a class="card ferr ativa" href="rede/">
@@ -228,10 +195,112 @@
         <p>Todas as empresas de uma pessoa na base de sócios da Receita Federal e o grafo de ligações: sócios em comum, administradores e endereços compartilhados, para grupos econômicos, sucessão empresarial e interpostas pessoas.</p>
         <div class="rodape-f"><span class="tag ok">Disponível</span><span class="seta">→</span></div>
       </a>
+      <a class="card ferr ativa" href="certidoes/">
+        <span class="num">13</span>
+        <h3>Central de certidões</h3>
+        <p>Painel com os serviços oficiais de certidão criminal de todos os tribunais estaduais, das seis regiões federais, da Justiça Militar, da Justiça Eleitoral, do STF, do STJ e da Polícia Federal, com os dados do cliente prontos para colar, leitura automática das certidões e relatório no padrão TPC.</p>
+        <div class="rodape-f"><span class="tag ok">Disponível</span><span class="seta">→</span></div>
+      </a>
+    </div>
+  </section>
+
+  <section class="secao categoria" id="cat-atuacao" data-cat="atuacao">
+    <div class="cat-cab"><div><div class="sobretitulo">4 ferramentas</div><h2>Atuação processual e peças</h2><p class="mudo" style="margin:4px 0 0">Leitura dos autos, audiência de custódia, procurações e análise de risco penal.</p></div></div>
+    <div class="ferramentas" style="margin-top:16px">
+      <a class="card ferr ativa" href="estudo-de-caso/">
+        <span class="num">06</span>
+        <h3>Estudo de caso criminal</h3>
+        <p>Anexe a cópia integral do processo: leitura de todas as páginas com OCR e estudo gerado pela própria plataforma, sem custo, com mapa dos autos, cronologia, tipicidade, mapeamento probatório, nulidades, teses da mais forte à mais fraca e riscos, ancorado nas páginas dos autos e em Word no padrão do escritório.</p>
+        <div class="rodape-f"><span class="tag ok">Disponível</span><span class="seta">→</span></div>
+      </a>
+      <a class="card ferr ativa" href="custodia/">
+        <span class="num">14</span>
+        <h3>Audiência de custódia</h3>
+        <p>Leitura do auto de prisão em flagrante, diagnóstico das ilegalidades e dos requisitos da preventiva, e elaboração do requerimento escrito e do roteiro oral: relaxamento, liberdade provisória, cautelares diversas e prisão domiciliar.</p>
+        <div class="rodape-f"><span class="tag ok">Disponível</span><span class="seta">→</span></div>
+      </a>
+      <a class="card ferr ativa" href="procuracao/">
+        <span class="num">09</span>
+        <h3>Procurações e substabelecimentos</h3>
+        <p>Procuração no padrão institucional, em Word pronto para assinatura: defesa nos autos, cópia dos autos, representação criminal ou notícia-crime e queixa-crime (art. 44 do CPP), com concordância automática. Inclui o substabelecimento, com ou sem reservas, de todos os poderes ou de poderes específicos.</p>
+        <div class="rodape-f"><span class="tag ok">Disponível</span><span class="seta">→</span></div>
+      </a>
+      <a class="card ferr ativa" href="risco/">
+        <span class="num">12</span>
+        <h3>Risco penal empresarial</h3>
+        <p>Questionário estruturado sobre a empresa que gera parecer de risco nas áreas de lavagem de dinheiro, crimes tributários, anticorrupção e ambiental, com índice por área e recomendações de compliance priorizadas.</p>
+        <div class="rodape-f"><span class="tag ok">Disponível</span><span class="seta">→</span></div>
+      </a>
+    </div>
+  </section>
+
+  <section class="secao categoria" id="cat-calculos" data-cat="calculos">
+    <div class="cat-cab"><div><div class="sobretitulo">2 ferramentas</div><h2>Cálculos penais</h2><p class="mudo" style="margin:4px 0 0">Prescrição, dosimetria e execução da pena.</p></div></div>
+    <div class="ferramentas" style="margin-top:16px">
+      <a class="card ferr ativa" href="prescricao/">
+        <span class="num">05</span>
+        <h3>Prescrição penal</h3>
+        <p>Cálculo da prescrição pela pena em abstrato, retroativa, superveniente e executória, com marcos interruptivos, suspensões (inclusive a limitação da Súmula 415 do STJ), redução do art. 115, linha do tempo e relatório com síntese e pedido.</p>
+        <div class="rodape-f"><span class="tag ok">Disponível</span><span class="seta">→</span></div>
+      </a>
+      <a class="card ferr ativa" href="execucao/">
+        <span class="num">10</span>
+        <h3>Execução penal e dosimetria</h3>
+        <p>Dosimetria nas três fases, com regime inicial, substituição e sursis. Na execução, detração, remição, progressão pelas frações vigentes do art. 112 da LEP e livramento condicional, com a data de cada benefício e o requerimento de progressão ou de livramento no padrão do escritório.</p>
+        <div class="rodape-f"><span class="tag ok">Disponível</span><span class="seta">→</span></div>
+      </a>
+    </div>
+  </section>
+
+  <section class="secao categoria" id="cat-pesquisa" data-cat="pesquisa">
+    <div class="cat-cab"><div><div class="sobretitulo">2 ferramentas</div><h2>Pesquisa jurídica</h2><p class="mudo" style="margin:4px 0 0">Jurisprudência dos tribunais e doutrina da biblioteca do escritório.</p></div></div>
+    <div class="ferramentas" style="margin-top:16px">
+      <a class="card ferr ativa" href="jurisprudencia/">
+        <span class="num">23</span>
+        <h3>Pesquisa de jurisprudência</h3>
+        <p>Súmulas, temas de repercussão geral e repetitivos, teses, informativos, acórdãos do STJ e legislação penal numa base oficial local, com busca ao vivo de acórdãos no STF, no STJ e nos tribunais de justiça, citação pronta e Word.</p>
+        <div class="rodape-f"><span class="tag ok">Disponível</span><span class="seta">→</span></div>
+      </a>
+      <a class="card ferr ativa" href="doutrina/">
+        <span class="num">19</span>
+        <h3>Pesquisa doutrinária</h3>
+        <p>Busca por tema nos livros de doutrina da pasta do escritório no Drive, com OCR dos digitalizados, busca inteligente com Claude, página da obra, citação ABNT pronta, visualização do livro e exportação dos trechos em Word.</p>
+        <div class="rodape-f"><span class="tag ok">Disponível</span><span class="seta">→</span></div>
+      </a>
+    </div>
+  </section>
+
+  <section class="secao categoria" id="cat-tributario" data-cat="tributario">
+    <div class="cat-cab"><div><div class="sobretitulo">2 ferramentas</div><h2>Tributário e patrimonial</h2><p class="mudo" style="margin:4px 0 0">Reforma tributária do consumo e planejamento patrimonial e sucessório.</p></div></div>
+    <div class="ferramentas" style="margin-top:16px">
       <a class="card ferr ativa" href="rtc/">
         <span class="num">27</span>
         <h3>Reforma tributária: CBS, IBS e IS</h3>
         <p>Calculadora oficial da Receita Federal no HUB: classificação tributária por NCM e NBS com fundamentação legal, diagnóstico de impacto de 2026 a 2033, Simples Nacional dentro ou fora do DAS e auditoria de notas fiscais com DANFSe.</p>
+        <div class="rodape-f"><span class="tag ok">Disponível</span><span class="seta">→</span></div>
+      </a>
+      <a class="card ferr ativa" href="patrimonio/">
+        <span class="num">15</span>
+        <h3>Diagnóstico patrimonial e sucessório</h3>
+        <p>Leitura das matrículas, declarações de IR e IPTU com OCR, panorama completo do planejamento (custo da sucessão, aluguéis na transição da reforma tributária, holding, cenários, riscos e roteiro), diagnóstico editável em Word e apresentação em PowerPoint no modelo do escritório.</p>
+        <div class="rodape-f"><span class="tag ok">Disponível</span><span class="seta">→</span></div>
+      </a>
+    </div>
+  </section>
+
+  <section class="secao categoria" id="cat-documentos" data-cat="documentos">
+    <div class="cat-cab"><div><div class="sobretitulo">2 ferramentas</div><h2>Documentos e utilidades</h2><p class="mudo" style="margin:4px 0 0">PDF e organização de documentos.</p></div></div>
+    <div class="ferramentas" style="margin-top:16px">
+      <a class="card ferr ativa" href="pdf/">
+        <span class="num">16</span>
+        <h3>Ferramentas de PDF</h3>
+        <p>Trinta e três ferramentas no próprio navegador: juntar, dividir, organizar, comprimir, reparar, OCR, converter de e para Word, Excel, PowerPoint, JPG, HTML e PDF/A, editar, numerar, marca d'água, recortar, formulários, proteger, desbloquear, assinar, tarjar, comparar, resumir e traduzir com IA.</p>
+        <div class="rodape-f"><span class="tag ok">Disponível</span><span class="seta">→</span></div>
+      </a>
+      <a class="card ferr ativa" href="organizador/">
+        <span class="num">08</span>
+        <h3>Organizador de documentos</h3>
+        <p>Documentos anexados ou em pastas do Google Drive reunidos em PDF único com capas numeradas na identidade TPC, classificação e ementas por IA, agrupamento de frente e verso e correção de orientação, além da refação das capas de um PDF já montado.</p>
         <div class="rodape-f"><span class="tag ok">Disponível</span><span class="seta">→</span></div>
       </a>
     </div>
@@ -250,5 +319,28 @@
   <div class="wrap"><b>TPC ADVOGADOS</b> · HUB Criminal. Ferramentas de apoio à análise jurídica; não constituem parecer nem laudo pericial.</div>
 </footer>
 <script src="assets/hub.js"></script>
+<script>
+(function () {
+  "use strict";
+  var busca = document.getElementById("buscaFerr"), chips = document.getElementById("chipsCat"), cat = "";
+  var norm = function (t) { return String(t || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase(); };
+  function aplicar() {
+    var q = norm(busca.value).trim().split(/\s+/).filter(Boolean), algum = false;
+    document.querySelectorAll(".categoria").forEach(function (sec) {
+      var vis = 0;
+      sec.querySelectorAll(".ferr").forEach(function (a) { var t = norm(a.textContent), ok = q.every(function (p) { return t.indexOf(p) >= 0; }); a.hidden = !ok; if (ok) vis++; });
+      sec.hidden = (cat && sec.dataset.cat !== cat) || !vis; if (!sec.hidden) algum = true;
+    });
+    document.getElementById("semResultado").hidden = algum;
+  }
+  busca.addEventListener("input", aplicar);
+  chips.addEventListener("click", function (e) { var b = e.target.closest("[data-cat]"); if (!b) return; cat = b.dataset.cat; chips.querySelectorAll("[data-cat]").forEach(function (x) { x.setAttribute("aria-pressed", x === b ? "true" : "false"); }); aplicar(); });
+  /* ferramentas usadas recentemente neste navegador */
+  var rec = []; try { rec = JSON.parse(localStorage.getItem("hub_recentes") || "[]"); } catch (e) { rec = []; }
+  document.querySelectorAll("a.ferr").forEach(function (a) { a.addEventListener("click", function () { var h = a.getAttribute("href"); rec = [h].concat(rec.filter(function (x) { return x !== h; })).slice(0, 6); try { localStorage.setItem("hub_recentes", JSON.stringify(rec)); } catch (e) { /* ignora */ } }); });
+  var l = rec.map(function (h) { var a = document.querySelector('a.ferr[href="' + h + '"]'); if (!a) return ""; return '<a href="' + h + '"><span>' + a.querySelector(".num").textContent + "</span>" + a.querySelector("h3").textContent + "</a>"; }).filter(Boolean);
+  if (l.length) { document.getElementById("listaRecentes").innerHTML = l.join(""); document.getElementById("recentes").hidden = false; }
+})();
+</script>
 </body>
 </html>
