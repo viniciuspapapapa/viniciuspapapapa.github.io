@@ -68,7 +68,7 @@
   const COLS = [["cod", /codigo da pasta|^pasta$|^codigo$/], ["cliente", /^cliente$|^nome do cliente/], ["grupo", /grupo economico/], ["contraria", /parte contraria|^contrari/], ["tipo", /tipo de acao|^acao$/], ["numero", /numero (do )?processo|^processo$|^n[ºo°]? do processo/],
     ["comarca", /comarca|cidade/], ["tribunal", /^tribunal$|^orgao$/], ["vara", /vara|juizo/], ["sistema", /sistema/], ["assunto", /assunto|resumo/], ["tags", /tags/], ["natureza", /natureza|^area$/], ["advResp", /advogado responsavel|^responsavel$/], ["advLider", /advogado lider/],
     ["entrada", /data de entrada|^entrada$/], ["distribuicao", /distribuicao/], ["ultAtualizacao", /ultima atualizacao/], ["comentarios", /^comentarios/], ["decisao", /^decisao/], ["idAutojur", /id pasta/], ["subpasta", /subpasta/], ["status", /status/]];
-  const ROTULO = { cod: "Código da pasta", cliente: "Cliente", grupo: "Grupo econômico", contraria: "Parte contrária", tipo: "Tipo de ação", numero: "Número do processo", comarca: "Comarca", tribunal: "Tribunal", vara: "Vara ou juízo", sistema: "Sistema do tribunal", assunto: "Assunto/Resumo", tags: "Tags de controle", natureza: "Natureza", advResp: "Advogado responsável", advLider: "Advogado líder", entrada: "Data de entrada", distribuicao: "Data de distribuição", ultAtualizacao: "Última atualização", comentarios: "Comentários", decisao: "Decisão", idAutojur: "ID Autojur", subpasta: "Subpasta", status: "Status da pasta" };
+  const ROTULO = { cod: "Código da pasta", cliente: "Cliente", grupo: "Grupo econômico", contraria: "Parte contrária", tipo: "Tipo de ação", numero: "Número do processo", comarca: "Comarca", tribunal: "Tribunal", vara: "Vara ou juízo", sistema: "Sistema do tribunal", assunto: "Assunto/Resumo", tags: "Tags de controle", natureza: "Natureza", advResp: "Advogado responsável", advLider: "Advogado líder", entrada: "Data de entrada", distribuicao: "Data de distribuição", ultAtualizacao: "Última atualização", comentarios: "Comentários", decisao: "Decisão", idAutojur: "ID Autojur", subpasta: "Subpasta", status: "Status da pasta", cnj: "Numeração CNJ", livre: "Observação" };
   const ESSENCIAIS = ["cod", "cliente", "numero", "tipo", "advResp", "tags", "comarca"];
   const isoData = v => { if (v == null || v === "") return ""; if (v instanceof Date) return isNaN(v) ? "" : new Date(v.getTime() - v.getTimezoneOffset() * 60000).toISOString().slice(0, 10); const s = String(v).trim(); let m = /^(\d{4})-(\d{2})-(\d{2})/.exec(s); if (m) return m[0]; m = /^(\d{1,2})\/(\d{1,2})\/(\d{4})/.exec(s); if (m) return m[3] + "-" + m[2].padStart(2, "0") + "-" + m[1].padStart(2, "0"); if (/^\d{5}(\.\d+)?$/.test(s)) return new Date(Date.UTC(1899, 11, 30) + parseFloat(s) * 86400000).toISOString().slice(0, 10); return ""; };
   async function lerPlanilha(f) {
@@ -108,10 +108,10 @@
   const fmtCnj = d => d.replace(/^(\d{7})(\d{2})(\d{4})(\d)(\d{2})(\d{4})$/, "$1-$2.$3.$4.$5.$6");
   function caso(r) {
     const tags = String(r.tags || "").split(/[,;]+/).map(s => s.trim()).filter(Boolean), tagTxt = tags.join(",");
-    const num = String(r.numero || "").trim(), nd = dig(num), cnj = nd.length === 20, fisicoSist = /fisic/.test(sem(r.sistema));
+    const num = String(r.numero || "").trim(), nd = dig(num), cnjDecl = /^sim$/i.test(String(r.cnj || "").trim()), cnj = nd.length === 20 || cnjDecl, fisicoSist = /fisic/.test(sem(r.sistema));
     const temas = [...new Set(tags.filter(t => !Object.values(MARCAS).some(re => re.test(t))).map(temaDe))];
-    const c = { cod: r.cod, cliente: r.cliente || "(sem cliente)", grupo: /sem grupo/i.test(r.grupo || "") ? "" : (r.grupo || ""), contraria: String(r.contraria || "").replace(/\s*\n\s*/g, " · "), tipo: r.tipo || "Não informado", numero: num, nd, cnj, cnjOk: cnj && cnjValido(nd),
-      semNumero: !nd || /pre-?cadastro|pendente/i.test(num), manual: !cnj || fisicoSist, fisicoSist, comarca: r.comarca || "Não informada", tribunal: r.tribunal || "", vara: r.vara || "", sistema: r.sistema || "Não informado", assunto: r.assunto || "",
+    const c = { cod: r.cod, cliente: r.cliente || "(sem cliente)", grupo: /sem grupo/i.test(r.grupo || "") ? "" : (r.grupo || ""), contraria: String(r.contraria || "").replace(/\s*\n\s*/g, " · "), tipo: r.tipo || "Não informado", numero: num, nd, cnj, cnjOk: nd.length === 20 ? cnjValido(nd) : cnjDecl, cnjIncompleto: cnjDecl && nd.length !== 20,
+      semNumero: !nd || /pre-?cadastro|pendente/i.test(num), manual: !cnj || (fisicoSist && !cnjDecl), fisicoSist, comarca: r.comarca || "Não informada", tribunal: r.tribunal || "", vara: r.vara || "", sistema: r.sistema || "Não informado", assunto: r.assunto || "",
       tags, temas: temas.length ? temas : ["Sem tema"], importante: MARCAS.importante.test(tagTxt), estrategico: MARCAS.estrategico.test(tagTxt), segredo: MARCAS.segredo.test(tagTxt), reuPreso: MARCAS.reuPreso.test(tagTxt),
       natureza: r.natureza || "", fase: faseDe(r.tipo, r.natureza), advResp: r.advResp || "Sem responsável", advLider: r.advLider || "", entrada: r.entrada || "", distribuicao: r.distribuicao || "", ultAtualizacao: r.ultAtualizacao || "", comentarios: r.comentarios || "", decisao: r.decisao || "", idAutojur: r.idAutojur || "", subpasta: /sub/i.test(r.subpasta || ""), editado: false };
     c.contravencao = c.temas.includes("Contravenção penal");
@@ -207,7 +207,7 @@
   }
 
   /* ------------------------------------------------------------------ correções para o ADVWin */
-  const EDITAVEIS = ["cliente", "grupo", "contraria", "tipo", "numero", "comarca", "tribunal", "vara", "sistema", "assunto", "advResp", "natureza", "distribuicao", "tags"];
+  const EDITAVEIS = ["cliente", "grupo", "contraria", "tipo", "numero", "cnj", "comarca", "tribunal", "vara", "sistema", "assunto", "advResp", "natureza", "distribuicao", "tags"];
   const igual = (a, b) => sem(a) === sem(b);
   function registrarCorrecao(cod, novos) {
     const r = rawDe(cod); if (!r) return 0;
@@ -220,19 +220,29 @@
       if (igual(v, r[campo])) { delete ed[campo]; if (i >= 0) S.alt.splice(i, 1); n++; continue; }
       ed[campo] = v; n++;
       if (i >= 0) Object.assign(S.alt[i], { para: v, data: hoje(), autor: S.cfg.autor || S.alt[i].autor, status: "pendente", enviadaEm: "" });
-      else S.alt.push({ id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), cod, campo, de: r[campo] || "", para: v, data: hoje(), autor: S.cfg.autor || "", status: "pendente" });
+      else S.alt.push({ id: novoId(), cod, campo, de: campo === "cnj" ? "" : r[campo] || "", para: v, data: hoje(), autor: S.cfg.autor || "", status: "pendente" });
     }
     if (Object.keys(ed).length) S.edit[cod] = ed; else delete S.edit[cod];
     salvar(); montar(); return n;
   }
-  function desfazerCorrecao(id) { const a = S.alt.find(x => x.id === id); if (!a) return; const ed = S.edit[a.cod]; if (ed) { delete ed[a.campo]; if (!Object.keys(ed).length) delete S.edit[a.cod]; } S.alt = S.alt.filter(x => x !== a); salvar(); montar(); }
+  const novoId = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+  /* solicitação livre ao setor do ADVWin: outro campo ou observação, sem efeito automático no painel */
+  function registrarSolicitacao(cod, rotulo, texto) { S.alt.push({ id: novoId(), cod, campo: "livre", rotulo: rotulo || "Observação", de: "", para: texto, data: hoje(), autor: S.cfg.autor || "", status: "pendente" }); salvar(); }
+  /* textos legíveis de cada correção, para a tela e para os arquivos enviados ao setor */
+  function textoAlt(a) {
+    const r = rawDe(a.cod) || {};
+    if (a.campo === "cnj") return { campo: "Numeração CNJ", de: "Número sem padrão CNJ" + (r.numero ? " (" + r.numero + ")" : ""), para: a.para ? "Processo com numeração CNJ" + (dig(r.numero).length === 20 ? "" : "; incluir o número completo no padrão CNJ") : "Processo sem numeração CNJ" };
+    if (a.campo === "livre") return { campo: a.rotulo || "Observação", de: "", para: a.para };
+    return { campo: ROTULO[a.campo] || a.campo, de: a.de, para: a.para };
+  }
+  function desfazerCorrecao(id) { const a = S.alt.find(x => x.id === id); if (!a) return; if (a.campo !== "livre") { const ed = S.edit[a.cod]; if (ed) { delete ed[a.campo]; if (!Object.keys(ed).length) delete S.edit[a.cod]; } } S.alt = S.alt.filter(x => x !== a); salvar(); montar(); }
   /* nova planilha: correções que o ADVWin já incorporou são concluídas */
   function conciliar() {
     const porCod = new Map(S.base.raw.map(r => [r.cod, r])); let concl = 0;
     for (const a of S.alt) {
-      if (a.status === "aplicada") continue; const r = porCod.get(a.cod); if (!r) continue;
-      if (igual(r[a.campo], a.para)) { a.status = "aplicada"; a.aplicadaEm = hoje(); concl++; const ed = S.edit[a.cod]; if (ed) { delete ed[a.campo]; if (!Object.keys(ed).length) delete S.edit[a.cod]; } }
-      else if (!igual(r[a.campo], a.de)) { a.obs = "O ADVWin agora traz: " + (r[a.campo] || "(vazio)"); a.de = r[a.campo] || ""; }
+      if (a.status === "aplicada" || a.campo === "livre") continue; const r = porCod.get(a.cod); if (!r) continue;
+      if (a.campo === "cnj" ? (a.para && dig(r.numero).length === 20) : igual(r[a.campo], a.para)) { a.status = "aplicada"; a.aplicadaEm = hoje(); concl++; const ed = S.edit[a.cod]; if (ed) { delete ed[a.campo]; if (!Object.keys(ed).length) delete S.edit[a.cod]; } }
+      else if (a.campo !== "cnj" && !igual(r[a.campo], a.de)) { a.obs = "O ADVWin agora traz: " + (r[a.campo] || "(vazio)"); a.de = r[a.campo] || ""; }
     }
     return concl;
   }
@@ -397,6 +407,7 @@
     const m = [], v = conferencia(c);
     if (c.reuPreso) m.push('<span class="mk preso">réu preso</span>'); if (c.estrategico) m.push('<span class="mk est">estratégico</span>'); if (c.importante) m.push('<span class="mk imp">importante</span>');
     if (c.manual) m.push('<span class="mk man">' + (c.semNumero ? "sem número" : "manual") + "</span>");
+    if (c.cnjIncompleto) m.push('<span class="mk ok">CNJ informado</span>');
     if (v && v.aConferir) m.push('<span class="mk alerta">conferir andamento</span>');
     if (c.editado) m.push('<span class="mk ok">corrigido</span>');
     return m.join("");
@@ -428,10 +439,11 @@
   function inconsistencias() {
     const g = (id, tit, desc, f, sugestao) => ({ id, tit, desc, casos: CASOS.filter(f), sugestao });
     return [
-      g("dv", "Número CNJ com dígito verificador que não confere", "Provável erro de digitação no número.", c => c.cnj && !c.cnjOk),
+      g("dv", "Número CNJ com dígito verificador que não confere", "Provável erro de digitação no número.", c => c.nd.length === 20 && !c.cnjOk),
       g("semnum", "Pasta sem número de processo", "Em pré-cadastro, pendente ou em branco.", c => c.semNumero),
-      g("mascara", "Número CNJ sem pontuação", "Cadastrado só com os 20 dígitos; o formato padrão facilita a busca nos tribunais.", c => c.cnj && c.cnjOk && !/[-.]/.test(c.numero), c => ({ numero: fmtCnj(c.nd) })),
-      g("fisicocnj", "Marcado como físico, mas com numeração CNJ", "Confira se o processo não migrou para o meio eletrônico.", c => c.fisicoSist && c.cnj),
+      g("mascara", "Número CNJ sem pontuação", "Cadastrado só com os 20 dígitos; o formato padrão facilita a busca nos tribunais.", c => c.nd.length === 20 && c.cnjOk && !/[-.]/.test(c.numero), c => ({ numero: fmtCnj(c.nd) })),
+      g("cnjinc", "Numeração CNJ informada, mas o número está incompleto", "Marcado como CNJ no painel; falta cadastrar o número completo.", c => c.cnjIncompleto),
+      g("fisicocnj", "Marcado como físico, mas com numeração CNJ", "Confira se o processo não migrou para o meio eletrônico.", c => c.fisicoSist && c.nd.length === 20),
       g("semresp", "Sem advogado responsável", "", c => c.advResp === "Sem responsável"),
       g("semcomarca", "Sem comarca", "", c => c.comarca === "Não informada" && c.fase !== "Recursos"),
       g("semgrupo", "Contravenção sem grupo econômico", "O painel já as reúne no grupo predominante; a correção leva o grupo ao ADVWin.", c => c.contravencao && !c.grupo && GRUPO_CONTRAV, () => ({ grupo: GRUPO_CONTRAV }))
@@ -440,18 +452,22 @@
   const rotCampo = k => ROTULO[k] || k;
   function alteracoes() {
     const pend = S.alt.filter(a => a.status === "pendente"), env = S.alt.filter(a => a.status === "enviada"), concl = S.alt.filter(a => a.status === "aplicada");
-    const linha = (a, chk) => { const c = PORCOD.get(a.cod); return "<tr>" + (chk ? '<td><input type="checkbox" class="selAlt" value="' + a.id + '" aria-label="Selecionar"></td>' : "") + '<td><a href="#" data-cod="' + esc(a.cod) + '"><b>' + esc(c ? c.cliente : a.cod) + '</b></a><br><span class="sec2">Pasta ' + esc(a.cod) + "</span></td><td>" + esc(rotCampo(a.campo)) + "</td><td>" + esc(a.de || "(vazio)") + "</td><td><b>" + esc(a.para || "(vazio)") + "</b>" + (a.obs ? '<br><span class="sec2">' + esc(a.obs) + "</span>" : "") + '</td><td class="sec2">' + dBr(a.data) + (a.autor ? "<br>" + esc(a.autor) : "") + (a.enviadaEm ? "<br>enviada " + dBr(a.enviadaEm) : "") + (a.aplicadaEm ? "<br>concluída " + dBr(a.aplicadaEm) : "") + "</td>" + (a.status !== "aplicada" ? '<td><button type="button" class="mini" data-desfaz="' + a.id + '">Desfazer</button>' + (a.status === "enviada" ? ' <button type="button" class="mini" data-repend="' + a.id + '">Reabrir</button>' : "") + "</td>" : "") + "</tr>"; };
+    const linha = (a, chk) => { const c = PORCOD.get(a.cod), tx = textoAlt(a); return "<tr>" + (chk ? '<td><input type="checkbox" class="selAlt" value="' + a.id + '" aria-label="Selecionar"></td>' : "") + '<td><a href="#" data-cod="' + esc(a.cod) + '"><b>' + esc(c ? c.cliente : a.cod) + '</b></a><br><span class="sec2">Pasta ' + esc(a.cod) + "</span></td><td>" + esc(tx.campo) + "</td><td>" + esc(a.campo === "livre" ? "-" : tx.de || "(vazio)") + "</td><td><b>" + esc(tx.para || "(vazio)") + "</b>" + (a.obs ? '<br><span class="sec2">' + esc(a.obs) + "</span>" : "") + '</td><td class="sec2">' + dBr(a.data) + (a.autor ? "<br>" + esc(a.autor) : "") + (a.enviadaEm ? "<br>enviada " + dBr(a.enviadaEm) : "") + (a.aplicadaEm ? "<br>concluída " + dBr(a.aplicadaEm) : "") + "</td>" + (a.status !== "aplicada" ? '<td><button type="button" class="mini" data-desfaz="' + a.id + '">Desfazer</button>' + (a.status === "enviada" ? ' <button type="button" class="mini" data-repend="' + a.id + '">Reabrir</button> <button type="button" class="mini" data-concluir="' + a.id + '" title="O setor já fez a alteração no ADVWin">Concluída</button>' : "") + "</td>" : "") + "</tr>"; };
     const tab = (l, chk, vazio) => l.length ? '<div class="rolagem"><table class="t"><thead><tr>' + (chk ? '<th><input type="checkbox" id="selTodas" aria-label="Selecionar todas"></th>' : "") + "<th>Pasta</th><th>Campo</th><th>Como está no ADVWin</th><th>Como deve ficar</th><th>Registro</th>" + (l[0].status !== "aplicada" ? "<th></th>" : "") + "</tr></thead><tbody>" + l.map(a => linha(a, chk)).join("") + "</tbody></table></div>" : '<p class="vazio-p">' + vazio + "</p>";
-    $("#altPend").innerHTML = tab(pend, true, "Nenhuma correção a enviar. Para corrigir uma pasta, abra-a e use a aba Corrigir dados.");
+    $("#altPend").innerHTML = formSolicitacao() + tab(pend, true, "Nenhuma correção a enviar. Para corrigir uma pasta, abra-a e use a aba Corrigir dados, ou inclua uma solicitação acima.");
     $("#altEnv").innerHTML = tab(env, false, "Nenhuma correção aguardando o ADVWin.");
     $("#altConcl").innerHTML = tab(concl, false, "Nenhuma correção concluída ainda."); $("#contConcl").textContent = concl.length ? "(" + concl.length + ")" : "";
     ["#altXlsx", "#altWord", "#altEnviar"].forEach(s => $(s).disabled = !pend.length);
     const inc = inconsistencias();
     $("#inconsist").innerHTML = inc.length ? inc.map(g => '<details style="border-top:1px solid var(--line);padding:10px 0"><summary style="cursor:pointer"><b>' + esc(g.tit) + '</b> <span class="sec2">' + g.casos.length + (g.desc ? " · " + esc(g.desc) : "") + "</span></summary>" + (g.sugestao ? '<div class="linha-btns" style="margin:8px 0"><button type="button" class="mini" data-sug-todas="' + g.id + '">Corrigir as ' + g.casos.length + " de uma vez</button></div>" : "") + '<table class="t"><tbody>' + g.casos.slice(0, 200).map(c => '<tr class="clic" data-cod="' + esc(c.cod) + '" data-aba-ficha="corrigir"><td><b>' + esc(c.cliente) + '</b><br><span class="sec2">Pasta ' + esc(c.cod) + "</span></td><td>" + esc(titulo(c.tipo)) + '<br><span class="num">' + esc(c.numero || "sem número") + "</span></td><td>" + (g.sugestao ? '<span class="sec2">sugestão: ' + esc(Object.values(g.sugestao(c))[0]) + "</span>" : "") + "</td></tr>").join("") + "</tbody></table></details>").join("") : '<p class="vazio-p">Nenhum erro aparente na base.</p>';
   }
+  const CAMPOS_SOLIC = ["Incluir a numeração CNJ", "Número do processo", "Assunto/Resumo", "Tipo de ação", "Parte contrária", "Comarca", "Vara ou juízo", "Tribunal", "Sistema do tribunal", "Data de distribuição", "Advogado responsável", "Tags de controle", "Cliente", "Grupo econômico", "Encerramento ou arquivamento da pasta", "Outro campo", "Observação"];
+  function formSolicitacao() {
+    return '<details style="margin-bottom:12px"><summary style="cursor:pointer" class="pequeno"><b>Incluir outra solicitação</b> <span class="mudo">(outro campo, inclusão de dado ou comentário ao setor)</span></summary><div class="grade g3" style="margin-top:10px"><label class="campo">Pasta<input type="text" id="nsPasta" list="lsPastas" placeholder="código ou cliente"></label><label class="campo">Assunto da solicitação<select id="nsCampo">' + CAMPOS_SOLIC.map(x => "<option>" + esc(x) + "</option>").join("") + '</select></label><span></span><label class="campo" style="grid-column:1/-1">O que deve ser feito<textarea id="nsTexto" placeholder="Ex.: incluir o número CNJ 1234567-89.2024.8.13.0024; corrigir o assunto para estelionato (art. 171 do CP)"></textarea></label><button type="button" class="btn" id="nsIncluir" style="justify-self:start">Incluir na lista</button></div><datalist id="lsPastas">' + CASOS.map(c => '<option value="' + esc(c.cod + " · " + c.cliente) + '">').join("") + "</datalist></details>";
+  }
   const selecionadas = () => { const ids = $$(".selAlt:checked").map(x => x.value); const pend = S.alt.filter(a => a.status === "pendente"); return ids.length ? pend.filter(a => ids.includes(a.id)) : pend; };
   $("#altEnviar").onclick = () => { const l = selecionadas(); if (!l.length) return; l.forEach(a => { a.status = "enviada"; a.enviadaEm = hoje(); }); salvar(); render(); window.HUB.toast(l.length + " correções marcadas como enviadas."); };
-  const linhasExport = l => l.map(a => { const c = PORCOD.get(a.cod), r = rawDe(a.cod) || {}; return { pasta: a.cod, cliente: c ? c.cliente : r.cliente || "", numero: r.numero || "", campo: rotCampo(a.campo), de: a.de || "", para: a.para || "", autor: a.autor || "", data: dBr(a.data) }; });
+  const linhasExport = l => l.map(a => { const c = PORCOD.get(a.cod), r = rawDe(a.cod) || {}, tx = textoAlt(a); return { pasta: a.cod, cliente: c ? c.cliente : r.cliente || "", numero: r.numero || "", campo: tx.campo, de: a.campo === "livre" ? "-" : tx.de || "", para: tx.para || "", autor: a.autor || "", data: dBr(a.data) }; });
   $("#altXlsx").onclick = async () => {
     const l = linhasExport(selecionadas()); if (!l.length) return; await xlsx();
     const ws = XLSX.utils.aoa_to_sheet([["Código da pasta", "Cliente", "Número do processo (ADVWin)", "Campo a alterar", "Como está no ADVWin", "Como deve ficar", "Solicitado por", "Data"], ...l.map(x => [x.pasta, x.cliente, x.numero, x.campo, x.de, x.para, x.autor, x.data])]);
@@ -464,6 +480,7 @@
     const b = [{ t: "tit", texto: "SOLICITAÇÃO DE ATUALIZAÇÃO CADASTRAL NO ADVWIN" }];
     b.push({ t: "p", r: "Solicitamos a atualização dos dados abaixo no ADVWin, conferidos pela área criminal. São " + l.length + (l.length === 1 ? " alteração" : " alterações") + " em " + pastas.length + (pastas.length === 1 ? " pasta" : " pastas") + ". Para cada uma, indicamos como o dado está hoje no sistema e como deve ficar." });
     b.push({ t: "tab", cab: ["Pasta", "Cliente e processo", "Campo", "Como está", "Como deve ficar"], larg: [1, 1.9, 1.2, 1.6, 1.6], linhas: l.map(x => [x.pasta, x.cliente + (x.numero ? " · " + x.numero : ""), x.campo, x.de || "(vazio)", x.para || "(vazio)"]) });
+    b.push({ t: "p", r: [["Nas observações e inclusões, a coluna \"Como deve ficar\" descreve o que deve ser feito.", "i"]] });
     b.push({ t: "p", r: [["Solicitado por: ", "bo"], [(S.cfg.autor || [...new Set(l.map(x => x.autor).filter(Boolean))].join(", ") || "área criminal"), "n"]] });
     b.push({ t: "data", texto: "Belo Horizonte, " + P.dataExtenso(new Date()) + "." });
     try { P.baixar(await P.docx(b), "Correcoes para o ADVWin - " + hoje()); } catch (e) { window.HUB.toast(e.message || "Não foi possível gerar o Word.", 5000); }
@@ -480,10 +497,10 @@
     let h = '<div class="cab"><div><div class="sobretitulo">Pasta ' + esc(c.cod) + (c.subpasta ? " · subpasta" : "") + "</div><h2>" + esc(c.cliente) + '</h2><p class="sec2" style="margin:4px 0 0">' + esc(titulo(c.tipo)) + " · " + esc(curto(c.advResp)) + '</p><div style="margin-top:8px">' + cxHtml(c) + " " + situacao(c) + '</div></div><button type="button" class="btn-icone" id="fechar" aria-label="Fechar">×</button></div>';
     h += '<div class="abas-f" role="tablist">' + [["resumo", "Resumo"], ["afazer", "Tarefas" + (provPend(c).length ? " (" + provPend(c).length + ")" : "")], ["historico", "Histórico"], ["corrigir", "Corrigir dados"]].map(([k, rt]) => '<button type="button" role="tab" data-af="' + k + '" aria-selected="' + (abaF === k) + '">' + rt + "</button>").join("") + "</div>";
     if (abaF === "resumo") {
-      h += '<h3>Processo</h3><dl>' + linha("Número", "numero", c.numero ? '<span class="num">' + esc(c.numero) + "</span>" + (c.cnj ? (c.cnjOk ? ' <span class="mk ok">CNJ</span>' : ' <span class="mk alerta">CNJ com dígito inválido</span>') : ' <span class="mk man">sem numeração CNJ</span>') : '<span class="mk man">sem número</span>') + linha("Parte contrária", "contraria", esc(c.contraria)) + linha("Grupo econômico", "grupo", esc(c.grupo || (c.grupoInferido ? c.grupoInferido + " (atribuído pelo painel)" : ""))) + linha("Comarca", "comarca", esc(c.comarca)) + linha("Tribunal", "tribunal", esc(c.tribunal)) + linha("Vara ou juízo", "vara", esc(c.vara)) + linha("Sistema", "sistema", esc(c.sistema)) + linha("Assunto", "assunto", esc(c.assunto)) + linha("Fase", "", esc(c.fase)) + linha("Entrada", "", dBr(c.entrada)) + linha("Última atualização no ADVWin", "", dBr(c.ultAtualizacao)) + linha("Decisão", "", esc(c.decisao)) + linha("Tags do ADVWin", "tags", esc(c.tags.join(", "))) + "</dl>";
+      h += '<h3>Processo</h3><dl>' + linha("Número", "numero", (c.numero ? '<span class="num">' + esc(c.numero) + "</span>" : '<span class="mk man">sem número</span>') + (c.cnjIncompleto ? ' <span class="mk ok">CNJ informado</span> <span class="sec2">falta o número completo</span> <button type="button" class="mini" data-cnj="nao">Não é CNJ</button>' : c.cnj ? (c.cnjOk ? ' <span class="mk ok">CNJ</span>' : ' <span class="mk alerta">CNJ com dígito inválido</span>') : (c.numero ? ' <span class="mk man">sem numeração CNJ</span>' : "") + ' <button type="button" class="mini" data-cnj="sim" title="Informe que o processo tem numeração CNJ; o painel se atualiza e a informação vai para a lista do ADVWin">É numeração CNJ</button>')) + linha("Parte contrária", "contraria", esc(c.contraria)) + linha("Grupo econômico", "grupo", esc(c.grupo || (c.grupoInferido ? c.grupoInferido + " (atribuído pelo painel)" : ""))) + linha("Comarca", "comarca", esc(c.comarca)) + linha("Tribunal", "tribunal", esc(c.tribunal)) + linha("Vara ou juízo", "vara", esc(c.vara)) + linha("Sistema", "sistema", esc(c.sistema)) + linha("Assunto", "assunto", esc(c.assunto)) + linha("Fase", "", esc(c.fase)) + linha("Entrada", "", dBr(c.entrada)) + linha("Última atualização no ADVWin", "", dBr(c.ultAtualizacao)) + linha("Decisão", "", esc(c.decisao)) + linha("Tags do ADVWin", "tags", esc(c.tags.join(", "))) + "</dl>";
       h += "<h3>Complexidade " + NIVEL_ROT[cx.nivel].toLowerCase() + '</h3><p class="motivos">' + (cx.manual ? "Definida manualmente. " : "") + (cx.motivos.length ? "Pesam: " + esc(cx.motivos.join("; ")) + "." : "Sem fatores de complexidade.") + (cx.atenuantes.length ? " Reduzem: " + esc(cx.atenuantes.join("; ")) + "." : "") + '</p><label class="campo" style="max-width:320px;margin-top:8px">Ajustar a complexidade<select id="fxCx"><option value="">Calculada pelo painel (' + NIVEL_ROT[complexidade(c, true).nivel].toLowerCase() + ')</option><option value="alta">Alta</option><option value="media">Média</option><option value="baixa">Baixa</option></select></label>';
       if (c.comentarios) h += '<h3>Comentário no ADVWin</h3><p class="motivos">' + esc(c.comentarios) + "</p>";
-      if (c.cnj) h += '<p style="margin-top:16px"><a class="btn sec peq" href="../relatorio/" target="_blank" rel="noopener">Consultar andamentos no DataJud</a> <button type="button" class="mini" id="copiar">Copiar número</button></p>';
+      if (c.nd.length === 20) h += '<p style="margin-top:16px"><a class="btn sec peq" href="../relatorio/" target="_blank" rel="noopener">Consultar andamentos no DataJud</a> <button type="button" class="mini" id="copiar">Copiar número</button></p>';
     } else if (abaF === "afazer") {
       const pend = a.providencias.filter(p => !p.feita), feitas = a.providencias.filter(p => p.feita);
       h += "<h3>Tarefas</h3>" + (pend.length ? pend.map(p => '<div class="prov"><input type="checkbox" data-pfeita="' + p.id + '" aria-label="Marcar como feita"><div class="txt" style="flex:1"><b>' + esc(p.texto) + '</b><div class="meta">' + (p.responsavel ? esc(curto(p.responsavel)) + " · " : "") + (p.prazo ? (provVencida(p) ? '<span style="color:#a02424">prazo ' + dBr(p.prazo) + "</span>" : "prazo " + dBr(p.prazo)) : "sem prazo") + (p.avisos && p.avisos.length ? " · e-mail enviado em " + dBr(p.avisos[p.avisos.length - 1].data) : "") + '</div></div><button type="button" class="mini" data-pmail="' + p.id + '">' + (p.avisos && p.avisos.length ? "Reenviar e-mail" : "Enviar por e-mail") + "</button></div>").join("") : '<p class="vazio-p">Nenhuma tarefa pendente nesta pasta.</p>');
@@ -498,9 +515,12 @@
       const r = Object.assign({}, r0, ed), marca = k => MARCAS[k].test(r.tags || "");
       const sistemas = [...new Set(S.base.raw.map(x => x.sistema).filter(Boolean))].sort(), advs = [...new Set(S.base.raw.map(x => x.advResp).filter(Boolean))].sort();
       const campo = (k, rot, extra) => '<label class="campo"' + (extra || "") + ">" + rot + '<input type="text" data-ed="' + k + '" value="' + esc(r[k] || "") + '"' + (k === "sistema" ? ' list="lsSist"' : "") + "></label>";
-      h += '<p class="motivos" style="margin-top:14px">Corrija o que estiver errado. A correção vale aqui na hora e entra na lista a enviar ao setor que atualiza o ADVWin.</p><div class="grade g2" style="margin-top:10px">' + campo("numero", "Número do processo", ' style="grid-column:1/-1"') + '<div id="avisoNum" class="aviso-num" style="grid-column:1/-1;margin-top:-4px"></div>' + campo("cliente", "Cliente") + campo("grupo", "Grupo econômico") + campo("contraria", "Parte contrária", ' style="grid-column:1/-1"') + campo("tipo", "Tipo de ação") + campo("comarca", "Comarca") + campo("tribunal", "Tribunal") + campo("vara", "Vara ou juízo") + campo("sistema", "Sistema (físico ou eletrônico)") + '<label class="campo">Advogado responsável<select data-ed="advResp">' + (r.advResp ? "" : '<option value="">(sem responsável)</option>') + advs.map(x => '<option value="' + esc(x) + '"' + (x === r.advResp ? " selected" : "") + ">" + esc(titulo(x)) + "</option>").join("") + "</select></label>" + campo("assunto", "Assunto", ' style="grid-column:1/-1"') + '</div><datalist id="lsSist">' + sistemas.map(x => '<option value="' + esc(x) + '">').join("") + "</datalist>";
+      h += '<p class="motivos" style="margin-top:14px">Corrija o que estiver errado. A correção vale aqui na hora e entra na lista a enviar ao setor que atualiza o ADVWin.</p><div class="grade g2" style="margin-top:10px">' + campo("numero", "Número do processo", ' style="grid-column:1/-1"') + '<div id="avisoNum" class="aviso-num" style="grid-column:1/-1;margin-top:-4px"></div><label class="pequeno" style="grid-column:1/-1;display:inline-flex;gap:6px;align-items:center;margin-top:-2px"><input type="checkbox" id="edCnj"' + (/^sim$/i.test(r.cnj || "") ? " checked" : "") + '> O processo tem numeração CNJ, ainda que o número acima esteja incompleto</label>' + campo("cliente", "Cliente") + campo("grupo", "Grupo econômico") + campo("contraria", "Parte contrária", ' style="grid-column:1/-1"') + campo("tipo", "Tipo de ação") + campo("comarca", "Comarca") + campo("tribunal", "Tribunal") + campo("vara", "Vara ou juízo") + campo("sistema", "Sistema (físico ou eletrônico)") + '<label class="campo">Advogado responsável<select data-ed="advResp">' + (r.advResp ? "" : '<option value="">(sem responsável)</option>') + advs.map(x => '<option value="' + esc(x) + '"' + (x === r.advResp ? " selected" : "") + ">" + esc(titulo(x)) + "</option>").join("") + "</select></label>" + campo("assunto", "Assunto", ' style="grid-column:1/-1"') + '</div><datalist id="lsSist">' + sistemas.map(x => '<option value="' + esc(x) + '">').join("") + "</datalist>";
       h += '<h3>Marcadores (tags do ADVWin)</h3><div class="linha-btns" style="margin:0">' + [["importante", "Importante", "Processo_Importante"], ["estrategico", "Estratégico", "Estrategico"], ["reuPreso", "Réu preso", "Criminal_Reu_Preso"], ["segredo", "Segredo de justiça", "Segredo_de_Justica"]].map(([k, rt, tag]) => '<label class="pequeno" style="display:inline-flex;gap:6px;align-items:center;margin-right:12px"><input type="checkbox" data-marca="' + tag + '" data-chave="' + k + '"' + (marca(k) ? " checked" : "") + "> " + rt + "</label>").join("") + "</div>";
       h += '<div class="linha-btns" style="margin-top:16px"><button type="button" class="btn" id="salvarCorr">Salvar correções</button><span class="sec2" id="estadoCorr"></span></div>';
+      h += '<h3>Outra solicitação ao ADVWin</h3><p class="motivos">Para pedir a inclusão de um dado ou deixar um comentário ao setor, sem alterar o painel.</p><div class="grade g2" style="margin-top:8px"><label class="campo">Assunto da solicitação<select id="fsCampo">' + CAMPOS_SOLIC.map(x => "<option>" + esc(x) + "</option>").join("") + '</select></label><span></span><label class="campo" style="grid-column:1/-1">O que deve ser feito<textarea id="fsTexto" placeholder="Ex.: incluir a vara (2ª Vara Criminal de Contagem); corrigir o tipo de ação para queixa-crime"></textarea></label><button type="button" class="btn sec" id="fsIncluir" style="justify-self:start">Incluir na lista</button></div>';
+      const pendPasta = S.alt.filter(x => x.cod === cod && x.status !== "aplicada");
+      if (pendPasta.length) h += '<h3>Já na lista desta pasta</h3>' + pendPasta.map(x => { const tx = textoAlt(x); return '<div class="evento"><div class="meta">' + esc(tx.campo) + " · " + (x.status === "enviada" ? "enviada em " + dBr(x.enviadaEm) : "a enviar") + '</div><p>' + esc(tx.para) + "</p></div>"; }).join("");
     }
     $("#gaveta").innerHTML = h; $("#gaveta").hidden = false; $("#veu").hidden = false;
     $("#fechar").onclick = fecharFicha;
@@ -508,6 +528,7 @@
     if (abaF === "resumo") {
       $("#fxCx").value = a.complexidade || ""; $("#fxCx").onchange = e => { a.complexidade = e.target.value; salvar(); montar(); render(); ficha(cod, "resumo"); };
       const cp = $("#copiar"); if (cp) cp.onclick = () => navigator.clipboard.writeText(c.numero).then(() => window.HUB.toast("Número copiado."));
+      $$("#gaveta [data-cnj]").forEach(x => x.onclick = () => marcarCnj(cod, x.dataset.cnj === "sim"));
     } else if (abaF === "afazer") {
       $("#fxInt").onchange = e => { a.intervalo = +e.target.value || null; salvar(); render(); ficha(cod, "afazer"); };
       $$("#gaveta [data-pfeita]").forEach(x => x.onchange = () => { const p = a.providencias.find(y => y.id === x.dataset.pfeita); p.feita = x.checked; p.feitaEm = x.checked ? hoje() : ""; salvar(); render(); ficha(cod, "afazer"); });
@@ -523,11 +544,13 @@
       $("#hAdd").onclick = () => { const t = $("#hTexto").value.trim(); if (!t) { $("#hTexto").focus(); return; } const autor = $("#hAutor").value.trim(); a.historico.push({ data: $("#hData").value || hoje(), autor, texto: t }); if (autor && !S.cfg.autor) S.cfg.autor = autor; salvar(); ficha(cod, "historico"); };
       $$("#gaveta [data-hrm]").forEach(x => x.onclick = ev => { ev.preventDefault(); if (!confirm("Apagar este registro?")) return; a.historico.splice(+x.dataset.hrm, 1); salvar(); ficha(cod, "historico"); });
     } else {
-      const aviso = () => { const n = dig($('[data-ed="numero"]').value), el = $("#avisoNum"); if (!n) { el.className = "aviso-num nao"; el.textContent = "Sem número: o caso fica em acompanhamento manual."; } else if (n.length === 20) { const ok = cnjValido(n); el.className = "aviso-num " + (ok ? "ok" : "nao"); el.textContent = ok ? "Número CNJ válido (" + fmtCnj(n) + "): o caso passa a ser tratado como eletrônico, com consulta automática." : "Tem 20 dígitos, mas o dígito verificador não confere: confira a digitação."; } else { el.className = "aviso-num nao"; el.textContent = "Não segue o padrão CNJ (20 dígitos): o caso fica em acompanhamento manual."; } };
-      $('[data-ed="numero"]').addEventListener("input", aviso); aviso();
+      $("#fsIncluir").onclick = () => { const t = $("#fsTexto").value.trim(); if (!t) { $("#fsTexto").focus(); return; } registrarSolicitacao(cod, $("#fsCampo").value, t); render(); ficha(cod, "corrigir"); window.HUB.toast("Solicitação incluída na lista a enviar ao ADVWin."); };
+      const aviso = () => { const n = dig($('[data-ed="numero"]').value), el = $("#avisoNum"); if ($("#edCnj").checked && n.length !== 20) { el.className = "aviso-num ok"; el.textContent = "Marcado como numeração CNJ: o caso sai do acompanhamento manual. Informe o número completo quando possível."; return; } if (!n) { el.className = "aviso-num nao"; el.textContent = "Sem número: o caso fica em acompanhamento manual."; } else if (n.length === 20) { const ok = cnjValido(n); el.className = "aviso-num " + (ok ? "ok" : "nao"); el.textContent = ok ? "Número CNJ válido (" + fmtCnj(n) + "): o caso passa a ser tratado como eletrônico, com consulta automática." : "Tem 20 dígitos, mas o dígito verificador não confere: confira a digitação."; } else { el.className = "aviso-num nao"; el.textContent = "Não segue o padrão CNJ (20 dígitos): o caso fica em acompanhamento manual."; } };
+      $('[data-ed="numero"]').addEventListener("input", aviso); $("#edCnj").addEventListener("change", aviso); aviso();
       $("#salvarCorr").onclick = () => {
         const novos = {}; $$("#gaveta [data-ed]").forEach(x => { novos[x.dataset.ed] = x.value; });
         const n = dig(novos.numero); if (n.length === 20 && cnjValido(n) && !/[-.]/.test(novos.numero)) novos.numero = fmtCnj(n);
+        novos.cnj = $("#edCnj").checked && n.length !== 20 ? "sim" : "";
         let tags = String(Object.assign({}, r0, S.edit[cod] || {}).tags || "").split(/[,;]+/).map(s => s.trim()).filter(Boolean);
         $$("#gaveta [data-marca]").forEach(x => { const re = MARCAS[x.dataset.chave], tem = tags.some(y => re.test(y)); if (x.checked && !tem) tags.push(x.dataset.marca); if (!x.checked && tem) tags = tags.filter(y => !re.test(y)); });
         novos.tags = tags.join(",");
@@ -535,6 +558,19 @@
         if (q) { window.HUB.toast(q === 1 ? "Correção registrada para envio ao ADVWin." : q + " correções registradas para envio ao ADVWin."); ficha(cod, "resumo"); } else $("#estadoCorr").textContent = "Nada mudou.";
       };
     }
+  }
+  /* "É numeração CNJ": com o número completo, corrige o número; sem ele, registra que o processo tem numeração CNJ */
+  function marcarCnj(cod, sim) {
+    if (!sim) { registrarCorrecao(cod, { cnj: "" }); render(); ficha(cod, "resumo"); window.HUB.toast("Marcação de numeração CNJ desfeita."); return; }
+    const t = prompt("Se tiver o número completo no padrão CNJ (20 dígitos), informe-o. Deixe em branco para só registrar que o processo tem numeração CNJ:", ""); if (t === null) return;
+    const n = dig(t), novos = { cnj: "sim" };
+    if (n) {
+      if (n.length !== 20) { window.HUB.toast("O número CNJ tem 20 dígitos; confira e tente de novo.", 5000); return; }
+      if (!cnjValido(n) && !confirm("O dígito verificador deste número não confere. Registrar assim mesmo?")) return;
+      novos.numero = fmtCnj(n); novos.cnj = "";
+    }
+    const q = registrarCorrecao(cod, novos); render(); ficha(cod, "resumo");
+    window.HUB.toast(q ? "Numeração CNJ registrada: o caso saiu do acompanhamento manual e a informação entrou na lista do ADVWin." : "Nada mudou.");
   }
   function fecharFicha() { $("#gaveta").hidden = true; $("#veu").hidden = true; FICHA = null; }
   $("#veu").onclick = fecharFicha;
@@ -550,6 +586,8 @@
     const va = e.target.closest("[data-ver-alta]"); if (va) { e.preventDefault(); FIL.adv = ADV; FIL.cx = "alta"; sincronizarSelects(); abrirAba("processos"); return; }
     const d = e.target.closest("[data-desfaz]"); if (d) { desfazerCorrecao(d.dataset.desfaz); render(); return; }
     const rp = e.target.closest("[data-repend]"); if (rp) { const a = S.alt.find(x => x.id === rp.dataset.repend); if (a) { a.status = "pendente"; a.enviadaEm = ""; salvar(); render(); } return; }
+    const cc = e.target.closest("[data-concluir]"); if (cc) { const a = S.alt.find(x => x.id === cc.dataset.concluir); if (a) { a.status = "aplicada"; a.aplicadaEm = hoje(); salvar(); render(); window.HUB.toast("Solicitação marcada como concluída."); } return; }
+    const ns = e.target.closest("#nsIncluir"); if (ns) { const cod = (($("#nsPasta").value.match(/^\s*([^\s·]+)/) || [])[1] || "").trim(), c = PORCOD.get(cod), rot = $("#nsCampo").value, t = $("#nsTexto").value.trim(); if (!c) { window.HUB.toast("Escolha uma pasta da lista."); $("#nsPasta").focus(); return; } if (!t) { $("#nsTexto").focus(); return; } registrarSolicitacao(cod, rot, t); render(); window.HUB.toast("Solicitação incluída na lista a enviar."); return; }
     const sg = e.target.closest("[data-sug-todas]"); if (sg) { const g = inconsistencias().find(x => x.id === sg.dataset.sugTodas); if (!g) return; if (!confirm("Registrar " + g.casos.length + " correções (" + g.tit.toLowerCase() + ")? Elas entram na lista a enviar ao ADVWin.")) return; let n = 0; for (const c of g.casos) n += registrarCorrecao(c.cod, g.sugestao(c)) ? 1 : 0; render(); window.HUB.toast(n + " correções registradas."); return; }
     const lk = e.target.closest("a[data-cod], tr[data-cod]"); if (lk && !e.target.closest("button, input, select") && !e.target.closest("#gaveta .abas-f")) { e.preventDefault(); ficha(lk.dataset.cod, lk.dataset.abaFicha); }
   });
@@ -622,6 +660,8 @@
     if (crit.length) { b.push({ t: "h", texto: "3. Processos de complexidade alta" }); b.push({ t: "tab", cab: ["Cliente e pasta", "Processo", "Responsável", "Fatores e tarefas"], larg: [1.8, 1.8, 1.1, 2.6], linhas: crit.slice(0, 80).map(c => [c.cliente + " · " + c.cod, titulo(c.tipo) + " · " + (c.numero || "sem número"), curto(c.advResp), [c.cx.motivos.join(", "), provPend(c).map(p => "tarefa: " + p.texto + (p.prazo ? " (" + dBr(p.prazo) + ")" : "")).join("; ")].filter(Boolean).join("; ")]) }); }
     const provs = []; L.forEach(c => provPend(c).forEach(p => provs.push([c.cliente + " · " + c.cod, p.texto, curto(p.responsavel || c.advResp), p.prazo ? dBr(p.prazo) + (provVencida(p) ? " (vencida)" : "") : "-"])));
     if (provs.length) { b.push({ t: "h", texto: (crit.length ? "4" : "3") + ". Tarefas pendentes" }); b.push({ t: "tab", cab: ["Caso", "Tarefa", "Responsável", "Prazo"], larg: [1.8, 3, 1.1, 1], linhas: provs.sort((x, y) => x[3].localeCompare(y[3])) }); }
+    const altAbertas = S.alt.filter(x => x.status !== "aplicada" && (!FIL.adv || (PORCOD.get(x.cod) || {}).advResp === FIL.adv));
+    if (altAbertas.length) { b.push({ t: "h", texto: "Correções e solicitações ao ADVWin" }); b.push({ t: "tab", cab: ["Pasta", "Campo", "Como está", "Como deve ficar", "Situação"], larg: [1.6, 1.1, 1.5, 1.8, 0.9], linhas: linhasExport(altAbertas).map((x, i) => [x.pasta + " · " + x.cliente, x.campo, x.de || "-", x.para || "-", altAbertas[i].status === "enviada" ? "enviada" : "a enviar"]) }); }
     b.push({ t: "data", texto: "Belo Horizonte, " + P.dataExtenso(new Date()) + "." });
     try { P.baixar(await P.docx(b), "Relatorio da carteira - " + hoje()); } catch (e) { window.HUB.toast(e.message || "Não foi possível gerar o Word.", 5000); }
   }
