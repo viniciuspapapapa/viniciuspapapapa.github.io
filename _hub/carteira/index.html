@@ -4,107 +4,132 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Gestão da Carteira · HUB TPC</title>
-<meta name="description" content="Painel de gestão dos processos da área a partir da base do ADVWin: clientes, temas, importância, equipe, processos físicos, verificações periódicas, discussões e providências.">
+<meta name="description" content="Panorama dos processos da área a partir do ADVWin: carga e complexidade por advogado, casos que pedem atenção, providências e correções a enviar ao ADVWin.">
 <meta name="theme-color" content="#f5f1e8">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Red+Hat+Display:wght@500;600&family=Red+Hat+Text:wght@400;500;600&family=Red+Hat+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../assets/hub.css">
 <style>
-  .heroi { padding: 30px 0 4px; display: flex; flex-wrap: wrap; gap: 12px 24px; align-items: end; justify-content: space-between; }
+  [hidden] { display: none !important; }
+  .heroi { padding: 28px 0 10px; display: flex; flex-wrap: wrap; gap: 12px 24px; align-items: end; justify-content: space-between; }
   .heroi h1 { margin: 0; }
-  .bloco { padding: 18px; margin-bottom: 14px; }
-  .bloco > h2 { font-size: 21px; margin-bottom: 4px; }
-  .painel[hidden], [hidden] { display: none !important; }
-  .filtros { position: sticky; top: 61px; z-index: 200; background: var(--paper); padding: 10px 0 8px; border-bottom: 1px solid var(--line); margin-bottom: 14px; }
-  .filtros .grade { grid-template-columns: minmax(180px, 2fr) repeat(5, minmax(120px, 1fr)); }
-  @media (max-width: 1100px) { .filtros .grade { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
-  @media (max-width: 620px) { .filtros .grade { grid-template-columns: minmax(0, 1fr); } .filtros { position: static; } }
-  .filtros select, .filtros input { min-height: 38px; padding: 6px 9px; font-size: 14px; }
-  .chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; align-items: center; }
-  .chip { border: 1px solid var(--line-2); background: var(--surface); color: var(--ink-2); border-radius: 99px; padding: 3px 11px; font-size: 13px; cursor: pointer; font: 500 13px var(--sans); }
-  .chip[aria-pressed="true"] { background: var(--ink); color: var(--surface); border-color: var(--ink); }
-  .chip.ativo-f { background: var(--accent-soft); border-color: transparent; color: var(--ink); }
-  .chip .x { margin-left: 6px; opacity: .7; }
-  .kpis { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 170px), 1fr)); gap: 10px; }
-  .kpi { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-key); padding: 12px 14px; cursor: pointer; text-align: left; font: inherit; color: inherit; transition: box-shadow var(--dur-short) var(--ease-out); }
-  .kpi:hover { box-shadow: 0 0 0 1px var(--ink); }
-  .kpi small { display: block; color: var(--ink-3); font-size: 12.5px; }
-  .kpi b { display: block; font-size: 28px; font-family: var(--sans); font-weight: 600; line-height: 1.15; margin-top: 2px; }
-  .kpi span { font-size: 12.5px; color: var(--ink-3); }
-  .kpi.alerta { box-shadow: inset 4px 0 0 var(--accent); }
-  .kpi.alerta:hover { box-shadow: inset 4px 0 0 var(--accent), 0 0 0 1px var(--ink); }
+  .acoes-topo { display: flex; gap: 8px; align-items: center; position: relative; }
+  .menu { position: absolute; right: 0; top: calc(100% + 6px); background: var(--surface); border: 1px solid var(--line-2); border-radius: var(--radius-key); box-shadow: var(--shadow-lift); padding: 6px; min-width: 250px; z-index: 250; }
+  .menu button { display: block; width: 100%; text-align: left; border: 0; background: none; padding: 9px 10px; border-radius: 6px; cursor: pointer; font: 500 14px var(--sans); color: var(--ink); }
+  .menu button:hover { background: var(--surface-2); }
+  .menu small { display: block; color: var(--ink-3); font-weight: 400; font-size: 12.5px; }
+  .abas .cont { font-size: 12px; }
+  .abas .cont:empty { display: none; }
+  .lente { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin: 16px 0 6px; }
+  .lente .rot { font-size: 13px; color: var(--ink-3); margin-right: 4px; }
+  .pilula { border: 1px solid var(--line-2); background: var(--surface); color: var(--ink-2); border-radius: 99px; padding: 5px 13px; cursor: pointer; font: 500 13.5px var(--sans); }
+  .pilula:hover { border-color: var(--ink-3); }
+  .pilula[aria-pressed="true"] { background: var(--ink); color: var(--surface); border-color: var(--ink); }
+  .pilula small { opacity: .7; margin-left: 4px; font-weight: 400; }
+  .ativos { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; min-height: 0; margin-bottom: 8px; font-size: 13px; color: var(--ink-3); }
+  .ativos button { border: 0; background: var(--accent-soft); color: var(--ink); border-radius: 99px; padding: 3px 10px; cursor: pointer; font: 500 13px var(--sans); }
+  .ativos button.limpar { background: none; text-decoration: underline; color: var(--ink-2); }
+  .numeros { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+  @media (max-width: 960px) { .numeros { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  @media (max-width: 520px) { .numeros { grid-template-columns: minmax(0, 1fr); } }
+  .numero { text-align: left; border: 1px solid var(--line); background: var(--surface); border-radius: var(--radius); padding: 16px 18px; cursor: pointer; font: inherit; color: inherit; transition: box-shadow var(--dur-short) var(--ease-out); }
+  .numero:hover { box-shadow: 0 0 0 1px var(--ink); }
+  .numero .rot { font-size: 14px; color: var(--ink-2); font-weight: 500; }
+  .numero b { display: block; font: 600 38px/1.1 var(--sans); margin: 6px 0 4px; }
+  .numero p { margin: 0; font-size: 13px; color: var(--ink-3); line-height: 1.45; }
+  .numero.atencao { box-shadow: inset 0 3px 0 var(--accent); }
+  .numero.atencao:hover { box-shadow: inset 0 3px 0 var(--accent), 0 0 0 1px var(--ink); }
   .graficos { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; margin-top: 14px; }
   @media (max-width: 900px) { .graficos { grid-template-columns: minmax(0, 1fr); } }
-  .gcard { padding: 14px 16px; }
-  .gcard h3 { font-size: 16px; margin: 0 0 2px; }
-  .gcard .sub { font-size: 12.5px; color: var(--ink-3); margin: 0 0 8px; }
-  .gcard .area { height: 290px; position: relative; }
-  .gcard.larga { grid-column: 1 / -1; }
-  .insights p { margin: 6px 0; line-height: 1.55; font-size: 14.5px; }
-  .insights p::before { content: "▸ "; color: var(--accent); }
-  table.t { width: 100%; border-collapse: collapse; font-size: 13.5px; }
-  table.t th { text-align: left; color: var(--ink-3); font-weight: 500; border-bottom: 1px solid var(--ink); padding: 6px; position: sticky; top: 0; background: var(--surface); z-index: 1; white-space: nowrap; }
+  .gcard { padding: 16px 18px; }
+  .gcard h3 { font-size: 16px; margin: 0; }
+  .gcard .sub { font-size: 12.5px; color: var(--ink-3); margin: 2px 0 10px; }
+  .gcard .area { height: 280px; position: relative; }
+  .larga { grid-column: 1 / -1; }
+  .leitura p { margin: 8px 0; line-height: 1.6; font-size: 15px; }
+  table.t { width: 100%; border-collapse: collapse; font-size: 14px; }
+  table.t th { text-align: left; color: var(--ink-3); font-weight: 500; font-size: 12.5px; border-bottom: 1px solid var(--line-2); padding: 8px; position: sticky; top: 0; background: var(--surface); z-index: 1; white-space: nowrap; }
   table.t th[data-ord] { cursor: pointer; }
-  table.t th[data-ord]:hover { color: var(--ink); }
-  table.t td { border-bottom: 1px solid var(--line); padding: 6px; vertical-align: top; }
+  table.t td { border-bottom: 1px solid var(--line); padding: 9px 8px; vertical-align: top; }
   table.t td.n, table.t th.n { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
   table.t tbody tr.clic { cursor: pointer; }
   table.t tbody tr.clic:hover { background: var(--surface-2); }
-  .rolagem { overflow: auto; border: 1px solid var(--line); border-radius: var(--radius-key); }
-  .mk { display: inline-block; font-size: 11.5px; border-radius: 99px; padding: 0 7px; margin: 1px 2px 1px 0; background: var(--surface-3); color: var(--ink-2); white-space: nowrap; }
-  .mk.imp { background: #EB683426; color: #a2401a; }
-  .mk.est { background: #2B2B2B; color: #fff; }
+  .sec2 { font-size: 12.5px; color: var(--ink-3); }
+  .rolagem { overflow: auto; border: 1px solid var(--line); border-radius: var(--radius-key); background: var(--surface); }
+  .mk { display: inline-block; font-size: 12px; border-radius: 99px; padding: 1px 8px; margin: 1px 3px 1px 0; background: var(--surface-3); color: var(--ink-2); white-space: nowrap; }
   .mk.preso { background: #D03B3B; color: #fff; }
-  .mk.seg { background: #6b5ca533; color: #4b3d8a; }
-  .mk.fis { background: #E8E34766; color: #5c5800; }
-  .mk.atr { background: #D03B3B22; color: #a02424; }
+  .mk.est { background: #2B2B2B; color: #fff; }
+  .mk.imp { background: #EB683426; color: #a2401a; }
+  .mk.man { background: #E8E34766; color: #5c5800; }
+  .mk.alerta { background: #D03B3B1f; color: #a02424; }
   .mk.ok { background: #1BAF7A22; color: #0d7a52; }
+  .cx { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; white-space: nowrap; }
+  .cx i { width: 9px; height: 9px; border-radius: 50%; display: inline-block; }
+  .cx.alta i { background: #D03B3B; } .cx.media i { background: #EB6834; } .cx.baixa i { background: #B8B8B8; }
   .num { font-family: var(--mono); font-size: 12.5px; }
+  .barra-busca { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 14px 0 10px; }
+  .barra-busca input[type=search] { flex: 1 1 320px; min-height: 44px; font-size: 16px; }
+  .filtros-mais { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin: 0 0 12px; padding: 12px; background: var(--surface-2); border-radius: var(--radius-key); }
+  @media (max-width: 900px) { .filtros-mais { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  @media (max-width: 520px) { .filtros-mais { grid-template-columns: minmax(0, 1fr); } }
+  .filtros-mais select { min-height: 38px; font-size: 14px; padding: 6px 8px; }
   .paginacao { display: flex; gap: 8px; align-items: center; justify-content: space-between; margin-top: 10px; flex-wrap: wrap; }
-  .matriz td.h { text-align: center; font-variant-numeric: tabular-nums; }
-  .cliente { border-top: 1px solid var(--line); padding: 10px 0; }
-  .cliente summary { cursor: pointer; display: flex; flex-wrap: wrap; gap: 6px 12px; align-items: baseline; list-style: none; }
-  .cliente summary::-webkit-details-marker { display: none; }
-  .cliente summary b { font-size: 15px; }
-  .barra-h { height: 6px; background: var(--line); border-radius: 99px; overflow: hidden; flex-basis: 100%; }
-  .barra-h i { display: block; height: 100%; background: var(--accent); }
-  .equipe { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr)); gap: 14px; }
-  .pessoa { padding: 16px; }
-  .pessoa h3 { font-size: 17px; margin: 0 0 8px; }
-  .pessoa dl { display: grid; grid-template-columns: 1fr auto; gap: 4px 10px; margin: 0; font-size: 14px; }
-  .pessoa dd { margin: 0; text-align: right; font-weight: 600; font-variant-numeric: tabular-nums; }
-  .pessoa dt { color: var(--ink-2); }
-  .pessoa dt button { all: unset; cursor: pointer; text-decoration: underline dotted; }
-  .quadro { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
-  @media (max-width: 900px) { .quadro { grid-template-columns: minmax(0, 1fr); } }
-  .coluna { background: var(--surface-2); border-radius: var(--radius-key); padding: 10px; min-height: 120px; }
-  .coluna h3 { font-size: 15px; margin: 0 0 8px; display: flex; justify-content: space-between; }
-  .prov { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; margin-bottom: 8px; font-size: 14px; }
-  .prov.venc { box-shadow: inset 3px 0 0 #D03B3B; }
-  .prov .meta { font-size: 12.5px; color: var(--ink-3); margin-top: 4px; display: flex; flex-wrap: wrap; gap: 4px 10px; }
-  .prov .acoes { display: flex; gap: 6px; margin-top: 6px; flex-wrap: wrap; }
-  .prov .acoes button, .mini { border: 1px solid var(--line-2); background: var(--surface); border-radius: 6px; font: 500 12.5px var(--sans); padding: 2px 8px; cursor: pointer; color: var(--ink); }
-  .prov .acoes button:hover, .mini:hover { border-color: var(--ink); }
-  .linha-tempo { border-left: 2px solid var(--line-2); margin-left: 6px; padding-left: 14px; }
-  .evento { position: relative; padding: 6px 0 10px; font-size: 14px; }
-  .evento::before { content: ""; position: absolute; left: -20px; top: 11px; width: 10px; height: 10px; border-radius: 50%; background: var(--accent); }
-  .evento .meta { font-size: 12.5px; color: var(--ink-3); }
-  .evento p { margin: 2px 0 0; white-space: pre-wrap; }
-  /* gaveta de detalhe */
+  /* advogados */
+  .equipe { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 250px), 1fr)); gap: 12px; margin-top: 14px; }
+  .adv { text-align: left; border: 1px solid var(--line); background: var(--surface); border-radius: var(--radius); padding: 14px 16px; cursor: pointer; font: inherit; color: inherit; }
+  .adv:hover { box-shadow: 0 0 0 1px var(--ink-3); }
+  .adv[aria-pressed="true"] { box-shadow: 0 0 0 2px var(--ink); }
+  .adv h3 { font-size: 16px; margin: 0 0 2px; }
+  .adv .linha { display: flex; justify-content: space-between; font-size: 13.5px; color: var(--ink-2); margin-top: 6px; }
+  .adv .linha b { color: var(--ink); }
+  .pilha { display: flex; height: 8px; border-radius: 99px; overflow: hidden; background: var(--line); margin-top: 10px; }
+  .pilha i { display: block; height: 100%; }
+  .detalhe-adv { margin-top: 16px; }
+  .detalhe-adv .cab { display: flex; flex-wrap: wrap; gap: 8px 20px; align-items: baseline; justify-content: space-between; }
+  .duas { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 14px; margin-top: 14px; }
+  @media (max-width: 900px) { .duas { grid-template-columns: minmax(0, 1fr); } }
+  .agenda-item { display: flex; gap: 10px; align-items: start; padding: 10px 0; border-top: 1px solid var(--line); font-size: 14px; }
+  .agenda-item:first-child { border-top: 0; }
+  .agenda-item .quando { min-width: 78px; font-size: 12.5px; color: var(--ink-3); padding-top: 2px; }
+  .agenda-item .quando.venc { color: #a02424; font-weight: 600; }
+  .agenda-item .o-que { flex: 1; }
+  .agenda-item .o-que a { color: inherit; }
+  .mini { border: 1px solid var(--line-2); background: var(--surface); border-radius: 6px; font: 500 12.5px var(--sans); padding: 3px 9px; cursor: pointer; color: var(--ink); white-space: nowrap; }
+  .mini:hover { border-color: var(--ink); }
+  .vazio-p { color: var(--ink-3); font-size: 14px; padding: 6px 0; }
+  /* gaveta */
   .veu { position: fixed; inset: 0; background: var(--scrim, rgb(0 0 0 / .35)); z-index: 420; }
-  .gaveta { position: fixed; top: 0; right: 0; bottom: 0; width: min(720px, 100vw); background: var(--surface); z-index: 430; overflow-y: auto; box-shadow: -10px 0 40px rgb(0 0 0 / .18); padding: 20px 22px 40px; }
-  .gaveta h2 { font-size: 21px; margin: 0; }
+  .gaveta { position: fixed; top: 0; right: 0; bottom: 0; width: min(720px, 100vw); background: var(--surface); z-index: 430; overflow-y: auto; box-shadow: -10px 0 40px rgb(0 0 0 / .18); padding: 22px 24px 48px; }
   .gaveta .cab { display: flex; justify-content: space-between; gap: 10px; align-items: start; }
-  .gaveta dl { display: grid; grid-template-columns: max-content 1fr; gap: 4px 12px; font-size: 14px; margin: 12px 0; }
+  .gaveta h2 { font-size: 22px; margin: 2px 0 0; }
+  .gaveta h3 { font-size: 15px; margin: 22px 0 8px; text-transform: none; }
+  .gaveta dl { display: grid; grid-template-columns: 170px 1fr; gap: 6px 12px; font-size: 14px; margin: 0; }
+  @media (max-width: 520px) { .gaveta dl { grid-template-columns: 1fr; } .gaveta dt { margin-top: 6px; } }
   .gaveta dt { color: var(--ink-3); }
   .gaveta dd { margin: 0; word-break: break-word; }
-  .gaveta h3 { font-size: 16px; margin: 18px 0 6px; }
-  .gaveta textarea { min-height: 70px; resize: vertical; }
-  .fisicos-alerta { border-left: 3px solid var(--accent); background: var(--surface-2); padding: 8px 12px; border-radius: 0 8px 8px 0; font-size: 14px; margin: 8px 0; }
-  .zona { display: grid; place-items: center; gap: 4px; text-align: center; border: 1.5px dashed var(--line-2); border-radius: var(--radius); padding: 26px 16px; cursor: pointer; background: var(--surface); }
+  .gaveta dd .editado { background: #E8E34755; border-radius: 4px; padding: 0 4px; }
+  .gaveta .abas-f { display: flex; gap: 4px; border-bottom: 1px solid var(--line-2); margin-top: 16px; }
+  .gaveta .abas-f button { border: 0; background: none; padding: 9px 12px; cursor: pointer; font: 500 14px var(--sans); color: var(--ink-3); border-bottom: 2px solid transparent; margin-bottom: -1px; }
+  .gaveta .abas-f button[aria-selected="true"] { color: var(--ink); border-bottom-color: var(--accent); }
+  .gaveta textarea { min-height: 80px; resize: vertical; }
+  .gaveta .grade { gap: 10px; }
+  .motivos { font-size: 13.5px; color: var(--ink-2); margin: 6px 0 0; }
+  .aviso-num { font-size: 13px; margin-top: 4px; }
+  .aviso-num.ok { color: #0d7a52; } .aviso-num.nao { color: #a02424; }
+  .evento { padding: 10px 0; border-top: 1px solid var(--line); font-size: 14px; }
+  .evento .meta { font-size: 12.5px; color: var(--ink-3); }
+  .evento p { margin: 3px 0 0; white-space: pre-wrap; }
+  .prov { display: flex; gap: 10px; align-items: start; padding: 9px 0; border-top: 1px solid var(--line); font-size: 14px; }
+  .prov input[type=checkbox] { margin-top: 3px; }
+  .prov .meta { font-size: 12.5px; color: var(--ink-3); }
+  .prov.feita .txt { text-decoration: line-through; color: var(--ink-3); }
+  .zona { display: grid; place-items: center; gap: 4px; text-align: center; border: 1.5px dashed var(--line-2); border-radius: var(--radius); padding: 28px 16px; cursor: pointer; background: var(--surface); }
   .zona.sobre { border-color: var(--accent); background: var(--surface-2); }
-  .vazio { text-align: center; padding: 40px 16px; }
+  .vazio { text-align: center; padding: 44px 18px; }
+  .explica { font-size: 14px; color: var(--ink-2); line-height: 1.6; max-width: 820px; }
+  .status { font-size: 12px; border-radius: 99px; padding: 1px 8px; white-space: nowrap; }
+  .status.pendente { background: #EB683426; color: #a2401a; } .status.enviada { background: #2A78D622; color: #1d5aa6; } .status.aplicada { background: #1BAF7A22; color: #0d7a52; }
 </style>
 </head>
 <body>
@@ -123,150 +148,102 @@
     <div>
       <div class="sobretitulo">Ferramenta 28 · Gestão da área</div>
       <h1>Gestão da carteira</h1>
-      <p class="pequeno mudo" id="baseInfo" style="margin:6px 0 0">Nenhuma base importada.</p>
+      <p class="pequeno mudo" id="baseInfo" style="margin:6px 0 0"></p>
     </div>
-    <div class="linha-btns" style="margin:0">
-      <button type="button" class="btn sec" id="btImportar">Importar planilha do ADVWin</button>
-      <button type="button" class="btn sec" id="btXlsx" disabled>Exportar seleção (XLSX)</button>
-      <button type="button" class="btn" id="btWord" disabled>Relatório gerencial (Word)</button>
-      <input type="file" id="arq" accept=".xlsx,.xls,.csv" hidden>
+    <div class="acoes-topo" id="acoesTopo" hidden>
+      <button type="button" class="btn sec" id="btAtualizar">Atualizar com nova planilha</button>
+      <button type="button" class="btn" id="btExportar" aria-haspopup="true" aria-expanded="false">Exportar ▾</button>
+      <button type="button" class="btn-icone" id="btConfig" title="Configurações e cópia de segurança" aria-label="Configurações e cópia de segurança">⚙</button>
+      <div class="menu" id="menuExportar" hidden role="menu">
+        <button type="button" data-exp="word" role="menuitem">Relatório da área (Word)<small>Panorama, carga por advogado e casos que pedem atenção</small></button>
+        <button type="button" data-exp="xlsx" role="menuitem">Lista de processos (Excel)<small>Os processos visíveis no momento, com as anotações</small></button>
+        <button type="button" data-exp="alteracoes" role="menuitem">Correções para o ADVWin<small>Abre a aba de alterações para exportar a lista</small></button>
+      </div>
     </div>
+    <input type="file" id="arq" accept=".xlsx,.xls,.csv" hidden>
   </section>
 
-  <section class="filtros" id="barraFiltros" hidden>
-    <div class="grade">
-      <input type="search" id="fBusca" placeholder="Buscar cliente, parte, número, pasta, assunto…" autocomplete="off" aria-label="Buscar">
-      <select id="fAdv" aria-label="Advogado responsável"></select>
-      <select id="fCliente" aria-label="Cliente ou grupo"></select>
-      <select id="fTema" aria-label="Tema"></select>
-      <select id="fTipo" aria-label="Tipo de ação"></select>
-      <select id="fComarca" aria-label="Comarca"></select>
-    </div>
-    <div class="chips" id="chipsSituacao" aria-label="Situação">
-      <button type="button" class="chip" data-s="importante" aria-pressed="false">Importantes</button>
-      <button type="button" class="chip" data-s="estrategico" aria-pressed="false">Estratégicos</button>
-      <button type="button" class="chip" data-s="reuPreso" aria-pressed="false">Réu preso</button>
-      <button type="button" class="chip" data-s="segredo" aria-pressed="false">Segredo de justiça</button>
-      <button type="button" class="chip" data-s="fisico" aria-pressed="false">Físicos e sem CNJ</button>
-      <button type="button" class="chip" data-s="verifAtrasada" aria-pressed="false">Verificação atrasada</button>
-      <button type="button" class="chip" data-s="provAberta" aria-pressed="false">Com providência aberta</button>
-      <button type="button" class="chip" data-s="parado" aria-pressed="false">Sem atualização no ADVWin</button>
-      <button type="button" class="chip" data-s="principal" aria-pressed="false">Só pastas principais</button>
-      <span class="espaco"></span>
-      <span class="pequeno mudo" id="contagem"></span>
-      <button type="button" class="chip" id="limpar">Limpar filtros</button>
-    </div>
-    <div class="chips" id="chipsAtivos"></div>
+  <!-- primeira importação -->
+  <section class="card vazio" id="vazio">
+    <h2>Comece pela planilha do ADVWin</h2>
+    <p class="mudo" style="max-width:620px;margin:8px auto 18px">Exporte do ADVWin a relação de pastas da área e solte o arquivo aqui. A leitura é feita no próprio navegador; os dados ficam guardados só neste computador, cifrados com a chave do HUB.</p>
+    <div class="zona" id="zona"><b>Arraste a planilha aqui</b><span class="pequeno mudo">ou clique para escolher (Excel ou CSV)</span></div>
+    <p class="pequeno" id="estadoVazio" style="margin-top:12px"></p>
   </section>
 
   <nav class="abas" role="tablist" aria-label="Seções" id="abas" hidden>
-    <button class="aba" role="tab" data-aba="painel" aria-selected="true">Painel</button>
+    <button class="aba" role="tab" data-aba="geral" aria-selected="true">Visão geral</button>
+    <button class="aba" role="tab" data-aba="advogados" aria-selected="false">Advogados</button>
     <button class="aba" role="tab" data-aba="processos" aria-selected="false">Processos</button>
-    <button class="aba" role="tab" data-aba="clientes" aria-selected="false">Clientes</button>
-    <button class="aba" role="tab" data-aba="equipe" aria-selected="false">Equipe</button>
-    <button class="aba" role="tab" data-aba="acompanhamento" aria-selected="false">Acompanhamento <span class="cont" id="contAcomp"></span></button>
-    <button class="aba" role="tab" data-aba="dados" aria-selected="false">Dados e configurações</button>
+    <button class="aba" role="tab" data-aba="alteracoes" aria-selected="false">Correções para o ADVWin <span class="cont" id="contAlt"></span></button>
   </nav>
 
-  <!-- vazio -->
-  <section class="card bloco vazio" id="vazio">
-    <h2>Importe a base de processos</h2>
-    <p class="mudo" style="max-width:640px;margin:6px auto 16px">Exporte do ADVWin a planilha da área (as colunas usuais: cliente, grupo econômico, parte contrária, tipo de ação, número do processo, comarca, tribunal, sistema, tags de controle, advogado responsável, datas e assunto) e solte o arquivo abaixo. A planilha é lida no próprio navegador; os dados ficam guardados neste computador, cifrados com a chave do HUB, e não são enviados a nenhum servidor.</p>
-    <div class="zona" id="zona"><b>Arraste a planilha aqui</b><span class="pequeno mudo">ou clique para escolher (XLSX, XLS ou CSV)</span></div>
-    <p class="pequeno mudo" id="estadoVazio" style="margin-top:10px"></p>
+  <!-- VISÃO GERAL -->
+  <section class="painel" id="p-geral" hidden>
+    <div class="lente" id="lenteGeral"></div>
+    <div class="ativos" id="ativosGeral"></div>
+    <div class="numeros" id="numeros"></div>
+    <div class="graficos">
+      <div class="card gcard"><h3>Carga da equipe</h3><p class="sub">Processos de cada advogado, por complexidade. Clique para ver os processos.</p><div class="area"><canvas id="gCarga"></canvas></div></div>
+      <div class="card gcard"><h3>Em que fase estão</h3><p class="sub">Da investigação à execução penal</p><div class="area"><canvas id="gFase"></canvas></div></div>
+      <div class="card gcard"><h3>Temas</h3><p class="sub">Pelas tags de controle do ADVWin</p><div class="area"><canvas id="gTema"></canvas></div></div>
+      <div class="card gcard"><h3>Clientes com mais processos</h3><p class="sub">Clientes do mesmo grupo econômico aparecem juntos</p><div class="area"><canvas id="gCli"></canvas></div></div>
+      <div class="card gcard larga"><h3>Entrada de casos</h3><p class="sub">Novas pastas por mês, nos últimos 24 meses</p><div class="area" style="height:240px"><canvas id="gEntrada"></canvas></div></div>
+      <div class="card gcard larga leitura"><h3>O que os números mostram</h3><div id="leitura"></div></div>
+    </div>
   </section>
 
-  <!-- PAINEL -->
-  <section class="painel" id="p-painel" hidden>
-    <div class="kpis" id="kpis" style="margin-top:14px"></div>
-    <div class="graficos">
-      <div class="card gcard"><h3>Distribuição por advogado responsável</h3><p class="sub">Clique numa barra para filtrar</p><div class="area"><canvas id="gAdv"></canvas></div></div>
-      <div class="card gcard"><h3>Temas e marcadores</h3><p class="sub">A partir das tags de controle do ADVWin</p><div class="area"><canvas id="gTema"></canvas></div></div>
-      <div class="card gcard"><h3>Principais clientes e grupos econômicos</h3><p class="sub">Os 12 maiores, por número de pastas</p><div class="area"><canvas id="gCli"></canvas></div></div>
-      <div class="card gcard"><h3>Tipos de ação</h3><p class="sub">Os 12 mais frequentes</p><div class="area"><canvas id="gTipo"></canvas></div></div>
-      <div class="card gcard larga"><h3>Entrada de casos</h3><p class="sub">Novas pastas por mês nos últimos 24 meses e total acumulado da seleção</p><div class="area"><canvas id="gEntrada"></canvas></div></div>
-      <div class="card gcard"><h3>Comarcas</h3><p class="sub">As 12 com mais casos</p><div class="area"><canvas id="gComarca"></canvas></div></div>
-      <div class="card gcard"><h3>Sistemas e meio de tramitação</h3><p class="sub">Eletrônicos por sistema; físicos e sem numeração CNJ à parte</p><div class="area"><canvas id="gSistema"></canvas></div></div>
-      <div class="card gcard"><h3>Fase e instância</h3><p class="sub">Investigação, ação penal, recursos, execução e medidas</p><div class="area"><canvas id="gFase"></canvas></div></div>
-      <div class="card gcard"><h3>Decisões registradas</h3><p class="sub">Campo de decisão do ADVWin, quando preenchido</p><div class="area"><canvas id="gDecisao"></canvas></div></div>
-      <div class="card gcard larga"><h3>Carga por advogado e tema</h3><p class="sub">Quantidade de pastas; clique numa célula para filtrar</p><div class="rolagem"><table class="t matriz" id="matriz"></table></div></div>
-      <div class="card gcard larga insights"><h3>Leitura da carteira</h3><div id="insights"></div></div>
-    </div>
+  <!-- ADVOGADOS -->
+  <section class="painel" id="p-advogados" hidden>
+    <p class="explica" style="margin:16px 0 0">Escolha um advogado para ver o dia a dia: o que vence, os processos mais complexos e a composição da carteira. A <b>carga ponderada</b> soma os processos pelo peso da complexidade (baixa vale 1, média 2 e alta 3), o que permite comparar carteiras de perfis diferentes.</p>
+    <div class="equipe" id="equipe"></div>
+    <div id="detalheAdv"></div>
   </section>
 
   <!-- PROCESSOS -->
   <section class="painel" id="p-processos" hidden>
-    <div class="rolagem" style="max-height:70vh"><table class="t" id="tabela"></table></div>
+    <div class="lente" id="lenteProc"></div>
+    <div class="barra-busca">
+      <input type="search" id="busca" placeholder="Buscar por cliente, parte contrária, número, pasta ou assunto" autocomplete="off" aria-label="Buscar processos">
+      <button type="button" class="btn sec" id="btFiltros" aria-expanded="false">Mais filtros</button>
+    </div>
+    <div class="filtros-mais" id="filtrosMais" hidden>
+      <select id="fCliente" aria-label="Cliente"></select>
+      <select id="fTema" aria-label="Tema"></select>
+      <select id="fFase" aria-label="Fase"></select>
+      <select id="fComplex" aria-label="Complexidade"><option value="">Qualquer complexidade</option><option value="alta">Complexidade alta</option><option value="media">Complexidade média</option><option value="baixa">Complexidade baixa</option></select>
+      <select id="fTipo" aria-label="Tipo de ação"></select>
+      <select id="fComarca" aria-label="Comarca"></select>
+      <select id="fSit" aria-label="Situação"><option value="">Qualquer situação</option><option value="reuPreso">Com réu preso</option><option value="estrategico">Estratégicos</option><option value="importante">Importantes</option><option value="manual">Acompanhamento manual (sem CNJ)</option><option value="conferir">Andamento a conferir</option><option value="providencia">Com providência pendente</option><option value="editado">Com correção para o ADVWin</option><option value="segredo">Segredo de justiça</option></select>
+      <select id="fPasta" aria-label="Tipo de pasta"><option value="">Pastas e subpastas</option><option value="principal">Só pastas principais</option></select>
+    </div>
+    <div class="ativos" id="ativosProc"></div>
+    <div class="rolagem" style="max-height:72vh"><table class="t" id="tabela"></table></div>
     <div class="paginacao"><span class="pequeno mudo" id="pagInfo"></span><span class="linha-btns" style="margin:0"><button type="button" class="btn sec peq" id="pagAnt">Anterior</button><button type="button" class="btn sec peq" id="pagProx">Próxima</button></span></div>
   </section>
 
-  <!-- CLIENTES -->
-  <section class="painel" id="p-clientes" hidden>
-    <div class="card bloco">
-      <div class="linha-btns" style="justify-content:space-between;margin:0"><h2 style="margin:0">Clientes e grupos econômicos</h2><select id="cliOrdem" style="max-width:260px"><option value="n">Ordenar por número de pastas</option><option value="imp">Ordenar por importantes</option><option value="nome">Ordenar por nome</option><option value="rec">Ordenar por entrada mais recente</option></select></div>
-      <p class="pequeno mudo" style="margin:4px 0 0">Clientes do mesmo grupo econômico aparecem reunidos. Os processos de contravenção penal (art. 50 da LCP) são reunidos no grupo econômico predominante entre eles, ajustável em Dados e configurações.</p>
-      <div id="clientes"></div>
+  <!-- CORREÇÕES -->
+  <section class="painel" id="p-alteracoes" hidden>
+    <p class="explica" style="margin:16px 0 0">Quando um dado da pasta estiver errado, corrija-o na ficha do processo (botão <b>Corrigir dados</b>). A correção passa a valer aqui na hora e entra nesta lista, para ser enviada ao setor que atualiza o ADVWin. Quando uma nova planilha do ADVWin trouxer o valor corrigido, a correção é dada como concluída automaticamente.</p>
+    <div class="card" style="padding:18px;margin-top:14px">
+      <div class="linha-btns" style="justify-content:space-between;margin:0"><h2 style="font-size:20px;margin:0">A enviar ao ADVWin</h2><span class="linha-btns" style="margin:0"><button type="button" class="btn sec" id="altXlsx">Exportar Excel</button><button type="button" class="btn sec" id="altWord">Exportar Word</button><button type="button" class="btn" id="altEnviar">Marcar como enviadas</button></span></div>
+      <div id="altPend" style="margin-top:12px"></div>
     </div>
-  </section>
-
-  <!-- EQUIPE -->
-  <section class="painel" id="p-equipe" hidden>
-    <div class="equipe" id="equipe"></div>
-    <div class="card gcard" style="margin-top:14px"><h3>Composição da carteira de cada advogado</h3><p class="sub">Pastas por tema</p><div class="area" style="height:340px"><canvas id="gEquipe"></canvas></div></div>
-  </section>
-
-  <!-- ACOMPANHAMENTO -->
-  <section class="painel" id="p-acompanhamento" hidden>
-    <div class="card bloco">
-      <h2>Agenda de verificação</h2>
-      <p class="pequeno mudo" style="margin:0">Casos que exigem conferência periódica de andamento: estratégicos, com réu preso, importantes e físicos ou sem numeração CNJ, além dos que receberam intervalo próprio. Os intervalos podem ser ajustados em Dados e configurações.</p>
-      <div class="chips" id="agendaFiltro"><button type="button" class="chip" data-v="atrasada" aria-pressed="true">Atrasadas</button><button type="button" class="chip" data-v="proxima" aria-pressed="true">Vencem em até 3 dias</button><button type="button" class="chip" data-v="em-dia" aria-pressed="false">Em dia</button></div>
-      <div class="rolagem" style="max-height:60vh;margin-top:10px"><table class="t" id="agenda"></table></div>
+    <div class="card" style="padding:18px;margin-top:14px">
+      <h2 style="font-size:20px;margin:0">Enviadas, aguardando o ADVWin</h2>
+      <div id="altEnv" style="margin-top:12px"></div>
     </div>
-    <div class="card bloco">
-      <div class="linha-btns" style="justify-content:space-between;margin:0"><h2 style="margin:0">Providências</h2><select id="provResp" style="max-width:280px"></select></div>
-      <p class="pequeno mudo" style="margin:4px 0 10px">Inclua providências pela ficha de cada processo. Os cartões vencidos ficam marcados em vermelho.</p>
-      <div class="quadro" id="quadro"></div>
+    <div class="card" style="padding:18px;margin-top:14px">
+      <h2 style="font-size:20px;margin:0">Possíveis erros na base</h2>
+      <p class="pequeno mudo" style="margin:4px 0 0">Encontrados automaticamente na leitura da planilha. Abra a pasta para conferir e, se for o caso, corrigir.</p>
+      <div id="inconsist" style="margin-top:10px"></div>
     </div>
-    <div class="card bloco">
-      <h2>Discussões e registros recentes</h2>
-      <div class="linha-tempo" id="discussoes"></div>
-    </div>
-  </section>
-
-  <!-- DADOS -->
-  <section class="painel" id="p-dados" hidden>
-    <div class="card bloco">
-      <h2>Atualizar a base</h2>
-      <p class="pequeno mudo" style="margin:0">Ao importar uma nova planilha, os casos são reconhecidos pelo código da pasta: as anotações, verificações, discussões e providências são mantidas, os casos novos são acrescentados e os que deixaram de constar na base são indicados.</p>
-      <div class="zona" id="zona2" style="margin-top:10px"><b>Arraste a nova planilha aqui</b><span class="pequeno mudo">ou clique para escolher</span></div>
-      <p class="pequeno" id="estadoImport" style="margin:8px 0 0"></p>
-      <h3 style="font-size:16px;margin:16px 0 4px">Histórico de importações</h3>
-      <div id="historico"></div>
-    </div>
-    <div class="card bloco">
-      <h2>Configurações</h2>
-      <div class="grade g4" style="margin-top:8px">
-        <label class="campo" style="grid-column:span 2">Seu nome (autor das anotações)<input type="text" id="cfgAutor" autocomplete="off"></label>
-        <label class="campo" style="grid-column:span 2">Grupo econômico dos processos de contravenção penal<input type="text" id="cfgGrupo" autocomplete="off"></label>
-        <label class="campo">Estratégicos: verificar a cada (dias)<input type="number" id="cfgEst" min="1" max="365"></label>
-        <label class="campo">Réu preso: verificar a cada (dias)<input type="number" id="cfgPreso" min="1" max="365"></label>
-        <label class="campo">Importantes: verificar a cada (dias)<input type="number" id="cfgImp" min="1" max="365"></label>
-        <label class="campo">Físicos e sem CNJ: verificar a cada (dias)<input type="number" id="cfgFis" min="1" max="365"></label>
-        <label class="campo">Sem movimentação no ADVWin há mais de (dias)<input type="number" id="cfgParado" min="15" max="999"></label>
-      </div>
-    </div>
-    <div class="card bloco">
-      <h2>Cópia de segurança</h2>
-      <p class="pequeno mudo" style="margin:0">Os dados ficam neste navegador. Para levá-los a outro computador ou guardar uma cópia, exporte o arquivo de segurança, protegido por uma senha que você escolhe; para recuperar, importe o arquivo com a mesma senha. A cópia contém dados de clientes: guarde-a em local seguro.</p>
-      <div class="linha-btns" style="margin-top:10px"><button type="button" class="btn sec" id="btBackup">Exportar cópia de segurança</button><button type="button" class="btn sec" id="btRestaurar">Restaurar cópia de segurança</button><input type="file" id="arqBackup" accept=".hubcarteira,.json" hidden><button type="button" class="btn sec" id="btApagar">Apagar os dados deste navegador</button></div>
-      <p class="pequeno" id="estadoBackup" style="margin:8px 0 0"></p>
-    </div>
+    <details class="card" style="padding:18px;margin-top:14px"><summary style="cursor:pointer"><b>Concluídas</b> <span class="pequeno mudo" id="contConcl"></span></summary><div id="altConcl" style="margin-top:12px"></div></details>
   </section>
 </main>
 
 <div class="veu" id="veu" hidden></div>
-<aside class="gaveta" id="gaveta" hidden aria-label="Ficha do processo"></aside>
+<aside class="gaveta" id="gaveta" hidden aria-label="Ficha"></aside>
 
 <footer class="rodape">
   <div class="wrap"><b>TPC ADVOGADOS</b> · HUB. Base do ADVWin lida no navegador; dados guardados somente neste computador, cifrados.</div>
@@ -274,6 +251,8 @@
 <script src="../vendor/jszip/jszip.min.js"></script>
 <script src="../assets/hub.js"></script>
 <script src="../assets/peca.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.27.0/lib/msal-browser.min.js"></script>
+<script src="../relatorio/envio.js"></script>
 <script src="app.js"></script>
 </body>
 </html>
