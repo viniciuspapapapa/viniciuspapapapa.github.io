@@ -144,6 +144,11 @@ _hub/  (publicada cifrada em hub/)
     app.js                    Rede de empresas e sócios: índice cifrado da base de sócios da Receita (release
                               bases-socios, fluxo bases-socios.yml, lido pelo sherlock-tpc em /socios/parte), BrasilAPI,
                               grafo em SVG e relatório Word
+  carteira/
+    app.js                    Gestão da carteira: planilha do ADVWin lida no navegador, base e anotações (verificações,
+                              discussões, providências) cifradas com a chave do HUB no IndexedDB deste computador,
+                              painel com filtros cruzados, relatório Word e cópia de segurança protegida por senha.
+                              Nenhum dado de cliente é gravado no repositório.
   rtc/
     nucleo.js                 Reforma tributária: tabelas oficiais da Calculadora de Tributos da Receita (rtc.json.gz no
                               ramo bases-publicas, gerado por _ferramentas/rtc/exportar.py no fluxo bases-publicas.yml),
