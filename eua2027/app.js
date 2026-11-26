@@ -151,12 +151,16 @@ function carregar() {
   let s = {};
   try { s = JSON.parse(localStorage.getItem(K_ESTADO) || '{}'); } catch { s = {}; }
   s.sync ||= {};
-  for (const c of ['gastos', 'check', 'hoteis', 'pix', 'conf', 'voos', 'votos']) s.sync[c] ||= {};
+  for (const c of ['gastos', 'check', 'hoteis', 'pix', 'conf', 'voos', 'votos', 'arquivos']) s.sync[c] ||= {};
+  s.pendUp ||= [];
   s.cambio ||= 5.5;
   s.ui ||= {};
   return s;
 }
-function salvar() { try { localStorage.setItem(K_ESTADO, JSON.stringify(S)); } catch { toast('Não foi possível salvar neste aparelho.'); } }
+function salvar(semSync) {
+  try { localStorage.setItem(K_ESTADO, JSON.stringify(S)); } catch { toast('Não foi possível salvar neste aparelho.'); }
+  if (!semSync) agendarSync();
+}
 const conf = (k, padrao) => S.sync.conf[k]?.v ?? padrao;
 function setConf(k, v) { S.sync.conf[k] = { v, ts: Date.now(), por: S.eu || '' }; salvar(); }
 const rotaAtual = () => conf('rota', 'A');
@@ -192,8 +196,135 @@ const idb = {
   get(id) { return this.tx('readonly', (st) => st.get(id)); },
   all() { return this.tx('readonly', (st) => st.getAll()); },
 };
-let ARQ = []; // metadados dos arquivos locais
-async function recarregarArquivos() { try { ARQ = (await idb.all()).map(({ blob, ...m }) => m).sort((a, b) => b.criado - a.criado); } catch { ARQ = []; } }
+let LOCAIS = new Set(); // arquivos cujo conteúdo já está neste aparelho
+async function recarregarArquivos() { try { LOCAIS = new Set((await idb.all()).map((a) => a.id)); } catch { LOCAIS = new Set(); } }
+const arquivos = (kind, ref) => Object.values(S.sync.arquivos).filter((a) => !a.del && a.kind === kind && (ref === undefined || a.ref === ref)).sort((a, b) => (b.criado || 0) - (a.criado || 0));
+// ------------------------------------------------------------------ sincronização automática (servidor Cloudflare)
+// Cada registro (gasto, tarefa, voto, reserva…) vai cifrado com a chave do grupo; o servidor só compara o ts
+// e guarda o mais novo. A cada mudança local e a cada 15 s com o app aberto, o app baixa o que é novo e envia
+// o que só ele tem. Se uma gravação se perder numa colisão, a próxima rodada reenvia (autocorreção).
+const SYNC = { url: '', token: '', status: 'off', ultimo: 0, rodando: false, denovo: false, pend: false, t: null, timer: null };
+let SRV = null;
+const autoSync = () => SYNC.status === 'ok';
+const aviso = () => (autoSync() || SYNC.status === 'offline' ? '' : ' Envie ao grupo pela aba Gastos.');
+function agendarSync() { if (!SYNC.url) return; clearTimeout(SYNC.t); SYNC.t = setTimeout(sincronizar, 800); }
+async function iniciarSync() {
+  SYNC.url = String(D.sincronizacao?.url || '').replace(/\/+$/, '');
+  if (!SYNC.url || !CHAVE) return;
+  const raw = new Uint8Array(await crypto.subtle.exportKey('raw', CHAVE));
+  const h = new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode('eua27-sync:' + b64.de(raw))));
+  SYNC.token = [...h].map((b) => b.toString(16).padStart(2, '0')).join('');
+  SYNC.status = 'conectando'; atualizarIndicador();
+  await sincronizar();
+  clearInterval(SYNC.timer);
+  SYNC.timer = setInterval(() => { if (document.visibilityState === 'visible') sincronizar(); }, 15000);
+}
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && SYNC.token) sincronizar(); });
+window.addEventListener('online', () => { if (SYNC.token) sincronizar(); });
+async function pedir(caminho, opc = {}) {
+  const r = await fetch(SYNC.url + caminho, { ...opc, cache: 'no-store', headers: { 'x-app-token': SYNC.token, ...(opc.headers || {}) } });
+  if (!r.ok) throw new Error('HTTP ' + r.status);
+  return r;
+}
+const cifrarReg = async (v) => b64.de(await lacrar(new TextEncoder().encode(JSON.stringify(v))));
+const decifrarReg = async (d) => JSON.parse(new TextDecoder().decode(await deslacrar(b64.para(d))));
+async function adotar(srv) {
+  let n = 0;
+  for (const [c, regs] of Object.entries(srv?.col || {})) {
+    S.sync[c] ||= {};
+    for (const [k, r] of Object.entries(regs || {})) {
+      const meu = S.sync[c][k];
+      if (!meu || r.ts > (meu.ts || 0)) { try { S.sync[c][k] = await decifrarReg(r.d); n++; } catch { /* registro de outra chave */ } }
+    }
+  }
+  return n;
+}
+async function diferenca(srv) {
+  const out = {}; let n = 0;
+  for (const [c, regs] of Object.entries(S.sync)) {
+    for (const [k, v] of Object.entries(regs || {})) {
+      const s = srv?.col?.[c]?.[k];
+      if (!s || (v.ts || 0) > s.ts) { (out[c] ||= {})[k] = { ts: v.ts || 0, d: await cifrarReg(v) }; n++; }
+    }
+  }
+  return n ? out : null;
+}
+async function sincronizar() {
+  if (!SYNC.url || !SYNC.token) return;
+  if (SYNC.rodando) { SYNC.denovo = true; return; }
+  SYNC.rodando = true;
+  let novos = 0;
+  try {
+    const r = await (await pedir('/estado' + (SRV ? '?rev=' + SRV.rev : ''))).json();
+    if (!r.igual) SRV = r;
+    novos += await adotar(SRV);
+    await enviarArquivos();
+    const d = await diferenca(SRV);
+    if (d) { SRV = await (await pedir('/estado', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ col: d }) })).json(); novos += await adotar(SRV); }
+    SYNC.status = 'ok'; SYNC.ultimo = Date.now();
+  } catch {
+    SYNC.status = SYNC.status === 'ok' || SYNC.status === 'offline' ? 'offline' : 'indisponivel';
+  } finally {
+    SYNC.rodando = false;
+    if (novos) { salvar(true); atualizarTela(); } else atualizarIndicador();
+    if (SYNC.denovo) { SYNC.denovo = false; setTimeout(sincronizar, 300); }
+  }
+}
+function atualizarTela() {
+  const digitando = document.activeElement && /INPUT|TEXTAREA/.test(document.activeElement.tagName);
+  if ($('.sheet') || digitando) { SYNC.pend = true; atualizarIndicador(); return; }
+  const y = window.scrollY; render(); window.scrollTo(0, y);
+}
+function pillSync() {
+  const hora = SYNC.ultimo ? new Date(SYNC.ultimo).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : '';
+  return {
+    ok: `<span class="tag ok">${ic('check', 'sm')}Sincronizado com o grupo às ${hora}</span>`,
+    conectando: `<span class="tag">${ic('sync', 'sm')}Conectando ao grupo…</span>`,
+    offline: `<span class="tag warn">${ic('alert', 'sm')}Sem conexão: as mudanças vão quando a internet voltar</span>`,
+    indisponivel: `<span class="tag warn">${ic('alert', 'sm')}Sincronização automática indisponível: use o link</span>`,
+  }[SYNC.status] || '';
+}
+function atualizarIndicador() { $$('.syncpill').forEach((el) => { el.innerHTML = pillSync(); }); }
+
+// Arquivos anexados: o conteúdo vai cifrado para o servidor; os metadados viajam na coleção "arquivos".
+async function enviarArquivos() {
+  for (const id of [...(S.pendUp || [])]) {
+    const meta = S.sync.arquivos[id];
+    const loc = await idb.get(id).catch(() => null);
+    if (!meta || meta.del || !loc) { S.pendUp = S.pendUp.filter((x) => x !== id); continue; }
+    const c = await lacrar(new Uint8Array(await loc.blob.arrayBuffer()));
+    await pedir('/arquivo/' + id, { method: 'PUT', body: c });
+    S.sync.arquivos[id] = { ...meta, remoto: true, ts: Date.now() };
+    S.pendUp = S.pendUp.filter((x) => x !== id);
+    salvar(true);
+  }
+}
+async function obterBlob(id) {
+  const loc = await idb.get(id).catch(() => null);
+  if (loc) return loc;
+  const meta = S.sync.arquivos[id];
+  if (!meta) return null;
+  if (!meta.remoto || !SYNC.token) { toast(`Ainda não enviado pelo aparelho de ${pessoa(meta.pessoa)?.curto || 'quem anexou'}.`); return null; }
+  toast('Baixando ' + meta.titulo + '…');
+  try {
+    const bytes = await deslacrar(new Uint8Array(await (await pedir('/arquivo/' + id)).arrayBuffer()));
+    const reg = { ...meta, blob: new Blob([bytes], { type: meta.tipo }) };
+    await idb.put(reg); LOCAIS.add(id);
+    return reg;
+  } catch { toast('Não foi possível baixar. Verifique a conexão.'); return null; }
+}
+async function migrarArquivos() {
+  try {
+    for (const a of await idb.all()) {
+      if (S.sync.arquivos[a.id]) continue;
+      const { blob, ...m } = a;
+      S.sync.arquivos[a.id] = { ...m, remoto: false, ts: a.criado || Date.now() };
+      if (!S.pendUp.includes(a.id)) S.pendUp.push(a.id);
+    }
+    salvar();
+  } catch { /* sem IndexedDB */ }
+}
+
 
 // ------------------------------------------------------------------ interface básica
 function toast(msg) {
@@ -221,7 +352,7 @@ function fecharSheet(imediato) {
   document.body.style.overflow = '';
   if (imediato) { sh.remove(); sc?.remove(); return; }
   sh.classList.remove('on'); sc?.classList.remove('on');
-  setTimeout(() => { sh.remove(); sc?.remove(); }, 220);
+  setTimeout(() => { sh.remove(); sc?.remove(); if (SYNC.pend && !$('.sheet')) { SYNC.pend = false; atualizarTela(); } }, 220);
 }
 document.addEventListener('keydown', (e) => { if (e.key === 'Escape') fecharSheet(); });
 
@@ -308,7 +439,7 @@ function iniciar(dados) {
   for (const g of D.gastosIniciais || []) if (!S.sync.gastos[g.id]) S.sync.gastos[g.id] = { ...g, ts: 1 };
   salvar();
   document.body.style.paddingBottom = '';
-  recarregarArquivos().then(() => { if (/viagem/.test(location.hash)) render(); });
+  recarregarArquivos().then(migrarArquivos).then(() => { if (/viagem/.test(location.hash)) render(); iniciarSync(); });
   aplicarTema();
   if (location.hash.startsWith('#s=')) { importarHash(location.hash.slice(3)); history.replaceState(null, '', location.pathname + '#/gastos'); }
   render();
@@ -586,9 +717,10 @@ function vGastos() {
     <div class="kpi"><span class="xs">${eu ? 'Seu saldo' : 'Quem é você?'}</span>${eu ? `<b class="${eu.saldo >= 0 ? 'amt pos' : 'amt neg'}" style="text-align:left">${eu.saldo >= 0 ? '+' : '−'}${usd(Math.abs(eu.saldo)).replace('US$ ', 'US$ ')}</b><span class="small mute">${eu.saldo >= 0 ? 'a receber' : 'a pagar'}</span>` : `<button class="btn sm soft" data-a="escolherEu" style="margin-top:6px">Escolher</button>`}</div>
   </div>
 
+  <div class="syncpill" style="margin-top:12px">${pillSync()}</div>
   <div class="btnrow">
-    <button class="btn" data-a="sincronizar">${ic('share', 'sm')}Enviar ao grupo</button>
-    <button class="btn" data-a="importar">${ic('sync', 'sm')}Importar</button>
+    ${autoSync() ? `<button class="btn" data-a="syncAgora">${ic('sync', 'sm')}Atualizar agora</button>` : `<button class="btn" data-a="sincronizar">${ic('share', 'sm')}Enviar ao grupo</button>
+    <button class="btn" data-a="importar">${ic('sync', 'sm')}Importar</button>`}
     <button class="btn" data-a="ferramentas">${ic('dice', 'sm')}Ferramentas</button>
   </div>
 
@@ -655,7 +787,7 @@ function formGasto(g) {
     const pagou = sh.querySelector('[data-g="pagou"] [aria-pressed="true"]')?.dataset.id;
     const cat = sh.querySelector('[data-g="cat"] [aria-pressed="true"]')?.dataset.id || 'outros';
     S.sync.gastos[g.id] = { ...g, desc: String(f.get('desc')).trim(), valor, moeda, data: f.get('data'), pagou, cat, pesos: pes, nota: String(f.get('nota') || '').trim(), cambio: moeda === 'BRL' ? (g.cambio || S.cambio) : undefined, ts: Date.now(), por: S.eu || '' };
-    salvar(); fecharSheet(); render(); toast(novo ? 'Gasto lançado. Lembre de enviar ao grupo.' : 'Gasto atualizado.');
+    salvar(); fecharSheet(); render(); toast((novo ? 'Gasto lançado.' : 'Gasto atualizado.') + (novo ? aviso() : ''));
     navigator.vibrate?.(15);
   });
 }
@@ -690,18 +822,20 @@ function linhaDoc(d) {
 }
 function linhaArq(a) {
   const kind = { hotel: 'Hotel', voo: 'Passagem', doc: 'Documento' }[a.kind] || 'Arquivo';
-  return `<div class="li"><span class="ic">${ic(a.tipo?.startsWith('image') ? 'img' : 'file')}</span><div class="grow"><h3 style="font-size:15px">${esc(a.titulo)}</h3><p class="xs mute">${kind}${a.pessoa ? ' · ' + esc(pessoa(a.pessoa)?.curto || '') : ''} · ${tam(a.tamanho || 0)} · neste aparelho</p></div><button class="iconbtn" data-a="abrirArq" data-id="${a.id}" aria-label="Abrir">${ic('down')}</button><button class="iconbtn" data-a="compartilharArq" data-id="${a.id}" aria-label="Compartilhar">${ic('share')}</button></div>`;
+  const quem = pessoa(a.pessoa)?.curto || 'alguém';
+  const st = a.remoto ? 'disponível para o grupo' : LOCAIS.has(a.id) ? (SYNC.url ? 'enviando ao grupo' : 'só neste aparelho') : `aguardando envio de ${quem}`;
+  return `<div class="li"><span class="ic">${ic(a.tipo?.startsWith('image') ? 'img' : 'file')}</span><div class="grow"><h3 style="font-size:15px">${esc(a.titulo)}</h3><p class="xs mute">${kind}${a.pessoa ? ' · ' + esc(quem) : ''} · ${tam(a.tamanho || 0)} · ${esc(st)}</p></div><button class="iconbtn" data-a="abrirArq" data-id="${a.id}" aria-label="Abrir">${ic('down')}</button><button class="iconbtn" data-a="compartilharArq" data-id="${a.id}" aria-label="Compartilhar">${ic('share')}</button></div>`;
 }
 function vDocs() {
   const mot = D.docs.filter((d) => d.cat === 'motorhome');
   const voo = D.docs.filter((d) => d.cat === 'voo');
-  const meus = ARQ.filter((a) => a.kind === 'doc');
+  const meus = arquivos('doc');
   return `
   <h2 class="sec" style="margin-top:8px">Motorhome</h2><div class="card" style="padding:4px 16px">${mot.map(linhaDoc).join('')}</div>
   <h2 class="sec">Passagens enviadas</h2><div class="card" style="padding:4px 16px">${voo.map(linhaDoc).join('')}</div>
-  <h2 class="sec">Arquivos deste aparelho <button class="link" data-a="upload" data-kind="doc" style="font-size:14px;font-weight:700;color:var(--acc-text)">${ic('up', 'sm')} Adicionar</button></h2>
+  <h2 class="sec">Arquivos do grupo <button class="link" data-a="upload" data-kind="doc" style="font-size:14px;font-weight:700;color:var(--acc-text)">${ic('up', 'sm')} Adicionar</button></h2>
   ${meus.length ? `<div class="card" style="padding:4px 16px">${meus.map(linhaArq).join('')}</div>` : `<div class="card empty">${ic('up')}<p>Seguro-viagem, vistos, ingressos: guarde aqui para abrir mesmo sem internet.</p><button class="btn soft" data-a="upload" data-kind="doc" style="margin-top:12px">${ic('up', 'sm')}Adicionar arquivo</button></div>`}
-  <a class="card row" href="${D.drive}" target="_blank" rel="noopener" style="margin-top:16px"><span class="ic" style="width:44px;height:44px;border-radius:14px;display:grid;place-items:center;background:var(--acc-soft);color:var(--acc-text)">${ic('folder')}</span><div class="grow"><h3>Pasta compartilhada no Drive</h3><p class="small mute">Os arquivos adicionados aqui ficam só neste celular. Para todos verem, enviem também para a pasta.</p></div>${ic('ext')}</a>`;
+  <a class="card row" href="${D.drive}" target="_blank" rel="noopener" style="margin-top:16px"><span class="ic" style="width:44px;height:44px;border-radius:14px;display:grid;place-items:center;background:var(--acc-soft);color:var(--acc-text)">${ic('folder')}</span><div class="grow"><h3>Pasta compartilhada no Drive</h3><p class="small mute">Cópia de segurança dos documentos e comprovantes do grupo.</p></div>${ic('ext')}</a>`;
 }
 
 function cardVoo(v) {
@@ -723,7 +857,7 @@ function cardVoo(v) {
 function vVoos() {
   const extras = Object.values(S.sync.voos).filter((v) => !v.del).map((v) => ({ ...v, manual: true }));
   const todos = [...D.voos, ...extras];
-  const meus = ARQ.filter((a) => a.kind === 'voo');
+  const meus = arquivos('voo');
   return D.pessoas.map((p) => {
     const ida = todos.filter((v) => v.pessoas.includes(p.id) && v.grupo === 'ida').sort((a, b) => a.saida.localeCompare(b.saida));
     const volta = todos.filter((v) => v.pessoas.includes(p.id) && v.grupo === 'volta').sort((a, b) => a.saida.localeCompare(b.saida));
@@ -737,7 +871,7 @@ function vVoos() {
       <p class="eyebrow" style="margin:16px 0 8px">Volta</p>${volta.map(cardVoo).join('')}${pVolta}${vazio('volta', volta, pVolta)}
     </section>`;
   }).join('') + `
-  <h2 class="sec">Bilhetes deste aparelho <button class="link" data-a="upload" data-kind="voo" style="font-size:14px;font-weight:700;color:var(--acc-text)">${ic('up', 'sm')} Adicionar</button></h2>
+  <h2 class="sec">Bilhetes anexados <button class="link" data-a="upload" data-kind="voo" style="font-size:14px;font-weight:700;color:var(--acc-text)">${ic('up', 'sm')} Adicionar</button></h2>
   ${meus.length ? `<div class="card" style="padding:4px 16px">${meus.map(linhaArq).join('')}</div>` : `<div class="card empty">${ic('ticket')}<p>Salve aqui o cartão de embarque e o e-ticket de cada um.</p></div>`}
   <div class="btnrow"><button class="btn" data-a="novoVoo">${ic('plus', 'sm')}Cadastrar outro voo</button></div>`;
 }
@@ -762,7 +896,7 @@ function formVoo(pid, grupoIni = 'volta') {
       if (!pessoas.length) { toast('Escolha ao menos um passageiro.'); return; }
       const id = 'v-' + uid();
       S.sync.voos[id] = { id, grupo, pessoas, cia: f.get('cia'), numero: String(f.get('numero')).toUpperCase(), de: String(f.get('de')).toUpperCase(), para: String(f.get('para')).toUpperCase(), saida: f.get('saida'), chegada: f.get('chegada') || '', localizador: String(f.get('localizador') || '').toUpperCase(), obs: f.get('obs') || '', ts: Date.now(), por: S.eu || '' };
-      salvar(); fecharSheet(); render(); toast('Voo salvo. Envie ao grupo pela aba Gastos.');
+      salvar(); fecharSheet(); render(); toast('Voo salvo.' + aviso());
     });
   });
 }
@@ -771,7 +905,7 @@ function vHoteis() {
   return D.hoteis.map((h) => {
     const r = S.sync.hoteis[h.id];
     const reservado = r && !r.del && r.nome;
-    const comp = ARQ.filter((a) => a.kind === 'hotel' && a.ref === h.id);
+    const comp = arquivos('hotel', h.id);
     const noites = diasEntre(h.checkin, h.checkout);
     return `<section style="margin-top:8px;margin-bottom:28px">
       <div class="between"><div><p class="eyebrow">${semana(h.checkin)} ${ddmm(h.checkin)} → ${semana(h.checkout)} ${ddmm(h.checkout)} · ${noites} ${noites === 1 ? 'noite' : 'noites'}</p><h2 style="font-size:20px;font-weight:800">${esc(h.titulo)}</h2></div>${avs(h.hospedes, 'xs')}</div>
@@ -781,7 +915,7 @@ function vHoteis() {
         : `<div class="row top"><span class="tag warn">${ic('alert', 'sm')}A reservar</span></div><p class="small" style="margin-top:8px;color:var(--ink2)">${esc(h.nota)}</p><div class="acts"><button class="btn sm primary" data-a="reservaHotel" data-id="${h.id}">${ic('check', 'sm')}Registrar reserva</button></div>`}
         <div class="divider"></div>
         <div class="between"><h3 style="font-size:15px">Comprovantes</h3><button class="btn sm soft" data-a="upload" data-kind="hotel" data-ref="${h.id}">${ic('up', 'sm')}Anexar</button></div>
-        ${comp.length ? comp.map(linhaArq).join('') : '<p class="xs mute" style="margin-top:6px">PDF ou print da confirmação. Fica salvo neste aparelho.</p>'}
+        ${comp.length ? comp.map(linhaArq).join('') : '<p class="xs mute" style="margin-top:6px">PDF ou print da confirmação. Fica disponível para todos.</p>'}
       </div>
       <p class="eyebrow" style="margin:16px 0 8px">Sugestões com preço real (Booking.com)</p>
       ${h.sugestoes.map((s) => `<article class="card"><div class="between"><h3>${esc(s.nome)}</h3><span class="tag ${s.nota >= 9 ? 'ok' : ''} num">${s.nota.toFixed(1).replace('.', ',')}</span></div><p class="small mute">${'★'.repeat(s.estrelas)} · ${esc(s.destaque)}</p><div class="between" style="margin-top:8px"><b class="num">${esc(s.preco)}</b><span class="xs mute">total no período</span></div><div class="acts"><a class="btn sm primary" href="${s.url}" target="_blank" rel="noopener">${ic('ext', 'sm')}Ver no Booking</a>${btnMapa(s.q)}</div></article>`).join('')}
@@ -802,7 +936,7 @@ function formHotel(id) {
       e.preventDefault(); const f = Object.fromEntries(new FormData(e.target));
       const sug = h.sugestoes.find((s) => s.nome === f.nome);
       if (!f.endereco && sug) f.endereco = sug.q;
-      S.sync.hoteis[id] = { ...f, ts: Date.now(), por: S.eu || '' }; salvar(); fecharSheet(); render(); toast('Reserva salva. Envie ao grupo pela aba Gastos.');
+      S.sync.hoteis[id] = { ...f, ts: Date.now(), por: S.eu || '' }; salvar(); fecharSheet(); render(); toast('Reserva salva.' + aviso());
     });
   });
 }
@@ -839,6 +973,8 @@ function vInfo() {
     ${c.whatsapp ? `<a class="iconbtn" href="https://wa.me/${c.whatsapp}" target="_blank" rel="noopener" aria-label="WhatsApp">${ic('msg')}</a>` : ''}${c.tel ? `<a class="iconbtn" href="tel:${c.tel}" aria-label="Ligar">${ic('phone')}</a>` : ''}${c.q ? `<a class="iconbtn" href="${mapsIr(c.q)}" target="_blank" rel="noopener" aria-label="Rota">${ic('nav')}</a>` : ''}${c.link ? `<a class="iconbtn" href="${c.link}" target="_blank" rel="noopener" aria-label="Abrir site">${ic('ext')}</a>` : ''}</div>`).join('')}</div>
   <h2 class="sec">Dicas</h2>
   ${D.dicas.map((d) => `<details class="card" style="padding:0"><summary style="padding:16px;cursor:pointer;font-weight:700;list-style:none" class="between">${esc(d.titulo)}${ic('chev', 'sm')}</summary><p class="small" style="padding:0 16px 16px;color:var(--ink2)">${esc(d.texto)}</p></details>`).join('')}
+  <h2 class="sec">Sincronização</h2>
+  <div class="card"><div class="syncpill">${pillSync() || '<span class="tag">Desligada</span>'}</div><p class="small mute" style="margin-top:8px">Gastos, checklist, reservas, voos cadastrados, votos, roteiro escolhido e arquivos anexados chegam sozinhos a todos os celulares e computadores do grupo.</p><div class="btnrow"><button class="btn sm" data-a="syncAgora">${ic('sync', 'sm')}Atualizar agora</button></div></div>
   <h2 class="sec">Este aparelho</h2>
   <div class="card" style="padding:4px 16px">
     <button class="li btnlike" data-a="escolherEu"><span class="ic">${S.eu ? av(S.eu, 'sm') : ic('users')}</span><div class="grow"><h3 style="font-size:15px">Quem é você</h3><p class="xs mute">${S.eu ? esc(pessoa(S.eu).nome) : 'Não escolhido'}</p></div>${ic('chev')}</button>
@@ -854,14 +990,15 @@ depoisRender.viagem = (sub) => {
 };
 
 // ------------------------------------------------------------------ arquivos
-async function abrirBlob(blob, nome) {
+async function abrirBlob(blob, nome, idArq) {
   const url = URL.createObjectURL(blob);
+  const apagar = idArq ? `<button class="btn danger" data-a="apagarArq" data-id="${idArq}">${ic('trash', 'sm')}Apagar</button>` : '';
   if (blob.type.startsWith('image/')) {
-    abrirSheet(nome, `<img src="${url}" alt="${esc(nome)}" style="border-radius:16px;width:100%;height:auto"><div class="btnrow"><a class="btn primary" href="${url}" download="${esc(nome)}">${ic('down', 'sm')}Baixar</a><button class="btn" data-a="shareBlob">${ic('share', 'sm')}Compartilhar</button></div>`, (sh) => {
+    abrirSheet(nome, `<img src="${url}" alt="${esc(nome)}" style="border-radius:16px;width:100%;height:auto"><div class="btnrow"><a class="btn primary" href="${url}" download="${esc(nome)}">${ic('down', 'sm')}Baixar</a><button class="btn" data-a="shareBlob">${ic('share', 'sm')}Compartilhar</button>${apagar}</div>`, (sh) => {
       sh.querySelector('[data-a="shareBlob"]').addEventListener('click', (e) => { e.stopPropagation(); compartilharBlob(blob, nome); });
     });
   } else {
-    abrirSheet(nome, `<p class="small mute">${tam(blob.size)} · PDF</p><div class="btnrow"><a class="btn primary" href="${url}" target="_blank" rel="noopener">${ic('ext', 'sm')}Abrir</a><a class="btn" href="${url}" download="${esc(nome)}">${ic('down', 'sm')}Baixar</a><button class="btn" data-a="shareBlob">${ic('share', 'sm')}Compartilhar</button></div>`, (sh) => {
+    abrirSheet(nome, `<p class="small mute">${tam(blob.size)} · PDF</p><div class="btnrow"><a class="btn primary" href="${url}" target="_blank" rel="noopener">${ic('ext', 'sm')}Abrir</a><a class="btn" href="${url}" download="${esc(nome)}">${ic('down', 'sm')}Baixar</a><button class="btn" data-a="shareBlob">${ic('share', 'sm')}Compartilhar</button>${apagar}</div>`, (sh) => {
       sh.querySelector('[data-a="shareBlob"]').addEventListener('click', (e) => { e.stopPropagation(); compartilharBlob(blob, nome); });
     });
   }
@@ -883,10 +1020,17 @@ async function abrirDoc(id) {
 function upload(kind, ref) {
   const inp = document.createElement('input'); inp.type = 'file'; inp.accept = 'image/*,application/pdf'; inp.multiple = true;
   inp.onchange = async () => {
+    let n = 0;
     for (const file of inp.files) {
-      await idb.put({ id: uid(), kind, ref: ref || '', titulo: file.name.replace(/\.[^.]+$/, ''), nome: file.name, tipo: file.type, tamanho: file.size, pessoa: S.eu || '', criado: Date.now(), blob: file });
+      if (file.size > 15 * 1024 * 1024) { toast(file.name + ' passa de 15 MB e não foi anexado.'); continue; }
+      const meta = { id: uid(), kind, ref: ref || '', titulo: file.name.replace(/\.[^.]+$/, ''), nome: file.name, tipo: file.type || 'application/octet-stream', tamanho: file.size, pessoa: S.eu || '', criado: Date.now() };
+      await idb.put({ ...meta, blob: file });
+      S.sync.arquivos[meta.id] = { ...meta, remoto: false, ts: Date.now() };
+      S.pendUp.push(meta.id); n++;
     }
-    await recarregarArquivos(); render(); toast(inp.files.length > 1 ? 'Arquivos salvos neste aparelho.' : 'Arquivo salvo neste aparelho.');
+    if (!n) return;
+    salvar(); await recarregarArquivos(); render();
+    toast(n > 1 ? (SYNC.url ? 'Arquivos salvos e enviados ao grupo.' : 'Arquivos salvos neste aparelho.') : (SYNC.url ? 'Arquivo salvo e enviado ao grupo.' : 'Arquivo salvo neste aparelho.'));
   };
   inp.click();
 }
@@ -912,7 +1056,7 @@ const A = {
       <div style="margin-top:16px">${voos.map(cardVoo).join('') || '<p class="small mute">Sem voos cadastrados.</p>'}</div>`);
   },
   irDia: (t) => document.getElementById('d-' + t.dataset.id)?.scrollIntoView({ behavior: 'smooth', block: 'start' }),
-  usarRota: (t) => { setConf('rota', t.dataset.id); render(); toast('Roteiro ' + t.dataset.id + ' escolhido. Envie ao grupo pela aba Gastos.'); },
+  usarRota: (t) => { setConf('rota', t.dataset.id); render(); toast('Roteiro ' + t.dataset.id + ' escolhido.' + aviso()); },
   fCidade: (t) => { F.cidade = t.dataset.id; render(); },
   fCat: (t) => { F.cat = t.dataset.id; render(); },
   fAnimados: () => { F.animados = !F.animados; render(); },
@@ -1003,12 +1147,21 @@ const A = {
   zerarGastos: () => {
     if (!confirm('Zerar todos os gastos? Os lançamentos e saldos somem para todos depois da sincronização.')) return;
     if (!confirm('Confirma? Esta ação não pode ser desfeita pelo app. Se quiser, baixe o CSV antes.')) return;
-    setConf('gastosDesde', Date.now()); fecharSheet(); render(); toast('Gastos zerados. Envie ao grupo para zerar nos outros celulares.');
+    setConf('gastosDesde', Date.now()); fecharSheet(); render(); toast('Gastos zerados.' + (aviso() ? ' Envie ao grupo para zerar nos outros celulares.' : ' Todos recebem em instantes.'));
   },
   copiar: (t) => copiar(t.dataset.v),
   abrirDoc: (t) => abrirDoc(t.dataset.id),
-  abrirArq: async (t) => { const a = await idb.get(t.dataset.id); if (a) abrirBlob(a.blob, a.nome); },
-  compartilharArq: async (t) => { const a = await idb.get(t.dataset.id); if (a) compartilharBlob(a.blob, a.nome); },
+  abrirArq: async (t) => { const a = await obterBlob(t.dataset.id); if (a) abrirBlob(a.blob, a.nome, t.dataset.id); },
+  apagarArq: async (t) => {
+    if (!confirm('Apagar este arquivo para todos?')) return;
+    const id = t.dataset.id; const meta = S.sync.arquivos[id];
+    S.sync.arquivos[id] = { ...meta, del: true, ts: Date.now() }; S.pendUp = S.pendUp.filter((x) => x !== id);
+    await idb.del(id).catch(() => {}); LOCAIS.delete(id);
+    if (meta?.remoto && SYNC.token) pedir('/arquivo/' + id, { method: 'DELETE' }).catch(() => {});
+    salvar(); fecharSheet(); render(); toast('Arquivo apagado.');
+  },
+  syncAgora: async () => { toast('Atualizando…'); await sincronizar(); if (!SYNC.pend) render(); toast(autoSync() ? 'Tudo em dia com o grupo.' : 'Sem conexão com o servidor agora.'); },
+  compartilharArq: async (t) => { const a = await obterBlob(t.dataset.id); if (a) compartilharBlob(a.blob, a.nome); },
   upload: (t) => upload(t.dataset.kind, t.dataset.ref),
   novoVoo: (t) => formVoo(t.dataset.p, t.dataset.g || 'volta'),
   apagarVoo: (t) => { if (!confirm('Remover este voo?')) return; S.sync.voos[t.dataset.id] = { ...S.sync.voos[t.dataset.id], del: true, ts: Date.now() }; salvar(); render(); },
@@ -1021,7 +1174,7 @@ const A = {
     if (promptInstalar) { promptInstalar.prompt(); promptInstalar = null; return; }
     abrirSheet('Instalar na tela inicial', `<p class="small" style="color:var(--ink2)"><b>iPhone:</b> no Safari, toque em Compartilhar e depois em “Adicionar à Tela de Início”.</p><p class="small" style="color:var(--ink2);margin-top:12px"><b>Android:</b> no Chrome, menu ⋮ e “Instalar app”.</p>`);
   },
-  bloquear: () => { if (!confirm('Esquecer a senha neste aparelho? Os gastos e arquivos salvos aqui continuam guardados.')) return; localStorage.removeItem(K_CHAVE); CHAVE = null; D = null; location.hash = ''; telaBloqueio(); },
+  bloquear: () => { if (!confirm('Esquecer a senha neste aparelho? Os gastos e arquivos salvos aqui continuam guardados.')) return; localStorage.removeItem(K_CHAVE); CHAVE = null; clearInterval(SYNC.timer); SYNC.token = ''; SYNC.status = 'off'; D = null; location.hash = ''; telaBloqueio(); },
 };
 document.addEventListener('click', (e) => {
   const t = e.target.closest('[data-a]');

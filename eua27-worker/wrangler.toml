@@ -1,0 +1,13 @@
+# Alternativa à configuração pelo painel: `npx wrangler deploy` nesta pasta.
+# Antes, crie o KV (`npx wrangler kv namespace create EUA`) e cole o id abaixo,
+# e cadastre o segredo com `npx wrangler secret put SYNC_TOKEN`.
+name = "eua27-sync"
+main = "worker.js"
+compatibility_date = "2026-09-01"
+
+[vars]
+ALLOWED_ORIGIN = "https://viniciuspapapapa.github.io"
+
+[[kv_namespaces]]
+binding = "EUA"
+id = "COLE_AQUI_O_ID_DO_KV"
