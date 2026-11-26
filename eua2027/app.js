@@ -104,6 +104,7 @@ const P = {
   list: '<path d="m3 17 2 2 4-4"/><path d="m3 7 2 2 4-4"/><path d="M13 6h8"/><path d="M13 12h8"/><path d="M13 18h8"/>',
   bulb: '<path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"/><path d="M9 18h6"/><path d="M10 22h4"/>',
   temp: '<path d="M14 4v10.54a4 4 0 1 1-4 0V4a2 2 0 0 1 4 0Z"/>',
+  star: '<polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>',
   shield: '<path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/>',
 };
 const ic = (n, cls = '') => `<svg class="i ${cls}" viewBox="0 0 24 24" aria-hidden="true">${P[n] || ''}</svg>`;
@@ -360,6 +361,7 @@ const avs = (ids, cls = 'sm') => `<span class="avs">${ids.map((i) => av(i, cls))
 const flames = (n) => (n ? `<span class="flames" aria-label="Animação ${n} de 3">${[1, 2, 3].map((i) => `<svg class="i ${i > n ? 'off' : ''}" viewBox="0 0 24 24">${P.flame}</svg>`).join('')}</span>` : '');
 const corFase = (f) => `var(--${f || 'pre'})`;
 const btnIr = (q, txt = 'Ir') => `<a class="btn sm primary" href="${esc(mapsIr(q))}" target="_blank" rel="noopener">${ic('nav', 'sm')}${txt}</a>`;
+const btnGoogle = (q, cls = 'primary') => `<a class="btn sm ${cls}" href="${esc(mapsVer(q))}" target="_blank" rel="noopener">${ic('star', 'sm')}Ver no Google</a>`;
 const btnMapa = (q) => `<a class="btn sm" href="${esc(mapsVer(q))}" target="_blank" rel="noopener">${ic('pin', 'sm')}Mapa</a>`;
 const cab = (eyebrow, titulo, sub = '') => `<div class="pagehead"><div class="grow"><p class="eyebrow">${eyebrow}</p><h1 class="title">${esc(titulo)}</h1>${sub ? `<p class="sub">${sub}</p>` : ''}</div><button class="me" data-a="ajustes" aria-label="Ajustes e contatos">${S.eu ? av(S.eu) : `<span class="iconbtn">${ic('users')}</span>`}</button></div>`;
 const seg = (base, atual, opcoes) => `<div class="seg" role="tablist">${opcoes.map(([k, n]) => `<button role="tab" aria-selected="${atual === k}" data-a="go" data-h="#/${base}/${k}">${n}</button>`).join('')}</div>`;
@@ -734,13 +736,13 @@ function cardLugar(x) {
     <button class="top" data-a="lugar" data-id="${esc(x.id)}" style="width:100%;text-align:left"><span class="ic">${ic(ICAT[x.cat] || 'pin')}</span>
       <span class="grow"><h3>${esc(x.nome)}</h3><span class="meta"><span class="tag">${esc(nomeCat(x.cat))}</span>${F.cidade === 'todas' && cid ? `<span class="tag">${esc(cid)}</span>` : ''}${x.custom ? `<span class="tag acc">por ${esc(nome(x.por))}</span>` : ''}${x.preco ? `<span class="tag num">${esc(x.preco)}</span>` : ''}${flames(x.energia)}</span>
       ${x.desc ? `<p class="clamp">${esc(x.desc)}</p>` : ''}</span></button>
-    <div class="acts" style="align-items:center">${x.q ? btnIr(x.q) : ''}<button class="mini vote" aria-pressed="${!!meu}" data-a="votar" data-id="${esc(x.id)}">${ic('heart')}Quero ir</button><button class="mini" data-a="lugar" data-id="${esc(x.id)}" aria-label="Comentários">${ic('chat')}${nc || ''}</button>${v.length ? avs(v, 'xs') : ''}</div>
+    <div class="acts" style="align-items:center">${x.q ? btnGoogle(x.q) : ''}<button class="mini vote" aria-pressed="${!!meu}" data-a="votar" data-id="${esc(x.id)}">${ic('heart')}Quero ir</button><button class="mini" data-a="lugar" data-id="${esc(x.id)}" aria-label="Comentários">${ic('chat')}${nc || ''}</button>${v.length ? avs(v, 'xs') : ''}</div>
   </article>`;
 }
 function vLugares() {
   const cidades = [{ id: 'todas', nome: 'Todas as cidades' }, ...D.cidades];
   const cats = [['todas', 'Tudo'], ['fav', 'Favoritos'], ['grupo', 'Do grupo'], ...D.categorias.map((c) => [c.id, c.nome]), ['ideias', 'Ideias de roteiro']];
-  return cab(`${lugares().length} lugares`, 'Lugares', 'Toque em “Ir” para abrir o GPS. Adicione o que quiser e comente.') + `
+  return cab(`${lugares().length} lugares`, 'Lugares', '“Ver no Google” abre fotos, avaliações e horários. Adicione o que quiser e comente.') + `
   <label class="search">${ic('search')}<span class="sr">Buscar</span><input id="busca" type="search" placeholder="Buscar: rooftop, pizza, trilha…" value="${esc(F.q)}" autocomplete="off"></label>
   <div class="chips" style="margin-top:12px">${cats.map(([id, n]) => `<button class="chip" aria-pressed="${F.cat === id}" data-a="fCat" data-id="${id}">${id === 'fav' ? ic('heart', 'sm') : id === 'grupo' ? ic('users', 'sm') : ICAT[id] ? ic(ICAT[id], 'sm') : ''}${esc(n)}</button>`).join('')}</div>
   ${F.cat === 'ideias' ? '' : `<div class="chips" style="margin-top:4px">${cidades.map((c) => `<button class="chip" aria-pressed="${F.cidade === c.id}" data-a="fCidade" data-id="${c.id}">${esc(c.nome)}</button>`).join('')}</div>`}
@@ -754,7 +756,7 @@ function listaLugares() {
 function vIdeias() {
   const nomes = { la: 'Los Angeles', estrada: 'Estrada LA → Vegas', lv: 'Las Vegas' };
   return D.alternativas.map((a) => `<article class="card"><span class="tag">${nomes[a.fase]}</span><h3 style="margin-top:6px">${esc(a.titulo)}</h3><p class="small mute">${esc(a.resumo)}</p>
-    <div class="stops">${a.itens.map(([n, q], i) => `<a class="stop" style="--c:var(--acc)" href="${esc(mapsIr(q))}" target="_blank" rel="noopener"><span class="n">${i + 1}</span><span class="grow">${esc(n)}</span>${ic('nav', 'sm')}</a>`).join('')}</div></article>`).join('')
+    <div class="stops">${a.itens.map(([n, q], i) => `<a class="stop" style="--c:var(--acc)" href="${esc(mapsVer(q))}" target="_blank" rel="noopener" aria-label="${esc(n)}: ver no Google"><span class="n">${i + 1}</span><span class="grow">${esc(n)}</span>${ic('star', 'sm')}</a>`).join('')}</div></article>`).join('')
     + `<h2 class="sec">Eventos para checar</h2>` + D.eventos.map((e) => `<a class="card row" href="${esc(e.link)}" target="_blank" rel="noopener"><span class="ic" style="width:40px;height:40px;border-radius:12px;display:grid;place-items:center;background:var(--acc-soft);color:var(--acc-text)">${ic('ticket')}</span><span class="grow"><h3>${esc(e.titulo)}</h3><span class="small mute">${esc(e.quando)}</span></span>${ic('ext', 'sm')}</a>`).join('');
 }
 depoisRender.lugares = () => {
@@ -769,7 +771,7 @@ function detalheLugar(id) {
     ${x.desc ? `<p style="margin-top:12px;color:var(--ink2)">${esc(x.desc)}</p>` : ''}
     ${x.dica ? `<div class="tip">${ic('bulb', 'sm')}<span>${esc(x.dica)}</span></div>` : ''}
     ${x.custom ? `<p class="xs mute" style="margin-top:8px">Adicionado por ${esc(nome(x.por))} ${quando(x.criado)}</p>` : ''}
-    <div class="acts">${x.q ? btnIr(x.q) + btnMapa(x.q) : ''}${x.link ? `<a class="btn sm" href="${esc(x.link)}" target="_blank" rel="noopener">${ic('ext', 'sm')}Site</a>` : ''}<button class="btn sm vote" aria-pressed="${!!meu}" data-a="votar" data-id="${esc(x.id)}">${ic('heart', 'sm')}Quero ir</button>${x.custom ? `<button class="btn sm" data-a="editarLugar" data-id="${esc(x.id)}">${ic('edit', 'sm')}Editar</button>` : ''}</div>
+    <div class="acts">${x.q ? btnGoogle(x.q) : ''}${x.link ? `<a class="btn sm" href="${esc(x.link)}" target="_blank" rel="noopener">${ic('ext', 'sm')}Site</a>` : ''}<button class="btn sm vote" aria-pressed="${!!meu}" data-a="votar" data-id="${esc(x.id)}">${ic('heart', 'sm')}Quero ir</button>${x.custom ? `<button class="btn sm" data-a="editarLugar" data-id="${esc(x.id)}">${ic('edit', 'sm')}Editar</button>` : ''}</div>
     ${v.length ? `<div class="row" style="margin-top:12px;gap:8px">${avs(v, 'xs')}<span class="xs mute">${esc(v.map(nome).join(', '))} ${v.length === 1 ? 'quer' : 'querem'} ir</span></div>` : ''}
     <h3 style="margin-top:24px">Comentários</h3>${blocoComentarios(x.id)}`, montarComentarios);
 }
@@ -782,7 +784,7 @@ function formLugar(id) {
     <label class="f"><span>Nome</span><input class="inp" name="nome" required maxlength="80" value="${esc(x.nome || '')}" placeholder="Ex.: Pizzaria do Joe"></label>
     <div class="f" style="margin-top:14px"><span class="xs mute" style="font-weight:700;display:block;margin-bottom:6px">Tipo</span><div class="pick" data-g="cat">${TIPOS_LUGAR.map(([k, n]) => `<button type="button" class="noav" aria-pressed="${cat === k}" data-id="${k}">${ic(ICAT[k], 'sm')}${n}</button>`).join('')}</div></div>
     <div class="f" style="margin-top:14px"><span class="xs mute" style="font-weight:700;display:block;margin-bottom:6px">Cidade</span><div class="pick" data-g="cidade">${D.cidades.filter((c) => c.id !== 'estrada').map((c) => `<button type="button" class="noav" aria-pressed="${cidade === c.id}" data-id="${c.id}">${esc(c.nome)}</button>`).join('')}</div></div>
-    <label class="f"><span>Endereço ou link do Google Maps (opcional)</span><input class="inp" name="q" value="${esc(x.q || '')}" placeholder="Se deixar vazio, o GPS busca pelo nome"></label>
+    <label class="f"><span>Endereço ou link do Google (opcional)</span><input class="inp" name="q" value="${esc(x.q || '')}" placeholder="Se deixar vazio, o Google busca pelo nome"></label>
     <label class="f"><span>Por que vale a pena (opcional)</span><textarea class="inp" name="desc" maxlength="400">${esc(x.desc || '')}</textarea></label>
     <label class="f"><span>Site ou link de reserva (opcional)</span><input class="inp" name="link" type="url" value="${esc(x.link || '')}" placeholder="https://"></label>
     <button class="btn primary block" style="margin-top:16px">${ic('check')}${id ? 'Salvar' : 'Adicionar para o grupo'}</button>
