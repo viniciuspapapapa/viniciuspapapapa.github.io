@@ -586,6 +586,7 @@ function vInicio() {
 
   <div class="card" style="padding:4px 16px;margin-top:12px">
     <a class="li" href="#/roteiro/reservas"><span class="ic">${ic('ticket')}</span><div class="grow"><h3>Voos e hotéis</h3></div>${ic('chev')}</a>
+    <a class="li" href="#/grupo/querem"><span class="ic">${ic('heart')}</span><div class="grow"><h3>Onde cada um quer ir</h3></div>${ic('chev')}</a>
     <a class="li" href="#/grupo/arquivos"><span class="ic">${ic('folder')}</span><div class="grow"><h3>Arquivos por pessoa</h3></div>${ic('chev')}</a>
     <a class="li" href="#/ajustes"><span class="ic">${ic('phone')}</span><div class="grow"><h3>Contatos, dicas e ajustes</h3></div>${ic('chev')}</a>
   </div>`;
@@ -750,7 +751,7 @@ function vLugares() {
 }
 function listaLugares() {
   const l = filtrarLugares();
-  if (!l.length) return `<div class="empty">${ic('compass')}<p>${F.cat === 'fav' ? 'Marquem “Quero ir” para montar a lista do grupo.' : F.cat === 'grupo' ? 'Nenhum lugar adicionado ainda. Toque em “Adicionar”.' : 'Nada com esses filtros.'}</p></div>`;
+  if (!l.length) return `<div class="empty">${ic('compass')}<p>${F.cat === 'fav' ? 'Marquem “Quero ir” para montar a lista do grupo. A lista por pessoa fica em Grupo › Quero ir.' : F.cat === 'grupo' ? 'Nenhum lugar adicionado ainda. Toque em “Adicionar”.' : 'Nada com esses filtros.'}</p></div>`;
   return l.map(cardLugar).join('');
 }
 function vIdeias() {
@@ -939,9 +940,28 @@ async function importarHash(codigo) {
 // ------------------------------------------------------------------ GRUPO (atualizações e arquivos por pessoa)
 const FG = { quem: 'todos' };
 function vGrupo(sub) {
-  const aba = sub === 'arquivos' ? 'arquivos' : 'atualizacoes';
-  const s = seg('grupo', aba, [['atualizacoes', 'Atualizações'], ['arquivos', 'Arquivos']]);
-  return cab('Quem fez o quê', 'Grupo') + s + (aba === 'arquivos' ? vArquivos() : vAtualizacoes());
+  const aba = ['arquivos', 'querem'].includes(sub) ? sub : 'atualizacoes';
+  const s = seg('grupo', aba, [['atualizacoes', 'Atualizações'], ['querem', 'Quero ir'], ['arquivos', 'Arquivos']]);
+  return cab('Quem fez o quê', 'Grupo') + s + (aba === 'arquivos' ? vArquivos() : aba === 'querem' ? vQuerem() : vAtualizacoes());
+}
+// Desejos do grupo: os lugares marcados com "Quero ir", em comum e por pessoa.
+function vQuerem() {
+  const ordemCid = (c) => { const i = D.cidades.findIndex((x) => x.id === c); return i < 0 ? 99 : i; };
+  const nomeCid = (c) => D.cidades.find((x) => x.id === c)?.nome || '';
+  const votados = lugares().map((l) => ({ l, v: votosDe(l.id) })).filter((x) => x.v.length);
+  const porRoteiro = (a, b) => ordemCid(a.l.cidade) - ordemCid(b.l.cidade) || a.l.nome.localeCompare(b.l.nome);
+  const linha = (x, outros) => `<button class="fl" data-a="lugar" data-id="${esc(x.l.id)}"><span class="ic">${ic(ICAT[x.l.cat] || 'pin')}</span><span class="grow"><b style="display:block;font-size:15px">${esc(x.l.nome)}</b><span class="xs mute">${esc(nomeCat(x.l.cat))} · ${esc(nomeCid(x.l.cidade))}</span></span>${outros.length ? avs(outros, 'xs') : ''}${ic('chev', 'sm')}</button>`;
+  if (!votados.length) return `<div class="card empty" style="margin-top:8px">${ic('heart')}<p>Ninguém marcou “Quero ir” ainda. Em Lugares, toque no coração dos bares, restaurantes e passeios que vocês querem conhecer: eles aparecem aqui, separados por pessoa.</p><a class="btn soft" href="#/lugares" style="margin-top:12px">${ic('compass', 'sm')}Ir para Lugares</a></div>`;
+  const comum = votados.filter((x) => x.v.length >= 2).sort((a, b) => b.v.length - a.v.length || porRoteiro(a, b));
+  const blocoComum = comum.length ? `<div class="person"><span class="iconbtn" style="box-shadow:none;color:var(--acc-text)">${ic('heart')}</span><h2 class="grow">Em comum</h2><span class="tag acc num">${comum.length}</span></div>
+    <div class="card" style="padding:4px 16px">${comum.map((x) => linha(x, x.v)).join('')}</div>` : '';
+  const pessoas = D.pessoas.map((p) => {
+    const meus = votados.filter((x) => x.v.includes(p.id)).sort(porRoteiro);
+    return `<div class="person">${av(p.id)}<h2 class="grow">${esc(p.curto)}</h2><span class="tag num">${meus.length}</span></div>
+    <div class="card" style="padding:4px 16px">${meus.length ? meus.map((x) => linha(x, x.v.filter((i) => i !== p.id))).join('') : `<p class="small mute" style="padding:12px 0">${p.id === S.eu ? 'Você ainda não marcou nenhum lugar.' : 'Nenhum lugar marcado ainda.'}</p>`}</div>`;
+  }).join('');
+  return `<p class="small mute">${votados.length} ${votados.length === 1 ? 'lugar marcado' : 'lugares marcados'} com “Quero ir”. As fotos ao lado mostram quem mais quer ir ao mesmo lugar.</p>${blocoComum}${pessoas}
+    <a class="btn soft block" href="#/lugares" style="margin-top:20px">${ic('compass', 'sm')}Marcar mais lugares</a>`;
 }
 function vAtualizacoes() {
   EVS = eventos();
@@ -958,7 +978,7 @@ function vAtualizacoes() {
     ${html || `<div class="card empty" style="margin-top:16px">${ic('users')}<p>Nenhuma atualização${FG.quem !== 'todos' ? ' de ' + esc(nome(FG.quem)) : ''} ainda.</p></div>`}`;
 }
 depoisRender.grupo = (sub) => {
-  if (sub === 'arquivos') return;
+  if (sub === 'arquivos' || sub === 'querem') return;
   S.ui.visto = Date.now(); salvar(true); atualizarIndicador();
 };
 function linhaDoc(d) {
