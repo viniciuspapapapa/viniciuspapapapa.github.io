@@ -37,3 +37,17 @@ cada mudança, ao voltar para a tela e a cada 15 segundos enquanto está aberto.
 o que cabe com folga no plano gratuito. Arquivos anexados (até 15 MB cada) ficam no mesmo KV, também cifrados.
 
 Enquanto o serviço não estiver no ar, o app continua funcionando com o link “Enviar ao grupo”.
+
+## Atualização: avisos no celular (notificações)
+
+A versão atual de [`worker.js`](worker.js) acrescenta as notificações sem mudar nada do que já existia. Para ativar:
+
+1. No painel do Cloudflare, abra o Worker **`eua27-sync`** e clique em **Edit code**.
+2. Apague o conteúdo, cole o novo `worker.js` inteiro e clique em **Deploy**.
+
+Não há segredo novo para cadastrar: na primeira vez, o próprio serviço gera e guarda no KV as chaves de notificação
+(VAPID). Depois, cada pessoa ativa os avisos no próprio aparelho, em Utilidades › Avisos. No iPhone, isso exige o app
+instalado na tela inicial (iOS 16.4 ou mais recente).
+
+As notificações saem sem conteúdo; o texto (“Rodrigo lançou o gasto…”) fica cifrado em `/push/aviso` e só o aparelho,
+que tem a chave do grupo, consegue lê-lo. Quem fez a alteração não recebe o próprio aviso.

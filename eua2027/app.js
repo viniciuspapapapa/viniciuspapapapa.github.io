@@ -105,6 +105,9 @@ const P = {
   bulb: '<path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"/><path d="M9 18h6"/><path d="M10 22h4"/>',
   temp: '<path d="M14 4v10.54a4 4 0 1 1-4 0V4a2 2 0 0 1 4 0Z"/>',
   star: '<polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>',
+  grid: '<rect width="7" height="7" x="3" y="3" rx="1"/><rect width="7" height="7" x="14" y="3" rx="1"/><rect width="7" height="7" x="14" y="14" rx="1"/><rect width="7" height="7" x="3" y="14" rx="1"/>',
+  bell: '<path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/>',
+  cal: '<rect width="18" height="18" x="3" y="4" rx="2"/><path d="M16 2v4"/><path d="M8 2v4"/><path d="M3 10h18"/>',
   shield: '<path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/>',
 };
 const ic = (n, cls = '') => `<svg class="i ${cls}" viewBox="0 0 24 24" aria-hidden="true">${P[n] || ''}</svg>`;
@@ -179,8 +182,8 @@ const idb = {
   abrir() {
     if (this.db) return Promise.resolve(this.db);
     return new Promise((ok, erro) => {
-      const r = indexedDB.open('eua27', 1);
-      r.onupgradeneeded = () => r.result.createObjectStore('arquivos', { keyPath: 'id' });
+      const r = indexedDB.open('eua27', 2);
+      r.onupgradeneeded = () => { const db = r.result; if (!db.objectStoreNames.contains('arquivos')) db.createObjectStore('arquivos', { keyPath: 'id' }); if (!db.objectStoreNames.contains('cfg')) db.createObjectStore('cfg'); };
       r.onsuccess = () => { this.db = r.result; ok(this.db); };
       r.onerror = () => erro(r.error);
     });
@@ -190,6 +193,10 @@ const idb = {
   del(id) { return this.tx('readwrite', (st) => st.delete(id)); },
   get(id) { return this.tx('readonly', (st) => st.get(id)); },
   all() { return this.tx('readonly', (st) => st.getAll()); },
+};
+const idbCfg = {
+  async put(k, v) { const db = await idb.abrir(); return new Promise((ok, erro) => { const t = db.transaction('cfg', 'readwrite'); t.objectStore('cfg').put(v, k); t.oncomplete = ok; t.onerror = () => erro(t.error); }); },
+  async del(k) { const db = await idb.abrir(); return new Promise((ok, erro) => { const t = db.transaction('cfg', 'readwrite'); t.objectStore('cfg').delete(k); t.oncomplete = ok; t.onerror = () => erro(t.error); }); },
 };
 let LOCAIS = new Set();
 async function recarregarArquivos() { try { LOCAIS = new Set((await idb.all()).map((a) => a.id)); } catch { LOCAIS = new Set(); } }
@@ -261,7 +268,13 @@ async function sincronizar() {
     novos += await adotar(SRV);
     await enviarArquivos();
     const d = await diferenca(SRV);
-    if (d) { SRV = await (await pedir('/estado', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ col: d }) })).json(); novos += await adotar(SRV); }
+    const avisos = [...(S.avisos || [])];
+    if (d || avisos.length) {
+      const corpo = { col: d || {} };
+      if (avisos.length) { corpo.autor = S.eu || ''; corpo.aviso = b64.de(await lacrar(new TextEncoder().encode((avisos.length === 1 ? avisos[0] : `${avisos.length} novidades: ${avisos.join(' · ')}`).slice(0, 600)))); }
+      SRV = await (await pedir('/estado', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(corpo) })).json(); novos += await adotar(SRV);
+      if (avisos.length) { S.avisos = (S.avisos || []).slice(avisos.length); salvar(true); }
+    }
     SYNC.status = 'ok'; SYNC.ultimo = Date.now();
   } catch {
     SYNC.status = SYNC.status === 'ok' || SYNC.status === 'offline' ? 'offline' : 'indisponivel';
@@ -363,7 +376,7 @@ const corFase = (f) => `var(--${f || 'pre'})`;
 const btnIr = (q, txt = 'Ir') => `<a class="btn sm primary" href="${esc(mapsIr(q))}" target="_blank" rel="noopener">${ic('nav', 'sm')}${txt}</a>`;
 const btnGoogle = (q, cls = 'primary') => `<a class="btn sm ${cls}" href="${esc(mapsVer(q))}" target="_blank" rel="noopener">${ic('star', 'sm')}Ver no Google</a>`;
 const btnMapa = (q) => `<a class="btn sm" href="${esc(mapsVer(q))}" target="_blank" rel="noopener">${ic('pin', 'sm')}Mapa</a>`;
-const cab = (eyebrow, titulo, sub = '') => `<div class="pagehead"><div class="grow"><p class="eyebrow">${eyebrow}</p><h1 class="title">${esc(titulo)}</h1>${sub ? `<p class="sub">${sub}</p>` : ''}</div><button class="me" data-a="ajustes" aria-label="Ajustes e contatos">${S.eu ? av(S.eu) : `<span class="iconbtn">${ic('users')}</span>`}</button></div>`;
+const cab = (eyebrow, titulo, sub = '') => `<div class="pagehead"><div class="grow"><p class="eyebrow">${eyebrow}</p><h1 class="title">${esc(titulo)}</h1>${sub ? `<p class="sub">${sub}</p>` : ''}</div><button class="iconbtn" data-a="util" aria-label="Utilidades: listas, agenda, avisos e contatos">${ic('grid')}</button></div>`;
 const seg = (base, atual, opcoes) => `<div class="seg" role="tablist">${opcoes.map(([k, n]) => `<button role="tab" aria-selected="${atual === k}" data-a="go" data-h="#/${base}/${k}">${n}</button>`).join('')}</div>`;
 const tam = (b) => (b > 1048576 ? (b / 1048576).toFixed(1) + ' MB' : Math.max(1, Math.round(b / 1024)) + ' KB');
 
@@ -441,6 +454,8 @@ function eventos() {
     if (k === 'rota') add(v.ts, v.por, 'map', `escolheu o roteiro ${esc(v.v)} do motorhome`, { h: '#/roteiro/motorhome' });
     else if (k === 'gastosDesde') add(v.ts, v.por, 'trash', 'zerou os gastos', { h: '#/gastos' });
     else if (k.startsWith('l:') && v.v) add(v.ts, v.por, v.del ? 'trash' : ICAT[v.v.cat] || 'pin', v.del ? `removeu o lugar ${esc(v.v.nome)}` : `${v.criado && v.ts - v.criado > 5000 ? 'editou' : 'adicionou'} o lugar ${esc(v.v.nome)}`, v.del ? null : { a: 'lugar', id: k });
+    else if (k.startsWith('li:') && v.v && !v.del) { if (v.v.feito) add(v.ts, v.v.porFeito, 'check', `riscou “${esc(v.v.texto)}” em ${esc(nomeLista(v.v.lista))}`, { h: '#/util/listas' }); else add(v.criado || v.ts, v.por, 'list', `adicionou “${esc(v.v.texto)}” em ${esc(nomeLista(v.v.lista))}`, { h: '#/util/listas' }); }
+    else if (k.startsWith('ll:') && v.v && !v.del) add(v.criado || v.ts, v.por, 'list', `criou a lista ${esc(v.v.nome)}`, { h: '#/util/listas' });
     else if (k.startsWith('c:') && v.v && !v.del) add(v.ts, v.por, 'chat', `comentou em ${esc(nomeAlvo(v.v.alvo))}: “${esc(String(v.v.texto).slice(0, 90))}”`, { a: 'comentar', alvo: v.v.alvo });
   }
   return ev.sort((a, b) => b.ts - a.ts);
@@ -496,6 +511,7 @@ function iniciar(dados) {
   D.lugares.forEach((l) => { l.id = slug(l.cidade + '-' + l.nome); });
   if (!D.categorias.some((c) => c.id === 'hotel')) D.categorias.unshift({ id: 'hotel', nome: 'Hotéis' });
   if (S.ui.visto === undefined) S.ui.visto = Date.now();
+  semearListas();
   salvar(true);
   document.body.style.paddingBottom = '';
   aplicarTema();
@@ -513,12 +529,12 @@ const TABS = [
   { id: 'gastos', nome: 'Gastos', ic: 'wallet' },
   { id: 'grupo', nome: 'Grupo', ic: 'users' },
 ];
-const ALIAS = { explorar: 'lugares', 'viagem/docs': 'grupo/arquivos', 'viagem/voos': 'roteiro/reservas', 'viagem/hoteis': 'roteiro/reservas', 'viagem/motorhome': 'roteiro/motorhome', 'viagem/checklist': 'inicio', 'viagem/info': 'ajustes', viagem: 'grupo/arquivos', 'roteiro/alternativas': 'lugares' };
+const ALIAS = { ajustes: 'util/mais', explorar: 'lugares', 'viagem/docs': 'grupo/arquivos', 'viagem/voos': 'roteiro/reservas', 'viagem/hoteis': 'roteiro/reservas', 'viagem/motorhome': 'roteiro/motorhome', 'viagem/checklist': 'inicio', 'viagem/info': 'util/mais', viagem: 'grupo/arquivos', 'roteiro/alternativas': 'lugares' };
 function rota() {
   let h = location.hash.replace(/^#\/?/, '');
   if (ALIAS[h]) h = ALIAS[h];
   const [tab, sub] = h.split('/');
-  if (tab === 'ajustes') return { tab: 'ajustes', sub: '' };
+  if (tab === 'util') return { tab: 'util', sub: sub || '' };
   return { tab: TABS.some((t) => t.id === tab) ? tab : 'inicio', sub: sub || '' };
 }
 window.addEventListener('hashchange', () => {
@@ -528,7 +544,7 @@ window.addEventListener('hashchange', () => {
 });
 function render() {
   const r = rota();
-  const corpo = { inicio: vInicio, roteiro: vRoteiro, lugares: vLugares, gastos: vGastos, grupo: vGrupo, ajustes: vAjustes }[r.tab](r.sub);
+  const corpo = { inicio: vInicio, roteiro: vRoteiro, lugares: vLugares, gastos: vGastos, grupo: vGrupo, util: vUtil }[r.tab](r.sub);
   const n = naoLidas();
   const fab = r.tab === 'gastos' ? `<button class="btn primary fab" data-a="novoGasto">${ic('plus')}Novo gasto</button>`
     : r.tab === 'lugares' ? `<button class="btn primary fab" data-a="novoLugar">${ic('plus')}Adicionar</button>`
@@ -558,7 +574,7 @@ function vInicio() {
   <section class="hero" style="margin-top:8px"><div class="sun"></div>
     <div class="between" style="position:relative;z-index:1;align-items:flex-start">
       <div><p class="eyebrow">Abril de 2027</p><h1>${esc(D.titulo)}</h1><p class="lead">${esc(D.subtitulo)}</p></div>
-      <button class="iconbtn" data-a="ajustes" aria-label="Ajustes e contatos" style="background:rgba(255,255,255,.15);border-color:rgba(255,255,255,.3);color:#fff;box-shadow:none">${S.eu ? av(S.eu, 'sm') : ic('users')}</button>
+      <button class="iconbtn" data-a="util" aria-label="Utilidades: listas, agenda, avisos e contatos" style="background:rgba(255,255,255,.15);border-color:rgba(255,255,255,.3);color:#fff;box-shadow:none">${ic('grid')}</button>
     </div>
     <div class="count">${contador}</div>
     <div class="crew">${D.pessoas.map((p) => `<button data-a="pessoa" data-id="${p.id}">${av(p.id)}<span>${esc(p.curto)}</span></button>`).join('')}</div>
@@ -588,7 +604,7 @@ function vInicio() {
     <a class="li" href="#/roteiro/reservas"><span class="ic">${ic('ticket')}</span><div class="grow"><h3>Voos e hotéis</h3></div>${ic('chev')}</a>
     <a class="li" href="#/grupo/querem"><span class="ic">${ic('heart')}</span><div class="grow"><h3>Onde cada um quer ir</h3></div>${ic('chev')}</a>
     <a class="li" href="#/grupo/arquivos"><span class="ic">${ic('folder')}</span><div class="grow"><h3>Arquivos por pessoa</h3></div>${ic('chev')}</a>
-    <a class="li" href="#/ajustes"><span class="ic">${ic('phone')}</span><div class="grow"><h3>Contatos, dicas e ajustes</h3></div>${ic('chev')}</a>
+    <a class="li" href="#/util"><span class="ic">${ic('grid')}</span><div class="grow"><h3>Utilidades</h3><p class="xs mute">Listas, agenda, avisos e contatos</p></div>${ic('chev')}</a>
   </div>`;
 }
 depoisRender.inicio = async () => {
@@ -636,9 +652,10 @@ function cardDia(d, compacto = false) {
 
 // ------------------------------------------------------------------ ROTEIRO (dia a dia, voos e hotéis, motorhome)
 function vRoteiro(sub) {
-  const aba = ['reservas', 'motorhome'].includes(sub) ? sub : 'dias';
-  const s = seg('roteiro', aba, [['dias', 'Dia a dia'], ['reservas', 'Voos e hotéis'], ['motorhome', 'Motorhome']]);
+  const aba = ['reservas', 'motorhome', 'campings'].includes(sub) ? sub : 'dias';
+  const s = seg('roteiro', aba, [['dias', 'Dia a dia'], ['reservas', 'Reservas'], ['motorhome', 'Motorhome'], ['campings', 'Campings']]);
   if (aba === 'reservas') return cab('Reservas', 'Voos e hotéis') + s + vReservas();
+  if (aba === 'campings') return cab('Onde dormir com o motorhome', 'Campings') + s + vCampings();
   if (aba === 'motorhome') return cab('14 a 24 de abril', 'Motorhome') + s + vMotorhome();
   const dias = diasViagem(); const hoje = isoHoje();
   const r = D.roteiros.find((x) => x.id === rotaAtual());
@@ -819,6 +836,7 @@ function montarComentarios(sh) {
     if (!S.eu) return escolherEu();
     const texto = ta.value.trim(); if (!texto) return;
     S.sync.conf['c:' + uid()] = { v: { alvo: f.dataset.coment, texto }, ts: Date.now(), por: S.eu };
+    avisar(`${nome(S.eu)} comentou em ${nomeAlvo(f.dataset.coment)}: “${texto.slice(0, 80)}”`);
     salvar(); ta.value = '';
     const th = sh.querySelector('[data-thread]'); th.innerHTML = listaComentarios(f.dataset.coment);
     th.lastElementChild?.scrollIntoView({ block: 'nearest' });
@@ -921,6 +939,7 @@ function formGasto(g) {
     if (!(valor > 0)) { err.textContent = 'Informe um valor maior que zero.'; sh.querySelector('[name="valor"]').focus(); return; }
     if (!Object.values(pes).some((w) => w > 0)) { err.textContent = 'Escolha pelo menos uma pessoa para dividir.'; return; }
     S.sync.gastos[g.id] = { ...g, desc: String(f.get('desc')).trim(), valor, moeda, data: f.get('data'), pagou: sh.querySelector('[data-g="pagou"] [aria-pressed="true"]')?.dataset.id, cat: sh.querySelector('[data-g="cat"] [aria-pressed="true"]')?.dataset.id || 'outros', pesos: pes, nota: String(f.get('nota') || '').trim(), cambio: moeda === 'BRL' ? (g.cambio || S.cambio) : undefined, ts: Date.now(), por: novo ? S.eu || '' : g.por || S.eu || '', criado: g.criado || Date.now() };
+    if (novo) { const gg = S.sync.gastos[g.id]; avisar(`${nome(S.eu)} lançou o gasto “${gg.desc}” (${gg.moeda === 'BRL' ? brl(gg.valor) : usd(gg.valor)})`); }
     salvar(); fecharSheet(); render(); toast((novo ? 'Gasto lançado.' : 'Gasto atualizado.') + (novo ? aviso() : '')); navigator.vibrate?.(15);
   });
 }
@@ -1002,9 +1021,9 @@ function vArquivos() {
 }
 
 // ------------------------------------------------------------------ AJUSTES (contatos, dicas, este aparelho)
-function vAjustes() {
+function vMais() {
   const tzs = [['Brasília', 'America/Sao_Paulo'], ['LA e Vegas', 'America/Los_Angeles'], ['Arizona', 'America/Phoenix'], ['Utah', 'America/Denver']];
-  return cab('Ajustes', 'Contatos e dicas') + `
+  return `
   <div class="card"><div class="syncpill">${pillSync() || '<span class="tag">Sincronização desligada</span>'}</div><p class="small mute" style="margin-top:8px">Tudo o que alguém faz no app chega sozinho aos outros celulares e computadores.</p>
     <div class="btnrow"><button class="btn sm" data-a="syncAgora">${ic('sync', 'sm')}Atualizar agora</button>${autoSync() ? '' : `<button class="btn sm" data-a="sincronizar">${ic('share', 'sm')}Enviar por link</button><button class="btn sm" data-a="importar">Importar link</button>`}</div></div>
   <h2 class="sec">Contatos</h2>
@@ -1022,10 +1041,179 @@ function vAjustes() {
     <button class="li btnlike" data-a="bloquear"><span class="ic">${ic('lock')}</span><div class="grow"><h3 style="font-size:15px">Bloquear</h3><p class="xs mute">Esquece a senha neste aparelho</p></div>${ic('chev')}</button>
   </div>`;
 }
-depoisRender.ajustes = () => {
+depoisRender.util = (sub) => {
+  if (sub !== 'mais') return;
   const tick = () => $$('#relogios [data-tz]').forEach((b) => { b.textContent = new Intl.DateTimeFormat('pt-BR', { timeZone: b.dataset.tz, hour: '2-digit', minute: '2-digit' }).format(new Date()); });
   tick(); clearInterval(depoisRender.t); depoisRender.t = setInterval(() => { if (!$('#relogios')) return clearInterval(depoisRender.t); tick(); }, 15000);
 };
+
+// ------------------------------------------------------------------ UTILIDADES (listas, agenda, avisos, mais)
+const LISTAS_FIXAS = [['mercado', 'Mercado'], ['levar', 'O que levar'], ['rv', 'Tarefas do motorhome']];
+const SEMENTES = {
+  rv: ['Abastecer sempre que o tanque chegar à metade', 'Esvaziar tanques de águas cinza e negras (dump station)', 'Repor propano', 'Encher o tanque de água potável', 'Recolher degrau, toldo e antenas antes de sair', 'Desligar o gerador nas horas de silêncio do camping', 'Na devolução: combustível e propano como na retirada'],
+  mercado: ['Água (galões)', 'Gelo', 'Café e filtro', 'Pão, frios e queijos', 'Ovos e bacon', 'Frutas', 'Carne para churrasco', 'Snacks para a estrada', 'Cerveja e bebidas (comprar em Nevada)', 'Papel higiênico próprio para motorhome', 'Sacos de lixo', 'Protetor solar'],
+  levar: ['Passaporte e visto', 'CNH física e PID', 'Cartão de crédito do Vinicius (caução)', 'Carregadores e power bank', 'Adaptador de tomada', 'Casaco de frio para Bryce e Grand Canyon', 'Roupa de balada para Vegas', 'Lanterna de cabeça', 'Remédios'],
+};
+function semearListas() {
+  for (const [l, itens] of Object.entries(SEMENTES)) itens.forEach((t, i) => { const k = `li:s-${l}-${i}`; if (!S.sync.conf[k]) S.sync.conf[k] = { v: { lista: l, texto: t, feito: false }, ts: 1, por: '', criado: i + 1 }; });
+}
+const listas = () => [...LISTAS_FIXAS, ...Object.entries(S.sync.conf).filter(([k, v]) => k.startsWith('ll:') && v && !v.del && v.v).sort((a, b) => (a[1].criado || 0) - (b[1].criado || 0)).map(([k, v]) => [k, v.v.nome])];
+const nomeLista = (l) => listas().find(([k]) => k === l)?.[1] || 'lista';
+const itensDe = (l) => Object.entries(S.sync.conf).filter(([k, v]) => k.startsWith('li:') && v && !v.del && v.v?.lista === l).map(([k, v]) => ({ id: k, ...v })).sort((a, b) => (a.v.feito - b.v.feito) || ((a.criado || a.ts) - (b.criado || b.ts)));
+
+function vUtil(sub) {
+  const aba = ['agenda', 'avisos', 'mais'].includes(sub) ? sub : 'listas';
+  const s = seg('util', aba, [['listas', 'Listas'], ['agenda', 'Agenda'], ['avisos', 'Avisos'], ['mais', 'Mais']]);
+  return cab('Ferramentas do grupo', 'Utilidades') + s + ({ listas: vListas, agenda: vAgenda, avisos: vAvisos, mais: vMais }[aba])();
+}
+function vListas() {
+  return `<p class="small mute">Qualquer um adiciona e risca itens; todos veem na hora.</p>` + listas().map(([l, n]) => {
+    const it = itensDe(l); const feitos = it.filter((x) => x.v.feito).length;
+    return `<details class="card sum" open style="margin-top:12px"><summary><span>${esc(n)}</span><span class="row" style="gap:8px"><span class="tag num">${feitos}/${it.length}</span>${ic('chev', 'sm chevd')}</span></summary>
+      ${it.map((x) => `<div class="item"><button class="chk" role="checkbox" aria-checked="${!!x.v.feito}" data-a="itemToggle" data-id="${esc(x.id)}"><span class="box">${ic('check', 'sm')}</span><span class="grow"><span class="txt small" style="display:block">${esc(x.v.texto)}</span>${x.v.feito && x.v.porFeito ? `<span class="xs mute">riscado por ${esc(nome(x.v.porFeito))}</span>` : x.por ? `<span class="xs mute">por ${esc(nome(x.por))}</span>` : ''}</span></button><button class="iconbtn" style="width:36px;height:36px;flex:0 0 36px;box-shadow:none" data-a="itemDel" data-id="${esc(x.id)}" aria-label="Remover ${esc(x.v.texto)}">${ic('x', 'sm')}</button></div>`).join('')}
+      <form class="sendbar" data-addlista="${esc(l)}"><label class="sr" for="add-${esc(l)}">Novo item em ${esc(n)}</label><input class="inp" id="add-${esc(l)}" maxlength="120" placeholder="Adicionar item…" autocomplete="off"><button class="btn primary" aria-label="Adicionar">${ic('plus')}</button></form>
+      ${feitos ? `<button class="link xs" data-a="limparLista" data-id="${esc(l)}" style="color:var(--mute);font-weight:700;min-height:32px">Limpar itens riscados</button>` : ''}
+    </details>`;
+  }).join('') + `<button class="btn soft block" data-a="novaLista" style="margin-top:16px">${ic('plus', 'sm')}Nova lista</button>`;
+}
+
+// Agenda: arquivo .ics gerado no aparelho, com horários convertidos para UTC (o celular mostra no fuso local).
+const TZ_AERO = { GIG: 'America/Sao_Paulo', GRU: 'America/Sao_Paulo', CNF: 'America/Sao_Paulo', PTY: 'America/Panama', LAX: 'America/Los_Angeles', LAS: 'America/Los_Angeles', MIA: 'America/New_York', JFK: 'America/New_York' };
+const TZ_EUA = 'America/Los_Angeles';
+function utcDe(iso, tz) {
+  const [d, t = '00:00'] = iso.split('T'); const [y, m, dd] = d.split('-').map(Number); const [hh, mi] = t.split(':').map(Number);
+  const alvo = Date.UTC(y, m - 1, dd, hh, mi); let g = alvo;
+  for (let i = 0; i < 2; i++) {
+    const p = Object.fromEntries(new Intl.DateTimeFormat('en-US', { timeZone: tz, hourCycle: 'h23', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' }).formatToParts(new Date(g)).map((x) => [x.type, x.value]));
+    g += alvo - Date.UTC(+p.year, +p.month - 1, +p.day, +p.hour, +p.minute);
+  }
+  return new Date(g);
+}
+const AG = { voos: 'meus', motorhome: true, hoteis: true, lakers: true, prazos: true };
+function eventosAgenda() {
+  const ev = [];
+  const eu = S.eu;
+  if (AG.voos !== 'nenhum') for (const v of todosVoos()) {
+    if (AG.voos === 'meus' && eu && !v.pessoas.includes(eu)) continue;
+    const ini = utcDe(v.saida, TZ_AERO[v.de] || TZ_EUA);
+    let fim = v.chegada && v.chegada.slice(0, 4) === v.saida.slice(0, 4) ? utcDe(v.chegada, TZ_AERO[v.para] || TZ_EUA) : null;
+    if (!fim || fim <= ini) fim = new Date(ini.getTime() + 2 * 3600e3);
+    ev.push({ uid: 'voo-' + v.id, titulo: `Voo ${v.numero} · ${v.de} → ${v.para}`, ini, fim, local: `Aeroporto ${v.de}`, desc: [`Passageiros: ${v.pessoas.map(nome).join(', ')}`, v.localizador ? `Localizador: ${v.localizador}` : '', v.obs || ''].filter(Boolean).join('\n'), alarmes: ['-P1D', '-PT3H'] });
+  }
+  if (AG.motorhome) {
+    const m = D.motorhome;
+    ev.push({ uid: 'rv-retirada', titulo: 'Retirada do motorhome (Cruise America)', ini: utcDe(m.retirada.data + 'T13:00', TZ_EUA), fim: utcDe(m.retirada.data + 'T16:00', TZ_EUA), local: m.retirada.endereco, desc: `Janela ${m.retirada.janela}. Levar cartão físico do titular, CNH física, passaporte e voucher. Tel. ${m.retirada.tel}`, alarmes: ['-P1D', '-PT2H'] });
+    ev.push({ uid: 'rv-devolucao', titulo: 'Devolução do motorhome (Cruise America)', ini: utcDe(m.devolucao.data + 'T09:00', TZ_EUA), fim: utcDe(m.devolucao.data + 'T11:00', TZ_EUA), local: m.devolucao.endereco, desc: `Janela ${m.devolucao.janela}. Tanques esvaziados, propano e combustível como na retirada.`, alarmes: ['-P1D', '-PT2H'] });
+  }
+  if (AG.lakers) ev.push({ uid: 'lakers', titulo: 'Lakers x Phoenix Suns', ini: utcDe('2027-04-11T17:30', TZ_EUA), fim: utcDe('2027-04-11T20:30', TZ_EUA), local: 'Crypto.com Arena, 1111 S Figueroa St, Los Angeles', desc: 'Horário previsto: confirmar no ingresso.', alarmes: ['-PT3H'] });
+  if (AG.hoteis) for (const h of D.hoteis) {
+    const r = reserva(h.id);
+    ev.push({ uid: 'hotel-' + h.id, titulo: r ? `Hotel: ${r.nome}` : `Hotel em ${h.titulo} (a reservar)`, ini: utcDe(h.checkin + 'T15:00', TZ_EUA), fim: utcDe(h.checkout + 'T11:00', TZ_EUA), local: r?.endereco || r?.nome || h.titulo, desc: r?.codigo ? `Reserva: ${r.codigo}` : '', alarmes: ['-PT4H'] });
+  }
+  if (AG.prazos) for (const c of D.checklist) {
+    if (!c.prazo || S.sync.check[c.id]?.v) continue;
+    ev.push({ uid: 'prazo-' + c.id, titulo: `EUA 2027: ${c.texto}`, dia: c.prazo, desc: 'Pendência da viagem (prazo sugerido). Marque como feita no app.', alarmes: ['PT9H'] });
+  }
+  return ev;
+}
+function gerarICS(ev) {
+  const fmt = (d) => d.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
+  const escx = (t) => String(t || '').replace(/\\/g, '\\\\').replace(/;/g, '\;').replace(/,/g, '\\,').replace(/\n/g, '\\n');
+  const dobra = (l) => { const out = []; let s = l; while (s.length > 74) { out.push(s.slice(0, 74)); s = ' ' + s.slice(74); } out.push(s); return out.join('\r\n'); };
+  const L = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//EUA 2027//PT-BR', 'CALSCALE:GREGORIAN', 'METHOD:PUBLISH', 'X-WR-CALNAME:EUA 2027'];
+  const agora = fmt(new Date());
+  for (const e of ev) {
+    L.push('BEGIN:VEVENT', `UID:${e.uid}@eua2027`, `DTSTAMP:${agora}`);
+    if (e.dia) { const d = e.dia.replace(/-/g, ''); L.push(`DTSTART;VALUE=DATE:${d}`, `DTEND;VALUE=DATE:${somaDias(e.dia, 1).replace(/-/g, '')}`); }
+    else L.push(`DTSTART:${fmt(e.ini)}`, `DTEND:${fmt(e.fim)}`);
+    L.push(`SUMMARY:${escx(e.titulo)}`);
+    if (e.local) L.push(`LOCATION:${escx(e.local)}`);
+    if (e.desc) L.push(`DESCRIPTION:${escx(e.desc)}`);
+    for (const a of e.alarmes || []) L.push('BEGIN:VALARM', 'ACTION:DISPLAY', `DESCRIPTION:${escx(e.titulo)}`, `TRIGGER:${a}`, 'END:VALARM');
+    L.push('END:VEVENT');
+  }
+  L.push('END:VCALENDAR');
+  return L.map(dobra).join('\r\n') + '\r\n';
+}
+function vAgenda() {
+  const ev = eventosAgenda();
+  const chipB = (k, n) => `<button class="chip" aria-pressed="${!!AG[k]}" data-a="ag" data-k="${k}" data-v="${!AG[k]}">${AG[k] ? ic('check', 'sm') : ''}${n}</button>`;
+  const chip = (k, v, n) => `<button class="chip" aria-pressed="${AG[k] === v}" data-a="ag" data-k="${k}" data-v="${String(v)}">${n}</button>`;
+  return `<div class="card"><div class="row">${ic('cal', 'lg')}<div class="grow"><h3>Agenda no seu celular</h3><p class="small mute">Os compromissos vão para o calendário do aparelho, com lembretes. O telefone avisa mesmo com o app fechado e sem internet.</p></div></div></div>
+  <h2 class="sec">O que incluir</h2>
+  <p class="xs mute" style="margin-bottom:6px">Voos</p><div class="chips">${chip('voos', 'meus', S.eu ? `Só os meus (${nome(S.eu)})` : 'Só os meus')}${chip('voos', 'todos', 'De todos')}${chip('voos', 'nenhum', 'Nenhum')}</div>
+  <p class="xs mute" style="margin:12px 0 6px">Outros compromissos</p><div class="chips">${chipB('motorhome', 'Motorhome')}${chipB('hoteis', 'Hotéis')}${chipB('lakers', 'Lakers')}${chipB('prazos', 'Prazos das pendências')}</div>
+  <details class="card sum" style="margin-top:12px"><summary class="small">${ev.length} compromissos selecionados${ic('chev', 'sm chevd')}</summary>${ev.map((e) => `<div class="li" style="min-height:40px;padding:6px 0"><span class="small grow">${esc(e.titulo)}</span><span class="xs mute num">${e.dia ? ddmm(e.dia) : e.ini.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })}</span></div>`).join('')}</details>
+  <button class="btn primary block" data-a="baixarAgenda" style="margin-top:16px" ${ev.length ? '' : 'disabled'}>${ic('cal')}Adicionar ao calendário</button>
+  <p class="xs mute" style="margin-top:8px">No iPhone, abra o app pelo Safari para adicionar. No Android, escolha o app de agenda. Se adicionar de novo depois de alguma mudança, apague os eventos antigos para não duplicar.${S.ui.agendaEm ? ' Última vez: ' + new Date(S.ui.agendaEm).toLocaleDateString('pt-BR') + '.' : ''}</p>`;
+}
+
+// Avisos: notificações no celular quando alguém lança gasto, comenta ou anexa arquivo.
+const suportaPush = () => 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
+const ehIOS = () => /iPhone|iPad|iPod/.test(navigator.userAgent);
+const instalado = () => window.matchMedia?.('(display-mode: standalone)').matches || navigator.standalone === true;
+function avisar(texto) { if (!SYNC.url || !texto) return; (S.avisos ||= []).push(texto); }
+async function idDoAparelho(sub) { const h = new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(sub.endpoint))); return [...h].slice(0, 16).map((b) => b.toString(16).padStart(2, '0')).join(''); }
+function vAvisos() {
+  const ativo = !!S.ui.push && suportaPush() && Notification.permission === 'granted';
+  let estado;
+  if (!suportaPush()) estado = ehIOS() && !instalado() ? 'No iPhone, os avisos só funcionam com o app instalado na tela inicial (Safari › Compartilhar › Adicionar à Tela de Início). Depois, abra pelo ícone e volte aqui.' : 'Este navegador não suporta notificações.';
+  else if (Notification.permission === 'denied') estado = 'As notificações foram bloqueadas para este site. Libere nas configurações do navegador e volte aqui.';
+  return `<div class="card"><div class="row">${ic('bell', 'lg')}<div class="grow"><h3>Avisos no celular</h3><p class="small mute">Notificação na hora quando alguém lança um gasto, comenta ou anexa um arquivo. Você não recebe aviso do que você mesmo fez.</p></div></div>
+    ${estado ? `<div class="tip">${ic('info', 'sm')}<span>${esc(estado)}</span></div>` : `<div class="btnrow">${ativo ? `<span class="tag ok">${ic('check', 'sm')}Ativados neste aparelho</span>` : ''}</div>
+    <div class="btnrow">${ativo ? `<button class="btn sm" data-a="testarAvisos">${ic('bell', 'sm')}Enviar teste</button><button class="btn sm" data-a="desativarAvisos">Desativar</button>` : `<button class="btn primary block" data-a="ativarAvisos">${ic('bell')}Ativar avisos neste aparelho</button>`}</div>`}
+  </div>
+  <p class="xs mute" style="margin-top:12px">Cada pessoa ativa no próprio aparelho (celular ou computador). O texto do aviso viaja cifrado: o servidor não consegue lê-lo.</p>`;
+}
+async function ativarAvisos() {
+  if (!S.eu) return escolherEu();
+  if (!SYNC.token) return toast('Sem conexão com o servidor do grupo agora.');
+  try {
+    const perm = await Notification.requestPermission();
+    if (perm !== 'granted') { toast('Permissão de notificação não concedida.'); return render(); }
+    let chave;
+    try { chave = (await (await pedir('/push/chave')).json()).chave; } catch { return toast('O serviço do grupo ainda não foi atualizado para avisos. Veja o passo a passo enviado no chat.'); }
+    const reg = await navigator.serviceWorker.ready;
+    const sub = (await reg.pushManager.getSubscription()) || (await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: b64.deUrl(chave) }));
+    const id = await idDoAparelho(sub);
+    await pedir('/push/inscrever', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ id, sub: sub.toJSON(), pessoa: S.eu }) });
+    await idbCfg.put('push', { url: SYNC.url, token: SYNC.token, chave: b64.de(new Uint8Array(await crypto.subtle.exportKey('raw', CHAVE))) });
+    S.ui.push = id; salvar(true); render(); toast('Avisos ativados neste aparelho.');
+  } catch { toast('Não foi possível ativar os avisos neste aparelho.'); }
+}
+async function desativarAvisos() {
+  try {
+    const reg = await navigator.serviceWorker.ready; const sub = await reg.pushManager.getSubscription();
+    if (S.ui.push) await pedir('/push/cancelar', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ id: S.ui.push }) }).catch(() => {});
+    await sub?.unsubscribe(); await idbCfg.del('push').catch(() => {});
+  } catch { /* segue */ }
+  S.ui.push = null; salvar(true); render(); toast('Avisos desativados neste aparelho.');
+}
+async function testarAvisos() {
+  try {
+    const aviso = b64.de(await lacrar(new TextEncoder().encode('Teste: os avisos estão funcionando neste aparelho.')));
+    const r = await (await pedir('/push/teste', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ id: S.ui.push, aviso }) })).json();
+    toast(r.enviados ? 'Teste enviado. A notificação deve chegar em segundos.' : 'O aparelho não respondeu. Desative e ative de novo.');
+  } catch { toast('Não foi possível enviar o teste.'); }
+}
+
+// Campings: sugestões por parada, com fotos e avaliações no Google, reserva e rota.
+function vCampings() {
+  const r = D.roteiros.find((x) => x.id === rotaAtual());
+  const noites = (c) => r.dias.filter((d) => d.camp?.q === c.q).map((d) => ddmm(d.data));
+  const ordemCid = (c) => { const i = D.cidades.findIndex((x) => x.id === c); return i < 0 ? 99 : i; };
+  const doRoteiro = r.dias.filter((d) => d.camp).map((d) => ({ d, c: D.campings.find((c) => c.q === d.camp.q) }));
+  const grupos = [...new Set(D.campings.map((c) => c.cidade))].sort((a, b) => ordemCid(a) - ordemCid(b));
+  return `<div class="card"><h3>Pernoites da opção ${r.id}</h3><p class="xs mute">${esc(r.nome)}</p>
+    ${doRoteiro.map(({ d, c }) => `<a class="fl" href="#camp-${c ? c.id : ''}" data-a="irCamp" data-id="${c ? c.id : ''}"><span class="num small" style="width:48px;font-weight:800;color:var(--acc-text)">${ddmm(d.data)}</span><span class="grow small">${esc(c ? c.nome : d.camp.nome)}</span>${ic('chev', 'sm')}</a>`).join('')}</div>
+  ${grupos.map((cid) => `<h2 class="sec">${esc(D.cidades.find((x) => x.id === cid)?.nome || cid)}</h2><div class="stack">${D.campings.filter((c) => c.cidade === cid).map((c) => { const n = noites(c); return `<article class="card" id="camp-${c.id}" style="scroll-margin-top:16px;${n.length ? 'border-color:var(--acc);box-shadow:0 0 0 1px var(--acc)' : ''}">
+      <div class="between"><h3>${esc(c.nome)}</h3>${n.length ? `<span class="tag acc">${ic('tent', 'sm')}${n.join(', ')}</span>` : ''}</div>
+      <div class="meta"><span class="tag">${esc(c.tipo)}</span><span class="tag">${esc(c.hookups)}</span></div>
+      <p class="small" style="color:var(--ink2);margin-top:8px">${esc(c.desc)}</p>
+      <div class="acts">${btnGoogle(c.q)}<a class="btn sm" href="${esc(c.reservar)}" target="_blank" rel="noopener">${ic('ext', 'sm')}Reservar</a><a class="btn sm" href="${esc(mapsIr(c.q))}" target="_blank" rel="noopener">${ic('nav', 'sm')}Como chegar</a></div>
+    </article>`; }).join('')}</div>`).join('')}
+  <p class="xs mute" style="margin-top:16px">“Ver no Google” mostra fotos, avaliações e localização. Campings dentro dos parques costumam abrir reservas com meses de antecedência; os demais links levam ao site ou à busca da reserva.</p>`;
+}
 
 // ------------------------------------------------------------------ voos, hotéis, checklist (formulários)
 function formVoo(pid, grupoIni = 'volta', v = null) {
@@ -1102,6 +1290,7 @@ async function salvarAnexo(file, meta) {
   await idb.put({ ...m, blob: file });
   S.sync.arquivos[m.id] = { ...m, remoto: false, ts: Date.now() };
   S.pendUp.push(m.id); LOCAIS.add(m.id);
+  avisar(`${nome(S.eu)} anexou “${m.titulo}”${m.dono && m.dono !== S.eu ? ` (${m.dono === 'grupo' ? 'do grupo' : 'de ' + nome(m.dono)})` : ''}`);
   return true;
 }
 function anexar(kind, ref, dono) {
@@ -1146,7 +1335,30 @@ window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); prom
 const A = {
   fechar: () => fecharSheet(),
   go: (t) => { location.hash = t.dataset.h; },
-  ajustes: () => { location.hash = '#/ajustes'; },
+  ajustes: () => { location.hash = '#/util/mais'; },
+  util: () => { location.hash = '#/util'; },
+  ag: (t) => { const v = t.dataset.v; AG[t.dataset.k] = v === 'true' ? true : v === 'false' ? false : v; render(); },
+  baixarAgenda: async () => {
+    const ics = gerarICS(eventosAgenda());
+    const arq = new File([ics], 'eua2027.ics', { type: 'text/calendar' });
+    S.ui.agendaEm = Date.now(); salvar(true);
+    if (ehIOS() && navigator.canShare?.({ files: [arq] }) && instalado()) { try { await navigator.share({ files: [arq], title: 'EUA 2027' }); return; } catch { /* segue */ } }
+    const url = URL.createObjectURL(new Blob([ics], { type: 'text/calendar;charset=utf-8' }));
+    const a = document.createElement('a'); a.href = url; a.download = 'eua2027.ics'; document.body.append(a); a.click(); a.remove();
+    toast('Abra o arquivo para adicionar os eventos à sua agenda.');
+  },
+  ativarAvisos: () => ativarAvisos(),
+  desativarAvisos: () => desativarAvisos(),
+  testarAvisos: () => testarAvisos(),
+  irCamp: (t) => document.getElementById('camp-' + t.dataset.id)?.scrollIntoView({ behavior: 'smooth', block: 'start' }),
+  itemToggle: (t) => { const r = S.sync.conf[t.dataset.id]; if (!r) return; const feito = !r.v.feito; S.sync.conf[t.dataset.id] = { ...r, v: { ...r.v, feito, porFeito: feito ? S.eu || '' : '' }, ts: Date.now() }; salvar(); render(); navigator.vibrate?.(10); },
+  itemDel: (t) => { const r = S.sync.conf[t.dataset.id]; if (!r) return; S.sync.conf[t.dataset.id] = { ...r, del: true, ts: Date.now() }; salvar(); render(); },
+  limparLista: (t) => { for (const x of itensDe(t.dataset.id)) if (x.v.feito) S.sync.conf[x.id] = { ...S.sync.conf[x.id], del: true, ts: Date.now() }; salvar(); render(); },
+  novaLista: () => {
+    abrirSheet('Nova lista', `<form id="fnl"><label class="f"><span>Nome da lista</span><input class="inp" name="n" required maxlength="40" placeholder="Ex.: Churrasco no camping"></label><button class="btn primary block" style="margin-top:16px">${ic('plus')}Criar</button></form>`, (sh) => {
+      sh.querySelector('#fnl').addEventListener('submit', (e) => { e.preventDefault(); const n = String(new FormData(e.target).get('n')).trim(); if (!n) return; S.sync.conf['ll:' + uid()] = { v: { nome: n }, ts: Date.now(), por: S.eu || '', criado: Date.now() }; salvar(); fecharSheet(); render(); });
+    });
+  },
   pessoa: (t) => {
     const p = pessoa(t.dataset.id);
     const vs = todosVoos().filter((v) => v.pessoas.includes(p.id)).sort((a, b) => a.saida.localeCompare(b.saida));
@@ -1286,6 +1498,14 @@ document.addEventListener('click', (e) => {
   if (t.tagName === 'A' && t.getAttribute('href')) return;
   e.preventDefault();
   A[t.dataset.a](t, e);
+});
+
+document.addEventListener('submit', (e) => {
+  const f = e.target.closest('[data-addlista]'); if (!f) return;
+  e.preventDefault();
+  const i = f.querySelector('input'); const texto = i.value.trim(); if (!texto) return;
+  S.sync.conf['li:' + uid()] = { v: { lista: f.dataset.addlista, texto, feito: false }, ts: Date.now(), por: S.eu || '', criado: Date.now() };
+  salvar(); const l = f.dataset.addlista; render(); document.getElementById('add-' + l)?.focus();
 });
 
 // ------------------------------------------------------------------ partida

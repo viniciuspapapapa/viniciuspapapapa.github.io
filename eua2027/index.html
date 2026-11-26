@@ -347,12 +347,16 @@ details.sum[open]>summary svg.chevd{transform:rotate(90deg)}
 .fl{display:flex;align-items:center;gap:12px;padding:12px 0;width:100%;text-align:left;min-height:56px}
 .fl+.fl{border-top:1px solid var(--line)}
 .fl .ic{width:40px;height:40px;border-radius:12px;display:grid;place-items:center;background:var(--surface2);flex:0 0 40px}
+.item{display:flex;align-items:center;gap:4px}
+.item .chk{flex:1}
+.item+.item{border-top:1px solid var(--line)}
+.item .chk+.chk{border:0}
 @media (min-width:700px){.phases{gap:12px}.hero{padding:32px 28px 28px}}
 </style>
 </head>
 <body>
 <div id="app"></div>
 <div id="toast" class="toast" role="status" aria-live="polite"></div>
-<script src="app.js?v=7"></script>
+<script src="app.js?v=8"></script>
 </body>
 </html>

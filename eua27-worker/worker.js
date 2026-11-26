@@ -7,6 +7,12 @@
 //   PUT  /arquivo/:id      grava um arquivo cifrado (até 15 MB)
 //   GET  /arquivo/:id      devolve o arquivo cifrado
 //   DELETE /arquivo/:id    apaga o arquivo
+//   GET  /push/chave       chave pública VAPID (gerada e guardada no KV na primeira chamada)
+//   POST /push/inscrever   { id, sub, pessoa } registra um aparelho para receber avisos
+//   POST /push/cancelar    { id } remove o aparelho
+//   GET  /push/aviso       último aviso (cifrado pelo app); o service worker o lê ao receber a notificação
+//   POST /push/teste       { id } envia um aviso de teste só para esse aparelho
+//   As notificações vão sem conteúdo (o texto fica cifrado em /push/aviso), então não exigem criptografia de payload.
 //
 // Variáveis: SYNC_TOKEN (secret), ALLOWED_ORIGIN (texto). KV: binding EUA.
 
@@ -14,6 +20,42 @@ const COLECOES = new Set(['gastos', 'check', 'hoteis', 'pix', 'conf', 'voos', 'v
 const MAX_REG = 40000;            // caracteres por registro cifrado
 const MAX_ARQ = 15 * 1024 * 1024; // bytes por arquivo
 const ID_ARQ = /^[a-z0-9-]{4,48}$/;
+const ID_PUSH = /^[a-f0-9]{16,64}$/;
+const SUB_CONTATO = 'https://viniciuspapapapa.github.io';
+
+const b64u = (buf) => btoa(String.fromCharCode(...new Uint8Array(buf))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+const txt = (s) => new TextEncoder().encode(s);
+
+async function chavesVapid(env) {
+  const salvo = await env.EUA.get('vapid', { type: 'json' });
+  if (salvo) return salvo;
+  const par = await crypto.subtle.generateKey({ name: 'ECDSA', namedCurve: 'P-256' }, true, ['sign', 'verify']);
+  const novo = { pub: b64u(await crypto.subtle.exportKey('raw', par.publicKey)), priv: await crypto.subtle.exportKey('jwk', par.privateKey) };
+  await env.EUA.put('vapid', JSON.stringify(novo));
+  return novo;
+}
+async function jwtVapid(vapid, endpoint) {
+  const cab = b64u(txt(JSON.stringify({ typ: 'JWT', alg: 'ES256' })));
+  const corpo = b64u(txt(JSON.stringify({ aud: new URL(endpoint).origin, exp: Math.floor(Date.now() / 1000) + 12 * 3600, sub: SUB_CONTATO })));
+  const chave = await crypto.subtle.importKey('jwk', vapid.priv, { name: 'ECDSA', namedCurve: 'P-256' }, false, ['sign']);
+  const assin = await crypto.subtle.sign({ name: 'ECDSA', hash: 'SHA-256' }, chave, txt(`${cab}.${corpo}`));
+  return `${cab}.${corpo}.${b64u(assin)}`;
+}
+async function enviarPush(env, filtro) {
+  const inscr = (await env.EUA.get('inscricoes', { type: 'json' })) || {};
+  const alvos = Object.entries(inscr).filter(([id, i]) => filtro(id, i));
+  if (!alvos.length) return 0;
+  const vapid = await chavesVapid(env);
+  let removidos = 0, enviados = 0;
+  await Promise.all(alvos.map(async ([id, i]) => {
+    try {
+      const r = await fetch(i.sub.endpoint, { method: 'POST', headers: { TTL: '86400', Urgency: 'normal', Authorization: `vapid t=${await jwtVapid(vapid, i.sub.endpoint)}, k=${vapid.pub}` } });
+      if (r.status === 404 || r.status === 410) { delete inscr[id]; removidos++; } else if (r.ok) enviados++;
+    } catch { /* aparelho indisponível */ }
+  }));
+  if (removidos) await env.EUA.put('inscricoes', JSON.stringify(inscr));
+  return enviados;
+}
 
 function cabecalhos(env, req) {
   const origem = req.headers.get('Origin') || '';
@@ -51,7 +93,7 @@ export function mesclar(estado, col) {
 }
 
 export default {
-  async fetch(req, env) {
+  async fetch(req, env, ctx) {
     const h = cabecalhos(env, req);
     if (req.method === 'OPTIONS') return new Response(null, { status: 204, headers: h });
     const url = new URL(req.url);
@@ -70,9 +112,39 @@ export default {
         try { corpo = await req.json(); } catch { return json({ erro: 'JSON inválido.' }, 400, h); }
         const mudou = mesclar(estado, corpo?.col);
         if (mudou) { estado.rev = (estado.rev || 0) + 1; estado.em = Date.now(); await env.EUA.put('estado', JSON.stringify(estado)); }
+        if (typeof corpo?.aviso === 'string' && corpo.aviso.length < 4000) {
+          const autor = typeof corpo.autor === 'string' ? corpo.autor.slice(0, 40) : '';
+          await env.EUA.put('aviso', JSON.stringify({ ts: Date.now(), d: corpo.aviso, autor }));
+          const envio = enviarPush(env, (id, i) => !autor || i.pessoa !== autor);
+          if (ctx?.waitUntil) ctx.waitUntil(envio); else await envio;
+        }
         return json({ ...estado, mudou }, 200, h);
       }
       return json({ erro: 'Método não suportado.' }, 405, h);
+    }
+
+    if (url.pathname.startsWith('/push/')) {
+      const rota = url.pathname.slice(6);
+      if (rota === 'chave' && req.method === 'GET') return json({ chave: (await chavesVapid(env)).pub }, 200, h);
+      if (rota === 'aviso' && req.method === 'GET') return json((await env.EUA.get('aviso', { type: 'json' })) || {}, 200, h);
+      if (req.method !== 'POST') return json({ erro: 'Método não suportado.' }, 405, h);
+      let corpo;
+      try { corpo = await req.json(); } catch { return json({ erro: 'JSON inválido.' }, 400, h); }
+      if (!ID_PUSH.test(String(corpo?.id || ''))) return json({ erro: 'Identificador inválido.' }, 400, h);
+      const inscr = (await env.EUA.get('inscricoes', { type: 'json' })) || {};
+      if (rota === 'inscrever') {
+        const sub = corpo.sub;
+        if (!sub || typeof sub.endpoint !== 'string' || !/^https:\/\//.test(sub.endpoint) || JSON.stringify(sub).length > 2000) return json({ erro: 'Inscrição inválida.' }, 400, h);
+        inscr[corpo.id] = { sub, pessoa: String(corpo.pessoa || '').slice(0, 40), em: Date.now() };
+        await env.EUA.put('inscricoes', JSON.stringify(inscr));
+        return json({ ok: true }, 200, h);
+      }
+      if (rota === 'cancelar') { delete inscr[corpo.id]; await env.EUA.put('inscricoes', JSON.stringify(inscr)); return json({ ok: true }, 200, h); }
+      if (rota === 'teste') {
+        await env.EUA.put('aviso', JSON.stringify({ ts: Date.now(), d: typeof corpo.aviso === 'string' ? corpo.aviso.slice(0, 4000) : '', autor: '' }));
+        return json({ ok: true, enviados: await enviarPush(env, (id) => id === corpo.id) }, 200, h);
+      }
+      return json({ erro: 'Rota não encontrada.' }, 404, h);
     }
 
     const m = url.pathname.match(/^\/arquivo\/([^/]+)$/);
