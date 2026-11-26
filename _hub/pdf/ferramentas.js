@@ -22,13 +22,15 @@
       return { saidas: [{ nome: "PDF_unido.pdf", blob: await salvar(out) }], nota: out.getPageCount() + " páginas de " + arquivos.length + " arquivos." };
     } });
 
-  def({ id: "dividir", cat: "Organizar", nome: "Dividir PDF", desc: "Separe intervalos de páginas ou transforme cada página em um PDF independente.", aceita: PDF, botao: "Dividir o PDF",
-    opcoes: [{ id: "modo", tipo: "select", rot: "Como dividir", valores: [["intervalos", "Por intervalos"], ["fixo", "A cada N páginas"], ["todas", "Cada página em um arquivo"]], padrao: "intervalos" },
+  def({ id: "dividir", cat: "Organizar", nome: "Dividir PDF", desc: "Separe intervalos de páginas, transforme cada página em um PDF independente ou divida por tamanho máximo de arquivo.", aceita: PDF, botao: "Dividir o PDF",
+    opcoes: [{ id: "modo", tipo: "select", rot: "Como dividir", valores: [["intervalos", "Por intervalos"], ["fixo", "A cada N páginas"], ["todas", "Cada página em um arquivo"], ["tamanho", "Por tamanho máximo de arquivo"]], padrao: "intervalos" },
+      { id: "mb", tipo: "numero", rot: "Tamanho máximo de cada arquivo (MB)", padrao: 10, min: 0.1, passo: "any", mostrar: o => o.modo === "tamanho" },
       { id: "intervalos", tipo: "texto", rot: "Intervalos (um arquivo por intervalo)", padrao: "1-2, 3-", dica: "Ex.: 1-3, 4-6, 7-", mostrar: o => o.modo === "intervalos" },
       { id: "n", tipo: "numero", rot: "Páginas por arquivo", padrao: 2, min: 1, mostrar: o => o.modo === "fixo" },
       { id: "unir", tipo: "check", rot: "Juntar os intervalos em um único PDF", mostrar: o => o.modo === "intervalos" }],
     async executar({ arquivos, op, ui }) {
       const f = so1(arquivos), d = await X.abrirLib(await X.bytesDe(f)), n = d.getPageCount();
+      if (op.modo === "tamanho") return dividirPorTamanho(f, d, n, op, ui);
       let gs = op.modo === "todas" ? d.getPageIndices().map(i => [i + 1]) : op.modo === "fixo" ? Array.from({ length: Math.ceil(n / Math.max(1, +op.n || 1)) }, (_, k) => Array.from({ length: Math.min(+op.n, n - k * op.n) }, (_, j) => k * op.n + j + 1)) : X.grupos(op.intervalos, n);
       if (!gs.length) throw new Error("Nenhum intervalo válido para um PDF de " + n + " páginas.");
       if (op.modo === "intervalos" && op.unir) gs = [gs.flat()];
@@ -40,6 +42,40 @@
       }
       return { saidas, zip: saidas.length > 1 ? X.base(f.name) + "_dividido.zip" : null };
     } });
+
+  /* Divide em arquivos que não passam do tamanho indicado. Para cada parte, procura o maior bloco
+     de páginas seguidas que cabe no limite (avanço exponencial e busca binária, medindo o arquivo
+     realmente gerado), de modo que recursos compartilhados, como fontes, sejam contados uma vez só. */
+  async function dividirPorTamanho(f, d, n, op, ui) {
+    const lim = Math.round(Math.max(0.1, +op.mb || 10) * 1048576), mb = b => (b / 1048576).toLocaleString("pt-BR", { maximumFractionDigits: 2 }) + " MB";
+    const gerar = async (ini, qtd) => { const o = await root.PDFLib.PDFDocument.create(); (await o.copyPages(d, Array.from({ length: qtd }, (_, j) => ini + j))).forEach(p => o.addPage(p)); return o.save({ useObjectStreams: true }); };
+    const saidas = [], grandes = []; let ini = 0;
+    while (ini < n) {
+      ui.prog("Medindo a parte " + (saidas.length + 1) + " (a partir da página " + (ini + 1) + " de " + n + ")", ini / n);
+      let bom = 1, bytesBom = await gerar(ini, 1), ruim = 0;
+      if (bytesBom.length > lim) grandes.push(ini + 1);
+      else {
+        let k = 2;
+        while (ini + bom < n) {
+          const q = Math.min(k, n - ini), b = await gerar(ini, q);
+          if (b.length <= lim) { bom = q; bytesBom = b; if (q === n - ini) break; k *= 2; } else { ruim = q; break; }
+        }
+        while (ruim && ruim - bom > 1) {
+          const q = Math.floor((bom + ruim) / 2), b = await gerar(ini, q);
+          if (b.length <= lim) { bom = q; bytesBom = b; } else ruim = q;
+        }
+      }
+      const a = ini + 1, z = ini + bom;
+      saidas.push({ nome: X.base(f.name) + "_parte" + String(saidas.length + 1).padStart(2, "0") + "_" + (a === z ? "pag" + a : "pags" + a + "-" + z) + ".pdf", blob: X.pdfBlob(bytesBom), tam: bytesBom.length });
+      ini += bom;
+    }
+    const dentro = saidas.filter(x => x.tam <= lim), maior = Math.max(0, ...dentro.map(x => x.tam));
+    let nota = saidas.length + (saidas.length === 1 ? " arquivo" : " arquivos") + " de até " + mb(lim) + (dentro.length ? " (o maior dentro do limite tem " + mb(maior) + ")" : "") + ".";
+    if (saidas.length === 1) nota = "O PDF inteiro já cabe em " + mb(lim) + " (" + mb(saidas[0].tam) + "); nada precisou ser dividido.";
+    if (grandes.length) nota += " Atenção: " + (grandes.length === 1 ? "a página " + grandes[0] + " sozinha passa" : "as páginas " + grandes.join(", ") + " sozinhas passam") + " do limite; " + (grandes.length === 1 ? "ela ficou" : "elas ficaram") + " em arquivo próprio. Use a ferramenta Comprimir PDF nesse arquivo.";
+    saidas.forEach(x => delete x.tam);
+    return { saidas, zip: saidas.length > 1 ? X.base(f.name) + "_dividido.zip" : null, nota };
+  }
 
   async function gradeSel(mesa, ctx, modo) {
     mesa.innerHTML = ""; ctx.grade = X.Grade(mesa, { modo: modo || "selecionar" });

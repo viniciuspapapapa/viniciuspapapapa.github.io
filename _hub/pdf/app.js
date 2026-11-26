@@ -93,7 +93,7 @@
       let c;
       if (o.tipo === "select") c = '<select id="' + id + '">' + o.valores.map(([v, r]) => '<option value="' + esc(v) + '"' + (v === pad ? " selected" : "") + ">" + esc(r) + "</option>").join("") + "</select>";
       else if (o.tipo === "area") c = '<textarea id="' + id + '" rows="6" placeholder="&lt;html&gt;…"></textarea>';
-      else if (o.tipo === "numero") c = '<input type="number" id="' + id + '" value="' + (pad == null ? "" : pad) + '"' + (o.min != null ? ' min="' + o.min + '"' : "") + ">";
+      else if (o.tipo === "numero") c = '<input type="number" id="' + id + '" value="' + (pad == null ? "" : pad) + '"' + (o.min != null ? ' min="' + o.min + '"' : "") + (o.passo ? ' step="' + o.passo + '"' : "") + ">";
       else if (o.tipo === "cor") c = '<input type="color" id="' + id + '" value="' + (pad || "#000000") + '">';
       else if (o.tipo === "arquivo") c = '<input type="file" id="' + id + '" accept="' + esc(o.aceita || "") + '">';
       else c = '<input type="' + (o.tipo === "senha" ? "password" : "text") + '" id="' + id + '" value="' + esc(pad || "") + '"' + (o.dica ? ' placeholder="' + esc(o.dica) + '"' : "") + (o.tipo === "senha" ? ' autocomplete="new-password"' : "") + ">";
