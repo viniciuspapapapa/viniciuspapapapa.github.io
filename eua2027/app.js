@@ -1,10 +1,10 @@
-/* EUA 2027 — app da viagem do grupo.
-   Os dados ficam em dados.bin e docs/*.bin, cifrados com AES-256-GCM (chave derivada da senha do grupo).
-   O estado de cada aparelho (gastos, checklist, reservas, votos) fica no localStorage e é trocado entre
-   os amigos por um link de sincronização, também cifrado. Arquivos enviados ficam no IndexedDB do aparelho. */
+/* EUA 2027 — app da viagem do grupo (versão 5).
+   Conteúdo base: dados.bin e docs/*.bin, cifrados com AES-256-GCM (chave derivada da senha do grupo).
+   Estado compartilhado (gastos, checklist, reservas, voos, votos, arquivos, lugares do grupo, comentários):
+   localStorage + sincronização automática com o serviço eua27-sync (Cloudflare), registro a registro e cifrado.
+   Lugares do grupo e comentários vivem na coleção "conf" (chaves "l:" e "c:"), já aceita pelo serviço. */
 'use strict';
 
-const VERSAO_APP = 1;
 const K_CHAVE = 'eua27:chave';
 const K_ESTADO = 'eua27:estado';
 const ITERACOES = 310000;
@@ -18,19 +18,23 @@ const enc = encodeURIComponent;
 const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
 const slug = (s) => String(s).normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
 const SEM = ['dom', 'seg', 'ter', 'qua', 'qui', 'sex', 'sáb'];
-const MES = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'];
 const dt = (iso) => { const [y, m, d] = iso.slice(0, 10).split('-').map(Number); return new Date(y, m - 1, d); };
-const isoHoje = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; };
+const isoDe = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+const isoHoje = () => isoDe(new Date());
 const ddmm = (iso) => `${iso.slice(8, 10)}/${iso.slice(5, 7)}`;
 const semana = (iso) => SEM[dt(iso).getDay()];
 const hora = (iso) => iso.slice(11, 16);
 const diasEntre = (a, b) => Math.round((dt(b) - dt(a)) / 86400000);
-const somaDias = (iso, n) => { const d = dt(iso); d.setDate(d.getDate() + n); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; };
+const somaDias = (iso, n) => { const d = dt(iso); d.setDate(d.getDate() + n); return isoDe(d); };
+const hhmm = (ts) => new Date(ts).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+const rotuloDia = (ts) => { const i = isoDe(new Date(ts)); const h = isoHoje(); return i === h ? 'Hoje' : i === somaDias(h, -1) ? 'Ontem' : `${semana(i)}, ${ddmm(i)}`; };
+const quando = (ts) => `${rotuloDia(ts) === 'Hoje' ? 'às ' : rotuloDia(ts).toLowerCase() + ' às '}${hhmm(ts)}`;
 const usd = (v) => 'US$ ' + (Math.round(v * 100) / 100).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const brl = (v) => 'R$ ' + (Math.round(v * 100) / 100).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const numero = (s) => { if (typeof s === 'number') return s; const t = String(s).trim().replace(/\s/g, ''); const n = t.includes(',') ? t.replace(/\./g, '').replace(',', '.') : t; return parseFloat(n) || 0; };
-const mapsIr = (q) => `https://www.google.com/maps/dir/?api=1&destination=${enc(q)}`;
-const mapsVer = (q) => `https://www.google.com/maps/search/?api=1&query=${enc(q)}`;
+const ehUrl = (q) => /^https?:\/\//i.test(String(q || '').trim());
+const mapsIr = (q) => (ehUrl(q) ? q : `https://www.google.com/maps/dir/?api=1&destination=${enc(q)}`);
+const mapsVer = (q) => (ehUrl(q) ? q : `https://www.google.com/maps/search/?api=1&query=${enc(q)}`);
 const mapsRota = (paradas) => {
   const p = paradas.filter(Boolean);
   if (p.length < 2) return mapsIr(p[0] || '');
@@ -51,7 +55,7 @@ const P = {
   map: '<polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21"/><line x1="9" x2="9" y1="3" y2="18"/><line x1="15" x2="15" y1="6" y2="21"/>',
   compass: '<circle cx="12" cy="12" r="10"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/>',
   wallet: '<path d="M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1"/><path d="M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4"/>',
-  case: '<path d="M16 20V4a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/><rect width="20" height="14" x="2" y="6" rx="2"/>',
+  users: '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>',
   plane: '<path d="M17.8 19.2 16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.5-.1 1 .3 1.3L9 12l-2 3H4l-1 1 3 2 2 3 1-1v-3l3-2 3.5 5.3c.3.4.8.5 1.3.3l.5-.2c.4-.3.6-.7.5-1.2z"/>',
   car: '<path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2"/><circle cx="7" cy="17" r="2"/><path d="M9 17h6"/><circle cx="17" cy="17" r="2"/>',
   food: '<path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"/><path d="M7 2v20"/><path d="M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7"/>',
@@ -78,37 +82,41 @@ const P = {
   share: '<path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" x2="12" y1="2" y2="15"/>',
   sync: '<path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/>',
   phone: '<path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.8 19.8 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.12 4.18 2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92z"/>',
-  msg: '<path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/>',
+  wa: '<path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/>',
+  chat: '<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>',
+  send: '<path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/>',
+  edit: '<path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/>',
   lock: '<rect width="18" height="11" x="3" y="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>',
   search: '<circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>',
   flame: '<path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.07-2.14-.22-4.05 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.15.43-2.29 1-3a2.5 2.5 0 0 0 2.5 2.5z"/>',
   heart: '<path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/>',
   rv: '<path d="M18 19V9a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v8a2 2 0 0 0 2 2h2"/><path d="M2 9h12"/><circle cx="8" cy="19" r="2"/><path d="M10 19h12v-2"/><rect width="4" height="4" x="10" y="9"/>',
   copy: '<rect width="14" height="14" x="8" y="8" rx="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/>',
-  clock: '<circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>',
   sun: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/>',
   moon: '<path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>',
   folder: '<path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/>',
-  users: '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>',
   dice: '<rect width="18" height="18" x="3" y="3" rx="2"/><path d="M16 8h.01"/><path d="M8 8h.01"/><path d="M8 16h.01"/><path d="M16 16h.01"/><path d="M12 12h.01"/>',
   trash: '<path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/>',
   chev: '<path d="m9 18 6-6-6-6"/>',
   ext: '<path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>',
-  cal: '<rect width="18" height="18" x="3" y="4" rx="2"/><path d="M16 2v4"/><path d="M8 2v4"/><path d="M3 10h18"/>',
   ticket: '<path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"/><path d="M13 5v2"/><path d="M13 17v2"/><path d="M13 11v2"/>',
   info: '<circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/>',
   list: '<path d="m3 17 2 2 4-4"/><path d="m3 7 2 2 4-4"/><path d="M13 6h8"/><path d="M13 12h8"/><path d="M13 18h8"/>',
   bulb: '<path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"/><path d="M9 18h6"/><path d="M10 22h4"/>',
   temp: '<path d="M14 4v10.54a4 4 0 1 1-4 0V4a2 2 0 0 1 4 0Z"/>',
+  shield: '<path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/>',
 };
 const ic = (n, cls = '') => `<svg class="i ${cls}" viewBox="0 0 24 24" aria-hidden="true">${P[n] || ''}</svg>`;
-const ICAT = { balada: 'music', bar: 'bar', piscina: 'waves', comer: 'food', show: 'ticket', atracao: 'landmark', natureza: 'mountain', camping: 'tent', compras: 'bag', apoio: 'fuel' };
+const ICAT = { balada: 'music', bar: 'bar', piscina: 'waves', comer: 'food', show: 'ticket', atracao: 'landmark', natureza: 'mountain', camping: 'tent', compras: 'bag', apoio: 'fuel', hotel: 'bed', outro: 'pin' };
 const ITIPO = { voo: 'plane', transporte: 'car', atividade: 'spark', comida: 'food', noite: 'music', show: 'ticket', hotel: 'bed' };
 const CATG = [
   { id: 'hospedagem', nome: 'Hospedagem', ic: 'bed' }, { id: 'motorhome', nome: 'Motorhome', ic: 'rv' }, { id: 'transporte', nome: 'Transporte', ic: 'car' },
   { id: 'combustivel', nome: 'Combustível', ic: 'fuel' }, { id: 'comida', nome: 'Comida', ic: 'food' }, { id: 'mercado', nome: 'Mercado', ic: 'bag' },
   { id: 'balada', nome: 'Bebida e balada', ic: 'bar' }, { id: 'ingressos', nome: 'Ingressos', ic: 'ticket' }, { id: 'outros', nome: 'Outros', ic: 'spark' },
 ];
+const TIPOS_LUGAR = [['hotel', 'Hotel'], ['comer', 'Restaurante'], ['bar', 'Bar'], ['balada', 'Balada'], ['atracao', 'Passeio'], ['natureza', 'Natureza'], ['compras', 'Compras'], ['outro', 'Outro']];
+const TIPOS_ARQ = [['doc', 'Documento', 'file'], ['voo', 'Passagem', 'plane'], ['hotel', 'Hotel', 'bed'], ['ingresso', 'Ingresso', 'ticket'], ['seguro', 'Seguro', 'shield'], ['outro', 'Outro', 'folder']];
+const ROT_ARQ = Object.fromEntries(TIPOS_ARQ.map(([k, n]) => [k, n]));
 
 // ------------------------------------------------------------------ cripto
 let CHAVE = null;
@@ -121,31 +129,18 @@ function partes(buf) {
   if (String.fromCharCode(...b.slice(0, 5)) !== MAGICA) throw new Error('formato');
   return { sal: b.slice(6, 22), iv: b.slice(22, 34), dados: b.slice(34) };
 }
-async function abrirBin(buf, chave = CHAVE) {
-  const p = partes(buf);
-  return new Uint8Array(await crypto.subtle.decrypt({ name: 'AES-GCM', iv: p.iv }, chave, p.dados));
-}
+async function abrirBin(buf, chave = CHAVE) { const p = partes(buf); return new Uint8Array(await crypto.subtle.decrypt({ name: 'AES-GCM', iv: p.iv }, chave, p.dados)); }
 async function lacrar(bytes) {
   const iv = crypto.getRandomValues(new Uint8Array(12));
   const c = new Uint8Array(await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, CHAVE, bytes));
   const out = new Uint8Array(12 + c.length); out.set(iv); out.set(c, 12); return out;
 }
-async function deslacrar(u8) {
-  return new Uint8Array(await crypto.subtle.decrypt({ name: 'AES-GCM', iv: u8.slice(0, 12) }, CHAVE, u8.slice(12)));
-}
-async function comprimir(u8) {
-  if (!('CompressionStream' in window)) return u8;
-  const s = new Blob([u8]).stream().pipeThrough(new CompressionStream('deflate-raw'));
-  return new Uint8Array(await new Response(s).arrayBuffer());
-}
-async function descomprimir(u8) {
-  if (!('DecompressionStream' in window)) return u8;
-  const s = new Blob([u8]).stream().pipeThrough(new DecompressionStream('deflate-raw'));
-  return new Uint8Array(await new Response(s).arrayBuffer());
-}
+async function deslacrar(u8) { return new Uint8Array(await crypto.subtle.decrypt({ name: 'AES-GCM', iv: u8.slice(0, 12) }, CHAVE, u8.slice(12))); }
+async function comprimir(u8) { if (!('CompressionStream' in window)) return u8; return new Uint8Array(await new Response(new Blob([u8]).stream().pipeThrough(new CompressionStream('deflate-raw'))).arrayBuffer()); }
+async function descomprimir(u8) { if (!('DecompressionStream' in window)) return u8; return new Uint8Array(await new Response(new Blob([u8]).stream().pipeThrough(new DecompressionStream('deflate-raw'))).arrayBuffer()); }
 
 // ------------------------------------------------------------------ estado local
-let D = null; // dados da viagem (decifrados)
+let D = null;
 let S = carregar();
 function carregar() {
   let s = {};
@@ -164,7 +159,6 @@ function salvar(semSync) {
 const conf = (k, padrao) => S.sync.conf[k]?.v ?? padrao;
 function setConf(k, v) { S.sync.conf[k] = { v, ts: Date.now(), por: S.eu || '' }; salvar(); }
 const rotaAtual = () => conf('rota', 'A');
-
 function mesclar(outro) {
   let novos = 0;
   for (const col of Object.keys(outro || {})) {
@@ -178,7 +172,7 @@ function mesclar(outro) {
   return novos;
 }
 
-// ------------------------------------------------------------------ IndexedDB (arquivos enviados)
+// ------------------------------------------------------------------ IndexedDB (conteúdo dos arquivos anexados)
 const idb = {
   db: null,
   abrir() {
@@ -190,23 +184,29 @@ const idb = {
       r.onerror = () => erro(r.error);
     });
   },
-  async tx(modo, fn) { const db = await this.abrir(); return new Promise((ok, erro) => { const t = db.transaction('arquivos', modo); const st = t.objectStore('arquivos'); const r = fn(st); t.oncomplete = () => ok(r?.result); t.onerror = () => erro(t.error); }); },
+  async tx(modo, fn) { const db = await this.abrir(); return new Promise((ok, erro) => { const t = db.transaction('arquivos', modo); const r = fn(t.objectStore('arquivos')); t.oncomplete = () => ok(r?.result); t.onerror = () => erro(t.error); }); },
   put(o) { return this.tx('readwrite', (st) => st.put(o)); },
   del(id) { return this.tx('readwrite', (st) => st.delete(id)); },
   get(id) { return this.tx('readonly', (st) => st.get(id)); },
   all() { return this.tx('readonly', (st) => st.getAll()); },
 };
-let LOCAIS = new Set(); // arquivos cujo conteúdo já está neste aparelho
+let LOCAIS = new Set();
 async function recarregarArquivos() { try { LOCAIS = new Set((await idb.all()).map((a) => a.id)); } catch { LOCAIS = new Set(); } }
-const arquivos = (kind, ref) => Object.values(S.sync.arquivos).filter((a) => !a.del && a.kind === kind && (ref === undefined || a.ref === ref)).sort((a, b) => (b.criado || 0) - (a.criado || 0));
-// ------------------------------------------------------------------ sincronização automática (servidor Cloudflare)
-// Cada registro (gasto, tarefa, voto, reserva…) vai cifrado com a chave do grupo; o servidor só compara o ts
-// e guarda o mais novo. A cada mudança local e a cada 15 s com o app aberto, o app baixa o que é novo e envia
-// o que só ele tem. Se uma gravação se perder numa colisão, a próxima rodada reenvia (autocorreção).
+const anexos = () => Object.values(S.sync.arquivos).filter((a) => a && !a.del && a.id).sort((a, b) => (b.criado || 0) - (a.criado || 0));
+// Dono do arquivo: o escolhido ao anexar; para anexos antigos, o nome da pessoa no título; senão, quem enviou.
+const donoDe = (a) => {
+  if (a.dono) return a.dono;
+  if (a.kind === 'hotel') return 'grupo';
+  const t = ' ' + slug(a.titulo || a.nome || '').replace(/-/g, ' ') + ' ';
+  const achou = D?.pessoas.find((p) => slug(p.nome).split('-').some((n) => n.length > 3 && t.includes(' ' + n + ' ')));
+  return achou?.id || a.pessoa || 'grupo';
+};
+
+// ------------------------------------------------------------------ sincronização automática (serviço Cloudflare)
 const SYNC = { url: '', token: '', status: 'off', ultimo: 0, rodando: false, denovo: false, pend: false, t: null, timer: null };
 let SRV = null;
 const autoSync = () => SYNC.status === 'ok';
-const aviso = () => (autoSync() || SYNC.status === 'offline' ? '' : ' Envie ao grupo pela aba Gastos.');
+const aviso = () => (autoSync() || SYNC.status === 'offline' ? '' : ' Envie ao grupo em Ajustes.');
 function agendarSync() { if (!SYNC.url) return; clearTimeout(SYNC.t); SYNC.t = setTimeout(sincronizar, 800); }
 async function iniciarSync() {
   SYNC.url = String(D.sincronizacao?.url || '').replace(/\/+$/, '');
@@ -234,7 +234,7 @@ async function adotar(srv) {
     S.sync[c] ||= {};
     for (const [k, r] of Object.entries(regs || {})) {
       const meu = S.sync[c][k];
-      if (!meu || r.ts > (meu.ts || 0)) { try { S.sync[c][k] = await decifrarReg(r.d); n++; } catch { /* registro de outra chave */ } }
+      if (!meu || r.ts > (meu.ts || 0)) { try { S.sync[c][k] = await decifrarReg(r.d); n++; } catch { /* outra chave */ } }
     }
   }
   return n;
@@ -271,29 +271,31 @@ async function sincronizar() {
   }
 }
 function atualizarTela() {
+  const th = $('.sheet [data-thread]');
+  if (th) th.innerHTML = listaComentarios(th.dataset.thread);
   const digitando = document.activeElement && /INPUT|TEXTAREA/.test(document.activeElement.tagName);
   if ($('.sheet') || digitando) { SYNC.pend = true; atualizarIndicador(); return; }
   const y = window.scrollY; render(); window.scrollTo(0, y);
 }
 function pillSync() {
-  const hora = SYNC.ultimo ? new Date(SYNC.ultimo).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : '';
   return {
-    ok: `<span class="tag ok">${ic('check', 'sm')}Sincronizado com o grupo às ${hora}</span>`,
+    ok: `<span class="tag ok">${ic('check', 'sm')}Sincronizado com o grupo às ${SYNC.ultimo ? hhmm(SYNC.ultimo) : ''}</span>`,
     conectando: `<span class="tag">${ic('sync', 'sm')}Conectando ao grupo…</span>`,
     offline: `<span class="tag warn">${ic('alert', 'sm')}Sem conexão: as mudanças vão quando a internet voltar</span>`,
-    indisponivel: `<span class="tag warn">${ic('alert', 'sm')}Sincronização automática indisponível: use o link</span>`,
+    indisponivel: `<span class="tag warn">${ic('alert', 'sm')}Sincronização automática indisponível</span>`,
   }[SYNC.status] || '';
 }
-function atualizarIndicador() { $$('.syncpill').forEach((el) => { el.innerHTML = pillSync(); }); }
-
-// Arquivos anexados: o conteúdo vai cifrado para o servidor; os metadados viajam na coleção "arquivos".
+function atualizarIndicador() {
+  $$('.syncpill').forEach((el) => { el.innerHTML = pillSync(); });
+  const n = naoLidas(); const b = $('nav.tabs [data-badge]');
+  if (b) { b.textContent = n > 9 ? '9+' : String(n); b.classList.toggle('hidden', !n); }
+}
 async function enviarArquivos() {
   for (const id of [...(S.pendUp || [])]) {
     const meta = S.sync.arquivos[id];
     const loc = await idb.get(id).catch(() => null);
     if (!meta || meta.del || !loc) { S.pendUp = S.pendUp.filter((x) => x !== id); continue; }
-    const c = await lacrar(new Uint8Array(await loc.blob.arrayBuffer()));
-    await pedir('/arquivo/' + id, { method: 'PUT', body: c });
+    await pedir('/arquivo/' + id, { method: 'PUT', body: await lacrar(new Uint8Array(await loc.blob.arrayBuffer())) });
     S.sync.arquivos[id] = { ...meta, remoto: true, ts: Date.now() };
     S.pendUp = S.pendUp.filter((x) => x !== id);
     salvar(true);
@@ -304,7 +306,7 @@ async function obterBlob(id) {
   if (loc) return loc;
   const meta = S.sync.arquivos[id];
   if (!meta) return null;
-  if (!meta.remoto || !SYNC.token) { toast(`Ainda não enviado pelo aparelho de ${pessoa(meta.pessoa)?.curto || 'quem anexou'}.`); return null; }
+  if (!meta.remoto || !SYNC.token) { toast(`Ainda não enviado pelo aparelho de ${nome(meta.pessoa)}.`); return null; }
   toast('Baixando ' + meta.titulo + '…');
   try {
     const bytes = await deslacrar(new Uint8Array(await (await pedir('/arquivo/' + id)).arrayBuffer()));
@@ -325,15 +327,9 @@ async function migrarArquivos() {
   } catch { /* sem IndexedDB */ }
 }
 
-
 // ------------------------------------------------------------------ interface básica
-function toast(msg) {
-  const t = $('#toast'); t.textContent = msg; t.classList.add('on');
-  clearTimeout(toast.h); toast.h = setTimeout(() => t.classList.remove('on'), 3200);
-}
-async function copiar(txt, msg = 'Copiado') {
-  try { await navigator.clipboard.writeText(txt); toast(msg); } catch { prompt('Copie:', txt); }
-}
+function toast(msg) { const t = $('#toast'); t.textContent = msg; t.classList.add('on'); clearTimeout(toast.h); toast.h = setTimeout(() => t.classList.remove('on'), 3200); }
+async function copiar(txt, msg = 'Copiado') { try { await navigator.clipboard.writeText(txt); toast(msg); } catch { prompt('Copie:', txt); } }
 function abrirSheet(titulo, html, aoMontar) {
   fecharSheet(true);
   const scrim = document.createElement('div'); scrim.className = 'scrim'; scrim.dataset.a = 'fechar';
@@ -343,7 +339,6 @@ function abrirSheet(titulo, html, aoMontar) {
   requestAnimationFrame(() => { scrim.classList.add('on'); sh.classList.add('on'); });
   document.body.style.overflow = 'hidden';
   aoMontar?.(sh);
-  setTimeout(() => sh.querySelector('input,select,textarea,button:not([data-a="fechar"])')?.focus({ preventScroll: true }), 280);
   return sh;
 }
 function fecharSheet(imediato) {
@@ -357,16 +352,21 @@ function fecharSheet(imediato) {
 document.addEventListener('keydown', (e) => { if (e.key === 'Escape') fecharSheet(); });
 
 const pessoa = (id) => D.pessoas.find((p) => p.id === id);
-const av = (id, cls = '') => { const p = pessoa(id); return p ? `<img class="av ${cls}" src="${p.foto}" alt="${esc(p.curto)}" width="40" height="40">` : ''; };
+const nome = (id) => (id === 'grupo' ? 'Grupo' : pessoa(id)?.curto || 'Alguém');
+const av = (id, cls = '') => { const p = pessoa(id); return p ? `<img class="av ${cls}" src="${p.foto}" alt="${esc(p.curto)}" width="40" height="40">` : `<span class="av ${cls}" style="display:grid;place-items:center;color:var(--mute)">${ic('users', 'sm')}</span>`; };
 const fimPessoa = (p) => p.ate || '2027-04-24';
 const presentes = (iso) => D.pessoas.filter((p) => p.de <= iso && iso <= fimPessoa(p)).map((p) => p.id);
 const avs = (ids, cls = 'sm') => `<span class="avs">${ids.map((i) => av(i, cls)).join('')}</span>`;
-const flames = (n) => `<span class="flames" aria-label="Animação ${n} de 3">${[1, 2, 3].map((i) => `<svg class="i ${i > n ? 'off' : ''}" viewBox="0 0 24 24">${P.flame}</svg>`).join('')}</span>`;
+const flames = (n) => (n ? `<span class="flames" aria-label="Animação ${n} de 3">${[1, 2, 3].map((i) => `<svg class="i ${i > n ? 'off' : ''}" viewBox="0 0 24 24">${P.flame}</svg>`).join('')}</span>` : '');
 const corFase = (f) => `var(--${f || 'pre'})`;
-const btnIr = (q, txt = 'Ir') => `<a class="btn sm primary" href="${mapsIr(q)}" target="_blank" rel="noopener">${ic('nav', 'sm')}${txt}</a>`;
-const btnMapa = (q) => `<a class="btn sm" href="${mapsVer(q)}" target="_blank" rel="noopener">${ic('pin', 'sm')}Mapa</a>`;
+const btnIr = (q, txt = 'Ir') => `<a class="btn sm primary" href="${esc(mapsIr(q))}" target="_blank" rel="noopener">${ic('nav', 'sm')}${txt}</a>`;
+const btnMapa = (q) => `<a class="btn sm" href="${esc(mapsVer(q))}" target="_blank" rel="noopener">${ic('pin', 'sm')}Mapa</a>`;
+const cab = (eyebrow, titulo, sub = '') => `<div class="pagehead"><div class="grow"><p class="eyebrow">${eyebrow}</p><h1 class="title">${esc(titulo)}</h1>${sub ? `<p class="sub">${sub}</p>` : ''}</div><button class="me" data-a="ajustes" aria-label="Ajustes e contatos">${S.eu ? av(S.eu) : `<span class="iconbtn">${ic('users')}</span>`}</button></div>`;
+const seg = (base, atual, opcoes) => `<div class="seg" role="tablist">${opcoes.map(([k, n]) => `<button role="tab" aria-selected="${atual === k}" data-a="go" data-h="#/${base}/${k}">${n}</button>`).join('')}</div>`;
+const tam = (b) => (b > 1048576 ? (b / 1048576).toFixed(1) + ' MB' : Math.max(1, Math.round(b / 1024)) + ' KB');
 
-// ------------------------------------------------------------------ dias combinados (fixos + roteiro do motorhome)
+// ------------------------------------------------------------------ dados derivados
+const reserva = (slot) => { const r = S.sync.hoteis[slot]; return r && !r.del && r.nome ? r : null; };
 function diasViagem() {
   const r = D.roteiros.find((x) => x.id === rotaAtual()) || D.roteiros[0];
   const porData = Object.fromEntries(D.dias.map((d) => [d.data, d]));
@@ -374,34 +374,95 @@ function diasViagem() {
   for (let iso = '2027-04-09'; iso <= D.fim; iso = somaDias(iso, 1)) {
     const fixo = porData[iso];
     const rd = r.dias.find((x) => x.data === iso);
-    if (rd) {
-      out.push({ data: iso, fase: 'rv', titulo: rd.titulo, cidade: D.cidades.find((c) => c.id === rd.cidade)?.nome, cidadeId: rd.cidade, rv: rd, itens: fixo?.itens || [], pernoite: rd.camp?.nome });
-    } else if (fixo) {
-      out.push({ ...fixo, cidadeId: fixo.fase === 'la' ? 'la' : 'lv' });
+    if (rd) out.push({ data: iso, fase: 'rv', titulo: rd.titulo, cidade: D.cidades.find((c) => c.id === rd.cidade)?.nome, cidadeId: rd.cidade, rv: rd, itens: fixo?.itens || [], pernoite: rd.camp?.nome });
+    else if (fixo) {
+      const res = fixo.hotel && reserva(fixo.hotel);
+      out.push({ ...fixo, pernoite: res ? res.nome : fixo.pernoite, cidadeId: fixo.fase === 'la' ? 'la' : 'lv' });
     }
   }
   return out;
+}
+function lugares() {
+  const base = D.lugares.map((l) => ({ ...l }));
+  const meus = Object.entries(S.sync.conf).filter(([k, v]) => k.startsWith('l:') && v && !v.del && v.v).map(([k, v]) => ({ id: k, ...v.v, energia: 0, preco: '', custom: true, por: v.por, criado: v.criado || v.ts }));
+  meus.sort((a, b) => b.criado - a.criado);
+  return [...meus, ...base];
+}
+const lugarPorId = (id) => lugares().find((l) => l.id === id);
+function comentarios(alvo) {
+  return Object.entries(S.sync.conf).filter(([k, v]) => k.startsWith('c:') && v && !v.del && v.v?.alvo === alvo).map(([k, v]) => ({ id: k, ...v })).sort((a, b) => a.ts - b.ts);
+}
+const nComent = (alvo) => comentarios(alvo).length;
+function nomeAlvo(alvo) {
+  if (alvo.startsWith('dia:')) { const i = alvo.slice(4); return `o dia ${semana(i)}, ${ddmm(i)}`; }
+  return lugarPorId(alvo)?.nome || 'um lugar';
+}
+const votosDe = (lid) => D.pessoas.filter((p) => S.sync.votos[`${lid}|${p.id}`]?.v).map((p) => p.id);
+
+// Linha do tempo do grupo: cada registro compartilhado vira um evento com autor e horário.
+let EVS = [];
+function eventos() {
+  const ev = [];
+  const add = (ts, por, icone, txt, acao) => { if (ts > 1000) ev.push({ ts, por: por || '', ic: icone, txt, acao }); };
+  const marco = marcoZero();
+  for (const g of Object.values(S.sync.gastos)) {
+    if (!g || (g.ts || 0) < marco) continue;
+    const valor = g.moeda === 'BRL' ? brl(g.valor) : usd(g.valor);
+    const edit = g.criado && g.ts - g.criado > 5000;
+    add(g.ts, g.por || g.pagou, 'wallet', g.del ? `apagou o gasto “${esc(g.desc)}”` : `${edit ? 'editou' : 'lançou'} o gasto “${esc(g.desc)}” (${valor}, pago por ${esc(nome(g.pagou))})`, g.del ? null : { a: 'editarGasto', id: g.id });
+  }
+  for (const [k, v] of Object.entries(S.sync.check)) {
+    const c = D.checklist.find((x) => x.id === k); if (!c || !v) continue;
+    add(v.ts, v.por, 'list', `${v.v ? 'concluiu' : 'reabriu'} a tarefa “${esc(c.texto)}”`, { a: 'checklist' });
+  }
+  for (const [k, r] of Object.entries(S.sync.hoteis)) {
+    const h = D.hoteis.find((x) => x.id === k); if (!h || !r) continue;
+    add(r.ts, r.por, 'bed', r.del ? `removeu a reserva de hotel de ${esc(h.titulo)}` : `registrou a reserva no ${esc(r.nome)} (${esc(h.titulo)})`, { h: '#/roteiro/reservas' });
+  }
+  for (const v of Object.values(S.sync.voos)) {
+    if (!v) continue;
+    add(v.ts, v.por, 'plane', v.del ? `removeu o voo ${esc(v.numero)}` : `cadastrou o voo ${esc(v.numero)} (${esc(v.de)} → ${esc(v.para)}) de ${esc((v.pessoas || []).map(nome).join(', '))}`, v.del ? null : { a: 'verVoo', id: v.id });
+  }
+  for (const [k, v] of Object.entries(S.sync.votos)) {
+    if (!v?.v) continue;
+    const [lid, pid] = k.split('|'); const l = lugarPorId(lid); if (!l) continue;
+    add(v.ts, v.por || pid, 'heart', `quer ir a ${esc(l.nome)}`, { a: 'lugar', id: lid });
+  }
+  for (const [k, v] of Object.entries(S.sync.pix)) if (v) add(v.ts, v.por || k, 'wallet', `atualizou a chave Pix de ${esc(nome(k))}`, { h: '#/gastos' });
+  for (const a of Object.values(S.sync.arquivos)) {
+    if (!a) continue;
+    const dono = donoDe(a);
+    add(a.del ? a.ts : a.criado || a.ts, a.pessoa, a.del ? 'trash' : 'file', a.del ? `apagou o arquivo “${esc(a.titulo)}”` : `anexou “${esc(a.titulo)}”${dono !== a.pessoa ? ` em ${dono === 'grupo' ? 'arquivos do grupo' : 'arquivos de ' + esc(nome(dono))}` : ''}`, a.del ? null : { a: 'abrirArq', id: a.id });
+  }
+  for (const [k, v] of Object.entries(S.sync.conf)) {
+    if (!v) continue;
+    if (k === 'rota') add(v.ts, v.por, 'map', `escolheu o roteiro ${esc(v.v)} do motorhome`, { h: '#/roteiro/motorhome' });
+    else if (k === 'gastosDesde') add(v.ts, v.por, 'trash', 'zerou os gastos', { h: '#/gastos' });
+    else if (k.startsWith('l:') && v.v) add(v.ts, v.por, v.del ? 'trash' : ICAT[v.v.cat] || 'pin', v.del ? `removeu o lugar ${esc(v.v.nome)}` : `${v.criado && v.ts - v.criado > 5000 ? 'editou' : 'adicionou'} o lugar ${esc(v.v.nome)}`, v.del ? null : { a: 'lugar', id: k });
+    else if (k.startsWith('c:') && v.v && !v.del) add(v.ts, v.por, 'chat', `comentou em ${esc(nomeAlvo(v.v.alvo))}: “${esc(String(v.v.texto).slice(0, 90))}”`, { a: 'comentar', alvo: v.v.alvo });
+  }
+  return ev.sort((a, b) => b.ts - a.ts);
+}
+const naoLidas = () => (D ? eventos().filter((e) => e.por !== S.eu && e.ts > (S.ui.visto || 0)).length : 0);
+function linhaEvento(e, i) {
+  return `<button class="ev" ${e.acao ? `data-a="evento" data-i="${i}"` : 'disabled style="opacity:1"'}>${av(e.por, 'sm')}<span class="tipo">${ic(e.ic)}</span><span class="grow"><span class="txt"><b>${esc(nome(e.por))}</b> ${e.txt}</span><span class="hr" style="display:block">${quando(e.ts)}</span></span>${e.acao ? ic('chev', 'sm') : ''}</button>`;
 }
 
 // ------------------------------------------------------------------ desbloqueio
 function telaBloqueio(erro = '') {
   document.body.style.paddingBottom = '0';
   $('#app').innerHTML = `
-  <section class="lock">
-    <div class="sunl"></div>
-    <div class="in">
-      <p class="eyebrow" style="color:rgba(255,255,255,.8)">Los Angeles · Las Vegas · Cânions</p>
-      <h1>EUA 2027</h1>
-      <p>Roteiro, motorhome, documentos e gastos do grupo. O conteúdo é cifrado: digite a senha combinada.</p>
-      <form id="flock" autocomplete="on">
-        <label class="sr" for="senha">Senha do grupo</label>
-        <input class="inp" id="senha" name="password" type="password" autocomplete="current-password" placeholder="Senha do grupo" required>
-        <label class="rem"><input type="checkbox" id="lembrar" checked> Lembrar neste aparelho</label>
-        <button class="btn primary block" type="submit">${ic('lock')}Entrar</button>
-        <p class="err" role="alert">${esc(erro)}</p>
-      </form>
-    </div>
-  </section>`;
+  <section class="lock"><div class="sunl"></div><div class="in">
+    <p class="eyebrow" style="color:rgba(255,255,255,.8)">Los Angeles · Las Vegas · Cânions</p>
+    <h1>EUA 2027</h1>
+    <p>Roteiro, motorhome, documentos e gastos do grupo. O conteúdo é cifrado: digite a senha combinada.</p>
+    <form id="flock" autocomplete="on">
+      <label class="sr" for="senha">Senha do grupo</label>
+      <input class="inp" id="senha" name="password" type="password" autocomplete="current-password" placeholder="Senha do grupo" required>
+      <label class="rem"><input type="checkbox" id="lembrar" checked> Lembrar neste aparelho</label>
+      <button class="btn primary block" type="submit">${ic('lock')}Entrar</button>
+      <p class="err" role="alert">${esc(erro)}</p>
+    </form></div></section>`;
   $('#flock').addEventListener('submit', async (e) => {
     e.preventDefault();
     const b = e.target.querySelector('button'); b.disabled = true; b.innerHTML = 'Abrindo…';
@@ -412,12 +473,9 @@ function telaBloqueio(erro = '') {
       CHAVE = chave;
       if ($('#lembrar').checked) localStorage.setItem(K_CHAVE, b64.de(new Uint8Array(await crypto.subtle.exportKey('raw', chave))));
       iniciar(dados);
-    } catch (err) {
-      telaBloqueio(err?.name === 'OperationError' ? 'Senha incorreta.' : 'Não foi possível abrir os dados. Verifique a conexão.');
-    }
+    } catch (err) { telaBloqueio(err?.name === 'OperationError' ? 'Senha incorreta.' : 'Não foi possível abrir os dados. Verifique a conexão.'); }
   });
 }
-
 async function tentarChaveSalva() {
   const k = localStorage.getItem(K_CHAVE);
   if (!k) return false;
@@ -428,21 +486,20 @@ async function tentarChaveSalva() {
     return true;
   } catch (e) {
     if (e?.name === 'OperationError') localStorage.removeItem(K_CHAVE);
-    CHAVE = null;
-    return false;
+    CHAVE = null; return false;
   }
 }
-
 function iniciar(dados) {
   D = dados;
   D.lugares.forEach((l) => { l.id = slug(l.cidade + '-' + l.nome); });
-  for (const g of D.gastosIniciais || []) if (!S.sync.gastos[g.id]) S.sync.gastos[g.id] = { ...g, ts: 1 };
-  salvar();
+  if (!D.categorias.some((c) => c.id === 'hotel')) D.categorias.unshift({ id: 'hotel', nome: 'Hotéis' });
+  if (S.ui.visto === undefined) S.ui.visto = Date.now();
+  salvar(true);
   document.body.style.paddingBottom = '';
-  recarregarArquivos().then(migrarArquivos).then(() => { if (/viagem/.test(location.hash)) render(); iniciarSync(); });
   aplicarTema();
   if (location.hash.startsWith('#s=')) { importarHash(location.hash.slice(3)); history.replaceState(null, '', location.pathname + '#/gastos'); }
   render();
+  recarregarArquivos().then(migrarArquivos).then(() => { if (!$('.sheet')) render(); iniciarSync(); });
   if (!S.eu) setTimeout(escolherEu, 400);
 }
 
@@ -450,23 +507,32 @@ function iniciar(dados) {
 const TABS = [
   { id: 'inicio', nome: 'Início', ic: 'home' },
   { id: 'roteiro', nome: 'Roteiro', ic: 'map' },
-  { id: 'explorar', nome: 'Explorar', ic: 'compass' },
+  { id: 'lugares', nome: 'Lugares', ic: 'compass' },
   { id: 'gastos', nome: 'Gastos', ic: 'wallet' },
-  { id: 'viagem', nome: 'Viagem', ic: 'case' },
+  { id: 'grupo', nome: 'Grupo', ic: 'users' },
 ];
-function rota() { const h = location.hash.replace(/^#\/?/, '').split('/'); return { tab: TABS.some((t) => t.id === h[0]) ? h[0] : 'inicio', sub: h[1] || '' }; }
+const ALIAS = { explorar: 'lugares', 'viagem/docs': 'grupo/arquivos', 'viagem/voos': 'roteiro/reservas', 'viagem/hoteis': 'roteiro/reservas', 'viagem/motorhome': 'roteiro/motorhome', 'viagem/checklist': 'inicio', 'viagem/info': 'ajustes', viagem: 'grupo/arquivos', 'roteiro/alternativas': 'lugares' };
+function rota() {
+  let h = location.hash.replace(/^#\/?/, '');
+  if (ALIAS[h]) h = ALIAS[h];
+  const [tab, sub] = h.split('/');
+  if (tab === 'ajustes') return { tab: 'ajustes', sub: '' };
+  return { tab: TABS.some((t) => t.id === tab) ? tab : 'inicio', sub: sub || '' };
+}
 window.addEventListener('hashchange', () => {
   if (!D) return;
   if (location.hash.startsWith('#s=')) { importarHash(location.hash.slice(3)); history.replaceState(null, '', location.pathname + '#/gastos'); }
   fecharSheet(true); render(); window.scrollTo(0, 0);
 });
-
 function render() {
   const r = rota();
-  const corpo = { inicio: vInicio, roteiro: vRoteiro, explorar: vExplorar, gastos: vGastos, viagem: vViagem }[r.tab](r.sub);
-  $('#app').innerHTML = `<main class="wrap view">${corpo}<p class="foot">EUA 2027 · dados cifrados · ${D.geradoEm ? 'atualizado em ' + new Date(D.geradoEm).toLocaleDateString('pt-BR') : ''}</p></main>
-  ${r.tab === 'gastos' ? `<button class="btn primary fab" data-a="novoGasto">${ic('plus')}Novo gasto</button>` : ''}
-  <nav class="tabs" aria-label="Navegação principal"><div class="in">${TABS.map((t) => `<a href="#/${t.id}" ${t.id === r.tab ? 'aria-current="page"' : ''}>${ic(t.ic)}<span>${t.nome}</span></a>`).join('')}</div></nav>`;
+  const corpo = { inicio: vInicio, roteiro: vRoteiro, lugares: vLugares, gastos: vGastos, grupo: vGrupo, ajustes: vAjustes }[r.tab](r.sub);
+  const n = naoLidas();
+  const fab = r.tab === 'gastos' ? `<button class="btn primary fab" data-a="novoGasto">${ic('plus')}Novo gasto</button>`
+    : r.tab === 'lugares' ? `<button class="btn primary fab" data-a="novoLugar">${ic('plus')}Adicionar</button>`
+      : r.tab === 'grupo' && r.sub === 'arquivos' ? `<button class="btn primary fab" data-a="anexar">${ic('up')}Anexar</button>` : '';
+  $('#app').innerHTML = `<main class="wrap view">${corpo}<p class="foot">EUA 2027 · dados cifrados</p></main>${fab}
+  <nav class="tabs" aria-label="Navegação principal"><div class="in">${TABS.map((t) => `<a href="#/${t.id}" ${t.id === r.tab ? 'aria-current="page"' : ''}>${ic(t.ic)}<span>${t.nome}</span>${t.id === 'grupo' ? `<span class="badge ${n ? '' : 'hidden'}" data-badge>${n > 9 ? '9+' : n}</span>` : ''}</a>`).join('')}</div></nav>`;
   depoisRender[r.tab]?.(r.sub);
 }
 const depoisRender = {};
@@ -478,88 +544,76 @@ function vInicio() {
   const embarque = '2027-04-09';
   let contador;
   if (hoje < embarque) { const n = diasEntre(hoje, embarque); contador = `<b>${n}</b><span>${n === 1 ? 'dia' : 'dias'} para o embarque</span>`; }
-  else if (hoje <= D.fim) { const n = diasEntre(D.inicio, hoje) + 1; contador = `<b>Dia ${Math.max(1, n)}</b><span>de 17 da viagem</span>`; }
-  else contador = `<b>Valeu!</b><span>viagem concluída</span>`;
-
+  else if (hoje <= D.fim) contador = `<b>Dia ${Math.max(1, diasEntre(D.inicio, hoje) + 1)}</b><span>de 17 da viagem</span>`;
+  else contador = '<b>Valeu!</b><span>viagem concluída</span>';
   const diaHoje = dias.find((d) => d.data === hoje);
   const proximo = hoje < embarque ? dias[0] : dias.find((d) => d.data > hoje);
   const ck = D.checklist.filter((c) => S.sync.check[c.id]?.v).length;
   const pend = D.checklist.filter((c) => !S.sync.check[c.id]?.v).slice(0, 3);
-
-  const fases = D.fases.map((f) => {
-    const ids = D.pessoas.filter((p) => p.de <= f.ate && fimPessoa(p) >= f.de).map((p) => p.id);
-    const now = hoje >= f.de && hoje <= f.ate;
-    return `<a class="phase ${now ? 'now' : ''}" style="--c:${corFase(f.id)}" href="#/roteiro"><b>${esc(f.nome)}</b><span class="xs num">${ddmm(f.de)} a ${ddmm(f.ate)}</span>${avs(ids, 'xs')}</a>`;
-  }).join('');
-
+  EVS = eventos();
+  const altos = D.alertas.filter((a) => a.nivel === 'alto').length;
   return `
-  <section class="hero" style="margin-top:8px">
-    <div class="sun"></div>
+  <section class="hero" style="margin-top:8px"><div class="sun"></div>
     <div class="between" style="position:relative;z-index:1;align-items:flex-start">
       <div><p class="eyebrow">Abril de 2027</p><h1>${esc(D.titulo)}</h1><p class="lead">${esc(D.subtitulo)}</p></div>
-      <button class="iconbtn" data-a="ajustes" aria-label="Ajustes" style="background:rgba(255,255,255,.15);border-color:rgba(255,255,255,.3);color:#fff;box-shadow:none">${S.eu ? av(S.eu, 'sm') : ic('users')}</button>
+      <button class="iconbtn" data-a="ajustes" aria-label="Ajustes e contatos" style="background:rgba(255,255,255,.15);border-color:rgba(255,255,255,.3);color:#fff;box-shadow:none">${S.eu ? av(S.eu, 'sm') : ic('users')}</button>
     </div>
     <div class="count">${contador}</div>
     <div class="crew">${D.pessoas.map((p) => `<button data-a="pessoa" data-id="${p.id}">${av(p.id)}<span>${esc(p.curto)}</span></button>`).join('')}</div>
   </section>
 
-  ${diaHoje ? `<h2 class="sec">Hoje <a class="link" href="#/roteiro">Roteiro completo</a></h2>${cardDia(diaHoje, true)}<div id="clima"></div>` : ''}
-  ${!diaHoje && proximo ? `<h2 class="sec">Próximo compromisso</h2>
+  ${diaHoje ? `<h2 class="sec">Hoje <a class="link" href="#/roteiro">Roteiro</a></h2>${cardDia(diaHoje, true)}<div id="clima"></div>` : ''}
+  ${!diaHoje && proximo ? `<h2 class="sec">Próximo</h2>
     <a class="card row" href="#/roteiro" style="--c:${corFase(proximo.fase)}">
       <div class="dayhead" style="margin:0"><div class="date"><small>${semana(proximo.data)}</small><b>${proximo.data.slice(8)}</b></div></div>
-      <div class="grow"><h3>${esc(proximo.titulo)}</h3><p class="small mute">${esc(proximo.itens?.[0] ? `${proximo.itens[0].hora} · ${proximo.itens[0].titulo}` : proximo.cidade || '')}</p></div>${ic('chev')}
-    </a>` : ''}
+      <div class="grow"><h3>${esc(proximo.titulo)}</h3><p class="small mute">${esc(proximo.itens?.[0] ? `${proximo.itens[0].hora} · ${proximo.itens[0].titulo}` : proximo.cidade || '')}</p></div>${ic('chev')}</a>` : ''}
 
-  <h2 class="sec">As fases</h2>
-  <div class="phases">${fases}</div>
+  <h2 class="sec">Novidades do grupo <a class="link" href="#/grupo">Ver todas</a></h2>
+  <div class="card" style="padding:4px 16px">${EVS.length ? EVS.slice(0, 3).map(linhaEvento).join('') : `<p class="small mute" style="padding:12px 0">Nada por aqui ainda. O que alguém lançar aparece aqui.</p>`}</div>
 
-  <h2 class="sec">Pontos de atenção <span class="tag bad">${D.alertas.filter((a) => a.nivel === 'alto').length} importantes</span></h2>
-  ${D.alertas.map((a) => `<div class="alert ${a.nivel}"><span class="dot">${ic(a.nivel === 'baixo' ? 'info' : 'alert', 'sm')}</span><div><h3>${esc(a.titulo)}</h3><p>${esc(a.texto)}</p></div></div>`).join('')}
-
-  <h2 class="sec">Pendências <a class="link" href="#/viagem/checklist">Ver todas</a></h2>
+  <h2 class="sec">Pendências</h2>
   <div class="card">
-    <div class="between"><b class="num">${ck} de ${D.checklist.length} concluídas</b><span class="mute small num">${Math.round((ck / D.checklist.length) * 100)}%</span></div>
+    <div class="between"><b class="num">${ck} de ${D.checklist.length} concluídas</b><button class="link small" data-a="checklist" style="color:var(--acc-text);font-weight:700">Ver lista</button></div>
     <div class="bar" style="margin-top:8px"><i style="width:${(ck / D.checklist.length) * 100}%"></i></div>
     ${pend.map((c) => `<button class="chk" role="checkbox" aria-checked="false" data-a="check" data-id="${c.id}"><span class="box">${ic('check', 'sm')}</span><span class="txt small">${esc(c.texto)}</span></button>`).join('')}
   </div>
 
-  <h2 class="sec">Atalhos</h2>
-  <div class="card flat">
-    <a class="li" href="#/viagem/docs"><span class="ic">${ic('file')}</span><div class="grow"><h3>Documentos</h3><p class="small mute">Contrato do motorhome, roteiro e passagens</p></div>${ic('chev')}</a>
-    <a class="li" href="#/viagem/motorhome"><span class="ic">${ic('rv')}</span><div class="grow"><h3>Motorhome</h3><p class="small mute">Retirada em 14/04, devolução em 24/04</p></div>${ic('chev')}</a>
-    <a class="li" href="#/gastos"><span class="ic">${ic('sync')}</span><div class="grow"><h3>Gastos e sincronização</h3><p class="small mute">Quem deve quanto para quem</p></div>${ic('chev')}</a>
-    <a class="li" href="${D.drive}" target="_blank" rel="noopener"><span class="ic">${ic('folder')}</span><div class="grow"><h3>Pasta do grupo no Drive</h3><p class="small mute">Onde guardar os comprovantes de todos</p></div>${ic('ext')}</a>
+  <details class="card sum" style="margin-top:12px"><summary><span class="row">${ic('alert')}<span>${D.alertas.length} pontos de atenção</span>${altos ? `<span class="tag bad">${altos} importantes</span>` : ''}</span>${ic('chev', 'sm chevd')}</summary>
+    <div style="margin-top:8px">${D.alertas.map((a) => `<div class="alert ${a.nivel}"><span class="dot">${ic(a.nivel === 'baixo' ? 'info' : 'alert', 'sm')}</span><div><h3>${esc(a.titulo)}</h3><p>${esc(a.texto)}</p></div></div>`).join('')}</div>
+  </details>
+
+  <div class="card" style="padding:4px 16px;margin-top:12px">
+    <a class="li" href="#/roteiro/reservas"><span class="ic">${ic('ticket')}</span><div class="grow"><h3>Voos e hotéis</h3></div>${ic('chev')}</a>
+    <a class="li" href="#/grupo/arquivos"><span class="ic">${ic('folder')}</span><div class="grow"><h3>Arquivos por pessoa</h3></div>${ic('chev')}</a>
+    <a class="li" href="#/ajustes"><span class="ic">${ic('phone')}</span><div class="grow"><h3>Contatos, dicas e ajustes</h3></div>${ic('chev')}</a>
   </div>`;
 }
 depoisRender.inicio = async () => {
   const el = $('#clima'); if (!el) return;
-  const d = diasViagem().find((x) => x.data === isoHoje()); if (!d) return;
-  const c = D.cidades.find((x) => x.id === d.cidadeId); if (!c) return;
+  const d = diasViagem().find((x) => x.data === isoHoje()); const c = d && D.cidades.find((x) => x.id === d.cidadeId); if (!c) return;
   try {
     const r = await (await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${c.lat}&longitude=${c.lon}&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max&timezone=auto&forecast_days=1`)).json();
-    el.innerHTML = `<div class="tip" style="margin-top:12px">${ic('temp', 'sm')}<span>Previsão para ${esc(c.nome)}: máxima de <b>${Math.round(r.daily.temperature_2m_max[0])}°</b>, mínima de <b>${Math.round(r.daily.temperature_2m_min[0])}°</b>, chuva ${r.daily.precipitation_probability_max[0] ?? 0}%.</span></div>`;
+    el.innerHTML = `<div class="tip" style="margin-top:12px">${ic('temp', 'sm')}<span>${esc(c.nome)}: máxima de <b>${Math.round(r.daily.temperature_2m_max[0])}°</b>, mínima de <b>${Math.round(r.daily.temperature_2m_min[0])}°</b>, chuva ${r.daily.precipitation_probability_max[0] ?? 0}%.</span></div>`;
   } catch { /* sem rede */ }
 };
 
 function cardDia(d, compacto = false) {
   const pres = presentes(d.data < D.inicio ? D.inicio : d.data);
   const rv = d.rv;
-  const itens = (d.itens || []).map((it) => `
-    <div class="tli">
-      <div><div class="ic">${ic(ITIPO[it.tipo] || 'spark')}</div></div>
-      <div class="bd">
-        <div class="between"><span class="hr">${esc(it.hora || '')}</span></div>
-        <h3>${esc(it.titulo)}</h3>
-        ${it.desc ? `<p>${esc(it.desc)}</p>` : ''}
-        ${it.q ? `<div class="acts">${btnIr(it.q)}${btnMapa(it.q)}</div>` : ''}
-      </div>
-    </div>`).join('');
+  const nc = nComent('dia:' + d.data);
+  const itens = (d.itens || []).map((it) => {
+    const res = it.hotel && reserva(it.hotel);
+    const desc = res ? `Hotel: ${res.nome}. ${it.desc || ''}` : it.desc;
+    const q = res ? res.endereco || res.nome : it.q;
+    return `<div class="tli"><div><div class="ic">${ic(ITIPO[it.tipo] || 'spark')}</div></div>
+      <div class="bd"><span class="hr">${esc(it.hora || '')}</span><h3>${esc(it.titulo)}</h3>${desc ? `<p>${esc(desc)}</p>` : ''}${q ? `<div class="acts">${btnIr(q)}</div>` : ''}</div></div>`;
+  }).join('');
   const blocoRv = rv ? `
     <div class="card" style="--c:${corFase('rv')}">
-      <div class="between"><span class="tag acc">${ic('rv', 'sm')}${rv.milhas} milhas · ${esc(rv.horas)}</span>${d.data !== '2027-04-14' ? '' : '<span class="tag">Dia 1 do motorhome</span>'}</div>
+      <span class="tag acc">${ic('rv', 'sm')}${rv.milhas} milhas · ${esc(rv.horas)}</span>
       <ul class="dots">${rv.destaques.map((x) => `<li>${esc(x)}</li>`).join('')}</ul>
-      ${rv.rota?.length ? `<div class="stops">${rv.rota.map((s, i) => `<a class="stop" href="${mapsIr(s)}" target="_blank" rel="noopener"><span class="n">${i + 1}</span><span class="grow">${esc(s.split(',')[0])}</span>${ic('nav', 'sm')}</a>`).join('')}</div>
-      <div class="acts"><a class="btn sm primary" href="${mapsRota(rv.rota)}" target="_blank" rel="noopener">${ic('map', 'sm')}Abrir rota completa</a></div>` : ''}
+      ${rv.rota?.length ? `<div class="stops">${rv.rota.map((s, i) => `<a class="stop" href="${esc(mapsIr(s))}" target="_blank" rel="noopener"><span class="n">${i + 1}</span><span class="grow">${esc(s.split(',')[0])}</span>${ic('nav', 'sm')}</a>`).join('')}</div>
+      <div class="acts"><a class="btn sm primary" href="${esc(mapsRota(rv.rota))}" target="_blank" rel="noopener">${ic('map', 'sm')}Rota completa</a></div>` : ''}
       ${rv.camp ? `<div class="divider"></div><div class="row"><span class="ic" style="width:40px;height:40px;border-radius:12px;display:grid;place-items:center;background:var(--surface2)">${ic('tent')}</span><div class="grow"><p class="xs mute">Pernoite</p><h3>${esc(rv.camp.nome)}</h3></div>${btnIr(rv.camp.q)}</div>` : ''}
       ${rv.dica ? `<div class="tip">${ic('bulb', 'sm')}<span>${esc(rv.dica)}</span></div>` : ''}
     </div>` : '';
@@ -569,112 +623,210 @@ function cardDia(d, compacto = false) {
       <div class="date"><small>${semana(d.data)}</small><b>${d.data.slice(8)}</b></div>
       <div class="grow">
         <h3>${esc(d.titulo)}</h3>
-        <div class="meta">${d.cidade ? `<span class="tag">${ic('pin', 'sm')}${esc(d.cidade)}</span>` : ''}${d.clima ? `<span class="tag">${ic('temp', 'sm')}${esc(d.clima)}</span>` : ''}${d.pernoite && !rv ? `<span class="tag">${ic('bed', 'sm')}${esc(d.pernoite)}</span>` : ''}</div>
-        ${compacto ? '' : `<div class="row" style="margin-top:8px;gap:8px">${avs(pres, 'xs')}<span class="xs mute">${pres.length} no grupo</span></div>`}
+        <div class="meta">${d.cidade ? `<span class="tag">${ic('pin', 'sm')}${esc(d.cidade)}</span>` : ''}${d.pernoite && !rv ? `<span class="tag">${ic('bed', 'sm')}${esc(d.pernoite)}</span>` : ''}</div>
+        ${compacto ? '' : `<div class="row" style="margin-top:8px;gap:8px">${avs(pres, 'xs')}<span class="grow"></span><button class="mini" data-a="comentar" data-alvo="dia:${d.data}">${ic('chat')}${nc ? nc + (nc === 1 ? ' comentário' : ' comentários') : 'Comentar'}</button></div>`}
       </div>
     </div>
-    ${itens ? `<div class="tl">${itens}</div>` : ''}
-    ${blocoRv}
+    ${itens ? `<div class="tl">${itens}</div>` : ''}${blocoRv}
   </article>`;
 }
 
-// ------------------------------------------------------------------ ROTEIRO
+// ------------------------------------------------------------------ ROTEIRO (dia a dia, voos e hotéis, motorhome)
 function vRoteiro(sub) {
-  const aba = sub || 'dias';
-  const seg = `<div class="seg" role="tablist">${[['dias', 'Dia a dia'], ['motorhome', 'Motorhome'], ['alternativas', 'Alternativas']].map(([k, n]) => `<button role="tab" aria-selected="${aba === k}" data-a="go" data-h="#/roteiro/${k}">${n}</button>`).join('')}</div>`;
-  if (aba === 'motorhome') return `<div class="pagehead"><div><p class="eyebrow">14 a 24 de abril</p><h1 class="title">Roteiros do motorhome</h1><p class="sub">Todos voltam a Las Vegas em 20/04 para o voo do Victor.</p></div></div>${seg}${vOpcoesRv()}`;
-  if (aba === 'alternativas') return `<div class="pagehead"><div><p class="eyebrow">Plano B, C e D</p><h1 class="title">Alternativas</h1><p class="sub">Outras formas de viver LA, a estrada e Vegas.</p></div></div>${seg}${vAlternativas()}`;
-  const dias = diasViagem();
-  const hoje = isoHoje();
+  const aba = ['reservas', 'motorhome'].includes(sub) ? sub : 'dias';
+  const s = seg('roteiro', aba, [['dias', 'Dia a dia'], ['reservas', 'Voos e hotéis'], ['motorhome', 'Motorhome']]);
+  if (aba === 'reservas') return cab('Reservas', 'Voos e hotéis') + s + vReservas();
+  if (aba === 'motorhome') return cab('14 a 24 de abril', 'Motorhome') + s + vMotorhome();
+  const dias = diasViagem(); const hoje = isoHoje();
   const r = D.roteiros.find((x) => x.id === rotaAtual());
-  return `
-  <div class="pagehead"><div><p class="eyebrow">09 a 26 de abril</p><h1 class="title">Roteiro</h1><p class="sub">Motorhome: opção ${r.id}, ${esc(r.nome)}. <a href="#/roteiro/motorhome" style="color:var(--acc-text);font-weight:700">Trocar</a></p></div></div>
-  ${seg}
+  return cab('09 a 26 de abril', 'Roteiro', `Motorhome: opção ${r.id}, ${esc(r.nome)}`) + s + `
   <div class="datepills"><div class="chips">${dias.map((d) => `<button class="dp ${d.data === hoje ? 'today' : ''}" style="--c:${corFase(d.fase)}" data-a="irDia" data-id="${d.data}"><small>${semana(d.data)}</small><b>${d.data.slice(8)}</b></button>`).join('')}</div></div>
   ${dias.map((d) => cardDia(d)).join('')}`;
 }
 depoisRender.roteiro = (sub) => {
   if (sub && sub !== 'dias') return;
-  const h = isoHoje(); const el = document.getElementById('d-' + h);
+  const el = document.getElementById('d-' + isoHoje());
   if (el && !S.ui.rolouHoje) { S.ui.rolouHoje = true; setTimeout(() => el.scrollIntoView({ block: 'start' }), 100); }
 };
 
-function vOpcoesRv() {
-  const atual = rotaAtual();
-  return D.roteiros.map((r) => `
-    <article class="card" style="--c:${corFase('rv')};${r.id === atual ? 'border-color:var(--acc);box-shadow:0 0 0 1px var(--acc),var(--shadow)' : ''}">
-      <div class="between"><span class="tag acc">Opção ${r.id} · ${esc(r.selo)}</span><span class="small mute num">${esc(r.milhas)}</span></div>
-      <h3 style="font-size:18px;margin-top:8px">${esc(r.nome)}</h3>
-      <p class="small" style="color:var(--ink2);margin-top:4px">${esc(r.resumo)}</p>
-      <div style="margin-top:12px">${r.dias.map((d) => `<div class="li" style="min-height:44px;padding:8px 0"><span class="num small" style="width:56px;font-weight:800;color:var(--acc-text)">${semana(d.data)} ${ddmm(d.data)}</span><span class="grow small">${esc(d.titulo)}</span><span class="xs mute num">${d.milhas} mi</span></div>`).join('')}</div>
-      <div class="btnrow">${r.id === atual ? `<span class="btn soft">${ic('check')}Roteiro escolhido</span>` : `<button class="btn primary" data-a="usarRota" data-id="${r.id}">Usar este roteiro</button>`}</div>
-    </article>`).join('') + `
-    <div class="tip" style="margin-top:16px">${ic('info', 'sm')}<span>A escolha entra no link de sincronização: quando alguém trocar, todos recebem ao importar. O guia original em PDF está em Viagem › Documentos.</span></div>`;
+const todosVoos = () => [...D.voos, ...Object.values(S.sync.voos).filter((v) => v && !v.del).map((v) => ({ ...v, manual: true }))];
+function vReservas() {
+  const voos = todosVoos();
+  const blocoVoos = D.pessoas.map((p) => {
+    const vs = voos.filter((v) => v.pessoas.includes(p.id)).sort((a, b) => a.saida.localeCompare(b.saida));
+    return `<div class="person">${av(p.id)}<h2 class="grow">${esc(p.curto)}</h2></div>
+    <div class="card" style="padding:4px 16px">${vs.length ? vs.map((v) => `<button class="fl" data-a="verVoo" data-id="${v.id}"><span class="ic">${ic('plane')}</span><span class="grow"><b style="display:block">${esc(v.numero)} · ${esc(v.de)} → ${esc(v.para)}</b><span class="xs mute">${v.grupo === 'ida' ? 'Ida' : 'Volta'} · ${semana(v.saida)}, ${ddmm(v.saida)} · ${hora(v.saida)}${v.chegada ? ' → ' + hora(v.chegada) : ''}</span></span>${ic('chev', 'sm')}</button>`).join('') : '<p class="small mute" style="padding:12px 0">Nenhum voo cadastrado.</p>'}</div>`;
+  }).join('');
+  const blocoHoteis = D.hoteis.map((h) => {
+    const r = reserva(h.id);
+    const comp = anexos().filter((a) => a.kind === 'hotel' && a.ref === h.id);
+    const noites = diasEntre(h.checkin, h.checkout);
+    return `<article class="card">
+      <div class="between"><div><p class="eyebrow">${semana(h.checkin)} ${ddmm(h.checkin)} → ${semana(h.checkout)} ${ddmm(h.checkout)} · ${noites} ${noites === 1 ? 'noite' : 'noites'}</p><h3 style="font-size:18px">${esc(h.titulo)}</h3></div>${r ? `<span class="tag ok">${ic('check', 'sm')}Reservado</span>` : `<span class="tag warn">A reservar</span>`}</div>
+      ${r ? `<p style="margin-top:8px;font-weight:700">${esc(r.nome)}</p>${r.codigo ? `<button class="tag acc" style="margin-top:6px" data-a="copiar" data-v="${esc(r.codigo)}">${ic('copy', 'sm')}${esc(r.codigo)}</button>` : ''}${r.obs ? `<p class="small mute">${esc(r.obs)}</p>` : ''}<p class="xs mute" style="margin-top:4px">Registrado por ${esc(nome(r.por))}</p>` : ''}
+      <div class="acts">${r ? btnIr(r.endereco || r.nome) : ''}<button class="btn sm ${r ? '' : 'primary'}" data-a="reservaHotel" data-id="${h.id}">${r ? ic('edit', 'sm') + 'Editar' : ic('check', 'sm') + 'Registrar reserva'}</button><button class="btn sm" data-a="anexar" data-kind="hotel" data-ref="${h.id}">${ic('up', 'sm')}Comprovante</button></div>
+      ${comp.length ? `<div style="margin-top:8px">${comp.map(linhaArq).join('')}</div>` : ''}
+      <details class="sum" style="margin-top:8px"><summary class="small mute">Sugestões com preço (${h.sugestoes.length})${ic('chev', 'sm chevd')}</summary>
+        ${h.sugestoes.map((s) => `<a class="fl" href="${esc(s.url)}" target="_blank" rel="noopener"><span class="grow"><b style="display:block;font-size:14px">${esc(s.nome)}</b><span class="xs mute">${s.nota.toFixed(1).replace('.', ',')} · ${esc(s.destaque)}</span></span><span class="small num" style="font-weight:700">${esc(s.preco)}</span>${ic('ext', 'sm')}</a>`).join('')}
+        <p class="xs mute">${esc(h.nota)}</p></details>
+    </article>`;
+  }).join('');
+  return `<h2 class="sec" style="margin-top:8px">Voos <button class="link small" data-a="novoVoo" style="color:var(--acc-text);font-weight:700">${ic('plus', 'sm')} Cadastrar</button></h2>${blocoVoos}
+  <h2 class="sec">Hotéis</h2><div class="stack">${blocoHoteis}</div>`;
+}
+function cardVoo(v) {
+  return `<article class="flight">
+    <div class="fh"><span>${esc(v.cia)} · ${esc(v.numero)}</span><span class="num">${semana(v.saida)}, ${ddmm(v.saida)}</span></div>
+    <div class="fb">
+      <div><div class="iata">${esc(v.de)}</div><div class="t">${hora(v.saida)}</div><div class="c">${esc(v.deCidade || '')}</div></div>
+      <div class="mid">${ic('plane')}<span class="xs">${v.chegada && v.chegada.slice(0, 10) !== v.saida.slice(0, 10) ? 'chega ' + ddmm(v.chegada) : ''}</span></div>
+      <div style="text-align:right"><div class="iata">${esc(v.para)}</div><div class="t">${v.chegada ? hora(v.chegada) : ''}</div><div class="c">${esc(v.paraCidade || '')}</div></div>
+    </div>
+    <div class="perf"></div>
+    <div class="ff" style="padding-top:12px">
+      <div class="between"><span>${avs(v.pessoas || [], 'xs')}</span>${v.localizador ? `<button class="tag acc" data-a="copiar" data-v="${esc(String(v.localizador).split(' ')[0])}">${ic('copy', 'sm')}${esc(v.localizador)}</button>` : ''}</div>
+      ${v.obs ? `<p style="margin-top:8px">${esc(v.obs)}</p>` : ''}
+      ${v.manual ? `<p class="xs mute" style="margin-top:6px">Cadastrado por ${esc(nome(v.por))}</p>` : ''}
+      <div class="acts">${v.doc ? `<button class="btn sm" data-a="abrirDoc" data-id="${v.doc}">${ic('ticket', 'sm')}Bilhete</button>` : ''}${v.manual ? `<button class="btn sm" data-a="editarVoo" data-id="${v.id}">${ic('edit', 'sm')}Editar</button><button class="btn sm danger" data-a="apagarVoo" data-id="${v.id}">${ic('trash', 'sm')}Remover</button>` : ''}</div>
+    </div></article>`;
 }
 
-function vAlternativas() {
-  const nomes = { la: 'Los Angeles', estrada: 'Estrada LA → Vegas', lv: 'Las Vegas' };
-  const grupos = ['la', 'estrada', 'lv'].map((f) => `
-    <h2 class="sec">${nomes[f]}</h2>
-    ${D.alternativas.filter((a) => a.fase === f).map((a) => `
-      <article class="card" style="--c:${corFase(f === 'estrada' ? 'lv' : f)}">
-        <h3>${esc(a.titulo)}</h3><p class="small" style="color:var(--ink2);margin-top:4px">${esc(a.resumo)}</p>
-        <div class="stops">${a.itens.map(([n, q], i) => `<a class="stop" href="${mapsIr(q)}" target="_blank" rel="noopener"><span class="n">${i + 1}</span><span class="grow">${esc(n)}</span>${ic('nav', 'sm')}</a>`).join('')}</div>
-        ${a.itens.length > 1 ? `<div class="acts"><a class="btn sm" href="${mapsRota(a.itens.map((x) => x[1]))}" target="_blank" rel="noopener">${ic('map', 'sm')}Rota com todas as paradas</a></div>` : ''}
-      </article>`).join('')}`).join('');
-  return grupos + `
-    <h2 class="sec">Eventos para checar</h2>
-    ${D.eventos.map((e) => `<article class="card"><div class="row top"><span class="ic" style="width:44px;height:44px;border-radius:14px;display:grid;place-items:center;background:var(--acc-soft);color:var(--acc-text)">${ic('ticket')}</span><div class="grow"><h3>${esc(e.titulo)}</h3><p class="small mute">${esc(e.quando)} · ${esc(e.onde)}</p><div class="acts"><a class="btn sm" href="${e.link}" target="_blank" rel="noopener">${ic('ext', 'sm')}Agenda</a>${btnMapa(e.q)}</div></div></div></article>`).join('')}`;
+function vMotorhome() {
+  const m = D.motorhome; const atual = rotaAtual();
+  const ponto = (t, x) => `<div class="fl"><span class="ic">${ic(t === 'Retirada' ? 'up' : 'down')}</span><span class="grow"><b style="display:block">${t}: ${semana(x.data)}, ${ddmm(x.data)}</b><span class="xs mute">${esc(x.janela)} · Henderson</span></span><a class="iconbtn" href="tel:${x.tel.replace(/[^+\d]/g, '')}" aria-label="Ligar">${ic('phone')}</a><a class="iconbtn" href="${esc(mapsIr(x.endereco))}" target="_blank" rel="noopener" aria-label="Rota">${ic('nav')}</a></div>`;
+  const det = (t, html) => `<details class="sum" style="border-top:1px solid var(--line)"><summary>${t}${ic('chev', 'sm chevd')}</summary><div style="padding-bottom:12px">${html}</div></details>`;
+  const lista = (l) => `<ul class="dots">${l.map((s) => `<li>${esc(s)}</li>`).join('')}</ul>`;
+  return `
+  <article class="card"><div class="row">${ic('rv', 'lg')}<div class="grow"><h3>${esc(m.locadora)} · C30</h3><p class="xs mute">${esc(m.intermediaria)} · ${esc(m.viajantes)}</p></div></div>
+    ${ponto('Retirada', m.retirada)}${ponto('Devolução', m.devolucao)}
+    <div class="acts"><button class="btn sm" data-a="abrirDoc" data-id="contrato-motorhome">${ic('file', 'sm')}Contrato</button><button class="btn sm" data-a="abrirDoc" data-id="roteiro-canions">${ic('map', 'sm')}Guia da rota</button><a class="btn sm" href="https://wa.me/554126264040" target="_blank" rel="noopener">${ic('wa', 'sm')}Assistência</a></div>
+  </article>
+  <h2 class="sec">Qual roteiro fazer</h2>
+  <div class="stack">${D.roteiros.map((r) => `<article class="card" style="${r.id === atual ? 'border-color:var(--acc);box-shadow:0 0 0 1px var(--acc)' : ''}">
+    <div class="between"><span class="tag acc">Opção ${r.id} · ${esc(r.selo)}</span><span class="xs mute num">${esc(r.milhas)}</span></div>
+    <h3 style="margin-top:8px">${esc(r.nome)}</h3><p class="small mute clamp">${esc(r.resumo)}</p>
+    <details class="sum"><summary class="small mute">Ver os ${r.dias.length} dias${ic('chev', 'sm chevd')}</summary>${r.dias.map((d) => `<div class="li" style="min-height:40px;padding:6px 0"><span class="num small" style="width:56px;font-weight:800;color:var(--acc-text)">${ddmm(d.data)}</span><span class="grow small">${esc(d.titulo)}</span><span class="xs mute num">${d.milhas} mi</span></div>`).join('')}</details>
+    ${r.id === atual ? `<span class="btn sm soft" style="margin-top:4px">${ic('check', 'sm')}Escolhido${S.sync.conf.rota?.por ? ' por ' + esc(nome(S.sync.conf.rota.por)) : ''}</span>` : `<button class="btn sm primary" data-a="usarRota" data-id="${r.id}" style="margin-top:4px">Usar este</button>`}
+  </article>`).join('')}</div>
+  <h2 class="sec">Contrato e regras</h2>
+  <div class="card" style="padding:0 16px">
+    ${det('Valores', m.valores.map(([k, v]) => `<div class="between small" style="padding:6px 0"><span>${esc(k)}</span><b class="num">${esc(v)}</b></div>`).join(''))}
+    ${det('O que levar na retirada', lista(m.levar))}${det('Antes de devolver', lista(m.devolver))}${det('Incluso na reserva', lista(m.servicos))}
+    ${det('Combustível', `<p class="small mute">${esc(m.combustivel)}</p>`)}${det('Assistência', `<p class="small mute">${esc(m.assistencia)}</p>`)}${det('Cancelamento', `<p class="small mute">${esc(m.cancelamento)}</p>`)}
+  </div>`;
 }
 
-// ------------------------------------------------------------------ EXPLORAR
-const F = { cidade: 'todas', cat: 'todas', q: '', animados: false, votados: false };
-function votosDe(lid) { return D.pessoas.filter((p) => S.sync.votos[`${lid}|${p.id}`]?.v).map((p) => p.id); }
+// ------------------------------------------------------------------ LUGARES
+const F = { cidade: 'todas', cat: 'todas', q: '' };
+const nomeCat = (c) => D.categorias.find((x) => x.id === c)?.nome || TIPOS_LUGAR.find((t) => t[0] === c)?.[1] || '';
 function filtrarLugares() {
   const q = slug(F.q).replace(/-/g, ' ');
-  let l = D.lugares.filter((x) => (F.cidade === 'todas' || x.cidade === F.cidade) && (F.cat === 'todas' || x.cat === F.cat) && (!F.animados || x.energia >= 3) && (!q || slug(`${x.nome} ${x.desc} ${x.dica} ${x.cat}`).replace(/-/g, ' ').includes(q)));
-  if (F.votados) l = l.filter((x) => votosDe(x.id).length).sort((a, b) => votosDe(b.id).length - votosDe(a.id).length);
+  let l = lugares().filter((x) => (F.cidade === 'todas' || x.cidade === F.cidade) && (!q || slug(`${x.nome} ${x.desc || ''} ${x.dica || ''} ${x.cat}`).replace(/-/g, ' ').includes(q)));
+  if (F.cat === 'fav') l = l.filter((x) => votosDe(x.id).length).sort((a, b) => votosDe(b.id).length - votosDe(a.id).length);
+  else if (F.cat === 'grupo') l = l.filter((x) => x.custom);
+  else if (F.cat !== 'todas') l = l.filter((x) => x.cat === F.cat);
   return l;
 }
 function cardLugar(x) {
-  const v = votosDe(x.id);
-  const meu = S.eu && v.includes(S.eu);
-  const cid = D.cidades.find((c) => c.id === x.cidade);
-  const cat = D.categorias.find((c) => c.id === x.cat);
+  const v = votosDe(x.id); const meu = S.eu && v.includes(S.eu); const nc = nComent(x.id);
+  const cid = D.cidades.find((c) => c.id === x.cidade)?.nome || '';
   return `<article class="card place">
-    <div class="top"><span class="ic">${ic(ICAT[x.cat] || 'pin')}</span>
-      <div class="grow"><h3>${esc(x.nome)}</h3>
-        <div class="meta"><span class="tag">${esc(cat?.nome || x.cat)}</span>${F.cidade === 'todas' ? `<span class="tag">${esc(cid?.nome || '')}</span>` : ''}${x.preco ? `<span class="tag num">${esc(x.preco)}</span>` : ''}${flames(x.energia)}</div>
-      </div></div>
-    <p>${esc(x.desc)}</p>
-    ${x.dica ? `<div class="tip">${ic('bulb', 'sm')}<span>${esc(x.dica)}</span></div>` : ''}
-    <div class="acts" style="align-items:center">${btnIr(x.q)}${btnMapa(x.q)}<button class="btn sm vote" aria-pressed="${meu}" data-a="votar" data-id="${x.id}">${ic('heart', 'sm')}${meu ? 'Quero ir' : 'Quero ir'}</button>${v.length ? avs(v, 'xs') : ''}</div>
+    <button class="top" data-a="lugar" data-id="${esc(x.id)}" style="width:100%;text-align:left"><span class="ic">${ic(ICAT[x.cat] || 'pin')}</span>
+      <span class="grow"><h3>${esc(x.nome)}</h3><span class="meta"><span class="tag">${esc(nomeCat(x.cat))}</span>${F.cidade === 'todas' && cid ? `<span class="tag">${esc(cid)}</span>` : ''}${x.custom ? `<span class="tag acc">por ${esc(nome(x.por))}</span>` : ''}${x.preco ? `<span class="tag num">${esc(x.preco)}</span>` : ''}${flames(x.energia)}</span>
+      ${x.desc ? `<p class="clamp">${esc(x.desc)}</p>` : ''}</span></button>
+    <div class="acts" style="align-items:center">${x.q ? btnIr(x.q) : ''}<button class="mini vote" aria-pressed="${!!meu}" data-a="votar" data-id="${esc(x.id)}">${ic('heart')}Quero ir</button><button class="mini" data-a="lugar" data-id="${esc(x.id)}" aria-label="Comentários">${ic('chat')}${nc || ''}</button>${v.length ? avs(v, 'xs') : ''}</div>
   </article>`;
 }
-function vExplorar() {
-  const cidades = [{ id: 'todas', nome: 'Todas' }, ...D.cidades];
-  const cats = [{ id: 'todas', nome: 'Tudo' }, ...D.categorias];
-  return `
-  <div class="pagehead"><div><p class="eyebrow">${D.lugares.length} lugares</p><h1 class="title">Explorar</h1><p class="sub">Bares, baladas, restaurantes e passeios. Toque em “Ir” para abrir o GPS.</p></div></div>
+function vLugares() {
+  const cidades = [{ id: 'todas', nome: 'Todas as cidades' }, ...D.cidades];
+  const cats = [['todas', 'Tudo'], ['fav', 'Favoritos'], ['grupo', 'Do grupo'], ...D.categorias.map((c) => [c.id, c.nome]), ['ideias', 'Ideias de roteiro']];
+  return cab(`${lugares().length} lugares`, 'Lugares', 'Toque em “Ir” para abrir o GPS. Adicione o que quiser e comente.') + `
   <label class="search">${ic('search')}<span class="sr">Buscar</span><input id="busca" type="search" placeholder="Buscar: rooftop, pizza, trilha…" value="${esc(F.q)}" autocomplete="off"></label>
-  <div class="chips" style="margin-top:12px">${cidades.map((c) => `<button class="chip" aria-pressed="${F.cidade === c.id}" data-a="fCidade" data-id="${c.id}">${esc(c.nome)}</button>`).join('')}</div>
-  <div class="chips" style="margin-top:4px">${cats.map((c) => `<button class="chip" aria-pressed="${F.cat === c.id}" data-a="fCat" data-id="${c.id}">${c.id !== 'todas' ? ic(ICAT[c.id], 'sm') : ''}${esc(c.nome)}</button>`).join('')}</div>
-  <div class="chips" style="margin-top:4px"><button class="chip" aria-pressed="${F.animados}" data-a="fAnimados">${ic('flame', 'sm')}Só os mais animados</button><button class="chip" aria-pressed="${F.votados}" data-a="fVotados">${ic('heart', 'sm')}Favoritos do grupo</button></div>
-  <div id="lista" class="stack" style="margin-top:16px">${listaLugares()}</div>`;
+  <div class="chips" style="margin-top:12px">${cats.map(([id, n]) => `<button class="chip" aria-pressed="${F.cat === id}" data-a="fCat" data-id="${id}">${id === 'fav' ? ic('heart', 'sm') : id === 'grupo' ? ic('users', 'sm') : ICAT[id] ? ic(ICAT[id], 'sm') : ''}${esc(n)}</button>`).join('')}</div>
+  ${F.cat === 'ideias' ? '' : `<div class="chips" style="margin-top:4px">${cidades.map((c) => `<button class="chip" aria-pressed="${F.cidade === c.id}" data-a="fCidade" data-id="${c.id}">${esc(c.nome)}</button>`).join('')}</div>`}
+  <div id="lista" class="stack" style="margin-top:16px">${F.cat === 'ideias' ? vIdeias() : listaLugares()}</div>`;
 }
 function listaLugares() {
   const l = filtrarLugares();
-  if (!l.length) return `<div class="empty">${ic('compass')}<p>Nada com esses filtros.${F.votados ? ' Marquem “Quero ir” nos lugares para montar a lista do grupo.' : ''}</p></div>`;
+  if (!l.length) return `<div class="empty">${ic('compass')}<p>${F.cat === 'fav' ? 'Marquem “Quero ir” para montar a lista do grupo.' : F.cat === 'grupo' ? 'Nenhum lugar adicionado ainda. Toque em “Adicionar”.' : 'Nada com esses filtros.'}</p></div>`;
   return l.map(cardLugar).join('');
 }
-depoisRender.explorar = () => {
+function vIdeias() {
+  const nomes = { la: 'Los Angeles', estrada: 'Estrada LA → Vegas', lv: 'Las Vegas' };
+  return D.alternativas.map((a) => `<article class="card"><span class="tag">${nomes[a.fase]}</span><h3 style="margin-top:6px">${esc(a.titulo)}</h3><p class="small mute">${esc(a.resumo)}</p>
+    <div class="stops">${a.itens.map(([n, q], i) => `<a class="stop" style="--c:var(--acc)" href="${esc(mapsIr(q))}" target="_blank" rel="noopener"><span class="n">${i + 1}</span><span class="grow">${esc(n)}</span>${ic('nav', 'sm')}</a>`).join('')}</div></article>`).join('')
+    + `<h2 class="sec">Eventos para checar</h2>` + D.eventos.map((e) => `<a class="card row" href="${esc(e.link)}" target="_blank" rel="noopener"><span class="ic" style="width:40px;height:40px;border-radius:12px;display:grid;place-items:center;background:var(--acc-soft);color:var(--acc-text)">${ic('ticket')}</span><span class="grow"><h3>${esc(e.titulo)}</h3><span class="small mute">${esc(e.quando)}</span></span>${ic('ext', 'sm')}</a>`).join('');
+}
+depoisRender.lugares = () => {
   const i = $('#busca');
-  i?.addEventListener('input', () => { F.q = i.value; clearTimeout(i.t); i.t = setTimeout(() => { $('#lista').innerHTML = listaLugares(); }, 150); });
+  i?.addEventListener('input', () => { F.q = i.value; clearTimeout(i.t); i.t = setTimeout(() => { if (F.cat !== 'ideias') $('#lista').innerHTML = listaLugares(); }, 150); });
 };
+function detalheLugar(id) {
+  const x = lugarPorId(id); if (!x) return;
+  const v = votosDe(x.id); const meu = S.eu && v.includes(S.eu);
+  abrirSheet(x.nome, `
+    <div class="meta">${x.cat ? `<span class="tag">${ic(ICAT[x.cat] || 'pin', 'sm')}${esc(nomeCat(x.cat))}</span>` : ''}<span class="tag">${esc(D.cidades.find((c) => c.id === x.cidade)?.nome || '')}</span>${x.preco ? `<span class="tag">${esc(x.preco)}</span>` : ''}${flames(x.energia)}</div>
+    ${x.desc ? `<p style="margin-top:12px;color:var(--ink2)">${esc(x.desc)}</p>` : ''}
+    ${x.dica ? `<div class="tip">${ic('bulb', 'sm')}<span>${esc(x.dica)}</span></div>` : ''}
+    ${x.custom ? `<p class="xs mute" style="margin-top:8px">Adicionado por ${esc(nome(x.por))} ${quando(x.criado)}</p>` : ''}
+    <div class="acts">${x.q ? btnIr(x.q) + btnMapa(x.q) : ''}${x.link ? `<a class="btn sm" href="${esc(x.link)}" target="_blank" rel="noopener">${ic('ext', 'sm')}Site</a>` : ''}<button class="btn sm vote" aria-pressed="${!!meu}" data-a="votar" data-id="${esc(x.id)}">${ic('heart', 'sm')}Quero ir</button>${x.custom ? `<button class="btn sm" data-a="editarLugar" data-id="${esc(x.id)}">${ic('edit', 'sm')}Editar</button>` : ''}</div>
+    ${v.length ? `<div class="row" style="margin-top:12px;gap:8px">${avs(v, 'xs')}<span class="xs mute">${esc(v.map(nome).join(', '))} ${v.length === 1 ? 'quer' : 'querem'} ir</span></div>` : ''}
+    <h3 style="margin-top:24px">Comentários</h3>${blocoComentarios(x.id)}`, montarComentarios);
+}
+function formLugar(id) {
+  const reg = id ? S.sync.conf[id] : null; const x = reg?.v || {};
+  const dHoje = diasViagem().find((d) => d.data === isoHoje());
+  const cidade = x.cidade || (F.cidade !== 'todas' ? F.cidade : dHoje?.cidadeId || 'lv');
+  const cat = x.cat || (TIPOS_LUGAR.some((t) => t[0] === F.cat) ? F.cat : 'comer');
+  abrirSheet(id ? 'Editar lugar' : 'Adicionar lugar', `<form id="fl">
+    <label class="f"><span>Nome</span><input class="inp" name="nome" required maxlength="80" value="${esc(x.nome || '')}" placeholder="Ex.: Pizzaria do Joe"></label>
+    <div class="f" style="margin-top:14px"><span class="xs mute" style="font-weight:700;display:block;margin-bottom:6px">Tipo</span><div class="pick" data-g="cat">${TIPOS_LUGAR.map(([k, n]) => `<button type="button" class="noav" aria-pressed="${cat === k}" data-id="${k}">${ic(ICAT[k], 'sm')}${n}</button>`).join('')}</div></div>
+    <div class="f" style="margin-top:14px"><span class="xs mute" style="font-weight:700;display:block;margin-bottom:6px">Cidade</span><div class="pick" data-g="cidade">${D.cidades.filter((c) => c.id !== 'estrada').map((c) => `<button type="button" class="noav" aria-pressed="${cidade === c.id}" data-id="${c.id}">${esc(c.nome)}</button>`).join('')}</div></div>
+    <label class="f"><span>Endereço ou link do Google Maps (opcional)</span><input class="inp" name="q" value="${esc(x.q || '')}" placeholder="Se deixar vazio, o GPS busca pelo nome"></label>
+    <label class="f"><span>Por que vale a pena (opcional)</span><textarea class="inp" name="desc" maxlength="400">${esc(x.desc || '')}</textarea></label>
+    <label class="f"><span>Site ou link de reserva (opcional)</span><input class="inp" name="link" type="url" value="${esc(x.link || '')}" placeholder="https://"></label>
+    <button class="btn primary block" style="margin-top:16px">${ic('check')}${id ? 'Salvar' : 'Adicionar para o grupo'}</button>
+    ${id ? `<button type="button" class="btn danger block" style="margin-top:8px" data-a="apagarLugar" data-id="${esc(id)}">${ic('trash')}Remover</button>` : ''}</form>`, (sh) => {
+    sh.querySelectorAll('.pick').forEach((g) => g.addEventListener('click', (e) => { const b = e.target.closest('button'); if (b) g.querySelectorAll('button').forEach((y) => y.setAttribute('aria-pressed', y === b)); }));
+    sh.querySelector('#fl').addEventListener('submit', (e) => {
+      e.preventDefault(); const f = new FormData(e.target);
+      const k = id || 'l:' + uid();
+      const v = { nome: String(f.get('nome')).trim(), cat: sh.querySelector('[data-g="cat"] [aria-pressed="true"]')?.dataset.id || 'outro', cidade: sh.querySelector('[data-g="cidade"] [aria-pressed="true"]')?.dataset.id || 'lv', desc: String(f.get('desc') || '').trim(), link: String(f.get('link') || '').trim() };
+      v.q = String(f.get('q') || '').trim() || `${v.nome}, ${D.cidades.find((c) => c.id === v.cidade)?.nome || ''}`;
+      S.sync.conf[k] = { v, ts: Date.now(), por: reg?.por || S.eu || '', criado: reg?.criado || Date.now() };
+      salvar(); fecharSheet(); F.cat = 'grupo'; F.cidade = 'todas'; render(); toast(id ? 'Lugar atualizado.' : 'Lugar adicionado para o grupo.' + aviso());
+    });
+  });
+}
+
+// ------------------------------------------------------------------ comentários
+function listaComentarios(alvo) {
+  const cs = comentarios(alvo);
+  if (!cs.length) return '<p class="small mute">Nenhum comentário ainda. Comece a conversa.</p>';
+  return cs.map((c) => `<div class="msg ${c.por === S.eu ? 'eu' : ''}">${av(c.por, 'sm')}<div class="bub"><small>${esc(nome(c.por))} · ${quando(c.ts)}${c.por === S.eu ? ` · <button data-a="apagarComent" data-id="${esc(c.id)}" style="color:var(--bad);font-size:11px">apagar</button>` : ''}</small><p>${esc(c.v.texto)}</p></div></div>`).join('');
+}
+const blocoComentarios = (alvo) => `<div class="thread" data-thread="${esc(alvo)}">${listaComentarios(alvo)}</div>
+  <form class="sendbar" data-coment="${esc(alvo)}"><label class="sr" for="ctx">Comentário</label><textarea class="inp" id="ctx" name="t" rows="1" maxlength="1000" placeholder="Escreva um comentário…" required></textarea><button class="btn primary" aria-label="Enviar">${ic('send')}</button></form>`;
+function montarComentarios(sh) {
+  const f = sh.querySelector('[data-coment]'); if (!f) return;
+  const ta = f.querySelector('textarea');
+  ta.addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); f.requestSubmit(); } });
+  f.addEventListener('submit', (e) => {
+    e.preventDefault();
+    if (!S.eu) return escolherEu();
+    const texto = ta.value.trim(); if (!texto) return;
+    S.sync.conf['c:' + uid()] = { v: { alvo: f.dataset.coment, texto }, ts: Date.now(), por: S.eu };
+    salvar(); ta.value = '';
+    const th = sh.querySelector('[data-thread]'); th.innerHTML = listaComentarios(f.dataset.coment);
+    th.lastElementChild?.scrollIntoView({ block: 'nearest' });
+    SYNC.pend = true;
+    navigator.vibrate?.(10);
+  });
+}
 
 // ------------------------------------------------------------------ GASTOS
 const marcoZero = () => Math.max(Date.parse(D.gastosZeradosEm || '') || 0, conf('gastosDesde', 0));
-const gastosAtivos = () => Object.values(S.sync.gastos).filter((g) => !g.del && (g.ts || 0) >= marcoZero()).sort((a, b) => (b.data || '').localeCompare(a.data || '') || (b.ts || 0) - (a.ts || 0));
+const gastosAtivos = () => Object.values(S.sync.gastos).filter((g) => g && !g.del && (g.ts || 0) >= marcoZero()).sort((a, b) => (b.data || '').localeCompare(a.data || '') || (b.ts || 0) - (a.ts || 0));
 const emUSD = (g) => (g.moeda === 'BRL' ? g.valor / (g.cambio || S.cambio) : g.valor);
 function saldos() {
   const s = Object.fromEntries(D.pessoas.map((p) => [p.id, { pagou: 0, deve: 0 }]));
@@ -691,8 +843,7 @@ function saldos() {
 function acertos(s) {
   const cred = Object.entries(s).filter(([, x]) => x.saldo > 0.005).map(([id, x]) => ({ id, v: x.saldo })).sort((a, b) => b.v - a.v);
   const deb = Object.entries(s).filter(([, x]) => x.saldo < -0.005).map(([id, x]) => ({ id, v: -x.saldo })).sort((a, b) => b.v - a.v);
-  const out = [];
-  let i = 0, j = 0;
+  const out = []; let i = 0, j = 0;
   while (i < deb.length && j < cred.length) {
     const v = Math.min(deb[i].v, cred[j].v);
     if (v > 0.005) out.push({ de: deb[i].id, para: cred[j].id, v });
@@ -703,40 +854,27 @@ function acertos(s) {
   return out;
 }
 function vGastos() {
-  const gs = gastosAtivos();
-  const s = saldos();
+  const gs = gastosAtivos(); const s = saldos();
   const total = gs.reduce((a, g) => a + emUSD(g), 0);
-  const eu = S.eu && s[S.eu];
-  const ac = acertos(s);
-  const porData = {};
-  for (const g of gs) (porData[g.data || 'sem data'] ||= []).push(g);
-  return `
-  <div class="pagehead"><div><p class="eyebrow">Divisão de despesas</p><h1 class="title">Gastos</h1><p class="sub">Câmbio usado: <button data-a="cambio" style="color:var(--acc-text);font-weight:700">US$ 1 = ${brl(S.cambio)}</button></p></div></div>
+  const eu = S.eu && s[S.eu]; const ac = acertos(s);
+  const porData = {}; for (const g of gs) (porData[g.data || 'sem data'] ||= []).push(g);
+  return cab('Divisão de despesas', 'Gastos', `US$ 1 = <button data-a="cambio" style="color:var(--acc-text);font-weight:700">${brl(S.cambio)}</button>`) + `
   <div class="kpis">
     <div class="kpi"><span class="xs">Total do grupo</span><b>${usd(total)}</b><span class="small mute num">${brl(total * S.cambio)}</span></div>
-    <div class="kpi"><span class="xs">${eu ? 'Seu saldo' : 'Quem é você?'}</span>${eu ? `<b class="${eu.saldo >= 0 ? 'amt pos' : 'amt neg'}" style="text-align:left">${eu.saldo >= 0 ? '+' : '−'}${usd(Math.abs(eu.saldo)).replace('US$ ', 'US$ ')}</b><span class="small mute">${eu.saldo >= 0 ? 'a receber' : 'a pagar'}</span>` : `<button class="btn sm soft" data-a="escolherEu" style="margin-top:6px">Escolher</button>`}</div>
+    <div class="kpi"><span class="xs">${eu ? 'Seu saldo' : 'Quem é você?'}</span>${eu ? `<b class="${eu.saldo >= -0.005 ? 'amt pos' : 'amt neg'}" style="text-align:left">${eu.saldo >= -0.005 ? '+' : '−'}${usd(Math.abs(eu.saldo))}</b><span class="small mute">${eu.saldo >= -0.005 ? 'a receber' : 'a pagar'}</span>` : `<button class="btn sm soft" data-a="escolherEu" style="margin-top:6px">Escolher</button>`}</div>
   </div>
+  <div class="between" style="margin-top:12px"><div class="syncpill">${pillSync()}</div><button class="mini" data-a="ferramentas">${ic('dice')}Ferramentas</button></div>
+  ${!autoSync() && SYNC.status !== 'conectando' ? `<div class="btnrow"><button class="btn sm" data-a="sincronizar">${ic('share', 'sm')}Enviar ao grupo</button><button class="btn sm" data-a="importar">${ic('sync', 'sm')}Importar</button></div>` : ''}
 
-  <div class="syncpill" style="margin-top:12px">${pillSync()}</div>
-  <div class="btnrow">
-    ${autoSync() ? `<button class="btn" data-a="syncAgora">${ic('sync', 'sm')}Atualizar agora</button>` : `<button class="btn" data-a="sincronizar">${ic('share', 'sm')}Enviar ao grupo</button>
-    <button class="btn" data-a="importar">${ic('sync', 'sm')}Importar</button>`}
-    <button class="btn" data-a="ferramentas">${ic('dice', 'sm')}Ferramentas</button>
-  </div>
+  ${ac.length ? `<h2 class="sec">Quem paga quem <button class="link small" data-a="pix" style="color:var(--acc-text);font-weight:700">Chaves Pix</button></h2>
+  <div class="card">${ac.map((a) => { const pix = S.sync.pix[a.para]?.v; return `<div class="bal">${av(a.de, 'sm')}${ic('chev', 'sm')}${av(a.para, 'sm')}<div class="grow"><p class="small"><b>${esc(nome(a.de))}</b> paga <b>${esc(nome(a.para))}</b></p>${pix ? `<button class="xs" data-a="copiar" data-v="${esc(pix)}" style="color:var(--acc-text);font-weight:700">Pix: ${esc(pix)}</button>` : ''}</div><div><div class="amt">${usd(a.v)}</div><button class="xs mute num" data-a="copiar" data-v="${(a.v * S.cambio).toFixed(2).replace('.', ',')}" style="display:block;text-align:right">${brl(a.v * S.cambio)}</button></div></div>`; }).join('')}</div>` : ''}
 
   <h2 class="sec">Saldos</h2>
-  <div class="card">${D.pessoas.map((p) => { const x = s[p.id]; return `<div class="bal">${av(p.id)}<div class="grow"><h3>${esc(p.curto)}</h3><p class="xs mute num">pagou ${usd(x.pagou)} · parte ${usd(x.deve)}</p></div><div><div class="amt ${x.saldo >= 0.005 ? 'pos' : x.saldo <= -0.005 ? 'neg' : ''}">${x.saldo >= 0.005 ? '+' : x.saldo <= -0.005 ? '−' : ''}${usd(Math.abs(x.saldo))}</div><div class="xs mute num" style="text-align:right">${brl(Math.abs(x.saldo) * S.cambio)}</div></div></div>`; }).join('')}</div>
-
-  <h2 class="sec">Acertos sugeridos <button class="link" data-a="pix" style="font-size:14px;font-weight:700;color:var(--acc-text)">Chaves Pix</button></h2>
-  ${ac.length ? `<div class="card">${ac.map((a) => { const pix = S.sync.pix[a.para]?.v; return `<div class="bal">${av(a.de, 'sm')}${ic('chev', 'sm')}${av(a.para, 'sm')}<div class="grow"><p class="small"><b>${esc(pessoa(a.de).curto)}</b> paga <b>${esc(pessoa(a.para).curto)}</b></p>${pix ? `<button class="xs" data-a="copiar" data-v="${esc(pix)}" style="color:var(--acc-text);font-weight:700">${ic('copy', 'sm')} Pix: ${esc(pix)}</button>` : ''}</div><div><div class="amt">${usd(a.v)}</div><button class="xs mute num" data-a="copiar" data-v="${(a.v * S.cambio).toFixed(2).replace('.', ',')}" style="text-align:right;display:block">${brl(a.v * S.cambio)}</button></div></div>`; }).join('')}</div>
-  <p class="xs mute" style="margin-top:8px">O número mínimo de transferências para zerar tudo. Toque no valor em reais para copiar.</p>` : `<div class="card empty">${ic('check')}<p>Tudo acertado por enquanto.</p></div>`}
+  <div class="card">${D.pessoas.map((p) => { const x = s[p.id]; return `<div class="bal">${av(p.id)}<div class="grow"><h3>${esc(p.curto)}</h3><p class="xs mute num">pagou ${usd(x.pagou)} · parte ${usd(x.deve)}</p></div><div class="amt ${x.saldo >= 0.005 ? 'pos' : x.saldo <= -0.005 ? 'neg' : ''}">${x.saldo >= 0.005 ? '+' : x.saldo <= -0.005 ? '−' : ''}${usd(Math.abs(x.saldo))}</div></div>`; }).join('')}</div>
 
   <h2 class="sec">Lançamentos <span class="small mute num">${gs.length}</span></h2>
-  ${gs.length ? Object.entries(porData).map(([data, l]) => `<p class="xs mute" style="margin:16px 0 4px;font-weight:700;text-transform:uppercase;letter-spacing:.06em">${data === 'sem data' ? data : `${semana(data)}, ${ddmm(data)}`}</p><div class="card" style="padding:4px 16px">${l.map((g) => { const c = CATG.find((x) => x.id === g.cat) || CATG[8]; const parts = Object.keys(g.pesos || {}).filter((k) => g.pesos[k] > 0); return `<button class="exp" data-a="editarGasto" data-id="${g.id}"><span class="ic">${ic(c.ic)}</span><div class="grow"><h3 style="font-size:15px">${esc(g.desc)}</h3><p class="xs mute">${esc(pessoa(g.pagou)?.curto || '?')} pagou · ${parts.length === D.pessoas.length ? 'todos' : parts.map((k) => pessoa(k)?.curto).join(', ')}</p></div><div><div class="amt">${g.moeda === 'BRL' ? brl(g.valor) : usd(g.valor)}</div>${g.moeda === 'BRL' ? `<div class="xs mute num" style="text-align:right">${usd(emUSD(g))}</div>` : ''}</div></button>`; }).join('')}</div>`).join('') : `<div class="card empty">${ic('wallet')}<p>Nenhum gasto ainda.</p></div>`}
-
-  <div class="tip" style="margin-top:20px">${ic('info', 'sm')}<span>Cada celular guarda os próprios lançamentos. Depois de lançar, toque em “Enviar ao grupo” e mande o link no WhatsApp: quem abrir recebe tudo mesclado, sem duplicar. Prefere outro app? Splitwise e Tricount fazem o mesmo; dá para exportar a planilha em Ferramentas.</span></div>`;
+  ${gs.length ? Object.entries(porData).map(([data, l]) => `<p class="feedday">${data === 'sem data' ? data : `${semana(data)}, ${ddmm(data)}`}</p><div class="card" style="padding:4px 16px">${l.map((g) => { const c = CATG.find((x) => x.id === g.cat) || CATG[8]; const parts = Object.keys(g.pesos || {}).filter((k) => g.pesos[k] > 0); return `<button class="exp" data-a="editarGasto" data-id="${g.id}"><span class="ic">${ic(c.ic)}</span><div class="grow"><h3 style="font-size:15px">${esc(g.desc)}</h3><p class="xs mute">${esc(nome(g.pagou))} pagou · ${parts.length === D.pessoas.length ? 'todos' : esc(parts.map(nome).join(', '))}${g.por && g.por !== g.pagou ? ` · lançado por ${esc(nome(g.por))}` : ''}</p></div><div><div class="amt">${g.moeda === 'BRL' ? brl(g.valor) : usd(g.valor)}</div>${g.moeda === 'BRL' ? `<div class="xs mute num" style="text-align:right">${usd(emUSD(g))}</div>` : ''}</div></button>`; }).join('')}</div>`).join('') : `<div class="card empty">${ic('wallet')}<p>Nenhum gasto ainda. Toque em “Novo gasto”.</p></div>`}`;
 }
-
 function formGasto(g) {
   const novo = !g;
   const hoje = isoHoje();
@@ -749,27 +887,24 @@ function formGasto(g) {
         <label class="f grow"><span>Valor</span><input class="inp num" name="valor" inputmode="decimal" required value="${g.valor === '' ? '' : String(g.valor).replace('.', ',')}" placeholder="0,00"></label>
         <div class="seg" style="margin:0 0 4px;width:132px" role="radiogroup" aria-label="Moeda">${['USD', 'BRL'].map((m) => `<button type="button" role="radio" aria-selected="${g.moeda === m}" data-m="${m}">${m === 'USD' ? 'US$' : 'R$'}</button>`).join('')}</div>
       </div>
-      <label class="f"><span>Data</span><input class="inp" type="date" name="data" value="${esc(g.data)}"></label>
       <div class="f" style="margin-top:14px"><span class="xs mute" style="font-weight:700;display:block;margin-bottom:6px">Quem pagou</span><div class="pick" data-g="pagou">${D.pessoas.map((p) => `<button type="button" aria-pressed="${g.pagou === p.id}" data-id="${p.id}">${av(p.id, 'sm')}${esc(p.curto)}</button>`).join('')}</div></div>
-      <div class="f" style="margin-top:14px"><span class="xs mute" style="font-weight:700;display:block;margin-bottom:6px">Dividir entre</span><div class="pick" data-g="pesos">${D.pessoas.map((p) => `<button type="button" aria-pressed="${(g.pesos?.[p.id] || 0) > 0}" data-id="${p.id}">${av(p.id, 'sm')}${esc(p.curto)}</button>`).join('')}</div>
-        <details style="margin-top:8px"><summary class="small" style="cursor:pointer;color:var(--acc-text);font-weight:700;min-height:32px">Dividir com pesos diferentes</summary>
-          <div class="row" style="flex-wrap:wrap;margin-top:8px">${D.pessoas.map((p) => `<label class="small" style="display:flex;align-items:center;gap:6px">${esc(p.curto)}<input class="inp num" style="width:72px;min-height:40px" inputmode="decimal" data-peso="${p.id}" value="${String(g.pesos?.[p.id] ?? 0).replace('.', ',')}"></label>`).join('')}</div>
-          <p class="xs mute" style="margin-top:6px">Ex.: 1 para cada um e 0,7 para quem ficou só 7 de 10 noites.</p></details></div>
-      <div class="f" style="margin-top:14px"><span class="xs mute" style="font-weight:700;display:block;margin-bottom:6px">Categoria</span><div class="pick" data-g="cat">${CATG.map((c) => `<button type="button" class="noav" aria-pressed="${g.cat === c.id}" data-id="${c.id}">${ic(c.ic, 'sm')}${c.nome}</button>`).join('')}</div></div>
-      <label class="f"><span>Observação (opcional)</span><input class="inp" name="nota" maxlength="140" value="${esc(g.nota || '')}"></label>
+      <div class="f" style="margin-top:14px"><span class="xs mute" style="font-weight:700;display:block;margin-bottom:6px">Dividir entre</span><div class="pick" data-g="pesos">${D.pessoas.map((p) => `<button type="button" aria-pressed="${(g.pesos?.[p.id] || 0) > 0}" data-id="${p.id}">${av(p.id, 'sm')}${esc(p.curto)}</button>`).join('')}</div></div>
+      <details class="sum" style="margin-top:8px"><summary class="small" style="color:var(--acc-text)">Mais opções${ic('chev', 'sm chevd')}</summary>
+        <label class="f"><span>Data</span><input class="inp" type="date" name="data" value="${esc(g.data)}"></label>
+        <div class="f" style="margin-top:14px"><span class="xs mute" style="font-weight:700;display:block;margin-bottom:6px">Categoria</span><div class="pick" data-g="cat">${CATG.map((c) => `<button type="button" class="noav" aria-pressed="${g.cat === c.id}" data-id="${c.id}">${ic(c.ic, 'sm')}${c.nome}</button>`).join('')}</div></div>
+        <div class="f" style="margin-top:14px"><span class="xs mute" style="font-weight:700;display:block;margin-bottom:6px">Pesos diferentes (ex.: 0,7 para quem ficou menos noites)</span><div class="row" style="flex-wrap:wrap">${D.pessoas.map((p) => `<label class="small" style="display:flex;align-items:center;gap:6px">${esc(p.curto)}<input class="inp num" style="width:72px;min-height:40px" inputmode="decimal" data-peso="${p.id}" value="${String(g.pesos?.[p.id] ?? 0).replace('.', ',')}"></label>`).join('')}</div></div>
+        <label class="f"><span>Observação</span><input class="inp" name="nota" maxlength="140" value="${esc(g.nota || '')}"></label>
+      </details>
       <p class="err small" style="color:var(--bad);min-height:21px;margin-top:8px" role="alert"></p>
-      <button class="btn primary block" type="submit" style="margin-top:4px">${ic('check')}${novo ? 'Lançar' : 'Salvar'}</button>
-      ${novo ? '' : `<button class="btn danger block" type="button" data-a="apagarGasto" data-id="${g.id}" style="margin-top:8px">${ic('trash')}Apagar</button>`}
+      <button class="btn primary block" type="submit">${ic('check')}${novo ? 'Lançar' : 'Salvar'}</button>
+      ${novo ? '' : `<p class="xs mute" style="margin-top:8px;text-align:center">Lançado por ${esc(nome(g.por))}${g.criado ? ' ' + quando(g.criado) : ''}</p><button class="btn danger block" type="button" data-a="apagarGasto" data-id="${g.id}" style="margin-top:8px">${ic('trash')}Apagar</button>`}
     </form>`);
-  let moeda = g.moeda;
-  const pes = { ...(g.pesos || {}) };
+  let moeda = g.moeda; const pes = { ...(g.pesos || {}) };
   sh.querySelectorAll('[data-m]').forEach((b) => b.addEventListener('click', () => { moeda = b.dataset.m; sh.querySelectorAll('[data-m]').forEach((x) => x.setAttribute('aria-selected', x === b)); }));
   sh.querySelectorAll('.pick').forEach((grp) => grp.addEventListener('click', (e) => {
     const b = e.target.closest('button'); if (!b) return;
-    if (grp.dataset.g === 'pesos') {
-      const on = b.getAttribute('aria-pressed') !== 'true'; b.setAttribute('aria-pressed', on); pes[b.dataset.id] = on ? 1 : 0;
-      const inp = sh.querySelector(`[data-peso="${b.dataset.id}"]`); if (inp) inp.value = on ? '1' : '0';
-    } else grp.querySelectorAll('button').forEach((x) => x.setAttribute('aria-pressed', x === b));
+    if (grp.dataset.g === 'pesos') { const on = b.getAttribute('aria-pressed') !== 'true'; b.setAttribute('aria-pressed', on); pes[b.dataset.id] = on ? 1 : 0; const inp = sh.querySelector(`[data-peso="${b.dataset.id}"]`); if (inp) inp.value = on ? '1' : '0'; }
+    else grp.querySelectorAll('button').forEach((x) => x.setAttribute('aria-pressed', x === b));
   }));
   sh.querySelectorAll('[data-peso]').forEach((i) => i.addEventListener('change', () => { pes[i.dataset.peso] = numero(i.value); sh.querySelector(`[data-g="pesos"] [data-id="${i.dataset.peso}"]`).setAttribute('aria-pressed', pes[i.dataset.peso] > 0); }));
   sh.querySelector('input[name="data"]').addEventListener('change', (e) => {
@@ -779,148 +914,121 @@ function formGasto(g) {
   });
   sh.querySelector('#fg').addEventListener('submit', (e) => {
     e.preventDefault();
-    const f = new FormData(e.target);
-    const valor = numero(f.get('valor'));
-    const err = sh.querySelector('.err');
+    const f = new FormData(e.target); const valor = numero(f.get('valor')); const err = sh.querySelector('.err');
     if (!(valor > 0)) { err.textContent = 'Informe um valor maior que zero.'; sh.querySelector('[name="valor"]').focus(); return; }
     if (!Object.values(pes).some((w) => w > 0)) { err.textContent = 'Escolha pelo menos uma pessoa para dividir.'; return; }
-    const pagou = sh.querySelector('[data-g="pagou"] [aria-pressed="true"]')?.dataset.id;
-    const cat = sh.querySelector('[data-g="cat"] [aria-pressed="true"]')?.dataset.id || 'outros';
-    S.sync.gastos[g.id] = { ...g, desc: String(f.get('desc')).trim(), valor, moeda, data: f.get('data'), pagou, cat, pesos: pes, nota: String(f.get('nota') || '').trim(), cambio: moeda === 'BRL' ? (g.cambio || S.cambio) : undefined, ts: Date.now(), por: S.eu || '' };
-    salvar(); fecharSheet(); render(); toast((novo ? 'Gasto lançado.' : 'Gasto atualizado.') + (novo ? aviso() : ''));
-    navigator.vibrate?.(15);
+    S.sync.gastos[g.id] = { ...g, desc: String(f.get('desc')).trim(), valor, moeda, data: f.get('data'), pagou: sh.querySelector('[data-g="pagou"] [aria-pressed="true"]')?.dataset.id, cat: sh.querySelector('[data-g="cat"] [aria-pressed="true"]')?.dataset.id || 'outros', pesos: pes, nota: String(f.get('nota') || '').trim(), cambio: moeda === 'BRL' ? (g.cambio || S.cambio) : undefined, ts: Date.now(), por: novo ? S.eu || '' : g.por || S.eu || '', criado: g.criado || Date.now() };
+    salvar(); fecharSheet(); render(); toast((novo ? 'Gasto lançado.' : 'Gasto atualizado.') + (novo ? aviso() : '')); navigator.vibrate?.(15);
   });
 }
-
 async function linkSync() {
-  const payload = { v: 1, de: S.eu || '', em: Date.now(), col: S.sync };
-  const z = await comprimir(new TextEncoder().encode(JSON.stringify(payload)));
+  const z = await comprimir(new TextEncoder().encode(JSON.stringify({ v: 1, de: S.eu || '', em: Date.now(), col: S.sync })));
   return `${location.origin}${location.pathname}#s=${b64.url(await lacrar(z))}`;
 }
 async function importarHash(codigo) {
   try {
-    const bruto = await deslacrar(b64.deUrl(codigo.trim().replace(/^.*#s=/, '')));
-    const p = JSON.parse(new TextDecoder().decode(await descomprimir(bruto)));
+    const p = JSON.parse(new TextDecoder().decode(await descomprimir(await deslacrar(b64.deUrl(codigo.trim().replace(/^.*#s=/, ''))))));
     const n = mesclar(p.col);
-    toast(n ? `Sincronizado com ${pessoa(p.de)?.curto || 'o grupo'}: ${n} atualizaç${n === 1 ? 'ão' : 'ões'}.` : 'Você já estava em dia.');
+    toast(n ? `Sincronizado com ${nome(p.de)}: ${n} atualizaç${n === 1 ? 'ão' : 'ões'}.` : 'Você já estava em dia.');
     render();
   } catch { toast('Código de sincronização inválido.'); }
 }
 
-// ------------------------------------------------------------------ VIAGEM (documentos, voos, hotéis, motorhome, checklist, info)
-const SUBS = [['docs', 'Documentos', 'file'], ['voos', 'Passagens', 'plane'], ['hoteis', 'Hotéis', 'bed'], ['motorhome', 'Motorhome', 'rv'], ['checklist', 'Checklist', 'list'], ['info', 'Info', 'info']];
-function vViagem(sub) {
-  const a = SUBS.some((s) => s[0] === sub) ? sub : 'docs';
-  const corpo = { docs: vDocs, voos: vVoos, hoteis: vHoteis, motorhome: vMotorhome, checklist: vChecklist, info: vInfo }[a]();
-  return `<div class="pagehead"><div><p class="eyebrow">Central da viagem</p><h1 class="title">${SUBS.find((s) => s[0] === a)[1]}</h1></div></div>
-  <div class="chips">${SUBS.map(([k, n, i]) => `<a class="chip" aria-pressed="${a === k}" href="#/viagem/${k}">${ic(i, 'sm')}${n}</a>`).join('')}</div>
-  <div style="margin-top:16px">${corpo}</div>`;
+// ------------------------------------------------------------------ GRUPO (atualizações e arquivos por pessoa)
+const FG = { quem: 'todos' };
+function vGrupo(sub) {
+  const aba = sub === 'arquivos' ? 'arquivos' : 'atualizacoes';
+  const s = seg('grupo', aba, [['atualizacoes', 'Atualizações'], ['arquivos', 'Arquivos']]);
+  return cab('Quem fez o quê', 'Grupo') + s + (aba === 'arquivos' ? vArquivos() : vAtualizacoes());
 }
-const tam = (b) => (b > 1048576 ? (b / 1048576).toFixed(1) + ' MB' : Math.max(1, Math.round(b / 1024)) + ' KB');
+function vAtualizacoes() {
+  EVS = eventos();
+  const lista = EVS.map((e, i) => ({ e, i })).filter(({ e }) => FG.quem === 'todos' || e.por === FG.quem);
+  let dia = '', html = '';
+  for (const { e, i } of lista.slice(0, 200)) {
+    const r = rotuloDia(e.ts);
+    if (r !== dia) { html += `${dia ? '</div>' : ''}<p class="feedday">${r}</p><div class="card" style="padding:4px 16px">`; dia = r; }
+    html += linhaEvento(e, i);
+  }
+  if (dia) html += '</div>';
+  return `<div class="chips"><button class="chip" aria-pressed="${FG.quem === 'todos'}" data-a="fQuem" data-id="todos">Todos</button>${D.pessoas.map((p) => `<button class="chip" aria-pressed="${FG.quem === p.id}" data-a="fQuem" data-id="${p.id}" style="padding-left:4px">${av(p.id, 'xs')}${esc(p.curto)}</button>`).join('')}</div>
+    <div class="syncpill" style="margin-top:12px">${pillSync()}</div>
+    ${html || `<div class="card empty" style="margin-top:16px">${ic('users')}<p>Nenhuma atualização${FG.quem !== 'todos' ? ' de ' + esc(nome(FG.quem)) : ''} ainda.</p></div>`}`;
+}
+depoisRender.grupo = (sub) => {
+  if (sub === 'arquivos') return;
+  S.ui.visto = Date.now(); salvar(true); atualizarIndicador();
+};
 function linhaDoc(d) {
-  return `<div class="li"><span class="ic">${ic(d.tipo.startsWith('image') ? 'img' : 'file')}</span><div class="grow"><h3 style="font-size:15px">${esc(d.titulo)}</h3><p class="xs mute">${esc(d.desc || '')} ${d.tamanho ? '· ' + tam(d.tamanho) : ''}</p></div><button class="iconbtn" data-a="abrirDoc" data-id="${d.id}" aria-label="Abrir ${esc(d.titulo)}">${ic('down')}</button></div>`;
+  return `<button class="fl" data-a="abrirDoc" data-id="${d.id}"><span class="ic">${ic(d.tipo.startsWith('image') ? 'img' : 'file')}</span><span class="grow"><b style="display:block;font-size:15px">${esc(d.titulo)}</b><span class="xs mute">${d.cat === 'voo' ? 'Passagem' : 'Documento'} · ${tam(d.tamanho || 0)}</span></span>${ic('down', 'sm')}</button>`;
 }
 function linhaArq(a) {
-  const kind = { hotel: 'Hotel', voo: 'Passagem', doc: 'Documento' }[a.kind] || 'Arquivo';
-  const quem = pessoa(a.pessoa)?.curto || 'alguém';
-  const st = a.remoto ? 'disponível para o grupo' : LOCAIS.has(a.id) ? (SYNC.url ? 'enviando ao grupo' : 'só neste aparelho') : `aguardando envio de ${quem}`;
-  return `<div class="li"><span class="ic">${ic(a.tipo?.startsWith('image') ? 'img' : 'file')}</span><div class="grow"><h3 style="font-size:15px">${esc(a.titulo)}</h3><p class="xs mute">${kind}${a.pessoa ? ' · ' + esc(quem) : ''} · ${tam(a.tamanho || 0)} · ${esc(st)}</p></div><button class="iconbtn" data-a="abrirArq" data-id="${a.id}" aria-label="Abrir">${ic('down')}</button><button class="iconbtn" data-a="compartilharArq" data-id="${a.id}" aria-label="Compartilhar">${ic('share')}</button></div>`;
+  const st = a.remoto ? '' : LOCAIS.has(a.id) ? (SYNC.url ? ' · enviando…' : ' · só neste aparelho') : ` · aguardando envio de ${esc(nome(a.pessoa))}`;
+  return `<button class="fl" data-a="abrirArq" data-id="${a.id}"><span class="ic">${ic(a.tipo?.startsWith('image') ? 'img' : (TIPOS_ARQ.find((t) => t[0] === a.kind)?.[2] || 'file'))}</span><span class="grow"><b style="display:block;font-size:15px">${esc(a.titulo)}</b><span class="xs mute">${esc(ROT_ARQ[a.kind] || 'Arquivo')} · enviado por ${esc(nome(a.pessoa))} ${a.criado ? quando(a.criado) : ''}${st}</span></span>${ic('down', 'sm')}</button>`;
 }
-function vDocs() {
-  const mot = D.docs.filter((d) => d.cat === 'motorhome');
-  const voo = D.docs.filter((d) => d.cat === 'voo');
-  const meus = arquivos('doc');
-  return `
-  <h2 class="sec" style="margin-top:8px">Motorhome</h2><div class="card" style="padding:4px 16px">${mot.map(linhaDoc).join('')}</div>
-  <h2 class="sec">Passagens enviadas</h2><div class="card" style="padding:4px 16px">${voo.map(linhaDoc).join('')}</div>
-  <h2 class="sec">Arquivos do grupo <button class="link" data-a="upload" data-kind="doc" style="font-size:14px;font-weight:700;color:var(--acc-text)">${ic('up', 'sm')} Adicionar</button></h2>
-  ${meus.length ? `<div class="card" style="padding:4px 16px">${meus.map(linhaArq).join('')}</div>` : `<div class="card empty">${ic('up')}<p>Seguro-viagem, vistos, ingressos: guarde aqui para abrir mesmo sem internet.</p><button class="btn soft" data-a="upload" data-kind="doc" style="margin-top:12px">${ic('up', 'sm')}Adicionar arquivo</button></div>`}
-  <a class="card row" href="${D.drive}" target="_blank" rel="noopener" style="margin-top:16px"><span class="ic" style="width:44px;height:44px;border-radius:14px;display:grid;place-items:center;background:var(--acc-soft);color:var(--acc-text)">${ic('folder')}</span><div class="grow"><h3>Pasta compartilhada no Drive</h3><p class="small mute">Cópia de segurança dos documentos e comprovantes do grupo.</p></div>${ic('ext')}</a>`;
+function vArquivos() {
+  const todos = anexos();
+  const secao = (id, titulo, docs, ups, avatar) => {
+    const n = docs.length + ups.length;
+    return `<div class="person">${avatar}<h2 class="grow">${esc(titulo)}</h2><span class="tag num">${n}</span><button class="mini" data-a="anexar" data-dono="${id}" aria-label="Anexar para ${esc(titulo)}">${ic('plus')}</button></div>
+    <div class="card" style="padding:4px 16px">${n ? docs.map(linhaDoc).join('') + ups.map(linhaArq).join('') : '<p class="small mute" style="padding:12px 0">Nenhum arquivo.</p>'}</div>`;
+  };
+  const geral = secao('grupo', 'Do grupo', D.docs.filter((d) => d.cat !== 'voo'), todos.filter((a) => donoDe(a) === 'grupo'), `<span class="iconbtn" style="box-shadow:none">${ic('folder')}</span>`);
+  const pessoas = D.pessoas.map((p) => secao(p.id, p.nome, D.docs.filter((d) => d.cat === 'voo' && (d.pessoas || []).includes(p.id)), todos.filter((a) => donoDe(a) === p.id), av(p.id))).join('');
+  return `<p class="small mute">Passagens, comprovantes e documentos de cada um. O que é anexado aqui fica disponível para todos.</p>${geral}${pessoas}
+    <a class="card row" href="${esc(D.drive)}" target="_blank" rel="noopener" style="margin-top:24px"><span class="ic" style="width:40px;height:40px;border-radius:12px;display:grid;place-items:center;background:var(--surface2)">${ic('folder')}</span><span class="grow"><h3>Pasta do Drive</h3><span class="xs mute">Cópia de segurança</span></span>${ic('ext', 'sm')}</a>`;
 }
 
-function cardVoo(v) {
-  return `<article class="flight">
-    <div class="fh"><span>${esc(v.cia)} · ${esc(v.numero)}</span><span class="num">${semana(v.saida)}, ${ddmm(v.saida)}</span></div>
-    <div class="fb">
-      <div><div class="iata">${esc(v.de)}</div><div class="t">${hora(v.saida)}</div><div class="c">${esc(v.deCidade || '')}</div></div>
-      <div class="mid">${ic('plane')}<span class="xs">${v.chegada && v.chegada.slice(0, 10) !== v.saida.slice(0, 10) ? 'chega ' + ddmm(v.chegada) : ''}</span></div>
-      <div style="text-align:right"><div class="iata">${esc(v.para)}</div><div class="t">${v.chegada ? hora(v.chegada) : ''}</div><div class="c">${esc(v.paraCidade || '')}</div></div>
-    </div>
-    <div class="perf"></div>
-    <div class="ff" style="padding-top:12px">
-      <div class="between"><span>${avs(v.pessoas || [], 'xs')}</span>${v.localizador ? `<button class="tag acc" data-a="copiar" data-v="${esc(v.localizador.split(' ')[0])}">${ic('copy', 'sm')}${esc(v.localizador)}</button>` : ''}</div>
-      ${v.obs ? `<p style="margin-top:8px">${esc(v.obs)}</p>` : ''}
-      <div class="acts">${v.doc ? `<button class="btn sm" data-a="abrirDoc" data-id="${v.doc}">${ic('ticket', 'sm')}Bilhete</button>` : ''}${v.manual ? `<button class="btn sm danger" data-a="apagarVoo" data-id="${v.id}">${ic('trash', 'sm')}Remover</button>` : ''}</div>
-    </div>
-  </article>`;
+// ------------------------------------------------------------------ AJUSTES (contatos, dicas, este aparelho)
+function vAjustes() {
+  const tzs = [['Brasília', 'America/Sao_Paulo'], ['LA e Vegas', 'America/Los_Angeles'], ['Arizona', 'America/Phoenix'], ['Utah', 'America/Denver']];
+  return cab('Ajustes', 'Contatos e dicas') + `
+  <div class="card"><div class="syncpill">${pillSync() || '<span class="tag">Sincronização desligada</span>'}</div><p class="small mute" style="margin-top:8px">Tudo o que alguém faz no app chega sozinho aos outros celulares e computadores.</p>
+    <div class="btnrow"><button class="btn sm" data-a="syncAgora">${ic('sync', 'sm')}Atualizar agora</button>${autoSync() ? '' : `<button class="btn sm" data-a="sincronizar">${ic('share', 'sm')}Enviar por link</button><button class="btn sm" data-a="importar">Importar link</button>`}</div></div>
+  <h2 class="sec">Contatos</h2>
+  <div class="card" style="padding:4px 16px">${D.contatos.map((c) => `<div class="li"><div class="grow"><h3 style="font-size:15px">${esc(c.nome)}</h3>${c.tel ? `<p class="xs mute num">${esc(c.tel)}</p>` : ''}</div>
+    ${c.whatsapp ? `<a class="iconbtn" href="https://wa.me/${c.whatsapp}" target="_blank" rel="noopener" aria-label="WhatsApp">${ic('wa')}</a>` : ''}${c.tel ? `<a class="iconbtn" href="tel:${c.tel}" aria-label="Ligar">${ic('phone')}</a>` : ''}${c.q ? `<a class="iconbtn" href="${esc(mapsIr(c.q))}" target="_blank" rel="noopener" aria-label="Rota">${ic('nav')}</a>` : ''}${c.link ? `<a class="iconbtn" href="${esc(c.link)}" target="_blank" rel="noopener" aria-label="Site">${ic('ext')}</a>` : ''}</div>`).join('')}</div>
+  <h2 class="sec">Relógios</h2>
+  <div class="clock" id="relogios">${tzs.map(([n, z]) => `<div><span class="xs mute">${n}</span><b data-tz="${z}">--:--</b></div>`).join('')}</div>
+  <h2 class="sec">Dicas</h2>
+  <div class="card" style="padding:0 16px">${D.dicas.map((d, i) => `<details class="sum" ${i ? 'style="border-top:1px solid var(--line)"' : ''}><summary>${esc(d.titulo)}${ic('chev', 'sm chevd')}</summary><p class="small" style="padding-bottom:12px;color:var(--ink2)">${esc(d.texto)}</p></details>`).join('')}</div>
+  <h2 class="sec">Este aparelho</h2>
+  <div class="card" style="padding:4px 16px">
+    <button class="li btnlike" data-a="escolherEu">${S.eu ? av(S.eu, 'sm') : `<span class="ic">${ic('users')}</span>`}<div class="grow"><h3 style="font-size:15px">Quem é você</h3><p class="xs mute">${S.eu ? esc(pessoa(S.eu).nome) : 'Não escolhido'}</p></div>${ic('chev')}</button>
+    <button class="li btnlike" data-a="tema"><span class="ic">${ic(S.tema === 'dark' ? 'sun' : 'moon')}</span><div class="grow"><h3 style="font-size:15px">Tema</h3><p class="xs mute">${{ dark: 'Escuro', light: 'Claro' }[S.tema] || 'Automático'}</p></div>${ic('chev')}</button>
+    <button class="li btnlike" data-a="instalar"><span class="ic">${ic('down')}</span><div class="grow"><h3 style="font-size:15px">Instalar na tela inicial</h3></div>${ic('chev')}</button>
+    <button class="li btnlike" data-a="bloquear"><span class="ic">${ic('lock')}</span><div class="grow"><h3 style="font-size:15px">Bloquear</h3><p class="xs mute">Esquece a senha neste aparelho</p></div>${ic('chev')}</button>
+  </div>`;
 }
-function vVoos() {
-  const extras = Object.values(S.sync.voos).filter((v) => !v.del).map((v) => ({ ...v, manual: true }));
-  const todos = [...D.voos, ...extras];
-  const meus = arquivos('voo');
-  return D.pessoas.map((p) => {
-    const ida = todos.filter((v) => v.pessoas.includes(p.id) && v.grupo === 'ida').sort((a, b) => a.saida.localeCompare(b.saida));
-    const volta = todos.filter((v) => v.pessoas.includes(p.id) && v.grupo === 'volta').sort((a, b) => a.saida.localeCompare(b.saida));
-    const pendente = (grupo, lista) => D.voosPendentes.filter((x) => x.pessoa === p.id && (x.grupo || 'volta') === grupo && !lista.length)
-      .map((x) => `<div class="alert medio"><span class="dot">${ic('alert', 'sm')}</span><div class="grow"><h3>Pendente</h3><p>${esc(x.texto)}</p><button class="btn sm soft" data-a="novoVoo" data-p="${p.id}" data-g="${grupo}" style="margin-top:8px">${ic('plus', 'sm')}Cadastrar voo</button></div></div>`).join('');
-    const vazio = (grupo, lista, pend) => (lista.length || pend ? '' : '<p class="small mute">Sem voos cadastrados.</p>');
-    const pIda = pendente('ida', ida), pVolta = pendente('volta', volta);
-    return `<section style="margin-top:24px">
-      <div class="row">${av(p.id, 'lg')}<div class="grow"><h2 style="font-size:20px;font-weight:800">${esc(p.nome)}</h2><p class="small mute">${esc(p.papel)}</p></div></div>
-      <p class="eyebrow" style="margin:16px 0 8px">Ida</p>${ida.map(cardVoo).join('')}${pIda}${vazio('ida', ida, pIda)}
-      <p class="eyebrow" style="margin:16px 0 8px">Volta</p>${volta.map(cardVoo).join('')}${pVolta}${vazio('volta', volta, pVolta)}
-    </section>`;
-  }).join('') + `
-  <h2 class="sec">Bilhetes anexados <button class="link" data-a="upload" data-kind="voo" style="font-size:14px;font-weight:700;color:var(--acc-text)">${ic('up', 'sm')} Adicionar</button></h2>
-  ${meus.length ? `<div class="card" style="padding:4px 16px">${meus.map(linhaArq).join('')}</div>` : `<div class="card empty">${ic('ticket')}<p>Salve aqui o cartão de embarque e o e-ticket de cada um.</p></div>`}
-  <div class="btnrow"><button class="btn" data-a="novoVoo">${ic('plus', 'sm')}Cadastrar outro voo</button></div>`;
-}
-function formVoo(pid, grupoIni = 'volta') {
-  abrirSheet('Cadastrar voo', `<form id="fv">
-    <div class="f" style="margin-top:8px"><span class="xs mute" style="font-weight:700;display:block;margin-bottom:6px">Passageiros</span><div class="pick" data-g="pes">${D.pessoas.map((p) => `<button type="button" aria-pressed="${p.id === pid}" data-id="${p.id}">${av(p.id, 'sm')}${esc(p.curto)}</button>`).join('')}</div></div>
-    <div class="seg" style="margin-top:14px" role="radiogroup"><button type="button" role="radio" aria-selected="${grupoIni === 'ida'}" data-gr="ida">Ida</button><button type="button" role="radio" aria-selected="${grupoIni === 'volta'}" data-gr="volta">Volta</button></div>
-    <div class="row"><label class="f grow"><span>Companhia</span><input class="inp" name="cia" required placeholder="American Airlines"></label><label class="f" style="width:120px"><span>Voo</span><input class="inp" name="numero" required placeholder="AA 1234"></label></div>
-    <div class="row"><label class="f grow"><span>De (IATA)</span><input class="inp" name="de" required maxlength="3" placeholder="LAS" style="text-transform:uppercase"></label><label class="f grow"><span>Para (IATA)</span><input class="inp" name="para" required maxlength="3" placeholder="MIA" style="text-transform:uppercase"></label></div>
-    <label class="f"><span>Saída (horário local)</span><input class="inp" type="datetime-local" name="saida" required value="${grupoIni === 'ida' ? '2027-04-09T22:00' : '2027-04-24T12:00'}"></label>
-    <label class="f"><span>Chegada (horário local)</span><input class="inp" type="datetime-local" name="chegada"></label>
-    <label class="f"><span>Localizador</span><input class="inp" name="localizador" style="text-transform:uppercase"></label>
-    <label class="f"><span>Observação</span><input class="inp" name="obs"></label>
-    <button class="btn primary block" style="margin-top:16px">${ic('check')}Salvar e sincronizar</button></form>`, (sh) => {
-    let grupo = grupoIni;
+depoisRender.ajustes = () => {
+  const tick = () => $$('#relogios [data-tz]').forEach((b) => { b.textContent = new Intl.DateTimeFormat('pt-BR', { timeZone: b.dataset.tz, hour: '2-digit', minute: '2-digit' }).format(new Date()); });
+  tick(); clearInterval(depoisRender.t); depoisRender.t = setInterval(() => { if (!$('#relogios')) return clearInterval(depoisRender.t); tick(); }, 15000);
+};
+
+// ------------------------------------------------------------------ voos, hotéis, checklist (formulários)
+function formVoo(pid, grupoIni = 'volta', v = null) {
+  abrirSheet(v ? 'Editar voo' : 'Cadastrar voo', `<form id="fv">
+    <div class="f" style="margin-top:8px"><span class="xs mute" style="font-weight:700;display:block;margin-bottom:6px">Passageiros</span><div class="pick" data-g="pes">${D.pessoas.map((p) => `<button type="button" aria-pressed="${v ? v.pessoas.includes(p.id) : p.id === pid}" data-id="${p.id}">${av(p.id, 'sm')}${esc(p.curto)}</button>`).join('')}</div></div>
+    <div class="seg" style="margin-top:14px" role="radiogroup">${[['ida', 'Ida'], ['volta', 'Volta']].map(([k, n]) => `<button type="button" role="radio" aria-selected="${(v?.grupo || grupoIni) === k}" data-gr="${k}">${n}</button>`).join('')}</div>
+    <div class="row"><label class="f grow"><span>Companhia</span><input class="inp" name="cia" required value="${esc(v?.cia || '')}" placeholder="Copa Airlines"></label><label class="f" style="width:120px"><span>Voo</span><input class="inp" name="numero" required value="${esc(v?.numero || '')}" placeholder="CM 253"></label></div>
+    <div class="row"><label class="f grow"><span>De (aeroporto)</span><input class="inp" name="de" required maxlength="3" value="${esc(v?.de || '')}" placeholder="LAS" style="text-transform:uppercase"></label><label class="f grow"><span>Para</span><input class="inp" name="para" required maxlength="3" value="${esc(v?.para || '')}" placeholder="PTY" style="text-transform:uppercase"></label></div>
+    <label class="f"><span>Saída (horário local)</span><input class="inp" type="datetime-local" name="saida" required value="${esc(v?.saida || ((v?.grupo || grupoIni) === 'ida' ? '2027-04-09T22:00' : '2027-04-24T12:00'))}"></label>
+    <label class="f"><span>Chegada (horário local)</span><input class="inp" type="datetime-local" name="chegada" value="${esc(v?.chegada || '')}"></label>
+    <label class="f"><span>Localizador</span><input class="inp" name="localizador" value="${esc(v?.localizador || '')}" style="text-transform:uppercase"></label>
+    <label class="f"><span>Observação</span><input class="inp" name="obs" value="${esc(v?.obs || '')}"></label>
+    <button class="btn primary block" style="margin-top:16px">${ic('check')}Salvar</button></form>`, (sh) => {
+    let grupo = v?.grupo || grupoIni;
     sh.querySelectorAll('[data-gr]').forEach((b) => b.addEventListener('click', () => { grupo = b.dataset.gr; sh.querySelectorAll('[data-gr]').forEach((x) => x.setAttribute('aria-selected', x === b)); }));
     sh.querySelector('[data-g="pes"]').addEventListener('click', (e) => { const b = e.target.closest('button'); if (b) b.setAttribute('aria-pressed', b.getAttribute('aria-pressed') !== 'true'); });
     sh.querySelector('#fv').addEventListener('submit', (e) => {
-      e.preventDefault();
-      const f = new FormData(e.target);
+      e.preventDefault(); const f = new FormData(e.target);
       const pessoas = [...sh.querySelectorAll('[data-g="pes"] [aria-pressed="true"]')].map((b) => b.dataset.id);
       if (!pessoas.length) { toast('Escolha ao menos um passageiro.'); return; }
-      const id = 'v-' + uid();
-      S.sync.voos[id] = { id, grupo, pessoas, cia: f.get('cia'), numero: String(f.get('numero')).toUpperCase(), de: String(f.get('de')).toUpperCase(), para: String(f.get('para')).toUpperCase(), saida: f.get('saida'), chegada: f.get('chegada') || '', localizador: String(f.get('localizador') || '').toUpperCase(), obs: f.get('obs') || '', ts: Date.now(), por: S.eu || '' };
+      const id = v?.id || 'v-' + uid();
+      S.sync.voos[id] = { id, grupo, pessoas, cia: f.get('cia'), numero: String(f.get('numero')).toUpperCase(), de: String(f.get('de')).toUpperCase(), para: String(f.get('para')).toUpperCase(), saida: f.get('saida'), chegada: f.get('chegada') || '', localizador: String(f.get('localizador') || '').toUpperCase(), obs: f.get('obs') || '', ts: Date.now(), por: v?.por || S.eu || '' };
       salvar(); fecharSheet(); render(); toast('Voo salvo.' + aviso());
     });
   });
-}
-
-function vHoteis() {
-  return D.hoteis.map((h) => {
-    const r = S.sync.hoteis[h.id];
-    const reservado = r && !r.del && r.nome;
-    const comp = arquivos('hotel', h.id);
-    const noites = diasEntre(h.checkin, h.checkout);
-    return `<section style="margin-top:8px;margin-bottom:28px">
-      <div class="between"><div><p class="eyebrow">${semana(h.checkin)} ${ddmm(h.checkin)} → ${semana(h.checkout)} ${ddmm(h.checkout)} · ${noites} ${noites === 1 ? 'noite' : 'noites'}</p><h2 style="font-size:20px;font-weight:800">${esc(h.titulo)}</h2></div>${avs(h.hospedes, 'xs')}</div>
-      <div class="card" style="margin-top:12px">
-        ${reservado ? `<div class="row top"><span class="tag ok">${ic('check', 'sm')}Reservado</span></div><h3 style="margin-top:8px;font-size:18px">${esc(r.nome)}</h3>${r.endereco ? `<p class="small mute">${esc(r.endereco)}</p>` : ''}${r.codigo ? `<button class="tag acc" style="margin-top:8px" data-a="copiar" data-v="${esc(r.codigo)}">${ic('copy', 'sm')}Código ${esc(r.codigo)}</button>` : ''}${r.valor ? `<p class="small" style="margin-top:6px">Valor: <b>${esc(r.valor)}</b></p>` : ''}${r.obs ? `<p class="small mute" style="margin-top:4px">${esc(r.obs)}</p>` : ''}
-          <div class="acts">${btnIr(r.endereco || r.nome)}<button class="btn sm" data-a="reservaHotel" data-id="${h.id}">Editar</button></div>`
-        : `<div class="row top"><span class="tag warn">${ic('alert', 'sm')}A reservar</span></div><p class="small" style="margin-top:8px;color:var(--ink2)">${esc(h.nota)}</p><div class="acts"><button class="btn sm primary" data-a="reservaHotel" data-id="${h.id}">${ic('check', 'sm')}Registrar reserva</button></div>`}
-        <div class="divider"></div>
-        <div class="between"><h3 style="font-size:15px">Comprovantes</h3><button class="btn sm soft" data-a="upload" data-kind="hotel" data-ref="${h.id}">${ic('up', 'sm')}Anexar</button></div>
-        ${comp.length ? comp.map(linhaArq).join('') : '<p class="xs mute" style="margin-top:6px">PDF ou print da confirmação. Fica disponível para todos.</p>'}
-      </div>
-      <p class="eyebrow" style="margin:16px 0 8px">Sugestões com preço real (Booking.com)</p>
-      ${h.sugestoes.map((s) => `<article class="card"><div class="between"><h3>${esc(s.nome)}</h3><span class="tag ${s.nota >= 9 ? 'ok' : ''} num">${s.nota.toFixed(1).replace('.', ',')}</span></div><p class="small mute">${'★'.repeat(s.estrelas)} · ${esc(s.destaque)}</p><div class="between" style="margin-top:8px"><b class="num">${esc(s.preco)}</b><span class="xs mute">total no período</span></div><div class="acts"><a class="btn sm primary" href="${s.url}" target="_blank" rel="noopener">${ic('ext', 'sm')}Ver no Booking</a>${btnMapa(s.q)}</div></article>`).join('')}
-    </section>`;
-  }).join('') + `<div class="tip">${ic('info', 'sm')}<span>Preços consultados em 26/11/2026, para conferência. A reserva é feita no próprio Booking.com (o app não guarda dados de cartão).</span></div>`;
 }
 function formHotel(id) {
   const h = D.hoteis.find((x) => x.id === id); const r = S.sync.hoteis[id] || {};
@@ -934,110 +1042,78 @@ function formHotel(id) {
     ${r.nome ? `<button type="button" class="btn danger block" style="margin-top:8px" data-a="limparHotel" data-id="${id}">${ic('trash')}Remover reserva</button>` : ''}</form>`, (sh) => {
     sh.querySelector('#fh').addEventListener('submit', (e) => {
       e.preventDefault(); const f = Object.fromEntries(new FormData(e.target));
-      const sug = h.sugestoes.find((s) => s.nome === f.nome);
-      if (!f.endereco && sug) f.endereco = sug.q;
+      const sug = h.sugestoes.find((s) => s.nome === f.nome); if (!f.endereco && sug) f.endereco = sug.q;
       S.sync.hoteis[id] = { ...f, ts: Date.now(), por: S.eu || '' }; salvar(); fecharSheet(); render(); toast('Reserva salva.' + aviso());
     });
   });
 }
-
-function vMotorhome() {
-  const m = D.motorhome;
-  const ponto = (t, x) => `<article class="card"><p class="eyebrow">${t}</p><h3 style="font-size:20px;margin-top:4px">${semana(x.data)}, ${ddmm(x.data)} · ${esc(x.janela)}</h3><p class="small mute">${esc(x.endereco)}</p><div class="acts">${btnIr(x.endereco)}<a class="btn sm" href="tel:${x.tel.replace(/[^+\d]/g, '')}">${ic('phone', 'sm')}${esc(x.tel)}</a></div></article>`;
-  return `
-  <article class="card" style="background:linear-gradient(150deg,var(--acc-soft),var(--surface))"><div class="row">${ic('rv', 'lg')}<div class="grow"><h3 style="font-size:18px">${esc(m.locadora)} · ${esc(m.modelo)}</h3><p class="small mute">Intermediação ${esc(m.intermediaria)} · ${esc(m.viajantes)}</p></div></div><div class="acts"><button class="btn sm primary" data-a="abrirDoc" data-id="contrato-motorhome">${ic('file', 'sm')}Contrato</button><button class="btn sm" data-a="abrirDoc" data-id="roteiro-canions">${ic('map', 'sm')}Guia da rota</button></div></article>
-  ${ponto('Retirada', m.retirada)}${ponto('Devolução', m.devolucao)}
-  <h2 class="sec">Valores</h2><div class="card" style="padding:4px 16px">${m.valores.map(([k, v]) => `<div class="li" style="min-height:48px"><span class="grow small">${esc(k)}</span><b class="num small">${esc(v)}</b></div>`).join('')}</div>
-  <h2 class="sec">Incluso na reserva</h2><div class="card"><ul class="dots">${m.servicos.map((s) => `<li>${esc(s)}</li>`).join('')}</ul></div>
-  <h2 class="sec">Levar na retirada</h2><div class="card"><ul class="dots">${m.levar.map((s) => `<li>${esc(s)}</li>`).join('')}</ul></div>
-  <h2 class="sec">Antes de devolver</h2><div class="card"><ul class="dots">${m.devolver.map((s) => `<li>${esc(s)}</li>`).join('')}</ul></div>
-  <h2 class="sec">Combustível</h2><div class="card"><p class="small" style="color:var(--ink2)">${esc(m.combustivel)}</p></div>
-  <h2 class="sec">Assistência</h2><div class="card"><p class="small" style="color:var(--ink2)">${esc(m.assistencia)}</p><div class="acts"><a class="btn sm primary" href="https://wa.me/554126264040" target="_blank" rel="noopener">${ic('msg', 'sm')}WhatsApp Motorhome Trips</a></div></div>
-  <h2 class="sec">Cancelamento e alterações</h2><div class="card"><p class="small" style="color:var(--ink2)">${esc(m.cancelamento)}</p></div>`;
-}
-
-function vChecklist() {
+function abrirChecklist() {
   const grupos = [...new Set(D.checklist.map((c) => c.grupo))];
-  const ck = D.checklist.filter((c) => S.sync.check[c.id]?.v).length;
-  return `<div class="card"><div class="between"><b class="num">${ck} de ${D.checklist.length}</b><span class="small mute num">${Math.round((ck / D.checklist.length) * 100)}%</span></div><div class="bar" style="margin-top:8px"><i style="width:${(ck / D.checklist.length) * 100}%"></i></div></div>
-  ${grupos.map((g) => `<h2 class="sec">${esc(g)}</h2><div class="card" style="padding:4px 16px">${D.checklist.filter((c) => c.grupo === g).map((c) => { const st = S.sync.check[c.id]; const on = !!st?.v; const quem = pessoa(c.quem); return `<button class="chk" role="checkbox" aria-checked="${on}" data-a="check" data-id="${c.id}"><span class="box">${ic('check', 'sm')}</span><span class="grow"><span class="txt small" style="display:block">${esc(c.texto)}</span><span class="xs mute">${quem ? esc(quem.curto) : esc(c.quem)}${on && st.por ? ' · marcado por ' + esc(pessoa(st.por)?.curto || '') : ''}</span></span></button>`; }).join('')}</div>`).join('')}`;
+  abrirSheet('Checklist', grupos.map((g) => `<h3 style="margin-top:16px">${esc(g)}</h3><div class="card" style="padding:4px 16px;margin-top:8px">${D.checklist.filter((c) => c.grupo === g).map((c) => { const st = S.sync.check[c.id]; const on = !!st?.v; return `<button class="chk" role="checkbox" aria-checked="${on}" data-a="check" data-id="${c.id}"><span class="box">${ic('check', 'sm')}</span><span class="grow"><span class="txt small" style="display:block">${esc(c.texto)}</span><span class="xs mute" data-quem>${on && st.por ? 'feito por ' + esc(nome(st.por)) : esc(pessoa(c.quem)?.curto || c.quem)}</span></span></button>`; }).join('')}</div>`).join(''));
 }
-
-function vInfo() {
-  const tzs = [['Brasília', 'America/Sao_Paulo'], ['LA e Vegas', 'America/Los_Angeles'], ['Arizona', 'America/Phoenix'], ['Utah', 'America/Denver']];
-  return `
-  <h2 class="sec" style="margin-top:8px">Relógios</h2>
-  <div class="clock" id="relogios">${tzs.map(([n, z]) => `<div><span class="xs mute">${n}</span><b data-tz="${z}">--:--</b></div>`).join('')}</div>
-  <h2 class="sec">Contatos</h2>
-  <div class="card" style="padding:4px 16px">${D.contatos.map((c) => `<div class="li"><span class="ic">${ic(c.tel ? 'phone' : c.link ? 'ext' : 'pin')}</span><div class="grow"><h3 style="font-size:15px">${esc(c.nome)}</h3>${c.tel ? `<p class="xs mute num">${esc(c.tel)}</p>` : ''}${c.email ? `<p class="xs mute">${esc(c.email)}</p>` : ''}</div>
-    ${c.whatsapp ? `<a class="iconbtn" href="https://wa.me/${c.whatsapp}" target="_blank" rel="noopener" aria-label="WhatsApp">${ic('msg')}</a>` : ''}${c.tel ? `<a class="iconbtn" href="tel:${c.tel}" aria-label="Ligar">${ic('phone')}</a>` : ''}${c.q ? `<a class="iconbtn" href="${mapsIr(c.q)}" target="_blank" rel="noopener" aria-label="Rota">${ic('nav')}</a>` : ''}${c.link ? `<a class="iconbtn" href="${c.link}" target="_blank" rel="noopener" aria-label="Abrir site">${ic('ext')}</a>` : ''}</div>`).join('')}</div>
-  <h2 class="sec">Dicas</h2>
-  ${D.dicas.map((d) => `<details class="card" style="padding:0"><summary style="padding:16px;cursor:pointer;font-weight:700;list-style:none" class="between">${esc(d.titulo)}${ic('chev', 'sm')}</summary><p class="small" style="padding:0 16px 16px;color:var(--ink2)">${esc(d.texto)}</p></details>`).join('')}
-  <h2 class="sec">Sincronização</h2>
-  <div class="card"><div class="syncpill">${pillSync() || '<span class="tag">Desligada</span>'}</div><p class="small mute" style="margin-top:8px">Gastos, checklist, reservas, voos cadastrados, votos, roteiro escolhido e arquivos anexados chegam sozinhos a todos os celulares e computadores do grupo.</p><div class="btnrow"><button class="btn sm" data-a="syncAgora">${ic('sync', 'sm')}Atualizar agora</button></div></div>
-  <h2 class="sec">Este aparelho</h2>
-  <div class="card" style="padding:4px 16px">
-    <button class="li btnlike" data-a="escolherEu"><span class="ic">${S.eu ? av(S.eu, 'sm') : ic('users')}</span><div class="grow"><h3 style="font-size:15px">Quem é você</h3><p class="xs mute">${S.eu ? esc(pessoa(S.eu).nome) : 'Não escolhido'}</p></div>${ic('chev')}</button>
-    <button class="li btnlike" data-a="tema"><span class="ic">${ic(document.documentElement.dataset.theme === 'dark' ? 'sun' : 'moon')}</span><div class="grow"><h3 style="font-size:15px">Tema</h3><p class="xs mute">${{ dark: 'Escuro', light: 'Claro' }[S.tema] || 'Automático'}</p></div>${ic('chev')}</button>
-    <button class="li btnlike" data-a="instalar"><span class="ic">${ic('down')}</span><div class="grow"><h3 style="font-size:15px">Instalar na tela inicial</h3><p class="xs mute">Funciona offline como app</p></div>${ic('chev')}</button>
-    <button class="li btnlike" data-a="bloquear"><span class="ic">${ic('lock')}</span><div class="grow"><h3 style="font-size:15px">Bloquear</h3><p class="xs mute">Esquece a senha neste aparelho</p></div>${ic('chev')}</button>
-  </div>`;
-}
-depoisRender.viagem = (sub) => {
-  if (sub !== 'info') return;
-  const tick = () => $$('#relogios [data-tz]').forEach((b) => { b.textContent = new Intl.DateTimeFormat('pt-BR', { timeZone: b.dataset.tz, hour: '2-digit', minute: '2-digit' }).format(new Date()); });
-  tick(); clearInterval(depoisRender.t); depoisRender.t = setInterval(() => { if (!$('#relogios')) return clearInterval(depoisRender.t); tick(); }, 15000);
-};
 
 // ------------------------------------------------------------------ arquivos
-async function abrirBlob(blob, nome, idArq) {
+async function abrirBlob(blob, nomeArq, idArq) {
   const url = URL.createObjectURL(blob);
-  const apagar = idArq ? `<button class="btn danger" data-a="apagarArq" data-id="${idArq}">${ic('trash', 'sm')}Apagar</button>` : '';
-  if (blob.type.startsWith('image/')) {
-    abrirSheet(nome, `<img src="${url}" alt="${esc(nome)}" style="border-radius:16px;width:100%;height:auto"><div class="btnrow"><a class="btn primary" href="${url}" download="${esc(nome)}">${ic('down', 'sm')}Baixar</a><button class="btn" data-a="shareBlob">${ic('share', 'sm')}Compartilhar</button>${apagar}</div>`, (sh) => {
-      sh.querySelector('[data-a="shareBlob"]').addEventListener('click', (e) => { e.stopPropagation(); compartilharBlob(blob, nome); });
-    });
-  } else {
-    abrirSheet(nome, `<p class="small mute">${tam(blob.size)} · PDF</p><div class="btnrow"><a class="btn primary" href="${url}" target="_blank" rel="noopener">${ic('ext', 'sm')}Abrir</a><a class="btn" href="${url}" download="${esc(nome)}">${ic('down', 'sm')}Baixar</a><button class="btn" data-a="shareBlob">${ic('share', 'sm')}Compartilhar</button>${apagar}</div>`, (sh) => {
-      sh.querySelector('[data-a="shareBlob"]').addEventListener('click', (e) => { e.stopPropagation(); compartilharBlob(blob, nome); });
-    });
-  }
+  const meta = idArq ? S.sync.arquivos[idArq] : null;
+  const img = blob.type.startsWith('image/');
+  const info = meta ? `<p class="xs mute" style="margin-bottom:12px">${esc(ROT_ARQ[meta.kind] || 'Arquivo')} de ${esc(nome(donoDe(meta)))} · enviado por ${esc(nome(meta.pessoa))} ${meta.criado ? quando(meta.criado) : ''}</p>` : '';
+  const botoes = `<div class="btnrow">${img ? '' : `<a class="btn primary" href="${url}" target="_blank" rel="noopener">${ic('ext', 'sm')}Abrir</a>`}<a class="btn ${img ? 'primary' : ''}" href="${url}" download="${esc(nomeArq)}">${ic('down', 'sm')}Baixar</a><button class="btn" data-a="shareBlob">${ic('share', 'sm')}Compartilhar</button>${idArq ? `<button class="btn danger" data-a="apagarArq" data-id="${idArq}">${ic('trash', 'sm')}Apagar</button>` : ''}</div>`;
+  abrirSheet(meta?.titulo || nomeArq, info + (img ? `<img src="${url}" alt="${esc(nomeArq)}" style="border-radius:16px;width:100%;height:auto">` : `<p class="small mute">${tam(blob.size)} · PDF</p>`) + botoes, (sh) => {
+    sh.querySelector('[data-a="shareBlob"]').addEventListener('click', (e) => { e.stopPropagation(); compartilharBlob(blob, nomeArq); });
+  });
 }
-async function compartilharBlob(blob, nome) {
-  const f = new File([blob], nome, { type: blob.type });
-  if (navigator.canShare?.({ files: [f] })) { try { await navigator.share({ files: [f], title: nome }); } catch { /* cancelado */ } }
-  else { const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = nome; a.click(); }
+async function compartilharBlob(blob, nomeArq) {
+  const f = new File([blob], nomeArq, { type: blob.type });
+  if (navigator.canShare?.({ files: [f] })) { try { await navigator.share({ files: [f], title: nomeArq }); } catch { /* cancelado */ } }
+  else { const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = nomeArq; a.click(); }
 }
 async function abrirDoc(id) {
   const d = D.docs.find((x) => x.id === id); if (!d) return;
   toast('Abrindo ' + d.titulo + '…');
-  try {
-    const buf = await (await fetch(d.bin)).arrayBuffer();
-    const blob = new Blob([await abrirBin(buf)], { type: d.tipo });
-    abrirBlob(blob, d.nome);
-  } catch { toast('Não foi possível abrir. Verifique a conexão.'); }
+  try { abrirBlob(new Blob([await abrirBin(await (await fetch(d.bin)).arrayBuffer())], { type: d.tipo }), d.nome); }
+  catch { toast('Não foi possível abrir. Verifique a conexão.'); }
 }
-function upload(kind, ref) {
-  const inp = document.createElement('input'); inp.type = 'file'; inp.accept = 'image/*,application/pdf'; inp.multiple = true;
+async function salvarAnexo(file, meta) {
+  if (file.size > 15 * 1024 * 1024) { toast(file.name + ' passa de 15 MB e não foi anexado.'); return false; }
+  const m = { id: uid(), titulo: file.name.replace(/\.[^.]+$/, ''), nome: file.name, tipo: file.type || 'application/octet-stream', tamanho: file.size, pessoa: S.eu || '', criado: Date.now(), ...meta };
+  await idb.put({ ...m, blob: file });
+  S.sync.arquivos[m.id] = { ...m, remoto: false, ts: Date.now() };
+  S.pendUp.push(m.id); LOCAIS.add(m.id);
+  return true;
+}
+function anexar(kind, ref, dono) {
+  const inp = document.createElement('input'); inp.type = 'file'; inp.accept = 'image/*,application/pdf';
   inp.onchange = async () => {
-    let n = 0;
-    for (const file of inp.files) {
-      if (file.size > 15 * 1024 * 1024) { toast(file.name + ' passa de 15 MB e não foi anexado.'); continue; }
-      const meta = { id: uid(), kind, ref: ref || '', titulo: file.name.replace(/\.[^.]+$/, ''), nome: file.name, tipo: file.type || 'application/octet-stream', tamanho: file.size, pessoa: S.eu || '', criado: Date.now() };
-      await idb.put({ ...meta, blob: file });
-      S.sync.arquivos[meta.id] = { ...meta, remoto: false, ts: Date.now() };
-      S.pendUp.push(meta.id); n++;
+    const file = inp.files[0]; if (!file) return;
+    if (kind === 'hotel') {
+      if (await salvarAnexo(file, { kind: 'hotel', ref, dono: 'grupo' })) { salvar(); render(); toast('Comprovante anexado' + (SYNC.url ? ' e enviado ao grupo.' : '.')); }
+      return;
     }
-    if (!n) return;
-    salvar(); await recarregarArquivos(); render();
-    toast(n > 1 ? (SYNC.url ? 'Arquivos salvos e enviados ao grupo.' : 'Arquivos salvos neste aparelho.') : (SYNC.url ? 'Arquivo salvo e enviado ao grupo.' : 'Arquivo salvo neste aparelho.'));
+    let d = dono || S.eu || 'grupo'; let k = kind || 'doc';
+    abrirSheet('Anexar arquivo', `<form id="fa">
+      <p class="small mute">${esc(file.name)} · ${tam(file.size)}</p>
+      <label class="f"><span>Nome</span><input class="inp" name="titulo" required value="${esc(file.name.replace(/\.[^.]+$/, ''))}"></label>
+      <div class="f" style="margin-top:14px"><span class="xs mute" style="font-weight:700;display:block;margin-bottom:6px">De quem é</span><div class="pick" data-g="dono">${D.pessoas.map((p) => `<button type="button" aria-pressed="${d === p.id}" data-id="${p.id}">${av(p.id, 'sm')}${esc(p.curto)}</button>`).join('')}<button type="button" class="noav" aria-pressed="${d === 'grupo'}" data-id="grupo">${ic('folder', 'sm')}Grupo</button></div></div>
+      <div class="f" style="margin-top:14px"><span class="xs mute" style="font-weight:700;display:block;margin-bottom:6px">Tipo</span><div class="pick" data-g="kind">${TIPOS_ARQ.filter(([t]) => t !== 'hotel').map(([t, n, i]) => `<button type="button" class="noav" aria-pressed="${k === t}" data-id="${t}">${ic(i, 'sm')}${n}</button>`).join('')}</div></div>
+      <button class="btn primary block" style="margin-top:16px">${ic('up')}Anexar para o grupo</button></form>`, (sh) => {
+      sh.querySelectorAll('.pick').forEach((g) => g.addEventListener('click', (e) => { const b = e.target.closest('button'); if (!b) return; g.querySelectorAll('button').forEach((y) => y.setAttribute('aria-pressed', y === b)); if (g.dataset.g === 'dono') d = b.dataset.id; else k = b.dataset.id; }));
+      sh.querySelector('#fa').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        if (await salvarAnexo(file, { kind: k, ref: '', dono: d, titulo: String(new FormData(e.target).get('titulo')).trim() })) {
+          salvar(); fecharSheet(true);
+          if (location.hash !== '#/grupo/arquivos') location.hash = '#/grupo/arquivos'; else render();
+          toast('Arquivo anexado' + (SYNC.url ? ' e enviado ao grupo.' : '.'));
+        }
+      });
+    });
   };
   inp.click();
 }
 
 // ------------------------------------------------------------------ ajustes
 function escolherEu() {
-  abrirSheet('Quem é você?', `<p class="small mute">Usado para marcar quem lançou gastos, votou em lugares e concluiu tarefas.</p>
+  abrirSheet('Quem é você?', `<p class="small mute">Assim o grupo sabe quem lançou cada gasto, comentário e arquivo.</p>
     <div class="stack" style="margin-top:16px">${D.pessoas.map((p) => `<button class="card row" data-a="souEu" data-id="${p.id}" style="width:100%;text-align:left;${S.eu === p.id ? 'border-color:var(--acc)' : ''}">${av(p.id, 'lg')}<div class="grow"><h3 style="font-size:18px">${esc(p.nome)}</h3><p class="small mute">${esc(p.papel)}</p></div>${S.eu === p.id ? ic('check') : ''}</button>`).join('')}</div>`);
 }
 function aplicarTema() { if (S.tema) document.documentElement.dataset.theme = S.tema; else delete document.documentElement.dataset.theme; }
@@ -1048,83 +1124,90 @@ window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); prom
 const A = {
   fechar: () => fecharSheet(),
   go: (t) => { location.hash = t.dataset.h; },
-  ajustes: () => { location.hash = '#/viagem/info'; },
+  ajustes: () => { location.hash = '#/ajustes'; },
   pessoa: (t) => {
     const p = pessoa(t.dataset.id);
-    const voos = [...D.voos, ...Object.values(S.sync.voos).filter((v) => !v.del)].filter((v) => v.pessoas.includes(p.id)).sort((a, b) => a.saida.localeCompare(b.saida));
+    const vs = todosVoos().filter((v) => v.pessoas.includes(p.id)).sort((a, b) => a.saida.localeCompare(b.saida));
     abrirSheet(p.nome, `<div class="row">${av(p.id, 'xl')}<div class="grow"><p class="small" style="color:var(--ink2)">${esc(p.papel)}</p><p class="small mute" style="margin-top:4px">No grupo de ${ddmm(p.de)} a ${p.ate ? ddmm(p.ate) : 'a definir'}</p></div></div>
-      <div style="margin-top:16px">${voos.map(cardVoo).join('') || '<p class="small mute">Sem voos cadastrados.</p>'}</div>`);
+      <div class="btnrow"><button class="btn sm" data-a="go" data-h="#/grupo/arquivos">${ic('folder', 'sm')}Arquivos</button></div>
+      <div style="margin-top:16px">${vs.map(cardVoo).join('') || '<p class="small mute">Sem voos cadastrados.</p>'}</div>`);
   },
   irDia: (t) => document.getElementById('d-' + t.dataset.id)?.scrollIntoView({ behavior: 'smooth', block: 'start' }),
   usarRota: (t) => { setConf('rota', t.dataset.id); render(); toast('Roteiro ' + t.dataset.id + ' escolhido.' + aviso()); },
   fCidade: (t) => { F.cidade = t.dataset.id; render(); },
   fCat: (t) => { F.cat = t.dataset.id; render(); },
-  fAnimados: () => { F.animados = !F.animados; render(); },
-  fVotados: () => { F.votados = !F.votados; render(); },
+  fQuem: (t) => { FG.quem = t.dataset.id; render(); },
+  lugar: (t) => detalheLugar(t.dataset.id),
+  novoLugar: () => { if (!S.eu) return escolherEu(); formLugar(); },
+  editarLugar: (t) => formLugar(t.dataset.id),
+  apagarLugar: (t) => { if (!confirm('Remover este lugar para todos?')) return; const r = S.sync.conf[t.dataset.id]; S.sync.conf[t.dataset.id] = { ...r, del: true, ts: Date.now(), por: S.eu || r.por }; salvar(); fecharSheet(); render(); toast('Lugar removido.'); },
+  comentar: (t) => { const alvo = t.dataset.alvo; if (alvo.startsWith('dia:')) abrirSheet('Comentários · ' + nomeAlvo(alvo).replace(/^o /, ''), blocoComentarios(alvo), montarComentarios); else detalheLugar(alvo); },
+  apagarComent: (t) => { const r = S.sync.conf[t.dataset.id]; if (!r) return; S.sync.conf[t.dataset.id] = { ...r, del: true, ts: Date.now() }; salvar(); SYNC.pend = true; const th = $('.sheet [data-thread]'); if (th) th.innerHTML = listaComentarios(th.dataset.thread); },
+  evento: (t) => { const e = EVS[+t.dataset.i]; if (!e?.acao) return; if (e.acao.h) location.hash = e.acao.h; else A[e.acao.a]?.({ dataset: { id: e.acao.id, alvo: e.acao.alvo } }); },
   votar: (t) => {
     if (!S.eu) return escolherEu();
     const k = `${t.dataset.id}|${S.eu}`; const on = !S.sync.votos[k]?.v;
-    S.sync.votos[k] = { v: on ? 1 : 0, ts: Date.now() }; salvar();
-    const card = t.closest('.place'); const x = D.lugares.find((l) => l.id === t.dataset.id);
-    if (card && x) { const tmp = document.createElement('div'); tmp.innerHTML = cardLugar(x); card.replaceWith(tmp.firstElementChild); }
+    S.sync.votos[k] = { v: on ? 1 : 0, ts: Date.now(), por: S.eu }; salvar();
+    t.setAttribute('aria-pressed', on);
+    if (!$('.sheet')) render(); else SYNC.pend = true;
     navigator.vibrate?.(10);
   },
   check: (t) => {
     const id = t.dataset.id; const on = !S.sync.check[id]?.v;
     S.sync.check[id] = { v: on, ts: Date.now(), por: S.eu || '' }; salvar();
-    if (rota().tab === 'inicio') render(); else { t.setAttribute('aria-checked', on); render(); }
+    t.setAttribute('aria-checked', on);
+    const q = t.querySelector('[data-quem]'); if (q) q.textContent = on ? 'feito por ' + nome(S.eu) : '';
+    if (!$('.sheet')) render(); else SYNC.pend = true;
     navigator.vibrate?.(10);
   },
+  checklist: () => abrirChecklist(),
   novoGasto: () => formGasto(),
-  editarGasto: (t) => formGasto(S.sync.gastos[t.dataset.id]),
+  editarGasto: (t) => { const g = S.sync.gastos[t.dataset.id]; if (g) formGasto(g); },
   apagarGasto: (t) => {
-    if (!confirm('Apagar este gasto para todos? (a exclusão também é sincronizada)')) return;
-    const g = S.sync.gastos[t.dataset.id];
-    S.sync.gastos[t.dataset.id] = { ...g, del: true, ts: Date.now() }; salvar(); fecharSheet(); render();
-    toast('Gasto apagado.');
+    if (!confirm('Apagar este gasto para todos?')) return;
+    S.sync.gastos[t.dataset.id] = { ...S.sync.gastos[t.dataset.id], del: true, ts: Date.now(), por: S.eu || '' }; salvar(); fecharSheet(); render(); toast('Gasto apagado.');
   },
+  syncAgora: async () => { toast('Atualizando…'); await sincronizar(); if (!$('.sheet')) render(); toast(autoSync() ? 'Tudo em dia com o grupo.' : 'Sem conexão com o servidor agora.'); },
   sincronizar: async () => {
     const url = await linkSync();
-    const texto = `EUA 2027: atualização de gastos e reservas${S.eu ? ' enviada por ' + pessoa(S.eu).curto : ''}. Abra o link para sincronizar:`;
+    const texto = 'EUA 2027: atualização do app. Abra o link para sincronizar:';
     if (navigator.share) { try { await navigator.share({ title: 'EUA 2027', text: texto, url }); return; } catch (e) { if (e?.name === 'AbortError') return; } }
-    abrirSheet('Enviar ao grupo', `<p class="small mute">Copie e mande no grupo do WhatsApp. O conteúdo vai cifrado: só abre com a senha do grupo.</p><textarea class="inp" readonly style="margin-top:12px;font-size:13px;min-height:120px">${esc(url)}</textarea><div class="btnrow"><button class="btn primary" data-a="copiar" data-v="${esc(url)}">${ic('copy', 'sm')}Copiar link</button><a class="btn" href="https://wa.me/?text=${enc(texto + ' ' + url)}" target="_blank" rel="noopener">${ic('msg', 'sm')}WhatsApp</a></div>`);
+    abrirSheet('Enviar ao grupo', `<textarea class="inp" readonly style="font-size:13px;min-height:120px">${esc(url)}</textarea><div class="btnrow"><button class="btn primary" data-a="copiar" data-v="${esc(url)}">${ic('copy', 'sm')}Copiar link</button><a class="btn" href="https://wa.me/?text=${enc(texto + ' ' + url)}" target="_blank" rel="noopener">${ic('wa', 'sm')}WhatsApp</a></div>`);
   },
   importar: () => {
-    abrirSheet('Importar do grupo', `<p class="small mute">Normalmente basta tocar no link recebido. Se ele abrir no navegador errado, cole aqui.</p><form id="fi"><textarea class="inp" name="c" required style="margin-top:12px" placeholder="https://…#s=…"></textarea><button class="btn primary block" style="margin-top:12px">${ic('sync')}Sincronizar</button></form>`, (sh) => {
+    abrirSheet('Importar do grupo', `<form id="fi"><textarea class="inp" name="c" required placeholder="https://…#s=…"></textarea><button class="btn primary block" style="margin-top:12px">${ic('sync')}Sincronizar</button></form>`, (sh) => {
       sh.querySelector('#fi').addEventListener('submit', (e) => { e.preventDefault(); fecharSheet(); importarHash(new FormData(e.target).get('c')); });
     });
   },
   cambio: () => {
-    abrirSheet('Câmbio', `<form id="fc"><label class="f"><span>US$ 1 vale (R$)</span><input class="inp num" name="v" inputmode="decimal" value="${String(S.cambio).replace('.', ',')}"></label><button type="button" class="btn soft block" data-a="buscarCambio" style="margin-top:12px">${ic('sync', 'sm')}Buscar cotação de agora</button><button class="btn primary block" style="margin-top:8px">${ic('check')}Salvar</button><p class="xs mute" style="margin-top:8px">Gastos em reais guardam o câmbio do dia em que foram lançados.</p></form>`, (sh) => {
-      sh.querySelector('#fc').addEventListener('submit', (e) => { e.preventDefault(); const v = numero(new FormData(e.target).get('v')); if (v > 0) { S.cambio = v; salvar(); } fecharSheet(); render(); });
+    abrirSheet('Câmbio', `<form id="fc"><label class="f"><span>US$ 1 vale (R$)</span><input class="inp num" name="v" inputmode="decimal" value="${String(S.cambio).replace('.', ',')}"></label><button type="button" class="btn soft block" data-a="buscarCambio" style="margin-top:12px">${ic('sync', 'sm')}Buscar cotação de agora</button><button class="btn primary block" style="margin-top:8px">${ic('check')}Salvar</button></form>`, (sh) => {
+      sh.querySelector('#fc').addEventListener('submit', (e) => { e.preventDefault(); const v = numero(new FormData(e.target).get('v')); if (v > 0) { S.cambio = v; salvar(true); } fecharSheet(); render(); });
     });
   },
   buscarCambio: async () => {
-    try {
-      const r = await (await fetch('https://economia.awesomeapi.com.br/json/last/USD-BRL')).json();
-      const v = parseFloat(r.USDBRL.bid); const i = $('#fc [name="v"]'); if (i && v) i.value = v.toFixed(4).replace('.', ',');
-      toast('Dólar comercial: R$ ' + v.toFixed(2).replace('.', ',') + '. Cartão costuma cobrar uns 4% a mais.');
-    } catch { toast('Sem conexão para buscar a cotação.'); }
+    try { const r = await (await fetch('https://economia.awesomeapi.com.br/json/last/USD-BRL')).json(); const v = parseFloat(r.USDBRL.bid); const i = $('#fc [name="v"]'); if (i && v) i.value = v.toFixed(4).replace('.', ','); toast('Dólar comercial: R$ ' + v.toFixed(2).replace('.', ',') + '. Cartão costuma cobrar uns 4% a mais.'); }
+    catch { toast('Sem conexão para buscar a cotação.'); }
   },
   pix: () => {
-    abrirSheet('Chaves Pix', `<form id="fp">${D.pessoas.map((p) => `<label class="f"><span>${esc(p.curto)}</span><div class="row">${av(p.id, 'sm')}<input class="inp" name="${p.id}" value="${esc(S.sync.pix[p.id]?.v || '')}" placeholder="CPF, celular, e-mail ou chave aleatória"></div></label>`).join('')}<button class="btn primary block" style="margin-top:16px">${ic('check')}Salvar e sincronizar</button><p class="xs mute" style="margin-top:8px">As chaves viajam cifradas no link de sincronização.</p></form>`, (sh) => {
+    abrirSheet('Chaves Pix', `<form id="fp">${D.pessoas.map((p) => `<label class="f"><span>${esc(p.curto)}</span><div class="row">${av(p.id, 'sm')}<input class="inp" name="${p.id}" value="${esc(S.sync.pix[p.id]?.v || '')}" placeholder="CPF, celular, e-mail ou chave aleatória"></div></label>`).join('')}<button class="btn primary block" style="margin-top:16px">${ic('check')}Salvar</button></form>`, (sh) => {
       sh.querySelector('#fp').addEventListener('submit', (e) => {
         e.preventDefault(); const f = new FormData(e.target);
-        for (const p of D.pessoas) { const v = String(f.get(p.id) || '').trim(); if (v !== (S.sync.pix[p.id]?.v || '')) S.sync.pix[p.id] = { v, ts: Date.now() }; }
+        for (const p of D.pessoas) { const v = String(f.get(p.id) || '').trim(); if (v !== (S.sync.pix[p.id]?.v || '')) S.sync.pix[p.id] = { v, ts: Date.now(), por: S.eu || '' }; }
         salvar(); fecharSheet(); render();
       });
     });
   },
   ferramentas: () => {
+    const pres = presentes(isoHoje() >= D.inicio && isoHoje() <= D.fim ? isoHoje() : D.inicio);
     abrirSheet('Ferramentas', `
       <div class="card"><h3>Gorjeta e divisão da conta</h3>
-        <div class="row" style="align-items:flex-end"><label class="f grow"><span>Conta (US$)</span><input class="inp num" id="gv" inputmode="decimal" placeholder="0,00"></label><label class="f" style="width:96px"><span>Pessoas</span><input class="inp num" id="gp" inputmode="numeric" value="${presentes(isoHoje() >= D.inicio ? isoHoje() : D.inicio).length}"></label></div>
+        <div class="row" style="align-items:flex-end"><label class="f grow"><span>Conta (US$)</span><input class="inp num" id="gv" inputmode="decimal" placeholder="0,00"></label><label class="f" style="width:96px"><span>Pessoas</span><input class="inp num" id="gp" inputmode="numeric" value="${pres.length}"></label></div>
         <div class="seg" id="gt" style="margin-top:12px">${[18, 20, 22].map((p) => `<button type="button" aria-selected="${p === 20}" data-p="${p}">${p}%</button>`).join('')}</div>
         <div id="gr" class="small" style="color:var(--ink2)">Digite o valor da conta.</div></div>
-      <div class="card"><h3>Conversor</h3><div class="row" style="align-items:flex-end"><label class="f grow"><span>US$</span><input class="inp num" id="cu" inputmode="decimal"></label><label class="f grow"><span>R$</span><input class="inp num" id="cb" inputmode="decimal"></label></div><p class="xs mute" style="margin-top:6px">Câmbio de ${brl(S.cambio)}.</p></div>
-      <div class="card"><h3>Sorteio</h3><p class="small mute">Quem paga a rodada, quem dirige, quem dorme no beliche.</p><div id="sorteio" class="row" style="justify-content:center;min-height:96px;margin-top:8px">${avs(presentes(isoHoje() >= D.inicio ? isoHoje() : D.inicio), 'lg')}</div><button class="btn primary block" id="sortear">${ic('dice')}Sortear</button></div>
-      <div class="card"><h3>Exportar</h3><p class="small mute">Planilha CSV com todos os gastos, para abrir no Excel, Splitwise ou Google Sheets.</p><button class="btn block" data-a="csv" style="margin-top:12px">${ic('down', 'sm')}Baixar CSV</button></div>
-      <div class="card"><h3>Zerar gastos</h3><p class="small mute">Apaga todos os lançamentos e saldos. Depois, envie ao grupo para zerar também nos outros celulares.</p><button class="btn danger block" data-a="zerarGastos" style="margin-top:12px">${ic('trash', 'sm')}Zerar todos os gastos</button></div>`, (sh) => {
+      <div class="card"><h3>Conversor</h3><div class="row" style="align-items:flex-end"><label class="f grow"><span>US$</span><input class="inp num" id="cu" inputmode="decimal"></label><label class="f grow"><span>R$</span><input class="inp num" id="cb" inputmode="decimal"></label></div></div>
+      <div class="card"><h3>Sorteio</h3><p class="small mute">Quem paga a rodada, quem dirige, quem dorme no beliche.</p><div id="sorteio" class="row" style="justify-content:center;min-height:96px;margin-top:8px">${avs(pres, 'lg')}</div><button class="btn primary block" id="sortear">${ic('dice')}Sortear</button></div>
+      <div class="card"><h3>Planilha</h3><button class="btn block" data-a="csv" style="margin-top:8px">${ic('down', 'sm')}Baixar CSV dos gastos</button></div>
+      <div class="card"><h3>Zerar gastos</h3><p class="small mute">Apaga todos os lançamentos e saldos, para todos.</p><button class="btn danger block" data-a="zerarGastos" style="margin-top:12px">${ic('trash', 'sm')}Zerar todos os gastos</button></div>`, (sh) => {
       let pct = 20;
       const calc = () => { const v = numero($('#gv', sh).value); const n = Math.max(1, parseInt($('#gp', sh).value) || 1); if (!v) return; const t = v * (1 + pct / 100); $('#gr', sh).innerHTML = `Gorjeta ${usd(v * pct / 100)} · total <b>${usd(t)}</b> · cada um <b>${usd(t / n)}</b> (${brl((t / n) * S.cambio)})`; };
       $('#gv', sh).addEventListener('input', calc); $('#gp', sh).addEventListener('input', calc);
@@ -1132,22 +1215,21 @@ const A = {
       $('#cu', sh).addEventListener('input', (e) => { $('#cb', sh).value = (numero(e.target.value) * S.cambio).toFixed(2).replace('.', ','); });
       $('#cb', sh).addEventListener('input', (e) => { $('#cu', sh).value = (numero(e.target.value) / S.cambio).toFixed(2).replace('.', ','); });
       $('#sortear', sh).addEventListener('click', () => {
-        const ids = presentes(isoHoje() >= D.inicio && isoHoje() <= D.fim ? isoHoje() : D.inicio);
-        let n = 0; const alvo = ids[Math.floor(Math.random() * ids.length)];
-        const giro = setInterval(() => { $('#sorteio', sh).innerHTML = av(ids[n++ % ids.length], 'xl'); if (n > 14) { clearInterval(giro); $('#sorteio', sh).innerHTML = `<div style="text-align:center">${av(alvo, 'xl')}<h3 style="margin-top:8px;font-size:20px">${esc(pessoa(alvo).curto)}!</h3></div>`; navigator.vibrate?.([30, 40, 30]); } }, 90);
+        let n = 0; const alvo = pres[Math.floor(Math.random() * pres.length)];
+        const giro = setInterval(() => { $('#sorteio', sh).innerHTML = av(pres[n++ % pres.length], 'xl'); if (n > 14) { clearInterval(giro); $('#sorteio', sh).innerHTML = `<div style="text-align:center">${av(alvo, 'xl')}<h3 style="margin-top:8px;font-size:20px">${esc(nome(alvo))}!</h3></div>`; navigator.vibrate?.([30, 40, 30]); } }, 90);
       });
     });
   },
   csv: () => {
-    const linhas = [['data', 'descricao', 'valor', 'moeda', 'valor_usd', 'pagou', 'dividido_entre', 'categoria', 'obs']];
-    for (const g of gastosAtivos()) linhas.push([g.data, g.desc, g.valor, g.moeda, emUSD(g).toFixed(2), pessoa(g.pagou)?.curto, Object.keys(g.pesos).filter((k) => g.pesos[k] > 0).map((k) => `${pessoa(k)?.curto}${g.pesos[k] !== 1 ? ' x' + g.pesos[k] : ''}`).join(' + '), g.cat, g.nota || '']);
+    const linhas = [['data', 'descricao', 'valor', 'moeda', 'valor_usd', 'pagou', 'dividido_entre', 'categoria', 'lancado_por', 'obs']];
+    for (const g of gastosAtivos()) linhas.push([g.data, g.desc, g.valor, g.moeda, emUSD(g).toFixed(2), nome(g.pagou), Object.keys(g.pesos).filter((k) => g.pesos[k] > 0).map((k) => `${nome(k)}${g.pesos[k] !== 1 ? ' x' + g.pesos[k] : ''}`).join(' + '), g.cat, nome(g.por), g.nota || '']);
     const csv = '﻿' + linhas.map((l) => l.map((c) => `"${String(c ?? '').replace(/"/g, '""')}"`).join(';')).join('\n');
     const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' })); a.download = 'gastos-eua-2027.csv'; a.click();
   },
   zerarGastos: () => {
-    if (!confirm('Zerar todos os gastos? Os lançamentos e saldos somem para todos depois da sincronização.')) return;
-    if (!confirm('Confirma? Esta ação não pode ser desfeita pelo app. Se quiser, baixe o CSV antes.')) return;
-    setConf('gastosDesde', Date.now()); fecharSheet(); render(); toast('Gastos zerados.' + (aviso() ? ' Envie ao grupo para zerar nos outros celulares.' : ' Todos recebem em instantes.'));
+    if (!confirm('Zerar todos os gastos? Os lançamentos e saldos somem para todos.')) return;
+    if (!confirm('Confirma? Se quiser, baixe a planilha antes.')) return;
+    setConf('gastosDesde', Date.now()); fecharSheet(); render(); toast('Gastos zerados.');
   },
   copiar: (t) => copiar(t.dataset.v),
   abrirDoc: (t) => abrirDoc(t.dataset.id),
@@ -1160,21 +1242,21 @@ const A = {
     if (meta?.remoto && SYNC.token) pedir('/arquivo/' + id, { method: 'DELETE' }).catch(() => {});
     salvar(); fecharSheet(); render(); toast('Arquivo apagado.');
   },
-  syncAgora: async () => { toast('Atualizando…'); await sincronizar(); if (!SYNC.pend) render(); toast(autoSync() ? 'Tudo em dia com o grupo.' : 'Sem conexão com o servidor agora.'); },
-  compartilharArq: async (t) => { const a = await obterBlob(t.dataset.id); if (a) compartilharBlob(a.blob, a.nome); },
-  upload: (t) => upload(t.dataset.kind, t.dataset.ref),
-  novoVoo: (t) => formVoo(t.dataset.p, t.dataset.g || 'volta'),
-  apagarVoo: (t) => { if (!confirm('Remover este voo?')) return; S.sync.voos[t.dataset.id] = { ...S.sync.voos[t.dataset.id], del: true, ts: Date.now() }; salvar(); render(); },
+  anexar: (t) => { if (!S.eu) return escolherEu(); anexar(t.dataset.kind, t.dataset.ref, t.dataset.dono); },
+  verVoo: (t) => { const v = todosVoos().find((x) => x.id === t.dataset.id); if (v) abrirSheet(`${v.numero} · ${v.de} → ${v.para}`, cardVoo(v)); },
+  novoVoo: (t) => formVoo(t.dataset.p || S.eu, t.dataset.g || 'volta'),
+  editarVoo: (t) => { const v = S.sync.voos[t.dataset.id]; if (v) formVoo(null, v.grupo, v); },
+  apagarVoo: (t) => { if (!confirm('Remover este voo?')) return; S.sync.voos[t.dataset.id] = { ...S.sync.voos[t.dataset.id], del: true, ts: Date.now(), por: S.eu || '' }; salvar(); fecharSheet(); render(); },
   reservaHotel: (t) => formHotel(t.dataset.id),
-  limparHotel: (t) => { S.sync.hoteis[t.dataset.id] = { del: true, ts: Date.now() }; salvar(); fecharSheet(); render(); },
+  limparHotel: (t) => { S.sync.hoteis[t.dataset.id] = { del: true, ts: Date.now(), por: S.eu || '' }; salvar(); fecharSheet(); render(); },
   escolherEu: () => escolherEu(),
-  souEu: (t) => { S.eu = t.dataset.id; salvar(); fecharSheet(); render(); toast('Olá, ' + pessoa(S.eu).curto + '!'); },
-  tema: () => { S.tema = { undefined: 'dark', dark: 'light', light: undefined }[String(S.tema)]; salvar(); aplicarTema(); render(); },
+  souEu: (t) => { S.eu = t.dataset.id; salvar(true); fecharSheet(); render(); toast('Olá, ' + nome(S.eu) + '!'); },
+  tema: () => { S.tema = { undefined: 'dark', dark: 'light', light: undefined }[String(S.tema)]; salvar(true); aplicarTema(); render(); },
   instalar: async () => {
     if (promptInstalar) { promptInstalar.prompt(); promptInstalar = null; return; }
-    abrirSheet('Instalar na tela inicial', `<p class="small" style="color:var(--ink2)"><b>iPhone:</b> no Safari, toque em Compartilhar e depois em “Adicionar à Tela de Início”.</p><p class="small" style="color:var(--ink2);margin-top:12px"><b>Android:</b> no Chrome, menu ⋮ e “Instalar app”.</p>`);
+    abrirSheet('Instalar na tela inicial', `<p class="small" style="color:var(--ink2)"><b>iPhone:</b> no Safari, toque em Compartilhar e depois em “Adicionar à Tela de Início”.</p><p class="small" style="color:var(--ink2);margin-top:12px"><b>Android:</b> no Chrome, menu ⋮ e “Instalar app”.</p><p class="small" style="color:var(--ink2);margin-top:12px"><b>Computador:</b> no Chrome ou Edge, ícone de instalar na barra de endereço.</p>`);
   },
-  bloquear: () => { if (!confirm('Esquecer a senha neste aparelho? Os gastos e arquivos salvos aqui continuam guardados.')) return; localStorage.removeItem(K_CHAVE); CHAVE = null; clearInterval(SYNC.timer); SYNC.token = ''; SYNC.status = 'off'; D = null; location.hash = ''; telaBloqueio(); },
+  bloquear: () => { if (!confirm('Esquecer a senha neste aparelho?')) return; localStorage.removeItem(K_CHAVE); CHAVE = null; clearInterval(SYNC.timer); SYNC.token = ''; SYNC.status = 'off'; D = null; location.hash = ''; telaBloqueio(); },
 };
 document.addEventListener('click', (e) => {
   const t = e.target.closest('[data-a]');
