@@ -726,30 +726,32 @@ function vVoos() {
   return D.pessoas.map((p) => {
     const ida = todos.filter((v) => v.pessoas.includes(p.id) && v.grupo === 'ida').sort((a, b) => a.saida.localeCompare(b.saida));
     const volta = todos.filter((v) => v.pessoas.includes(p.id) && v.grupo === 'volta').sort((a, b) => a.saida.localeCompare(b.saida));
-    const pend = D.voosPendentes.filter((x) => x.pessoa === p.id && !volta.length);
+    const pendente = (grupo, lista) => D.voosPendentes.filter((x) => x.pessoa === p.id && (x.grupo || 'volta') === grupo && !lista.length)
+      .map((x) => `<div class="alert medio"><span class="dot">${ic('alert', 'sm')}</span><div class="grow"><h3>Pendente</h3><p>${esc(x.texto)}</p><button class="btn sm soft" data-a="novoVoo" data-p="${p.id}" data-g="${grupo}" style="margin-top:8px">${ic('plus', 'sm')}Cadastrar voo</button></div></div>`).join('');
+    const vazio = (grupo, lista, pend) => (lista.length || pend ? '' : '<p class="small mute">Sem voos cadastrados.</p>');
+    const pIda = pendente('ida', ida), pVolta = pendente('volta', volta);
     return `<section style="margin-top:24px">
       <div class="row">${av(p.id, 'lg')}<div class="grow"><h2 style="font-size:20px;font-weight:800">${esc(p.nome)}</h2><p class="small mute">${esc(p.papel)}</p></div></div>
-      <p class="eyebrow" style="margin:16px 0 8px">Ida</p>${ida.map(cardVoo).join('') || '<p class="small mute">Sem voos cadastrados.</p>'}
-      <p class="eyebrow" style="margin:16px 0 8px">Volta</p>${volta.map(cardVoo).join('')}
-      ${pend.map((x) => `<div class="alert medio"><span class="dot">${ic('alert', 'sm')}</span><div class="grow"><h3>Pendente</h3><p>${esc(x.texto)}</p><button class="btn sm soft" data-a="novoVoo" data-p="${p.id}" style="margin-top:8px">${ic('plus', 'sm')}Cadastrar voo</button></div></div>`).join('')}
+      <p class="eyebrow" style="margin:16px 0 8px">Ida</p>${ida.map(cardVoo).join('')}${pIda}${vazio('ida', ida, pIda)}
+      <p class="eyebrow" style="margin:16px 0 8px">Volta</p>${volta.map(cardVoo).join('')}${pVolta}${vazio('volta', volta, pVolta)}
     </section>`;
   }).join('') + `
   <h2 class="sec">Bilhetes deste aparelho <button class="link" data-a="upload" data-kind="voo" style="font-size:14px;font-weight:700;color:var(--acc-text)">${ic('up', 'sm')} Adicionar</button></h2>
   ${meus.length ? `<div class="card" style="padding:4px 16px">${meus.map(linhaArq).join('')}</div>` : `<div class="card empty">${ic('ticket')}<p>Salve aqui o cartão de embarque e o e-ticket de cada um.</p></div>`}
   <div class="btnrow"><button class="btn" data-a="novoVoo">${ic('plus', 'sm')}Cadastrar outro voo</button></div>`;
 }
-function formVoo(pid) {
+function formVoo(pid, grupoIni = 'volta') {
   abrirSheet('Cadastrar voo', `<form id="fv">
     <div class="f" style="margin-top:8px"><span class="xs mute" style="font-weight:700;display:block;margin-bottom:6px">Passageiros</span><div class="pick" data-g="pes">${D.pessoas.map((p) => `<button type="button" aria-pressed="${p.id === pid}" data-id="${p.id}">${av(p.id, 'sm')}${esc(p.curto)}</button>`).join('')}</div></div>
-    <div class="seg" style="margin-top:14px" role="radiogroup"><button type="button" role="radio" aria-selected="false" data-gr="ida">Ida</button><button type="button" role="radio" aria-selected="true" data-gr="volta">Volta</button></div>
+    <div class="seg" style="margin-top:14px" role="radiogroup"><button type="button" role="radio" aria-selected="${grupoIni === 'ida'}" data-gr="ida">Ida</button><button type="button" role="radio" aria-selected="${grupoIni === 'volta'}" data-gr="volta">Volta</button></div>
     <div class="row"><label class="f grow"><span>Companhia</span><input class="inp" name="cia" required placeholder="American Airlines"></label><label class="f" style="width:120px"><span>Voo</span><input class="inp" name="numero" required placeholder="AA 1234"></label></div>
     <div class="row"><label class="f grow"><span>De (IATA)</span><input class="inp" name="de" required maxlength="3" placeholder="LAS" style="text-transform:uppercase"></label><label class="f grow"><span>Para (IATA)</span><input class="inp" name="para" required maxlength="3" placeholder="MIA" style="text-transform:uppercase"></label></div>
-    <label class="f"><span>Saída (horário local)</span><input class="inp" type="datetime-local" name="saida" required value="2027-04-24T12:00"></label>
+    <label class="f"><span>Saída (horário local)</span><input class="inp" type="datetime-local" name="saida" required value="${grupoIni === 'ida' ? '2027-04-09T22:00' : '2027-04-24T12:00'}"></label>
     <label class="f"><span>Chegada (horário local)</span><input class="inp" type="datetime-local" name="chegada"></label>
     <label class="f"><span>Localizador</span><input class="inp" name="localizador" style="text-transform:uppercase"></label>
     <label class="f"><span>Observação</span><input class="inp" name="obs"></label>
     <button class="btn primary block" style="margin-top:16px">${ic('check')}Salvar e sincronizar</button></form>`, (sh) => {
-    let grupo = 'volta';
+    let grupo = grupoIni;
     sh.querySelectorAll('[data-gr]').forEach((b) => b.addEventListener('click', () => { grupo = b.dataset.gr; sh.querySelectorAll('[data-gr]').forEach((x) => x.setAttribute('aria-selected', x === b)); }));
     sh.querySelector('[data-g="pes"]').addEventListener('click', (e) => { const b = e.target.closest('button'); if (b) b.setAttribute('aria-pressed', b.getAttribute('aria-pressed') !== 'true'); });
     sh.querySelector('#fv').addEventListener('submit', (e) => {
@@ -1001,7 +1003,7 @@ const A = {
   abrirArq: async (t) => { const a = await idb.get(t.dataset.id); if (a) abrirBlob(a.blob, a.nome); },
   compartilharArq: async (t) => { const a = await idb.get(t.dataset.id); if (a) compartilharBlob(a.blob, a.nome); },
   upload: (t) => upload(t.dataset.kind, t.dataset.ref),
-  novoVoo: (t) => formVoo(t.dataset.p),
+  novoVoo: (t) => formVoo(t.dataset.p, t.dataset.g || 'volta'),
   apagarVoo: (t) => { if (!confirm('Remover este voo?')) return; S.sync.voos[t.dataset.id] = { ...S.sync.voos[t.dataset.id], del: true, ts: Date.now() }; salvar(); render(); },
   reservaHotel: (t) => formHotel(t.dataset.id),
   limparHotel: (t) => { S.sync.hoteis[t.dataset.id] = { del: true, ts: Date.now() }; salvar(); fecharSheet(); render(); },

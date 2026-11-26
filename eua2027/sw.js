@@ -1,8 +1,8 @@
 // Service worker do app EUA 2027: funciona offline depois do primeiro acesso.
 // App e dados: rede primeiro (para receber atualizações), cache como reserva.
 // Documentos cifrados e fontes: cache primeiro (não mudam).
-const CACHE = 'eua27-v1';
-const BASE = ['./', 'index.html', 'app.js?v=1', 'dados.bin', 'manifest.webmanifest', 'icone-192.png', 'icone-512.png'];
+const CACHE = 'eua27-v2';
+const BASE = ['./', 'index.html', 'app.js?v=2', 'dados.bin', 'manifest.webmanifest', 'icone-192.png', 'icone-512.png'];
 
 self.addEventListener('install', (e) => {
   e.waitUntil(caches.open(CACHE).then((c) => c.addAll(BASE)).then(() => self.skipWaiting()));
