@@ -542,7 +542,8 @@ depoisRender.explorar = () => {
 };
 
 // ------------------------------------------------------------------ GASTOS
-const gastosAtivos = () => Object.values(S.sync.gastos).filter((g) => !g.del).sort((a, b) => (b.data || '').localeCompare(a.data || '') || (b.ts || 0) - (a.ts || 0));
+const marcoZero = () => Math.max(Date.parse(D.gastosZeradosEm || '') || 0, conf('gastosDesde', 0));
+const gastosAtivos = () => Object.values(S.sync.gastos).filter((g) => !g.del && (g.ts || 0) >= marcoZero()).sort((a, b) => (b.data || '').localeCompare(a.data || '') || (b.ts || 0) - (a.ts || 0));
 const emUSD = (g) => (g.moeda === 'BRL' ? g.valor / (g.cambio || S.cambio) : g.valor);
 function saldos() {
   const s = Object.fromEntries(D.pessoas.map((p) => [p.id, { pagou: 0, deve: 0 }]));
@@ -978,7 +979,8 @@ const A = {
         <div id="gr" class="small" style="color:var(--ink2)">Digite o valor da conta.</div></div>
       <div class="card"><h3>Conversor</h3><div class="row" style="align-items:flex-end"><label class="f grow"><span>US$</span><input class="inp num" id="cu" inputmode="decimal"></label><label class="f grow"><span>R$</span><input class="inp num" id="cb" inputmode="decimal"></label></div><p class="xs mute" style="margin-top:6px">Câmbio de ${brl(S.cambio)}.</p></div>
       <div class="card"><h3>Sorteio</h3><p class="small mute">Quem paga a rodada, quem dirige, quem dorme no beliche.</p><div id="sorteio" class="row" style="justify-content:center;min-height:96px;margin-top:8px">${avs(presentes(isoHoje() >= D.inicio ? isoHoje() : D.inicio), 'lg')}</div><button class="btn primary block" id="sortear">${ic('dice')}Sortear</button></div>
-      <div class="card"><h3>Exportar</h3><p class="small mute">Planilha CSV com todos os gastos, para abrir no Excel, Splitwise ou Google Sheets.</p><button class="btn block" data-a="csv" style="margin-top:12px">${ic('down', 'sm')}Baixar CSV</button></div>`, (sh) => {
+      <div class="card"><h3>Exportar</h3><p class="small mute">Planilha CSV com todos os gastos, para abrir no Excel, Splitwise ou Google Sheets.</p><button class="btn block" data-a="csv" style="margin-top:12px">${ic('down', 'sm')}Baixar CSV</button></div>
+      <div class="card"><h3>Zerar gastos</h3><p class="small mute">Apaga todos os lançamentos e saldos. Depois, envie ao grupo para zerar também nos outros celulares.</p><button class="btn danger block" data-a="zerarGastos" style="margin-top:12px">${ic('trash', 'sm')}Zerar todos os gastos</button></div>`, (sh) => {
       let pct = 20;
       const calc = () => { const v = numero($('#gv', sh).value); const n = Math.max(1, parseInt($('#gp', sh).value) || 1); if (!v) return; const t = v * (1 + pct / 100); $('#gr', sh).innerHTML = `Gorjeta ${usd(v * pct / 100)} · total <b>${usd(t)}</b> · cada um <b>${usd(t / n)}</b> (${brl((t / n) * S.cambio)})`; };
       $('#gv', sh).addEventListener('input', calc); $('#gp', sh).addEventListener('input', calc);
@@ -997,6 +999,11 @@ const A = {
     for (const g of gastosAtivos()) linhas.push([g.data, g.desc, g.valor, g.moeda, emUSD(g).toFixed(2), pessoa(g.pagou)?.curto, Object.keys(g.pesos).filter((k) => g.pesos[k] > 0).map((k) => `${pessoa(k)?.curto}${g.pesos[k] !== 1 ? ' x' + g.pesos[k] : ''}`).join(' + '), g.cat, g.nota || '']);
     const csv = '﻿' + linhas.map((l) => l.map((c) => `"${String(c ?? '').replace(/"/g, '""')}"`).join(';')).join('\n');
     const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' })); a.download = 'gastos-eua-2027.csv'; a.click();
+  },
+  zerarGastos: () => {
+    if (!confirm('Zerar todos os gastos? Os lançamentos e saldos somem para todos depois da sincronização.')) return;
+    if (!confirm('Confirma? Esta ação não pode ser desfeita pelo app. Se quiser, baixe o CSV antes.')) return;
+    setConf('gastosDesde', Date.now()); fecharSheet(); render(); toast('Gastos zerados. Envie ao grupo para zerar nos outros celulares.');
   },
   copiar: (t) => copiar(t.dataset.v),
   abrirDoc: (t) => abrirDoc(t.dataset.id),
