@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Trajeto de viatura por GPS · HUB TPC</title>
+<meta name="description" content="Leitura do relatório de rastreamento (GPS) de viaturas: trajeto no mapa com reprodução no tempo, paradas, lacunas de sinal, velocidades, confronto com o local e o horário dos fatos e relatório em Word.">
+<meta name="theme-color" content="#f5f1e8">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Red+Hat+Display:wght@500;600&family=Red+Hat+Text:wght@400;500;600&family=Red+Hat+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/hub.css">
+<link rel="stylesheet" href="../vendor/leaflet/leaflet.css">
+<style>
+  .heroi { padding: 34px 0 6px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 14px; }
+  .chips span { font-size: 13px; padding: 2px 8px; border-radius: var(--radius-chip); background: var(--surface-3); color: var(--ink-2); }
+  .bloco { padding: 18px; margin-bottom: 14px; }
+  .bloco > h2 { font-size: 22px; margin-bottom: 4px; }
+  .zona { display: grid; place-items: center; gap: 4px; text-align: center; border: 1.5px dashed var(--line-2); border-radius: var(--radius); padding: 26px 16px; cursor: pointer; background: var(--surface); }
+  .zona.sobre { border-color: var(--accent); background: var(--surface-2); }
+  #mapa { height: 600px; border-radius: var(--radius-key) var(--radius-key) 0 0; border: 1px solid var(--line); z-index: 0; }
+  @media (max-width: 720px) { #mapa { height: 440px; } }
+  .leaflet-container { font-family: var(--sans); }
+  .kpis { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 170px), 1fr)); gap: 10px; margin: 10px 0; }
+  .kpi { background: var(--surface-2); border-radius: var(--radius-key); padding: 10px 12px; }
+  .kpi small { display: block; color: var(--ink-3); font-size: 12.5px; } .kpi b { font-size: 18px; }
+  .kpi.alerta { box-shadow: inset 3px 0 0 var(--accent); }
+  .player { border: 1px solid var(--line); border-top: 0; border-radius: 0 0 var(--radius-key) var(--radius-key); padding: 10px 12px; background: var(--surface); }
+  .player .linha1 { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+  .player .relogio { font-family: var(--mono); font-size: 20px; font-variant-numeric: tabular-nums; min-width: 190px; }
+  .player .onde { flex: 1 1 260px; font-size: 14px; color: var(--ink-2); min-width: 0; }
+  .player input[type=range] { width: 100%; margin: 10px 0 2px; accent-color: var(--ink); }
+  .player .escala { display: flex; justify-content: space-between; font-size: 12px; color: var(--ink-3); font-variant-numeric: tabular-nums; }
+  .btn-play { width: 44px; height: 44px; border-radius: 50%; border: 1px solid var(--ink); background: var(--ink); color: var(--surface); font-size: 18px; cursor: pointer; display: grid; place-items: center; }
+  .player select { min-height: 36px; }
+  .faixa-t { position: relative; height: 10px; border-radius: 99px; background: var(--surface-3); overflow: hidden; margin-top: 8px; }
+  .faixa-t i { position: absolute; top: 0; bottom: 0; }
+  .grafico { height: 170px; margin-top: 12px; }
+  table.t { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+  table.t th { text-align: left; color: var(--ink-3); font-weight: 500; border-bottom: 1px solid var(--ink); padding: 5px 6px; position: sticky; top: 0; background: var(--surface); }
+  table.t td { border-bottom: 1px solid var(--line); padding: 4px 6px; vertical-align: top; }
+  table.t td.n { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  table.t tbody tr[data-t] { cursor: pointer; } table.t tbody tr[data-t]:hover { background: var(--surface-2); }
+  .rolagem { max-height: 360px; overflow: auto; border: 1px solid var(--line); border-radius: var(--radius-key); margin-top: 8px; }
+  .abas-t { display: flex; flex-wrap: wrap; gap: 4px; border-bottom: 1px solid var(--line); margin-top: 18px; }
+  .abas-t button { border: 0; background: none; padding: 8px 12px; cursor: pointer; color: var(--ink-2); border-bottom: 2px solid transparent; font: inherit; }
+  .abas-t button[aria-selected=true] { color: var(--ink); border-bottom-color: var(--accent); font-weight: 600; }
+  .aviso { border-left: 3px solid var(--warn); background: var(--warn-bg, var(--surface-2)); padding: 8px 12px; border-radius: 0 8px 8px 0; font-size: 14px; margin: 8px 0; }
+  .veic { display: inline-flex; align-items: center; gap: 6px; font-size: 14px; margin-right: 12px; }
+  .veic i { width: 12px; height: 12px; border-radius: 50%; display: inline-block; }
+  .seta-v { width: 30px; height: 30px; display: grid; place-items: center; }
+  .seta-v svg { filter: drop-shadow(0 1px 2px rgba(0,0,0,.45)); transition: transform .15s linear; }
+  .rot-parada { background: #2B2B2B; color: #fff; border-radius: 50%; width: 22px; height: 22px; display: grid; place-items: center; font: 600 11px var(--sans); border: 2px solid #fff; box-shadow: 0 1px 3px rgba(0,0,0,.4); }
+  .legenda-v { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; font-size: 12.5px; color: var(--ink-2); margin-top: 6px; }
+  .legenda-v .g { display: inline-block; width: 120px; height: 8px; border-radius: 99px; background: linear-gradient(90deg, #2A78D6, #3BAA5C, #E8C547, #EB6834, #C0262D); vertical-align: middle; }
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body>
+<header class="topo">
+  <div class="topo-in">
+    <a class="marca" href="../" aria-label="HUB TPC, página inicial"><span class="marca-tpc">TPC</span><span class="marca-txt"><b>HUB</b> Criminal</span></a>
+    <nav class="migalha" aria-label="Você está em"><span>/</span><span>Trajeto de viatura por GPS</span></nav>
+    <div class="espaco"></div>
+    <button class="btn-icone" type="button" onclick="HUB.alternarTema()" aria-label="Alternar tema claro ou escuro" title="Tema"><span data-tema-icone>☾</span></button>
+  </div>
+</header>
+<div class="faixa"></div>
+
+<main class="wrap">
+  <section class="heroi">
+    <div class="sobretitulo">Ferramenta 29 · Prova de localização</div>
+    <h1>Trajeto de viatura por GPS</h1>
+    <p class="lead">A partir do relatório de rastreamento da viatura juntado aos autos: o trajeto no mapa, reproduzido no tempo como um vídeo, com as paradas, as lacunas de sinal, as velocidades e o confronto com o local e o horário dos fatos, para verificar a versão policial sobre abordagem, perseguição, permanência no local e condução do preso.</p>
+    <div class="chips"><span>CPP, arts. 155 a 158-F</span><span>Cadeia de custódia</span><span>Contraditório sobre a prova técnica</span></div>
+  </section>
+
+  <section class="secao" style="padding-top:18px">
+    <div class="card bloco">
+      <h2>1. Relatório de GPS</h2>
+      <label class="zona" id="zona"><b>Arraste aqui o relatório da viatura ou clique para selecionar</b><span class="pequeno mudo">PDF do sistema de rastreamento (com texto ou digitalizado), planilha .xlsx/.csv, GPX ou KML; pode enviar mais de um arquivo e mais de uma viatura</span><input type="file" id="arquivo" accept=".pdf,.xlsx,.xls,.ods,.csv,.txt,.gpx,.kml" multiple hidden></label>
+      <p class="pequeno" id="estado" style="margin:10px 0 0"></p>
+      <div class="barra" id="barra" hidden style="height:6px;background:var(--line);border-radius:99px;overflow:hidden;margin-top:10px"><i style="display:block;height:100%;width:0;background:var(--ink-2)"></i></div>
+      <div id="fontes"></div>
+    </div>
+
+    <div class="card bloco" id="resBloco" hidden>
+      <div class="linha-btns" style="justify-content:space-between;margin:0"><h2 style="margin:0">2. Trajeto</h2>
+        <span class="linha-btns" style="margin:0"><button type="button" class="btn sec" id="relatorio">Relatório (Word)</button><button type="button" class="btn sec" id="kml" title="Abre no Google Earth com a linha do tempo">Google Earth (KML)</button><button type="button" class="btn sec" id="csv">Planilha (CSV)</button></span></div>
+      <div id="veiculos" style="margin-top:8px"></div>
+      <div class="grade g4" style="margin-top:10px">
+        <label class="campo">De<input type="datetime-local" id="de" step="1"></label>
+        <label class="campo">Até<input type="datetime-local" id="ate" step="1"></label>
+        <label class="campo">Local dos fatos (endereço ou "latitude, longitude")<input type="text" id="local" placeholder="Ex.: Rua da Bahia, 1000, Belo Horizonte, MG"></label>
+        <label class="campo">Data e hora dos fatos<input type="datetime-local" id="horaFato" step="1"></label>
+      </div>
+      <details style="margin-top:8px"><summary class="pequeno" style="cursor:pointer">Parâmetros da análise</summary>
+        <div class="grade g4" style="margin-top:8px">
+          <label class="campo">Raio do local dos fatos (m)<input type="number" id="raio" value="200" min="20" step="10"></label>
+          <label class="campo">Parada: tempo mínimo (min)<input type="number" id="minParada" value="2" min="0.5" step="0.5"></label>
+          <label class="campo">Parada: raio de tolerância (m)<input type="number" id="raioParada" value="60" min="10" step="5"></label>
+          <label class="campo">Lacuna de sinal a partir de (min)<input type="number" id="lacuna" value="2" min="0.5" step="0.5"></label>
+          <label class="campo">Velocidade de atenção (km/h)<input type="number" id="limVel" value="100" min="20" step="5"></label>
+          <label class="campo">Processo ou caso<input type="text" id="caso" autocomplete="off"></label>
+        </div>
+      </details>
+      <div class="linha-btns" style="margin-top:10px"><button type="button" class="btn" id="aplicar">Aplicar intervalo e local</button>
+        <label class="campo" style="margin:0;min-width:180px">Cor do trajeto<select id="corPor"><option value="vel">Por velocidade</option><option value="tempo">Por horário</option><option value="veic">Por viatura</option></select></label>
+        <label class="check" style="font-size:14px"><input type="checkbox" id="mostrarPontos"> Pontos registrados</label>
+        <label class="check" style="font-size:14px"><input type="checkbox" id="mostrarParadas" checked> Paradas</label>
+        <label class="check" style="font-size:14px"><input type="checkbox" id="mostrarLacunas" checked> Lacunas</label></div>
+      <div id="mapa" style="margin-top:12px" role="application" aria-label="Mapa do trajeto da viatura"></div>
+      <div class="player" id="player">
+        <div class="linha1">
+          <button type="button" class="btn-play" id="play" aria-label="Reproduzir">▶</button>
+          <div class="relogio" id="relogio">--/--/---- --:--:--</div>
+          <label class="campo" style="margin:0;min-width:120px">Velocidade<select id="ritmo"><option value="1">1× (tempo real)</option><option value="10">10×</option><option value="30">30×</option><option value="60" selected>60× (1 min/s)</option><option value="120">120×</option><option value="300">300× (5 min/s)</option><option value="900">900× (15 min/s)</option></select></label>
+          <label class="check" style="font-size:14px"><input type="checkbox" id="seguir" checked> Seguir a viatura</label>
+          <label class="check" style="font-size:14px"><input type="checkbox" id="rastro" checked> Só o percorrido</label>
+          <div class="onde" id="onde"></div>
+        </div>
+        <input type="range" id="tempo" min="0" max="1000" value="0" step="1" aria-label="Linha do tempo">
+        <div class="faixa-t" id="faixaT" title="Linha do tempo: verde, em movimento; cinza, parada; vermelho, sem sinal"></div>
+        <div class="escala"><span id="tIni"></span><span class="pequeno">Espaço reproduz ou pausa · setas avançam 20 s (com Shift, 5 min)</span><span id="tFim"></span></div>
+        <div class="legenda-v" id="legenda"></div>
+      </div>
+      <div class="grafico"><canvas id="gVel" aria-label="Velocidade calculada ao longo do tempo"></canvas></div>
+      <div id="resumo"></div>
+      <div class="abas-t" role="tablist" id="abasT"></div>
+      <div id="tabela"></div>
+    </div>
+
+    <div class="card bloco">
+      <details class="cfg"><summary>Como interpretar</summary>
+        <p class="pequeno" style="margin-top:10px">O relatório de rastreamento registra a posição da viatura a intervalos regulares (no exemplo da PMMG, a cada 20 segundos) e o endereço aproximado de cada ponto, obtido pelo próprio sistema. A velocidade não costuma vir no relatório; aqui ela é calculada pela distância em linha reta entre dois pontos consecutivos dividida pelo tempo entre eles, o que a subestima em curvas.</p>
+        <p class="pequeno">Parada é a permanência da viatura dentro do raio de tolerância pelo tempo mínimo escolhido. Lacuna é o intervalo sem registro acima do limite: se a viatura reaparece longe de onde sumiu, houve deslocamento sem rastreamento, o que merece explicação (desligamento do equipamento, área sem cobertura ou falha). Saltos com velocidade implausível costumam indicar erro de posição do GPS.</p>
+        <p class="pequeno">O confronto com o local dos fatos mostra onde a viatura estava no horário informado, a menor distância alcançada e as passagens pelo raio escolhido. Esses dados permitem testar a narrativa do boletim de ocorrência (horário da abordagem, tempo de permanência, trajeto até a delegacia ou o hospital) e fundamentar pedidos de complementação da prova, como o relatório bruto do sistema, a identificação do equipamento e a cadeia de custódia do arquivo.</p>
+      </details>
+    </div>
+  </section>
+</main>
+
+<footer class="rodape">
+  <div class="wrap"><b>TPC ADVOGADOS</b> · HUB. Mapas: OpenStreetMap e Esri (imagem de satélite). O relatório é lido somente neste navegador; só o endereço do local dos fatos é enviado para localização.</div>
+</footer>
+<script src="../vendor/jszip/jszip.min.js"></script>
+<script src="../assets/hub.js"></script>
+<script src="../assets/peca.js"></script>
+<script src="../pdf/nucleo.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
