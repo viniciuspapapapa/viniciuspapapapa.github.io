@@ -145,6 +145,9 @@ _hub/  (publicada cifrada em hub/)
                               Tesseract do núcleo de PDF), planilha, GPX ou KML; paradas, lacunas, velocidades calculadas,
                               local e horário dos fatos (geocodificação pelo sherlock-tpc em /erb/geo), mapa Leaflet com
                               reprodução no tempo, gráfico de velocidade, Word, KML com linha do tempo e CSV
+    video.js                  Vídeo da movimentação: quadros desenhados em canvas (blocos do OpenStreetMap ou Esri,
+                              trajeto, viaturas, relógio, situação e linha do tempo), MP4 H.264 pelo WebCodecs com o
+                              mp4-muxer (vendor/mp4-muxer), ou gravação em tempo real pelo MediaRecorder como reserva
   rede/
     app.js                    Rede de empresas e sócios: índice cifrado da base de sócios da Receita (release
                               bases-socios, fluxo bases-socios.yml, lido pelo sherlock-tpc em /socios/parte), BrasilAPI,
