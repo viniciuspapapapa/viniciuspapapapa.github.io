@@ -211,6 +211,7 @@
       const ruas = L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 19, attribution: "© OpenStreetMap" }).addTo(MAPA);
       const sat = L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}", { maxZoom: 19, attribution: "Imagem © Esri" });
       L.control.layers({ "Mapa": ruas, "Satélite": sat }, null, { position: "topright", collapsed: false }).addTo(MAPA); L.control.scale({ imperial: false }).addTo(MAPA);
+      E.base = "ruas"; MAPA.on("baselayerchange", e => { E.base = e.name === "Satélite" ? "sat" : "ruas"; });
     }
     await aplicar(true); $("#resBloco").scrollIntoView({ behavior: "smooth", block: "start" });
   }
@@ -367,7 +368,9 @@
 
   /* ------------------------------------------------------------------ exportações */
   const nomeArq = s => (s || "trajeto").replace(/[\\/:*?"<>|]+/g, " ").trim();
-  function baixarTexto(txt, nome, tipo) { P.baixar(new Blob([txt], { type: tipo }), nome); }
+  /* download com o nome e a extensão exatos (o baixar do gerador de peças acrescenta .docx) */
+  function baixarArquivo(blob, nome) { const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = nome; document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 4000); }
+  function baixarTexto(txt, nome, tipo) { baixarArquivo(new Blob([txt], { type: tipo }), nome); }
   $("#csv").onclick = () => {
     const l = ["viatura;data_hora;latitude;longitude;endereco;intervalo_s;distancia_m;velocidade_calculada_kmh" + (E.local ? ";distancia_local_m" : "")];
     R.filter(r => r.v.visivel).forEach(r => r.pts.forEach((p, i) => { const s = r.seg[i - 1]; l.push([r.v.nome, fmt(p.t), p.lat, p.lon, '"' + String(p.end || "").replace(/"/g, '""') + '"', s ? Math.round(s.dt / 1000) : "", s ? Math.round(s.d) : "", s && !s.lac ? (Math.round(s.vel * 10) / 10).toString().replace(".", ",") : ""].concat(E.local ? [Math.round(dist(p, E.local))] : []).join(";")); }));
@@ -416,4 +419,7 @@
     b.push({ t: "data", texto: "Belo Horizonte, " + P.dataExtenso(new Date()) + "." });
     try { P.baixar(await P.docx(b), "Analise de GPS - " + nomeArq($("#caso").value || rs.map(r => r.v.nome).join(", "))); } catch (e) { window.HUB.toast(e.message || "Não foi possível gerar o Word.", 5000); }
   };
+
+  /* interface para o gerador de vídeo (video.js) */
+  window.GPS = { R, E, posicao, par, fmt, hora, dur, km, n1, dist, rumo, corVel, corTempo, iso, pausar, baixarArquivo, nomeArq: () => nomeArq($("#caso").value || R.filter(r => r.v.visivel).map(r => r.v.nome).join(", ")) };
 })();

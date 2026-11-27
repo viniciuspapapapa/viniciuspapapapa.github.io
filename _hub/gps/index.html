@@ -87,7 +87,22 @@
 
     <div class="card bloco" id="resBloco" hidden>
       <div class="linha-btns" style="justify-content:space-between;margin:0"><h2 style="margin:0">2. Trajeto</h2>
-        <span class="linha-btns" style="margin:0"><button type="button" class="btn sec" id="relatorio">Relatório (Word)</button><button type="button" class="btn sec" id="kml" title="Abre no Google Earth com a linha do tempo">Google Earth (KML)</button><button type="button" class="btn sec" id="csv">Planilha (CSV)</button></span></div>
+        <span class="linha-btns" style="margin:0"><button type="button" class="btn sec" id="relatorio">Relatório (Word)</button><button type="button" class="btn sec" id="kml" title="Abre no Google Earth com a linha do tempo">Google Earth (KML)</button><button type="button" class="btn sec" id="csv">Planilha (CSV)</button><button type="button" class="btn" id="videoBtn" aria-expanded="false" aria-controls="videoPainel">Vídeo (MP4)</button></span></div>
+      <div class="card" id="videoPainel" hidden style="padding:14px 16px;margin-top:12px;background:var(--surface-2)">
+        <h3 style="font-size:17px;margin:0 0 4px">Vídeo da movimentação</h3>
+        <p class="pequeno mudo" style="margin:0 0 10px">Gera um arquivo de vídeo com o trajeto do início ao fim: mapa, relógio, situação de cada viatura, linha do tempo e local dos fatos. Usa o intervalo De/Até, as viaturas marcadas, o mapa (ruas ou satélite), a cor do trajeto e as paradas escolhidas abaixo. A gravação roda neste navegador; no Chrome e no Edge o arquivo sai em MP4, que abre no Windows, no PowerPoint e no WhatsApp.</p>
+        <div class="grade g4">
+          <label class="campo">Enquadramento<select id="vEnq"><option value="todo">Trajeto inteiro, mapa fixo</option><option value="seguir">Seguir a viatura (aproximado)</option></select></label>
+          <label class="campo" id="vVeicCampo" hidden>Viatura seguida<select id="vVeic"></select></label>
+          <label class="campo" id="vZoomCampo" hidden>Aproximação<select id="vZoom"><option value="13">Cidade</option><option value="14">Bairros</option><option value="15" selected>Ruas</option><option value="16">Quarteirões</option><option value="17">Máxima</option></select></label>
+          <label class="campo">Duração do vídeo<select id="vDur"><option value="30">30 segundos</option><option value="60" selected>1 minuto</option><option value="120">2 minutos</option><option value="180">3 minutos</option><option value="300">5 minutos</option></select></label>
+          <label class="campo">Resolução<select id="vRes"><option value="1280x720" selected>HD 1280 × 720</option><option value="1920x1080">Full HD 1920 × 1080</option></select></label>
+        </div>
+        <label class="check" style="font-size:14px;margin-top:8px"><input type="checkbox" id="vAcel" checked> Acelerar paradas e períodos sem sinal (o tempo de deslocamento ganha mais espaço no vídeo; o relógio continua exato)</label>
+        <div class="linha-btns" style="margin-top:10px"><button type="button" class="btn" id="vGerar">Gerar vídeo</button><button type="button" class="btn sec" id="vCancelar" hidden>Cancelar</button><span class="pequeno" id="vEstado"></span></div>
+        <div id="vBarra" hidden style="height:6px;background:var(--line);border-radius:99px;overflow:hidden;margin-top:8px"><i style="display:block;height:100%;width:0;background:var(--ink-2)"></i></div>
+        <canvas id="vPrevia" hidden style="width:100%;max-width:640px;margin-top:10px;border-radius:8px;border:1px solid var(--line)"></canvas>
+      </div>
       <div id="veiculos" style="margin-top:8px"></div>
       <div class="grade g4" style="margin-top:10px">
         <label class="campo">De<input type="datetime-local" id="de" step="1"></label>
@@ -149,5 +164,6 @@
 <script src="../assets/peca.js"></script>
 <script src="../pdf/nucleo.js"></script>
 <script src="app.js"></script>
+<script src="video.js"></script>
 </body>
 </html>
